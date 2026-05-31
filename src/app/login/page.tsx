@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   authenticateMockUser,
@@ -23,12 +23,12 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function isSafeInternalPath(path: string | null) {
+function isSafeInternalPath(path: string | null): path is string {
   if (!path) return false;
   return path.startsWith("/") && !path.startsWith("//");
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -242,5 +242,23 @@ export default function LoginPage() {
         </section>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="linkedin-shell min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-2xl space-y-5">
+            <section className="linkedin-card overflow-hidden bg-white p-6 sm:p-8">
+              <p className="text-sm text-slate-600">Cargando...</p>
+            </section>
+          </div>
+        </main>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }
