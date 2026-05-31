@@ -6,9 +6,9 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "node scripts/next-with-selected-env.mjs dev",
+    "build": "node scripts/next-with-selected-env.mjs build",
+    "start": "node scripts/next-with-selected-env.mjs start",
     "lint": "eslint"
   },
   "dependencies": {

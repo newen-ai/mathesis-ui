@@ -19,8 +19,6 @@ export function ProfileView() {
     draft,
     editingId,
     sortedExperiences,
-    profileOptions,
-    activeProfileId,
     profileCompletion,
     userDisplayName,
     initials,
@@ -30,8 +28,6 @@ export function ProfileView() {
     onSubmitExperience,
     onEditExperience,
     onDeleteExperience,
-    selectProfile,
-    createNewProfile,
   } = useProfessionalProfile();
 
   return (
@@ -50,11 +46,7 @@ export function ProfileView() {
         <section className="mensa-fade-up-delay space-y-4">
           <ProfileFormCard
             profile={profile}
-            profileOptions={profileOptions}
-            activeProfileId={activeProfileId}
             onProfileChange={handleProfileChange}
-            onSelectProfile={selectProfile}
-            onCreateNewProfile={createNewProfile}
           />
           <ExperienceCard
             editingId={editingId}

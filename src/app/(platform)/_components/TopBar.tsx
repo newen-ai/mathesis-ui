@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import type { NavItem } from "../_lib/constants";
+import { clearSession, readSession } from "@/lib/auth/session";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const logoSrc = `${basePath}/mensa-empresarios-logo.svg`;
@@ -13,6 +15,8 @@ type TopBarProps = {
 
 export function TopBar({ navItems }: TopBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [userName] = useState(() => readSession()?.user.name ?? "Miembro");
 
   const isNavItemActive = (href: string) => {
     if (href === "/") {
@@ -20,6 +24,12 @@ export function TopBar({ navItems }: TopBarProps) {
     }
 
     return pathname.startsWith(href);
+  };
+
+  const onLogout = () => {
+    clearSession();
+    router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -57,6 +67,19 @@ export function TopBar({ navItems }: TopBarProps) {
             </Link>
           ))}
         </nav>
+
+        <div className="flex items-center gap-2 pl-1">
+          <span className="hidden max-w-28 truncate text-xs font-semibold text-slate-600 xl:block">
+            {userName}
+          </span>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Cerrar sesion
+          </button>
+        </div>
       </div>
     </header>
   );

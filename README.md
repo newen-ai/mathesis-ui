@@ -20,6 +20,33 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Environment Configuration
+
+This project uses a custom environment loader so that only one environment file is applied at runtime.
+
+1. Set `NODE_ENV` in `.env` with one of: `local`, `dev`, `stage`, `prod`.
+1. The app then loads only `.env.${NODE_ENV}`.
+1. No other `.env*` files are loaded by Next.js.
+
+Example:
+
+```txt
+# .env
+NODE_ENV=local
+```
+
+This will load only `.env.local` for application configuration.
+
+Available files:
+
+- `.env` (selector only)
+- `.env.local`
+- `.env.dev`
+- `.env.stage`
+- `.env.prod`
+
+> Note: Internally, Next.js still runs with its own runtime mode (`development` for `next dev`, `production` for `next build/start`) so framework behavior remains correct.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
