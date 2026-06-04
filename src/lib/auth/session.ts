@@ -15,10 +15,14 @@ export function setSessionName(name: string, surname: string) {
 }
 
 // Update registered user name and surname by email
-export function updateRegisteredUserName(email: string, name: string, surname: string) {
+export function updateRegisteredUserName(
+  email: string,
+  name: string,
+  surname: string
+) {
   if (!isBrowser()) return;
   const users = readRegisteredUsersUnsafe();
-  const idx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+  const idx = users.findIndex((u) => u.email.toLowerCase() === email.toLowerCase());
   if (idx === -1) return;
   users[idx] = {
     ...users[idx],
@@ -26,6 +30,7 @@ export function updateRegisteredUserName(email: string, name: string, surname: s
   };
   localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
 }
+
 export const SESSION_STORAGE_KEY = "mensa-empresarios-session-v1";
 export const SESSION_COOKIE_KEY = "mensa_session";
 export const USERS_STORAGE_KEY = "mensa-empresarios-users-v1";
@@ -39,9 +44,21 @@ export type MockSession = {
   rememberMe: boolean;
   createdAt: number;
   expiresAt: number;
+  accessToken: string | null;
   user: {
     name: string;
     email: string;
+    id?: string;
+    role?: string;
+  };
+};
+
+type BackendAuthPayload = {
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    role: string;
   };
 };
 
@@ -141,6 +158,21 @@ function clearSessionCookie() {
   document.cookie = `${SESSION_COOKIE_KEY}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
 }
 
+function decodeJwtExpiryMs(token: string): number | null {
+  try {
+    const [, payload] = token.split(".");
+    if (!payload) return null;
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = JSON.parse(atob(normalized)) as { exp?: number };
+
+    if (!decoded.exp) return null;
+    return decoded.exp * 1000;
+  } catch {
+    return null;
+  }
+}
+
 export function createMockSession(seed: SessionSeed): MockSession {
   const now = Date.now();
   const duration = seed.rememberMe ? LONG_SESSION_MS : SHORT_SESSION_MS;
@@ -150,9 +182,35 @@ export function createMockSession(seed: SessionSeed): MockSession {
     rememberMe: seed.rememberMe,
     createdAt: now,
     expiresAt: now + duration,
+    accessToken: null,
     user: {
       name: resolveSessionDisplayName(seed),
       email: seed.email,
+    },
+  };
+}
+
+export function createSessionFromBackendAuth(input: {
+  auth: BackendAuthPayload;
+  rememberMe: boolean;
+  name?: string;
+}): MockSession {
+  const now = Date.now();
+  const tokenExpiry = decodeJwtExpiryMs(input.auth.accessToken);
+  const fallbackDuration = input.rememberMe ? LONG_SESSION_MS : SHORT_SESSION_MS;
+  const fallbackExpiry = now + fallbackDuration;
+
+  return {
+    sessionId: crypto.randomUUID(),
+    rememberMe: input.rememberMe,
+    createdAt: now,
+    expiresAt: tokenExpiry && tokenExpiry > now ? tokenExpiry : fallbackExpiry,
+    accessToken: input.auth.accessToken,
+    user: {
+      id: input.auth.user.id,
+      role: input.auth.user.role,
+      email: input.auth.user.email,
+      name: input.name?.trim() || normalizeDisplayName(input.auth.user.email),
     },
   };
 }
@@ -282,4 +340,8 @@ export function readSession(): MockSession | null {
 
 export function hasActiveSession() {
   return readSession() !== null;
+}
+
+export function getAccessToken() {
+  return readSession()?.accessToken ?? null;
 }
