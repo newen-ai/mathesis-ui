@@ -1,84 +1,62 @@
-import type { ChangeEvent } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import type { Profile } from "../../_lib/types";
 
 type ProfileFormCardProps = {
   profile: Profile;
-  onProfileChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  profileCompletion: number;
+  isLoading: boolean;
 };
 
-export function ProfileFormCard({
-  profile,
-  onProfileChange,
-}: ProfileFormCardProps) {
-  const today = new Date().toISOString().split("T")[0];
+type ProfileEntry = {
+  label: string;
+  value: string;
+};
+
+export function ProfileFormCard({ profile, profileCompletion, isLoading }: ProfileFormCardProps) {
+  const fields: ProfileEntry[] = [
+    { label: "Nombre", value: profile.nombre },
+    { label: "Apellido", value: profile.apellido },
+    { label: "Fecha de nacimiento", value: profile.fechaNacimiento },
+    { label: "Nacionalidad", value: profile.nacionalidad },
+    { label: "Puesto de trabajo", value: profile.puesto },
+    { label: "Empresa actual", value: profile.empresaActual },
+  ].filter((item) => Boolean(item.value?.trim()));
 
   return (
     <AppCard className="p-5 sm:p-6">
       <h2 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-slate-900">
-        Arma tu perfil
+        Perfil profesional
       </h2>
       <p className="mt-1 text-sm text-slate-600">
-        Una comunidad de alto rendimiento necesita perfiles claros y accionables.
+        Se muestran solo los datos recibidos y completos desde el servicio.
       </p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <label className="mensa-field sm:col-span-1">
-          Nombre
-          <input
-            name="nombre"
-            value={profile.nombre}
-            onChange={onProfileChange}
-            placeholder="Ana"
-            autoComplete="given-name"
-            readOnly
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+          <span>Completitud del perfil</span>
+          <span>{profileCompletion}%</span>
+        </div>
+        <div className="mt-2 h-2 rounded-full bg-slate-200">
+          <div
+            className="h-2 rounded-full bg-[var(--brand-700)] transition-all"
+            style={{ width: `${profileCompletion}%` }}
           />
-        </label>
+        </div>
+      </div>
 
-        <label className="mensa-field sm:col-span-1">
-          Apellido
-          <input
-            name="apellido"
-            value={profile.apellido}
-            onChange={onProfileChange}
-            placeholder="Martinez"
-            autoComplete="family-name"
-            readOnly
-          />
-        </label>
-
-        <label className="mensa-field sm:col-span-1">
-          Fecha de nacimiento
-          <input
-            name="fechaNacimiento"
-            type="date"
-            value={profile.fechaNacimiento}
-            onChange={onProfileChange}
-            max={today}
-          />
-        </label>
-
-        <label className="mensa-field sm:col-span-1">
-          Nacionalidad
-          <input
-            name="nacionalidad"
-            value={profile.nacionalidad}
-            onChange={onProfileChange}
-            placeholder="Argentina"
-            autoComplete="country-name"
-          />
-        </label>
-
-        <label className="mensa-field sm:col-span-2">
-          Puesto de trabajo
-          <input
-            name="puesto"
-            value={profile.puesto}
-            onChange={onProfileChange}
-            placeholder="Lider de Proyectos"
-            autoComplete="organization-title"
-          />
-        </label>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {isLoading ? (
+          <p className="text-sm text-slate-600">Cargando perfil...</p>
+        ) : fields.length === 0 ? (
+          <p className="text-sm text-slate-600">No hay datos completos para mostrar.</p>
+        ) : (
+          fields.map((field) => (
+            <div key={field.label} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{field.label}</p>
+              <p className="mt-1 text-sm text-slate-900">{field.value}</p>
+            </div>
+          ))
+        )}
       </div>
     </AppCard>
   );

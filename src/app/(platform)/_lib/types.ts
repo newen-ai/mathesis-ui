@@ -4,6 +4,7 @@ export type Profile = {
   fechaNacimiento: string;
   nacionalidad: string;
   puesto: string;
+  empresaActual: string;
 };
 
 export type Experience = {

@@ -4,6 +4,7 @@ type LeftSidebarProps = {
   initials: string;
   userDisplayName: string;
   puesto: string;
+  empresaActual: string;
   profileCompletion: number;
 };
 
@@ -11,6 +12,7 @@ export function LeftSidebar({
   initials,
   userDisplayName,
   puesto,
+  empresaActual,
   profileCompletion,
 }: LeftSidebarProps) {
   return (
@@ -24,7 +26,12 @@ export function LeftSidebar({
           <h1 className="mt-2 font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
             {userDisplayName}
           </h1>
-          <p className="text-sm text-slate-600">{puesto || "Puesto sin definir"}</p>
+          {puesto || empresaActual ? (
+            <p className="text-sm text-slate-600">
+              {puesto}
+              {empresaActual ? ` en ${empresaActual}` : ""}
+            </p>
+          ) : null}
           <p className="mt-2 text-xs font-medium uppercase tracking-[0.14em] text-[var(--brand-700)]">
             Mensa Argentina Member Network
           </p>

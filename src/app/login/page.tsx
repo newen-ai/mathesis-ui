@@ -1,14 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  authenticateMockUser,
-  createMockSession,
-  hasActiveSession,
-  saveSession,
-} from "@/lib/auth/session";
+import { login } from "@/lib/api/auth";
+import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 
 type ValidationErrors = {
   email?: string;
@@ -49,11 +45,7 @@ function LoginPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
 
-  useEffect(() => {
-    if (hasActiveSession()) {
-      router.replace(nextPath);
-    }
-  }, [nextPath, router]);
+  useRedirectIfAuthenticated(nextPath);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -77,30 +69,18 @@ function LoginPageContent() {
 
     setIsSubmitting(true);
 
-    // Simula roundtrip de autenticacion para que el flujo sea realista.
-    await new Promise((resolve) => setTimeout(resolve, 700));
-
-    const authenticatedUser = authenticateMockUser({
+    const result = await login({
       email: trimmedEmail,
       password,
     });
 
-    if (!authenticatedUser) {
+    if (!result.success) {
       setErrors({
-        credentials:
-          "Credenciales invalidas o cuenta inexistente. Registrate para crear tu cuenta.",
+        credentials: result.message,
       });
       setIsSubmitting(false);
       return;
     }
-
-    saveSession(
-      createMockSession({
-        name: authenticatedUser.name,
-        email: trimmedEmail,
-        rememberMe,
-      })
-    );
 
     router.replace(nextPath);
     router.refresh();

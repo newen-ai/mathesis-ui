@@ -1,38 +1,22 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { emptyExperience, emptyProfile, STORAGE_KEY } from "../constants";
+import { emptyExperience, emptyProfile } from "../constants";
 import { Experience, ExperienceDraft, Profile } from "../types";
 import { readSession } from "@/lib/auth/session";
+import {
+  EmploymentHistoryOutput,
+  getMyProfile,
+  ProfileOutput,
+} from "@/lib/api/profile";
 
 const DEFAULT_PROFILE_ID = "profile-default";
 
-type StoredProfilePayload = {
-  profile?: Profile;
-  experiences?: Experience[];
-  activeProfileId?: string;
-  profiles?: Array<{
-    id?: string;
-    profile?: Profile;
-    experiences?: Experience[];
-  }>;
+type ProfessionalProfileState = {
+  profile: Profile;
+  experiences: Experience[];
+  profileId: string;
 };
-
-function splitFullName(fullName: string) {
-  const chunks = fullName.trim().split(/\s+/).filter(Boolean);
-  if (chunks.length === 0) {
-    return { nombre: "", apellido: "" };
-  }
-
-  if (chunks.length === 1) {
-    return { nombre: chunks[0], apellido: "" };
-  }
-
-  return {
-    nombre: chunks[0],
-    apellido: chunks.slice(1).join(" "),
-  };
-}
 
 function normalizeExperience(item: Experience): Experience {
   return {
@@ -50,47 +34,57 @@ function normalizeExperience(item: Experience): Experience {
   };
 }
 
-function buildInitialProfileState() {
-  const session = readSession();
-  const { nombre: nombreSesion, apellido: apellidoSesion } = splitFullName(
-    session?.user.name ?? ""
-  );
+function normalizeYearMonth(value: string | null | undefined) {
+  if (!value) return "";
+  return value.length >= 7 ? value.slice(0, 7) : value;
+}
 
-  let loadedProfile: Profile = emptyProfile;
-  let loadedExperiences: Experience[] = [];
+function normalizeDateInputValue(value: Date | string | null | undefined) {
+  if (!value) return "";
 
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as StoredProfilePayload;
-
-      if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
-        const selected =
-          parsed.profiles.find((entry) => entry.id === parsed.activeProfileId) ??
-          parsed.profiles[0];
-
-        loadedProfile = selected?.profile ?? emptyProfile;
-        loadedExperiences = Array.isArray(selected?.experiences)
-          ? selected.experiences
-          : [];
-      } else {
-        loadedProfile = parsed.profile ?? emptyProfile;
-        loadedExperiences = Array.isArray(parsed.experiences)
-          ? parsed.experiences
-          : [];
-      }
-    }
-  } catch {
-    localStorage.removeItem(STORAGE_KEY);
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
   }
 
+  return value.length >= 10 ? value.slice(0, 10) : value;
+}
+
+function mapProfileOutputToProfile(
+  source: ProfileOutput
+): Profile {
   return {
-    profile: {
-      ...loadedProfile,
-      nombre: nombreSesion,
-      apellido: apellidoSesion,
-    },
-    experiences: loadedExperiences.map(normalizeExperience),
+    nombre: source.firstName ?? "",
+    apellido: source.lastName ?? "",
+    fechaNacimiento: normalizeDateInputValue(source.dateOfBirth),
+    nacionalidad: source.nationality ?? "",
+    puesto: source.currentJobTitle ?? "",
+    empresaActual: source.currentCompany ?? "",
+  };
+}
+
+function mapEmploymentHistoryToExperience(
+  items: EmploymentHistoryOutput[]
+): Experience[] {
+  return items.map((item, index) => {
+    const fechaFinalizacion = normalizeYearMonth(item.endYearMonth);
+
+    return {
+      id: `${item.company}-${item.jobTitle}-${item.startYearMonth}-${index}`,
+      puestoTrabajo: item.jobTitle,
+      lugarTrabajo: item.company,
+      fechaComienzo: normalizeYearMonth(item.startYearMonth),
+      fechaFinalizacion,
+      trabajoActual: !fechaFinalizacion,
+    };
+  });
+}
+
+function buildInitialProfileState(): ProfessionalProfileState {
+  const session = readSession();
+
+  return {
+    profile: emptyProfile,
+    experiences: [],
     profileId: (session?.user.email || DEFAULT_PROFILE_ID).toLowerCase(),
   };
 }
@@ -107,21 +101,41 @@ const isFutureYearMonth = (value: string) => {
 };
 
 export const useProfessionalProfile = () => {
-  const [state, setState] = useState(buildInitialProfileState);
+  const [state, setState] = useState<ProfessionalProfileState>(
+    buildInitialProfileState
+  );
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [draft, setDraft] = useState<ExperienceDraft>(emptyExperience);
   const [editingId, setEditingId] = useState<string | null>(null);
   const profile = state.profile;
   const activeProfileIdResolved = state.profileId;
 
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        profile: state.profile,
-        experiences: state.experiences,
+    const controller = new AbortController();
+
+    getMyProfile(controller.signal)
+      .then((remoteProfile) => {
+        setState((current) => ({
+          ...current,
+          profile: mapProfileOutputToProfile(remoteProfile),
+          experiences: mapEmploymentHistoryToExperience(
+            remoteProfile.employmentHistory ?? []
+          ),
+        }));
       })
-    );
-  }, [state]);
+      .catch(() => {
+        setState((current) => ({
+          ...current,
+          profile: emptyProfile,
+          experiences: [],
+        }));
+      })
+      .finally(() => {
+        setIsProfileLoading(false);
+      });
+
+    return () => controller.abort();
+  }, []);
 
   const sortedExperiences = useMemo(() => {
     return [...state.experiences].sort((a, b) => {
@@ -132,13 +146,14 @@ export const useProfessionalProfile = () => {
   }, [state.experiences]);
 
   const profileCompletion = useMemo(() => {
-    const totalFields = 5;
+    const totalFields = 6;
     const completed = [
       profile.nombre,
       profile.apellido,
       profile.fechaNacimiento,
       profile.nacionalidad,
       profile.puesto,
+      profile.empresaActual,
     ].filter(Boolean).length;
 
     return Math.round((completed / totalFields) * 100);
@@ -262,6 +277,7 @@ export const useProfessionalProfile = () => {
     sortedExperiences,
     activeProfileId: activeProfileIdResolved,
     profileCompletion,
+    isProfileLoading,
     userDisplayName,
     initials,
     handleProfileChange,

@@ -1,8 +1,8 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useSyncExternalStore } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { hasActiveSession } from "@/lib/auth/session";
+import { hasSession } from "@/lib/api/auth";
 
 type SessionGateProps = {
   children: ReactNode;
@@ -18,39 +18,37 @@ function buildLoginPath(pathname: string) {
   return queryString ? `/login?${queryString}` : "/login";
 }
 
-function subscribeToSessionChanges(onStoreChange: () => void) {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
-  const handler = () => onStoreChange();
-  window.addEventListener("storage", handler);
-  window.addEventListener("focus", handler);
-
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener("focus", handler);
-  };
-}
-
 export function SessionGate({ children }: SessionGateProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const hasSession = useSyncExternalStore(
-    subscribeToSessionChanges,
-    hasActiveSession,
-    () => false
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   const loginPath = useMemo(() => buildLoginPath(pathname), [pathname]);
 
   useEffect(() => {
-    if (!hasSession) {
-      router.replace(loginPath);
-    }
-  }, [hasSession, loginPath, router]);
+    let isMounted = true;
 
-  if (!hasSession) {
+    const verifySession = async () => {
+      const authenticated = await hasSession();
+      if (!isMounted) return;
+
+      setIsAuthenticated(authenticated);
+      setIsCheckingSession(false);
+
+      if (!authenticated) {
+        router.replace(loginPath);
+      }
+    };
+
+    void verifySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [loginPath, router]);
+
+  if (isCheckingSession || !isAuthenticated) {
     return (
       <div className="linkedin-shell flex min-h-screen items-center justify-center px-4">
         <div className="linkedin-card w-full max-w-md p-6 text-center">

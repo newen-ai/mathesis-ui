@@ -14,6 +14,7 @@ export const emptyProfile: Profile = {
   fechaNacimiento: "",
   nacionalidad: "",
   puesto: "",
+  empresaActual: "",
 };
 
 export const emptyExperience: ExperienceDraft = {

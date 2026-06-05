@@ -43,6 +43,7 @@ export function HomeView() {
           initials={initials}
           userDisplayName={userDisplayName}
           puesto={profile.puesto}
+          empresaActual={profile.empresaActual}
           profileCompletion={profileCompletion}
         />
 

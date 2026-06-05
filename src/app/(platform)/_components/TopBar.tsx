@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { NavItem } from "../_lib/constants";
 import { clearSession, readSession } from "@/lib/auth/session";
+import { logout } from "@/lib/api/auth";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const logoSrc = `${basePath}/mensa-empresarios-logo.svg`;
@@ -26,9 +27,10 @@ export function TopBar({ navItems }: TopBarProps) {
     return pathname.startsWith(href);
   };
 
-  const onLogout = () => {
+  const onLogout = async () => {
+    await logout();
     clearSession();
-    router.push("/login");
+    router.replace("/login");
     router.refresh();
   };
 

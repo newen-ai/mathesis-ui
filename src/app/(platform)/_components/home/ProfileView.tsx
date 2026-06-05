@@ -20,9 +20,9 @@ export function ProfileView() {
     editingId,
     sortedExperiences,
     profileCompletion,
+    isProfileLoading,
     userDisplayName,
     initials,
-    handleProfileChange,
     handleDraftChange,
     resetDraft,
     onSubmitExperience,
@@ -40,13 +40,15 @@ export function ProfileView() {
           initials={initials}
           userDisplayName={userDisplayName}
           puesto={profile.puesto}
+          empresaActual={profile.empresaActual}
           profileCompletion={profileCompletion}
         />
 
         <section className="mensa-fade-up-delay space-y-4">
           <ProfileFormCard
             profile={profile}
-            onProfileChange={handleProfileChange}
+            profileCompletion={profileCompletion}
+            isLoading={isProfileLoading}
           />
           <ExperienceCard
             editingId={editingId}

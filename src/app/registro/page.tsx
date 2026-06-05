@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { hasActiveSession, registerMockUser } from "@/lib/auth/session";
+import { register } from "@/lib/api/auth";
+import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 
 type ValidationErrors = {
   name?: string;
@@ -33,11 +34,7 @@ export default function RegistroPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
 
-  useEffect(() => {
-    if (hasActiveSession()) {
-      router.replace("/");
-    }
-  }, [router]);
+  useRedirectIfAuthenticated("/");
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -73,23 +70,21 @@ export default function RegistroPage() {
     }
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 700));
-
-    const result = registerMockUser({
-      name: trimmedName,
+    const result = await register({
       email: normalizedEmail,
       password,
     });
 
-    if (!result.ok) {
+    if (!result.success) {
       setErrors({
-        general: "Ya existe una cuenta con ese email. Puedes iniciar sesion.",
+        general: result.message,
       });
       setIsSubmitting(false);
       return;
     }
 
-    router.push(`/login?email=${encodeURIComponent(normalizedEmail)}`);
+    router.replace("/");
+    router.refresh();
   };
 
   return (
@@ -118,7 +113,7 @@ export default function RegistroPage() {
             Crear cuenta
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Este registro es mock y queda guardado en localStorage hasta conectar backend real.
+            Tu cuenta se registra contra el servicio de autenticacion.
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
