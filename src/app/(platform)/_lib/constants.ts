@@ -28,7 +28,6 @@ export const emptyExperience: ExperienceDraft = {
 export const navItems: NavItem[] = [
   { label: "Inicio", href: "/" },
   { label: "Perfil", href: "/perfil" },
-  { label: "Cuenta", href: "/cuenta" },
   { label: "Red", href: "/red" },
   { label: "Mensajes", href: "/mensajes" },
   { label: "Notificaciones", href: "/notificaciones" },
