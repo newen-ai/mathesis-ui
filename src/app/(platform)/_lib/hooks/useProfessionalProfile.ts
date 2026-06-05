@@ -111,10 +111,14 @@ export const useProfessionalProfile = () => {
   const activeProfileIdResolved = state.profileId;
 
   useEffect(() => {
-    const controller = new AbortController();
+    let isMounted = true;
 
-    getMyProfile(controller.signal)
+    getMyProfile()
       .then((remoteProfile) => {
+        if (!isMounted) {
+          return;
+        }
+
         setState((current) => ({
           ...current,
           profile: mapProfileOutputToProfile(remoteProfile),
@@ -124,6 +128,10 @@ export const useProfessionalProfile = () => {
         }));
       })
       .catch(() => {
+        if (!isMounted) {
+          return;
+        }
+
         setState((current) => ({
           ...current,
           profile: emptyProfile,
@@ -131,10 +139,16 @@ export const useProfessionalProfile = () => {
         }));
       })
       .finally(() => {
+        if (!isMounted) {
+          return;
+        }
+
         setIsProfileLoading(false);
       });
 
-    return () => controller.abort();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const sortedExperiences = useMemo(() => {

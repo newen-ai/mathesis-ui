@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/api/auth";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
+import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 
 type ValidationErrors = {
   name?: string;
@@ -33,6 +34,11 @@ export default function RegistroPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [popupInfo, setPopupInfo] = useState<{
+    title: string;
+    message: string;
+    details?: string;
+  } | null>(null);
 
   useRedirectIfAuthenticated("/");
 
@@ -79,6 +85,13 @@ export default function RegistroPage() {
       setErrors({
         general: result.message,
       });
+      setPopupInfo({
+        title: "Error de servicio",
+        message: result.message,
+        details:
+          result.details ??
+          (result.status ? `HTTP ${result.status}` : "Sin detalles adicionales."),
+      });
       setIsSubmitting(false);
       return;
     }
@@ -88,9 +101,18 @@ export default function RegistroPage() {
   };
 
   return (
-    <main className="linkedin-shell min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-2xl">
-        <section className="linkedin-card bg-white p-6 sm:p-8">
+    <>
+      <ServiceErrorPopup
+        isOpen={popupInfo !== null}
+        title={popupInfo?.title ?? ""}
+        message={popupInfo?.message ?? ""}
+        details={popupInfo?.details}
+        onClose={() => setPopupInfo(null)}
+      />
+
+      <main className="linkedin-shell min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-2xl">
+          <section className="linkedin-card bg-white p-6 sm:p-8">
           <div className="mb-6 flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -239,8 +261,9 @@ export default function RegistroPage() {
               Inicia sesion
             </Link>
           </p>
-        </section>
-      </div>
-    </main>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }

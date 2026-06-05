@@ -5,6 +5,7 @@ import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login } from "@/lib/api/auth";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
+import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 
 type ValidationErrors = {
   email?: string;
@@ -44,6 +45,11 @@ function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [popupInfo, setPopupInfo] = useState<{
+    title: string;
+    message: string;
+    details?: string;
+  } | null>(null);
 
   useRedirectIfAuthenticated(nextPath);
 
@@ -78,6 +84,13 @@ function LoginPageContent() {
       setErrors({
         credentials: result.message,
       });
+      setPopupInfo({
+        title: "Error de servicio",
+        message: result.message,
+        details:
+          result.details ??
+          (result.status ? `HTTP ${result.status}` : "Sin detalles adicionales."),
+      });
       setIsSubmitting(false);
       return;
     }
@@ -87,9 +100,18 @@ function LoginPageContent() {
   };
 
   return (
-    <main className="linkedin-shell min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-2xl space-y-5">
-        <section className="linkedin-card overflow-hidden bg-white p-6 sm:p-8">
+    <>
+      <ServiceErrorPopup
+        isOpen={popupInfo !== null}
+        title={popupInfo?.title ?? ""}
+        message={popupInfo?.message ?? ""}
+        details={popupInfo?.details}
+        onClose={() => setPopupInfo(null)}
+      />
+
+      <main className="linkedin-shell min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-2xl space-y-5">
+          <section className="linkedin-card overflow-hidden bg-white p-6 sm:p-8">
               <div className="mb-6 flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -219,9 +241,10 @@ function LoginPageContent() {
                   Registrate aca
                 </Link>
               </p>
-        </section>
-      </div>
-    </main>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }
 

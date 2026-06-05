@@ -18,7 +18,12 @@ export type ProfileOutput = {
 type ProfileMeResponse = {
   success: boolean;
   message: string;
-  data: ProfileOutput;
+  data: {
+    id: string;
+    email: string;
+    role: string;
+    profile: ProfileOutput;
+  };
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
@@ -32,9 +37,6 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
     method: "GET",
     signal,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
   });
 
   if (!response.ok) {
@@ -47,5 +49,5 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
     throw new Error("Invalid profile response");
   }
 
-  return payload.data;
+  return payload.data.profile;
 }
