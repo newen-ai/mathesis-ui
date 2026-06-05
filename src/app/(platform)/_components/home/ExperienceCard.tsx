@@ -2,6 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import { toDateLabel } from "../../_lib/utils/date";
 import type { Experience, ExperienceDraft } from "../../_lib/types";
+import type { WorkExperienceOperation } from "@/lib/api/profile";
 
 const monthOptions = [
   { value: "01", label: "Enero" },
@@ -32,27 +33,44 @@ const splitYearMonth = (value: string) => {
   return { year: year ?? "", month: month ?? "" };
 };
 
+const emptyDraft: ExperienceDraft = {
+  puestoTrabajo: "",
+  lugarTrabajo: "",
+  fechaComienzo: "",
+  fechaFinalizacion: "",
+  trabajoActual: false,
+};
+
 type ExperienceCardProps = {
-  editingId: string | null;
-  draft: ExperienceDraft;
   experiences: Experience[];
-  onDraftChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onSubmitExperience: (event: FormEvent<HTMLFormElement>) => void;
-  onResetDraft: () => void;
-  onEditExperience: (experience: Experience) => void;
-  onDeleteExperience: (id: string) => void;
+  isSaving: boolean;
+  saveError: string | null;
+  onSaveOperations: (
+    operations: WorkExperienceOperation[]
+  ) => Promise<{ ok: boolean; message?: string }>;
+  onClearSaveError: () => void;
 };
 
 export function ExperienceCard({
-  editingId,
-  draft,
   experiences,
-  onDraftChange,
-  onSubmitExperience,
-  onResetDraft,
-  onEditExperience,
-  onDeleteExperience,
+  isSaving,
+  saveError,
+  onSaveOperations,
+  onClearSaveError,
 }: ExperienceCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState<ExperienceDraft>(emptyDraft);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [workingExperiences, setWorkingExperiences] = useState<Experience[]>(
+    experiences
+  );
+
+  useEffect(() => {
+    if (!isEditing) {
+      setWorkingExperiences(experiences);
+    }
+  }, [experiences, isEditing]);
+
   const beginDate = splitYearMonth(draft.fechaComienzo);
   const endDate = splitYearMonth(draft.fechaFinalizacion);
   const [beginMonth, setBeginMonth] = useState(beginDate.month);
@@ -89,13 +107,10 @@ export function ExperienceCard({
         ? `${nextYear}-${nextMonth}`
         : "";
 
-    onDraftChange({
-      target: {
-        name: fieldName,
-        value,
-        type: "text",
-      },
-    } as ChangeEvent<HTMLInputElement>);
+    setDraft((current) => ({
+      ...current,
+      [fieldName]: value,
+    }));
   };
 
   const onStartMonthChange = (month: string) => {
@@ -140,153 +155,313 @@ export function ExperienceCard({
     pushDatePart("fechaFinalizacion", year, normalizedMonth);
   };
 
+  const onDraftChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, type, value, checked } = event.target;
+
+    if (name === "trabajoActual") {
+      setDraft((current) => ({
+        ...current,
+        trabajoActual: checked,
+        fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
+      }));
+      return;
+    }
+
+    setDraft((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const resetDraft = () => {
+    setDraft(emptyDraft);
+    setEditingId(null);
+  };
+
+  const onStartEditing = () => {
+    onClearSaveError();
+    setWorkingExperiences(experiences);
+    resetDraft();
+    setIsEditing(true);
+  };
+
+  const onCancelEditing = () => {
+    onClearSaveError();
+    setWorkingExperiences(experiences);
+    resetDraft();
+    setIsEditing(false);
+  };
+
+  const areSameExperience = (a: Experience, b: Experience) =>
+    a.lugarTrabajo === b.lugarTrabajo &&
+    a.puestoTrabajo === b.puestoTrabajo &&
+    a.fechaComienzo === b.fechaComienzo &&
+    a.fechaFinalizacion === b.fechaFinalizacion &&
+    a.trabajoActual === b.trabajoActual;
+
+  const buildOperations = (): WorkExperienceOperation[] => {
+    const originalById = new Map(experiences.map((item) => [item.id, item]));
+    const stagedById = new Map(workingExperiences.map((item) => [item.id, item]));
+
+    const operations: WorkExperienceOperation[] = [];
+
+    experiences.forEach((item) => {
+      if (!stagedById.has(item.id)) {
+        operations.push({
+          action: "REMOVE",
+          id: item.id,
+        });
+      }
+    });
+
+    workingExperiences.forEach((item) => {
+      const original = originalById.get(item.id);
+
+      if (!original) {
+        operations.push({
+          action: "ADD",
+          company: item.lugarTrabajo,
+          jobTitle: item.puestoTrabajo,
+          startYearMonth: item.fechaComienzo,
+          ...(item.trabajoActual || !item.fechaFinalizacion
+            ? {}
+            : { endYearMonth: item.fechaFinalizacion }),
+        });
+        return;
+      }
+
+      if (!areSameExperience(original, item)) {
+        operations.push({
+          action: "EDIT",
+          id: item.id,
+          company: item.lugarTrabajo,
+          jobTitle: item.puestoTrabajo,
+          startYearMonth: item.fechaComienzo,
+          ...(item.trabajoActual || !item.fechaFinalizacion
+            ? {}
+            : { endYearMonth: item.fechaFinalizacion }),
+        });
+      }
+    });
+
+    return operations;
+  };
+
+  const onSubmitExperience = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (
+      !draft.puestoTrabajo ||
+      !draft.lugarTrabajo ||
+      !draft.fechaComienzo ||
+      (!draft.trabajoActual && !draft.fechaFinalizacion)
+    ) {
+      return;
+    }
+
+    if (editingId) {
+      setWorkingExperiences((current) =>
+        current.map((item) =>
+          item.id === editingId ? { ...item, ...draft } : item
+        )
+      );
+      resetDraft();
+      return;
+    }
+
+    setWorkingExperiences((current) => [
+      ...current,
+      {
+        id: `tmp-${crypto.randomUUID()}`,
+        ...draft,
+      },
+    ]);
+    resetDraft();
+  };
+
+  const onEditExperience = (item: Experience) => {
+    setEditingId(item.id);
+    setDraft({
+      puestoTrabajo: item.puestoTrabajo,
+      lugarTrabajo: item.lugarTrabajo,
+      fechaComienzo: item.fechaComienzo,
+      fechaFinalizacion: item.fechaFinalizacion,
+      trabajoActual: item.trabajoActual,
+    });
+  };
+
+  const onDeleteExperience = (id: string) => {
+    setWorkingExperiences((current) => current.filter((item) => item.id !== id));
+
+    if (editingId === id) {
+      resetDraft();
+    }
+  };
+
+  const onSaveAll = async () => {
+    const operations = buildOperations();
+    const result = await onSaveOperations(operations);
+
+    if (result.ok) {
+      onClearSaveError();
+      setIsEditing(false);
+      resetDraft();
+    }
+  };
+
+  const listItems = isEditing ? workingExperiences : experiences;
+
   return (
     <AppCard className="p-5 sm:p-6">
       <div className="flex items-center justify-between">
         <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
           Experiencia laboral
         </h3>
-        {editingId && (
+        {isEditing ? (
           <button
             type="button"
-            onClick={onResetDraft}
+            onClick={onCancelEditing}
+            disabled={isSaving}
             className="text-sm font-medium text-[var(--brand-700)] hover:text-[var(--brand-900)]"
           >
             Cancelar edicion
           </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onStartEditing}
+            className="inline-flex items-center rounded-xl border border-[var(--brand-700)] px-3 py-1.5 text-xs font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)]"
+          >
+            Editar
+          </button>
         )}
       </div>
 
-      <form onSubmit={onSubmitExperience} className="mt-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="mensa-field sm:col-span-1">
-            Lugar de trabajo
-            <input
-              name="lugarTrabajo"
-              value={draft.lugarTrabajo}
-              onChange={onDraftChange}
-              placeholder="Mensa Empresarios"
-            />
-          </label>
+      {isEditing ? (
+        <form onSubmit={onSubmitExperience} className="mt-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="mensa-field sm:col-span-1">
+              Lugar de trabajo
+              <input
+                name="lugarTrabajo"
+                value={draft.lugarTrabajo}
+                onChange={onDraftChange}
+                placeholder="Mensa Empresarios"
+              />
+            </label>
 
-          <label className="mensa-field sm:col-span-1">
-            Puesto de trabajo
-            <input
-              name="puestoTrabajo"
-              value={draft.puestoTrabajo}
-              onChange={onDraftChange}
-              placeholder="Analista de Estrategia"
-            />
-          </label>
+            <label className="mensa-field sm:col-span-1">
+              Puesto de trabajo
+              <input
+                name="puestoTrabajo"
+                value={draft.puestoTrabajo}
+                onChange={onDraftChange}
+                placeholder="Analista de Estrategia"
+              />
+            </label>
 
-          <label className="mensa-field sm:col-span-1">
-            Fecha de comienzo
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={beginMonth}
-                onChange={(event) => onStartMonthChange(event.target.value)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
-              >
-                <option value="">Mes</option>
-                {monthOptions.map((month) => (
-                  <option
-                    key={month.value}
-                    value={month.value}
-                    disabled={isFutureMonthForYear(month.value, beginYear)}
-                  >
-                    {month.label}
-                  </option>
-                ))}
-              </select>
+            <label className="mensa-field sm:col-span-1">
+              Fecha de comienzo
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={beginMonth}
+                  onChange={(event) => onStartMonthChange(event.target.value)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                >
+                  <option value="">Mes</option>
+                  {monthOptions.map((month) => (
+                    <option
+                      key={month.value}
+                      value={month.value}
+                      disabled={isFutureMonthForYear(month.value, beginYear)}
+                    >
+                      {month.label}
+                    </option>
+                  ))}
+                </select>
 
-              <select
-                value={beginYear}
-                onChange={(event) => onStartYearChange(event.target.value)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
-              >
-                <option value="">Año</option>
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <span className="text-xs font-normal text-slate-500">
-              Selecciona mes y año (formato: mm/aaaa)
-            </span>
-          </label>
+                <select
+                  value={beginYear}
+                  onChange={(event) => onStartYearChange(event.target.value)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                >
+                  <option value="">Año</option>
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </label>
 
-          <label className="mensa-field sm:col-span-1">
-            Fecha de finalizacion
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={endMonth}
-                onChange={(event) => onEndMonthChange(event.target.value)}
-                disabled={draft.trabajoActual}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
-              >
-                <option value="">Mes</option>
-                {monthOptions.map((month) => (
-                  <option
-                    key={month.value}
-                    value={month.value}
-                    disabled={isFutureMonthForYear(month.value, endYear)}
-                  >
-                    {month.label}
-                  </option>
-                ))}
-              </select>
+            <label className="mensa-field sm:col-span-1">
+              Fecha de finalizacion
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={endMonth}
+                  onChange={(event) => onEndMonthChange(event.target.value)}
+                  disabled={draft.trabajoActual}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
+                >
+                  <option value="">Mes</option>
+                  {monthOptions.map((month) => (
+                    <option
+                      key={month.value}
+                      value={month.value}
+                      disabled={isFutureMonthForYear(month.value, endYear)}
+                    >
+                      {month.label}
+                    </option>
+                  ))}
+                </select>
 
-              <select
-                value={endYear}
-                onChange={(event) => onEndYearChange(event.target.value)}
-                disabled={draft.trabajoActual}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
-              >
-                <option value="">Año</option>
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <span className="text-xs font-normal text-slate-500">
-              {draft.trabajoActual
-                ? "Deshabilitada porque marcaste trabajo actual"
-                : "Selecciona mes y año (formato: mm/aaaa)"}
-            </span>
-          </label>
+                <select
+                  value={endYear}
+                  onChange={(event) => onEndYearChange(event.target.value)}
+                  disabled={draft.trabajoActual}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
+                >
+                  <option value="">Año</option>
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </label>
 
-          <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-slate-700">
-            <input
-              name="trabajoActual"
-              type="checkbox"
-              checked={draft.trabajoActual}
-              onChange={onDraftChange}
-              className="h-4 w-4 rounded border-slate-300 text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
-            />
-            Actualmente trabajo aqui
-          </label>
-        </div>
+            <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+              <input
+                name="trabajoActual"
+                type="checkbox"
+                checked={draft.trabajoActual}
+                onChange={onDraftChange}
+                className="h-4 w-4 rounded border-slate-300 text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
+              />
+              Actualmente trabajo aqui
+            </label>
+          </div>
 
-        <button
-          type="submit"
-          className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
-        >
-          {editingId ? "Actualizar experiencia" : "Agregar experiencia"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
+          >
+            {editingId ? "Actualizar experiencia" : "Agregar experiencia"}
+          </button>
+        </form>
+      ) : null}
 
       <div className="mt-5 border-t border-slate-100 pt-4">
-        {experiences.length === 0 ? (
+        {listItems.length === 0 ? (
           <p className="text-sm text-slate-600">
             Todavia no agregaste experiencias laborales.
           </p>
         ) : (
           <ul className="space-y-3">
-            {experiences.map((item) => (
+            {listItems.map((item) => (
               <li
                 key={item.id}
                 className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
@@ -303,26 +478,57 @@ export function ExperienceCard({
                   </p>
                 </div>
 
-                <div className="mt-3 flex gap-4 text-xs font-semibold">
-                  <button
-                    type="button"
-                    className="text-[var(--brand-700)] hover:text-[var(--brand-900)]"
-                    onClick={() => onEditExperience(item)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    className="text-rose-600 hover:text-rose-700"
-                    onClick={() => onDeleteExperience(item.id)}
-                  >
-                    Eliminar
-                  </button>
-                </div>
+                {isEditing ? (
+                  <div className="mt-3 flex gap-4 text-xs font-semibold">
+                    <button
+                      type="button"
+                      className="text-[var(--brand-700)] hover:text-[var(--brand-900)]"
+                      disabled={isSaving}
+                      onClick={() => onEditExperience(item)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="text-rose-600 hover:text-rose-700"
+                      disabled={isSaving}
+                      onClick={() => onDeleteExperience(item.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
         )}
+
+        {saveError ? (
+          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+            {saveError}
+          </p>
+        ) : null}
+
+        {isEditing ? (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onSaveAll}
+              disabled={isSaving}
+              className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isSaving ? "Guardando..." : "Guardar"}
+            </button>
+            <button
+              type="button"
+              onClick={onCancelEditing}
+              disabled={isSaving}
+              className="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              Cancelar
+            </button>
+          </div>
+        ) : null}
       </div>
     </AppCard>
   );

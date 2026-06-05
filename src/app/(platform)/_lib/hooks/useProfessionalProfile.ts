@@ -1,13 +1,19 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { emptyExperience, emptyProfile } from "../constants";
-import { Experience, ExperienceDraft, Profile } from "../types";
+import { useEffect, useMemo, useState } from "react";
+import { emptyProfile } from "../constants";
+import { Experience, Profile } from "../types";
 import { readSession } from "@/lib/auth/session";
 import {
+  EmploymentHistoryInput,
   EmploymentHistoryOutput,
   getMyProfile,
+  patchWorkExperiences,
+  PatchWorkExperiencesInput,
   ProfileOutput,
+  saveMyProfile,
+  SaveProfileInput,
+  WorkExperienceOperation,
 } from "@/lib/api/profile";
 
 const DEFAULT_PROFILE_ID = "profile-default";
@@ -65,11 +71,11 @@ function mapProfileOutputToProfile(
 function mapEmploymentHistoryToExperience(
   items: EmploymentHistoryOutput[]
 ): Experience[] {
-  return items.map((item, index) => {
+  return items.map((item) => {
     const fechaFinalizacion = normalizeYearMonth(item.endYearMonth);
 
     return {
-      id: `${item.company}-${item.jobTitle}-${item.startYearMonth}-${index}`,
+      id: item.id,
       puestoTrabajo: item.jobTitle,
       lugarTrabajo: item.company,
       fechaComienzo: normalizeYearMonth(item.startYearMonth),
@@ -77,6 +83,46 @@ function mapEmploymentHistoryToExperience(
       trabajoActual: !fechaFinalizacion,
     };
   });
+}
+
+function mapExperiencesToEmploymentHistoryInput(
+  items: Experience[]
+): EmploymentHistoryInput[] {
+  return items.map((item) => ({
+    company: item.lugarTrabajo,
+    jobTitle: item.puestoTrabajo,
+    startYearMonth: item.fechaComienzo,
+    ...(item.trabajoActual || !item.fechaFinalizacion
+      ? {}
+      : { endYearMonth: item.fechaFinalizacion }),
+  }));
+}
+
+function mapProfileToSaveInput(
+  profile: Profile,
+  experiences: Experience[]
+): SaveProfileInput {
+  const isoDateOfBirth = profile.fechaNacimiento
+    ? new Date(`${profile.fechaNacimiento}T00:00:00.000Z`).toISOString()
+    : undefined;
+
+  return {
+    firstName: profile.nombre.trim(),
+    lastName: profile.apellido.trim(),
+    ...(isoDateOfBirth ? { dateOfBirth: isoDateOfBirth } : {}),
+    ...(profile.nacionalidad.trim()
+      ? { nationality: profile.nacionalidad.trim() }
+      : {}),
+    ...(profile.puesto.trim() ? { currentJobTitle: profile.puesto.trim() } : {}),
+    ...(profile.empresaActual.trim()
+      ? { currentCompany: profile.empresaActual.trim() }
+      : {}),
+    ...(experiences.length > 0
+      ? {
+          employmentHistory: mapExperiencesToEmploymentHistoryInput(experiences),
+        }
+      : {}),
+  };
 }
 
 function buildInitialProfileState(): ProfessionalProfileState {
@@ -105,8 +151,10 @@ export const useProfessionalProfile = () => {
     buildInitialProfileState
   );
   const [isProfileLoading, setIsProfileLoading] = useState(true);
-  const [draft, setDraft] = useState<ExperienceDraft>(emptyExperience);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [isSavingExperiences, setIsSavingExperiences] = useState(false);
+  const [experienceSaveError, setExperienceSaveError] = useState<string | null>(null);
   const profile = state.profile;
   const activeProfileIdResolved = state.profileId;
 
@@ -182,123 +230,100 @@ export const useProfessionalProfile = () => {
     .toUpperCase()
     .trim();
 
-  const handleProfileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-
-    if (name === "nombre" || name === "apellido") return;
+  const refreshProfile = async () => {
+    const remoteProfile = await getMyProfile();
 
     setState((current) => ({
       ...current,
-      profile: {
-        ...current.profile,
-        [name]: value,
-      },
+      profile: mapProfileOutputToProfile(remoteProfile),
+      experiences: mapEmploymentHistoryToExperience(
+        remoteProfile.employmentHistory ?? []
+      ),
     }));
   };
 
-  const handleDraftChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, type, value, checked } = event.target;
+  const persistWorkExperienceOperations = async (
+    operations: PatchWorkExperiencesInput["operations"]
+  ) => {
+    setExperienceSaveError(null);
+    setIsSavingExperiences(true);
 
-    if (name === "trabajoActual") {
-      setDraft((current) => ({
-        ...current,
-        trabajoActual: checked,
-        fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
-      }));
-      return;
+    const result = await patchWorkExperiences({ operations });
+
+    if (!result.success) {
+      setExperienceSaveError(result.message);
+      setIsSavingExperiences(false);
+      return false;
     }
 
-    setDraft((current) => ({
-      ...current,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    try {
+      await refreshProfile();
+      return true;
+    } catch {
+      setExperienceSaveError("Experience was saved but refresh failed");
+      return false;
+    } finally {
+      setIsSavingExperiences(false);
+    }
   };
 
-  const resetDraft = () => {
-    setDraft(emptyExperience);
-    setEditingId(null);
-  };
-
-  const onSubmitExperience = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (
-      !draft.puestoTrabajo ||
-      !draft.lugarTrabajo ||
-      !draft.fechaComienzo ||
-      (!draft.trabajoActual && !draft.fechaFinalizacion)
-    ) {
-      return;
+  const onSaveExperienceOperations = async (
+    operations: WorkExperienceOperation[]
+  ) => {
+    if (operations.length === 0) {
+      return { ok: true };
     }
 
-    if (
-      isFutureYearMonth(draft.fechaComienzo) ||
-      (!draft.trabajoActual && isFutureYearMonth(draft.fechaFinalizacion))
-    ) {
-      return;
+    const saved = await persistWorkExperienceOperations(operations);
+    if (!saved) {
+      return { ok: false, message: experienceSaveError ?? "Save failed" };
     }
 
-    if (editingId) {
-      setState((current) => ({
-        ...current,
-        experiences: current.experiences.map((item) =>
-          item.id === editingId ? { ...item, ...draft } : item
-        ),
-      }));
-      resetDraft();
-      return;
+    return { ok: true };
+  };
+
+  const onSaveProfile = async (nextProfile: Profile) => {
+    setProfileSaveError(null);
+    setIsSavingProfile(true);
+
+    const result = await saveMyProfile(
+      mapProfileToSaveInput(nextProfile, state.experiences)
+    );
+
+    if (!result.success) {
+      setProfileSaveError(result.message);
+      setIsSavingProfile(false);
+      return { ok: false, message: result.message };
     }
 
-    setState((current) => ({
-      ...current,
-      experiences: [
-        ...current.experiences,
-        {
-          id: crypto.randomUUID(),
-          ...draft,
-        },
-      ],
-    }));
+    try {
+      await refreshProfile();
 
-    resetDraft();
-  };
-
-  const onEditExperience = (item: Experience) => {
-    setEditingId(item.id);
-    setDraft({
-      puestoTrabajo: item.puestoTrabajo,
-      lugarTrabajo: item.lugarTrabajo,
-      fechaComienzo: item.fechaComienzo,
-      fechaFinalizacion: item.fechaFinalizacion,
-      trabajoActual: item.trabajoActual,
-    });
-  };
-
-  const onDeleteExperience = (id: string) => {
-    setState((current) => ({
-      ...current,
-      experiences: current.experiences.filter((item) => item.id !== id),
-    }));
-    if (editingId === id) {
-      resetDraft();
+      return { ok: true };
+    } catch {
+      const refreshError = "Profile was saved but refresh failed";
+      setProfileSaveError(refreshError);
+      return { ok: false, message: refreshError };
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
   return {
     profile,
-    draft,
-    editingId,
     sortedExperiences,
     activeProfileId: activeProfileIdResolved,
     profileCompletion,
     isProfileLoading,
+    isSavingProfile,
+    profileSaveError,
+    isSavingExperiences,
+    experienceSaveError,
     userDisplayName,
     initials,
-    handleProfileChange,
-    handleDraftChange,
-    resetDraft,
-    onSubmitExperience,
-    onEditExperience,
-    onDeleteExperience,
+    onSaveProfile,
+    onSaveExperienceOperations,
+    clearProfileSaveError: () => setProfileSaveError(null),
+    clearExperienceSaveError: () => setExperienceSaveError(null),
   };
 };

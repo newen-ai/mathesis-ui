@@ -16,18 +16,19 @@ import { RightSidebar } from "./RightSidebar";
 export function ProfileView() {
   const {
     profile,
-    draft,
-    editingId,
     sortedExperiences,
     profileCompletion,
     isProfileLoading,
+    isSavingProfile,
+    profileSaveError,
+    isSavingExperiences,
+    experienceSaveError,
     userDisplayName,
     initials,
-    handleDraftChange,
-    resetDraft,
-    onSubmitExperience,
-    onEditExperience,
-    onDeleteExperience,
+    onSaveProfile,
+    onSaveExperienceOperations,
+    clearProfileSaveError,
+    clearExperienceSaveError,
   } = useProfessionalProfile();
 
   return (
@@ -49,16 +50,17 @@ export function ProfileView() {
             profile={profile}
             profileCompletion={profileCompletion}
             isLoading={isProfileLoading}
+            isSaving={isSavingProfile}
+            saveError={profileSaveError}
+            onSave={onSaveProfile}
+            onClearSaveError={clearProfileSaveError}
           />
           <ExperienceCard
-            editingId={editingId}
-            draft={draft}
             experiences={sortedExperiences}
-            onDraftChange={handleDraftChange}
-            onSubmitExperience={onSubmitExperience}
-            onResetDraft={resetDraft}
-            onEditExperience={onEditExperience}
-            onDeleteExperience={onDeleteExperience}
+            isSaving={isSavingExperiences}
+            saveError={experienceSaveError}
+            onSaveOperations={onSaveExperienceOperations}
+            onClearSaveError={clearExperienceSaveError}
           />
         </section>
 
