@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { emptyProfile } from "../constants";
 import { Experience, Profile } from "../types";
 import { readSession } from "@/lib/auth/session";
 import {
   EmploymentHistoryInput,
   EmploymentHistoryOutput,
+  getProfileByUserId,
   getMyProfile,
   patchWorkExperiences,
   PatchWorkExperiencesInput,
@@ -147,6 +149,8 @@ const isFutureYearMonth = (value: string) => {
 };
 
 export const useProfessionalProfile = () => {
+  const searchParams = useSearchParams();
+  const selectedUserId = searchParams.get("userId")?.trim() ?? "";
   const [state, setState] = useState<ProfessionalProfileState>(
     buildInitialProfileState
   );
@@ -156,27 +160,37 @@ export const useProfessionalProfile = () => {
   const [isSavingExperiences, setIsSavingExperiences] = useState(false);
   const [experienceSaveError, setExperienceSaveError] = useState<string | null>(null);
   const profile = state.profile;
-  const activeProfileIdResolved = state.profileId;
+  const activeProfileIdResolved = selectedUserId || state.profileId;
+
+  const loadProfile = async (signal?: AbortSignal) => {
+    const remoteProfile = selectedUserId
+      ? await getProfileByUserId(selectedUserId, signal)
+      : await getMyProfile(signal);
+
+    setState((current) => ({
+      ...current,
+      profile: mapProfileOutputToProfile(remoteProfile),
+      experiences: mapEmploymentHistoryToExperience(
+        remoteProfile.employmentHistory ?? []
+      ),
+      ...(selectedUserId ? { profileId: selectedUserId } : {}),
+    }));
+  };
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
 
-    getMyProfile()
-      .then((remoteProfile) => {
+    setIsProfileLoading(true);
+
+    loadProfile(controller.signal)
+      .then(() => {
         if (!isMounted) {
           return;
         }
-
-        setState((current) => ({
-          ...current,
-          profile: mapProfileOutputToProfile(remoteProfile),
-          experiences: mapEmploymentHistoryToExperience(
-            remoteProfile.employmentHistory ?? []
-          ),
-        }));
       })
       .catch(() => {
-        if (!isMounted) {
+        if (!isMounted || controller.signal.aborted) {
           return;
         }
 
@@ -196,8 +210,9 @@ export const useProfessionalProfile = () => {
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
-  }, []);
+  }, [selectedUserId]);
 
   const sortedExperiences = useMemo(() => {
     return [...state.experiences].sort((a, b) => {
@@ -231,15 +246,7 @@ export const useProfessionalProfile = () => {
     .trim();
 
   const refreshProfile = async () => {
-    const remoteProfile = await getMyProfile();
-
-    setState((current) => ({
-      ...current,
-      profile: mapProfileOutputToProfile(remoteProfile),
-      experiences: mapEmploymentHistoryToExperience(
-        remoteProfile.employmentHistory ?? []
-      ),
-    }));
+    await loadProfile();
   };
 
   const persistWorkExperienceOperations = async (
