@@ -2,7 +2,7 @@ name: Deploy Next.js to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["dev"]
   workflow_dispatch:
 
 permissions:
@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_BASE_PATH: /mensa-empresarios
+      NEXT_PUBLIC_BASE_PATH: /mensa-ui
     steps:
       - name: Checkout
         uses: actions/checkout@v4
