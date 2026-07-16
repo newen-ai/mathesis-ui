@@ -29,6 +29,13 @@ export type SearchProfileOutput = {
   lastName: string;
 };
 
+export class ProfileSourceEmptyError extends Error {
+  constructor() {
+    super("Profile source is empty");
+    this.name = "ProfileSourceEmptyError";
+  }
+}
+
 type ProfileMeResponse = {
   success: boolean;
   message: string;
@@ -43,6 +50,27 @@ type ProfileMeResponse = {
 type ProfileDataEnvelope = ProfileMeResponse["data"] | ProfileOutput;
 
 type ProfileMutationResponse = ApiServiceResponse;
+
+function extractProfileFromEnvelope(data: unknown): ProfileOutput {
+  if (!data || typeof data !== "object") {
+    throw new ProfileSourceEmptyError();
+  }
+
+  if ("profile" in data) {
+    const profile = (data as { profile?: ProfileOutput | null }).profile;
+    if (!profile) {
+      throw new ProfileSourceEmptyError();
+    }
+
+    return profile;
+  }
+
+  return data as ProfileOutput;
+}
+
+export function isProfileSourceEmptyError(error: unknown) {
+  return error instanceof ProfileSourceEmptyError;
+}
 
 export type EmploymentHistoryInput = {
   company: string;
@@ -138,6 +166,10 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
     signal,
   });
 
+  if (response.status === 404) {
+    throw new ProfileSourceEmptyError();
+  }
+
   if (!response.ok) {
     throw new Error(`Unable to fetch profile: ${response.status}`);
   }
@@ -147,11 +179,7 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
     "Invalid profile response"
   );
 
-  if ("profile" in payload.data) {
-    return payload.data.profile;
-  }
-
-  return payload.data;
+  return extractProfileFromEnvelope(payload.data);
 }
 
 export async function getProfileByUserId(
@@ -171,11 +199,7 @@ export async function getProfileByUserId(
     "Invalid profile response"
   );
 
-  if ("profile" in payload.data) {
-    return payload.data.profile;
-  }
-
-  return payload.data;
+  return extractProfileFromEnvelope(payload.data);
 }
 
 export async function saveMyProfile(

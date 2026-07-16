@@ -11,6 +11,7 @@ import { CatchyPhrasesBanner } from "./CatchyPhrasesBanner";
 import { ExperienceCard } from "./ExperienceCard";
 import { LeftSidebar } from "./LeftSidebar";
 import { ProfileFormCard } from "./ProfileFormCard";
+import { ProfileInitializationView } from "./ProfileInitializationView";
 import { RightSidebar } from "./RightSidebar";
 
 export function ProfileView() {
@@ -21,6 +22,7 @@ export function ProfileView() {
     isProfileLoading,
     isSavingProfile,
     profileSaveError,
+    needsProfileInitialization,
     isSavingExperiences,
     experienceSaveError,
     userDisplayName,
@@ -30,6 +32,17 @@ export function ProfileView() {
     clearProfileSaveError,
     clearExperienceSaveError,
   } = useProfessionalProfile();
+
+  if (needsProfileInitialization) {
+    return (
+      <ProfileInitializationView
+        isSaving={isSavingProfile}
+        saveError={profileSaveError}
+        onSave={onSaveProfile}
+        onClearSaveError={clearProfileSaveError}
+      />
+    );
+  }
 
   return (
     <div className="linkedin-shell min-h-screen">
