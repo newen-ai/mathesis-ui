@@ -96,7 +96,7 @@ Example:
 ```yaml
 env:
 	APP_ENV: dev
-  NEXT_PUBLIC_BASE_PATH: /mensa-ui
+	NEXT_PUBLIC_BASE_PATH: /mathesis-ui
   NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
 ```
 
