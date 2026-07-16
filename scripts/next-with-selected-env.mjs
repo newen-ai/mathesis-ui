@@ -59,6 +59,18 @@ function fail(message) {
   process.exit(1);
 }
 
+function validateAppEnv(value, sourceLabel) {
+  if (!value) {
+    fail(`${sourceLabel} must define one of: local, dev, stage, prod.`);
+  }
+
+  if (!allowedAppEnvs.has(value)) {
+    fail(`Invalid ${sourceLabel}="${value}". Allowed values: local, dev, stage, prod.`);
+  }
+
+  return value;
+}
+
 const [nextCommand, ...nextArgs] = process.argv.slice(2);
 if (!nextCommand) {
   fail("Missing Next.js command. Usage: node scripts/next-with-selected-env.mjs <dev|build|start> [...args]");
@@ -69,27 +81,32 @@ if (!supportedNextCommands.has(nextCommand)) {
 }
 
 const rootEnvPath = path.join(projectRoot, ".env");
-if (!existsSync(rootEnvPath)) {
-  fail("Missing .env file in project root.");
-}
+const appEnvFromProcess = process.env.APP_ENV?.trim();
+let appEnv;
 
-const rootEnv = parseEnvFile(rootEnvPath);
-const appEnv = rootEnv.NODE_ENV;
+if (appEnvFromProcess) {
+  appEnv = validateAppEnv(appEnvFromProcess, "APP_ENV");
+} else {
+  if (!existsSync(rootEnvPath)) {
+    fail("Missing .env file in project root. Define APP_ENV to run without .env.");
+  }
 
-if (!appEnv) {
-  fail(".env must define NODE_ENV with one of: local, dev, stage, prod.");
-}
-
-if (!allowedAppEnvs.has(appEnv)) {
-  fail(`Invalid NODE_ENV=\"${appEnv}\" in .env. Allowed values: local, dev, stage, prod.`);
+  const rootEnv = parseEnvFile(rootEnvPath);
+  appEnv = validateAppEnv(rootEnv.NODE_ENV, "NODE_ENV in .env");
 }
 
 const selectedEnvPath = path.join(projectRoot, `.env.${appEnv}`);
-if (!existsSync(selectedEnvPath)) {
-  fail(`Missing environment file: .env.${appEnv}`);
-}
+let selectedEnv = {};
 
-const selectedEnv = parseEnvFile(selectedEnvPath);
+if (existsSync(selectedEnvPath)) {
+  selectedEnv = parseEnvFile(selectedEnvPath);
+} else if (!appEnvFromProcess) {
+  fail(`Missing environment file: .env.${appEnv}`);
+} else {
+  console.warn(
+    `[env-loader] .env.${appEnv} not found; continuing with process environment variables only.`
+  );
+}
 const nextNodeEnv = nextCommand === "dev" ? "development" : "production";
 
 const childEnv = {

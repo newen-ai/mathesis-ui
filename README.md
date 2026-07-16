@@ -27,6 +27,14 @@ This project uses a custom environment loader so that only one environment file 
 1. Set `NODE_ENV` in `.env` with one of: `local`, `dev`, `stage`, `prod`.
 1. The app then loads only `.env.${NODE_ENV}`.
 1. No other `.env*` files are loaded by Next.js.
+1. In CI/CD, `APP_ENV` can be used to override `.env` selection.
+
+Priority order:
+
+1. `APP_ENV` (if defined)
+1. `NODE_ENV` from `.env`
+
+If `APP_ENV` is defined and `.env.${APP_ENV}` does not exist, the build continues using environment variables provided by the shell/CI.
 
 Example:
 
@@ -70,7 +78,27 @@ This project is configured for GitHub Pages static deployment.
 - `.github/workflows/deploy.yml`
 	- Builds and exports the app to `out/`
 	- Uploads artifact and deploys via GitHub Pages Actions
-	- Uses `NEXT_PUBLIC_BASE_PATH=/mensa-empresarios`
+	- Sets `APP_ENV=dev` so CI currently selects development config
+	- Uses `NEXT_PUBLIC_BASE_PATH` for subpath deployment
+
+### Recommended env setup for GitHub Pages
+
+Since GitHub Pages is static hosting, all `NEXT_PUBLIC_*` values are bundled at build time.
+
+Use GitHub repository `Settings` -> `Secrets and variables` -> `Actions`:
+
+1. Add non-sensitive values to `Variables` (for example, `NEXT_PUBLIC_API_BASE_URL`).
+1. Add sensitive values to `Secrets`.
+1. Reference them in `.github/workflows/deploy.yml` under `jobs.build.env`.
+
+Example:
+
+```yaml
+env:
+	APP_ENV: dev
+  NEXT_PUBLIC_BASE_PATH: /mensa-ui
+  NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+```
 
 ### One-time GitHub repository setting
 

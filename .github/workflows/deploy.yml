@@ -18,6 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      APP_ENV: dev
       NEXT_PUBLIC_BASE_PATH: /mensa-ui
     steps:
       - name: Checkout
