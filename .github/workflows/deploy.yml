@@ -38,6 +38,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+
       - name: Validate required public env vars
         run: |
           if [ -z "$NEXT_PUBLIC_API_BASE_URL" ]; then
@@ -51,6 +52,9 @@ jobs:
       - name: Build static export
         run: npm run build
 
+      - name: Set custom domain
+        run: echo "test.mathesis.social" > ./out/CNAME
+        
       - name: Add .nojekyll
         run: touch out/.nojekyll
 
