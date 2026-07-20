@@ -10,6 +10,7 @@ import {
   EmploymentHistoryOutput,
   getProfileByUserId,
   getMyProfile,
+  isProfileSourceEmptyError,
   patchWorkExperiences,
   PatchWorkExperiencesInput,
   ProfileOutput,
@@ -157,6 +158,8 @@ export const useProfessionalProfile = () => {
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [needsProfileInitialization, setNeedsProfileInitialization] =
+    useState(false);
   const [isSavingExperiences, setIsSavingExperiences] = useState(false);
   const [experienceSaveError, setExperienceSaveError] = useState<string | null>(null);
   const profile = state.profile;
@@ -175,6 +178,7 @@ export const useProfessionalProfile = () => {
       ),
       ...(selectedUserId ? { profileId: selectedUserId } : {}),
     }));
+    setNeedsProfileInitialization(false);
   };
 
   useEffect(() => {
@@ -189,9 +193,13 @@ export const useProfessionalProfile = () => {
           return;
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (!isMounted || controller.signal.aborted) {
           return;
+        }
+
+        if (!selectedUserId && isProfileSourceEmptyError(error)) {
+          setNeedsProfileInitialization(true);
         }
 
         setState((current) => ({
@@ -305,6 +313,7 @@ export const useProfessionalProfile = () => {
 
     try {
       await refreshProfile();
+      setNeedsProfileInitialization(false);
 
       return { ok: true };
     } catch {
@@ -324,6 +333,7 @@ export const useProfessionalProfile = () => {
     isProfileLoading,
     isSavingProfile,
     profileSaveError,
+    needsProfileInitialization,
     isSavingExperiences,
     experienceSaveError,
     userDisplayName,

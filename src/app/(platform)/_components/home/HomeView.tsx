@@ -12,6 +12,7 @@ import { CatchyPhrasesBanner } from "./CatchyPhrasesBanner";
 import { ComposerCard } from "./ComposerCard";
 import { FeedPostCard } from "./FeedPostCard";
 import { LeftSidebar } from "./LeftSidebar";
+import { ProfileInitializationView } from "./ProfileInitializationView";
 import { RightSidebar } from "./RightSidebar";
 
 export function HomeView() {
@@ -21,9 +22,25 @@ export function HomeView() {
     profileCompletion,
     userDisplayName,
     initials,
+    needsProfileInitialization,
+    isSavingProfile,
+    profileSaveError,
+    onSaveProfile,
+    clearProfileSaveError,
   } = useProfessionalProfile();
   const { feedPosts, customPostIds, addPost, updatePost, deletePost } =
     useHomeFeed(activeProfileId);
+
+  if (needsProfileInitialization) {
+    return (
+      <ProfileInitializationView
+        isSaving={isSavingProfile}
+        saveError={profileSaveError}
+        onSave={onSaveProfile}
+        onClearSaveError={clearProfileSaveError}
+      />
+    );
+  }
 
   const onPublishPost = (content: string) => {
     addPost({
