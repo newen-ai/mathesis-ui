@@ -8,7 +8,6 @@ import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticate
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 
 type ValidationErrors = {
-  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -26,7 +25,6 @@ function isValidEmail(email: string) {
 export default function RegistroPage() {
   const router = useRouter();
 
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -45,13 +43,8 @@ export default function RegistroPage() {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmedName = name.trim();
     const normalizedEmail = email.trim().toLowerCase();
     const nextErrors: ValidationErrors = {};
-
-    if (trimmedName.length < 3) {
-      nextErrors.name = "Ingresa nombre y apellido (minimo 3 caracteres).";
-    }
 
     if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
       nextErrors.email = "Ingresa un email valido.";
@@ -139,24 +132,6 @@ export default function RegistroPage() {
           </p>
 
           <form className="mt-6 space-y-4" onSubmit={onSubmit} noValidate>
-            <label className="mensa-field" htmlFor="name">
-              Nombre y apellido
-              <input
-                id="name"
-                autoComplete="name"
-                placeholder="Ej. Ada Lovelace"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                aria-invalid={Boolean(errors.name)}
-                aria-describedby={errors.name ? "name-error" : undefined}
-              />
-            </label>
-            {errors.name ? (
-              <p id="name-error" className="text-xs font-medium text-red-700">
-                {errors.name}
-              </p>
-            ) : null}
-
             <label className="mensa-field" htmlFor="email">
               Email profesional
               <input
