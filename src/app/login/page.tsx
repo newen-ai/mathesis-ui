@@ -108,8 +108,8 @@ function LoginPageContent() {
         onClose={() => setPopupInfo(null)}
       />
 
-      <main className="flex min-h-screen items-center justify-center bg-[#EDE9E2] px-4 py-8 font-[family-name:Arial] lg:items-stretch lg:p-0">
-        <section className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-[0_18px_50px_rgba(10,37,64,0.16)] lg:max-w-none lg:flex-row lg:rounded-none lg:shadow-none">
+      <main className="flex min-h-screen flex-col bg-white font-[family-name:Arial] lg:flex-row">
+        <section className="flex flex-1 flex-col lg:flex-row">
           {/* Panel de marca (navy): arriba en mobile, columna izquierda a pantalla completa en desktop */}
           <div className="px-6 pb-8 pt-9 text-center lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:justify-between lg:bg-[#0A2540] lg:px-12 lg:py-14 lg:text-left">
             {/* Logo + nombre */}
@@ -153,8 +153,8 @@ function LoginPageContent() {
             </div>
           </div>
 
-          {/* Columna del formulario: abajo en mobile, derecha en desktop */}
-          <div className="px-6 pb-9 lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-14 lg:py-14">
+          {/* Columna del formulario: llena el alto en mobile (footer abajo), derecha en desktop */}
+          <div className="flex flex-1 flex-col px-6 pb-6 lg:justify-center lg:px-14 lg:py-14">
             <div className="w-full lg:mx-auto lg:max-w-[440px]">
               <div className="mb-6 hidden font-[family-name:Georgia] text-2xl font-bold text-[#0A2540] lg:block">
                 Bienvenido a Mathesis
@@ -242,8 +242,10 @@ function LoginPageContent() {
                   ¿Olvidaste tu contraseña?
                 </button>
               </form>
+            </div>
 
-              <div className="mt-8 border-t border-[#E8E5E0] pt-4 text-center text-xs leading-relaxed text-[#666666]">
+            <div className="mt-auto w-full pt-6 lg:mx-auto lg:mt-8 lg:max-w-[440px] lg:pt-0">
+              <div className="border-t border-[#E8E5E0] pt-4 text-center text-xs leading-relaxed text-[#666666]">
                 ¿Sos Miembro de Mensa y todavía no tenés cuenta en Mathesis?
                 <br />
                 <Link href="/registro" className="font-bold text-[#7A6435] hover:underline">
@@ -277,10 +279,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#EDE9E2] px-4 py-8 font-[family-name:Arial]">
-          <section className="flex w-full max-w-sm flex-col rounded-2xl bg-white px-6 py-9 shadow-[0_10px_40px_rgba(10,37,64,0.12)]">
-            <p className="text-center text-sm text-[#666666]">Cargando...</p>
-          </section>
+        <main className="flex min-h-screen items-center justify-center bg-white font-[family-name:Arial]">
+          <p className="text-center text-sm text-[#666666]">Cargando...</p>
         </main>
       }
     >
