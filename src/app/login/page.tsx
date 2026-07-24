@@ -108,8 +108,8 @@ function LoginPageContent() {
         onClose={() => setPopupInfo(null)}
       />
 
-      <main className="flex min-h-screen items-center justify-center bg-[#EDE9E2] px-4 py-8">
-        <section className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-[0_18px_50px_rgba(10,37,64,0.16)] lg:max-w-4xl lg:flex-row">
+      <main className="flex min-h-screen items-center justify-center bg-[#EDE9E2] px-4 py-8 font-[family-name:Arial] lg:items-stretch lg:p-0">
+        <section className="flex w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-[0_18px_50px_rgba(10,37,64,0.16)] lg:max-w-none lg:flex-row lg:rounded-none lg:shadow-none">
           {/* Panel de marca (navy): arriba en mobile, columna izquierda a pantalla completa en desktop */}
           <div className="px-6 pb-8 pt-9 text-center lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:justify-between lg:bg-[#0A2540] lg:px-12 lg:py-14 lg:text-left">
             {/* Logo + nombre */}
@@ -124,13 +124,13 @@ function LoginPageContent() {
                 decoding="async"
                 className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
               />
-              <div className="mt-2 font-[family-name:var(--font-spectral)] text-xl font-bold tracking-[0.1em] text-[#0A2540] lg:mt-0 lg:text-xl lg:text-[#FAF8F5]">
+              <div className="mt-2 font-[family-name:Georgia] text-xl font-bold tracking-[0.1em] text-[#0A2540] lg:mt-0 lg:text-xl lg:text-[#FAF8F5]">
                 Mathesis
               </div>
             </div>
 
             {/* Tagline (solo mobile) */}
-            <div className="mt-1.5 font-[family-name:var(--font-spectral)] text-sm italic text-[#0A2540]/70 lg:hidden">
+            <div className="mt-1.5 font-[family-name:Georgia] text-sm italic text-[#0A2540]/70 lg:hidden">
               La primera comunidad intelectual verificada para mentes excepcionales.
             </div>
 
@@ -139,10 +139,10 @@ function LoginPageContent() {
               <div className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#C9A84C]/80">
                 Comunidad verificada
               </div>
-              <div className="mt-4 font-[family-name:var(--font-spectral)] text-xl font-bold leading-snug text-[#FAF8F5]">
+              <div className="mt-4 font-[family-name:Georgia] text-xl font-bold leading-snug text-[#FAF8F5]">
                 La primera comunidad intelectual verificada para mentes excepcionales.
               </div>
-              <div className="mt-4 max-w-xs font-[family-name:var(--font-spectral)] text-sm italic leading-relaxed text-[#FAF8F5]/70">
+              <div className="mt-4 max-w-xs font-[family-name:Georgia] text-sm italic leading-relaxed text-[#FAF8F5]/70">
                 La red que conecta a los Miembros de Mensa.
               </div>
             </div>
@@ -156,7 +156,7 @@ function LoginPageContent() {
           {/* Columna del formulario: abajo en mobile, derecha en desktop */}
           <div className="px-6 pb-9 lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-14 lg:py-14">
             <div className="w-full lg:mx-auto lg:max-w-[440px]">
-              <div className="mb-6 hidden font-[family-name:var(--font-spectral)] text-2xl font-bold text-[#0A2540] lg:block">
+              <div className="mb-6 hidden font-[family-name:Georgia] text-2xl font-bold text-[#0A2540] lg:block">
                 Bienvenido a Mathesis
               </div>
 
@@ -261,6 +261,10 @@ function LoginPageContent() {
                   </a>
                 </div>
               </div>
+
+              <p className="mt-6 text-center text-[0.65rem] tracking-wide text-[#999999]">
+                Powered by Newen.solutions
+              </p>
             </div>
           </div>
         </section>
@@ -273,7 +277,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#EDE9E2] px-4 py-8">
+        <main className="flex min-h-screen items-center justify-center bg-[#EDE9E2] px-4 py-8 font-[family-name:Arial]">
           <section className="flex w-full max-w-sm flex-col rounded-2xl bg-white px-6 py-9 shadow-[0_10px_40px_rgba(10,37,64,0.12)]">
             <p className="text-center text-sm text-[#666666]">Cargando...</p>
           </section>
