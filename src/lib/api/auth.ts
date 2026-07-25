@@ -3,7 +3,6 @@ import {
 	ApiServiceResponse as AuthServiceResponse,
 	parseServiceResponse,
 } from "@/lib/api/client";
-import { readSession } from "../auth/session";
 
 type RegisterInput = {
 	email: string;

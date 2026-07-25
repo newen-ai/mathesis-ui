@@ -4,12 +4,17 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { NavItem } from "../_lib/constants";
-import { clearSession, readSession } from "@/lib/auth/session";
 import { logout } from "@/lib/api/auth";
-import { searchProfiles, type SearchProfileOutput } from "@/lib/api/profile";
+import {
+  getMyProfile,
+  searchProfiles,
+  type SearchProfileOutput,
+} from "@/lib/api/profile";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const logoSrc = `${basePath}/mensa-empresarios-logo.svg`;
+const SESSION_COOKIE_KEY = "mensa_session";
+const SESSION_MEMORY_KEY = "current-session-memory";
 
 type TopBarProps = {
   navItems: NavItem[];
@@ -18,7 +23,7 @@ type TopBarProps = {
 export function TopBar({ navItems }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [userName] = useState(() => readSession()?.user.name ?? "Miembro");
+  const [userName, setUserName] = useState("");
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<SearchProfileOutput[]>([]);
   const [searchMessage, setSearchMessage] = useState("");
@@ -34,12 +39,60 @@ export function TopBar({ navItems }: TopBarProps) {
     return pathname.startsWith(href);
   };
 
-  const onLogout = async () => {
-    await logout();
-    clearSession();
+  const clearClientSession = () => {
+    document.cookie = `${SESSION_COOKIE_KEY}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+
+    try {
+      sessionStorage.removeItem(SESSION_MEMORY_KEY);
+    } catch {
+      // sessionStorage might be unavailable, ignore
+    }
+  };
+
+  const forceLogout = () => {
+    clearClientSession();
     router.replace("/login");
     router.refresh();
   };
+
+  const onLogout = async () => {
+    await logout();
+    forceLogout();
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadCurrentUserName = async () => {
+      try {
+        const profile = await getMyProfile(controller.signal);
+        if (!isMounted) return;
+
+        const fullName = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
+        setUserName(fullName);
+      } catch (error) {
+        if (!isMounted || controller.signal.aborted) {
+          return;
+        }
+
+        if (error instanceof Error && /Unable to fetch profile: (401|403)$/.test(error.message)) {
+          await logout();
+          forceLogout();
+          return;
+        }
+
+        setUserName("");
+      }
+    };
+
+    void loadCurrentUserName();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [router]);
 
   useEffect(() => {
     if (!normalizedSearchText) {
