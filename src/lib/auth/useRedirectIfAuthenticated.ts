@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { hasSession } from "@/lib/api/auth";
+import { getSessionState } from "@/lib/api/auth";
 
 export function useRedirectIfAuthenticated(destination: string) {
   const router = useRouter();
@@ -11,10 +11,10 @@ export function useRedirectIfAuthenticated(destination: string) {
     let isMounted = true;
 
     const verifySession = async () => {
-      const authenticated = await hasSession();
+      const sessionState = await getSessionState();
       if (!isMounted) return;
 
-      if (authenticated) {
+      if (sessionState === "authenticated") {
         router.replace(destination);
       }
     };

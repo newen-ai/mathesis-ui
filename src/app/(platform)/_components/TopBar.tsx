@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { NavItem } from "../_lib/constants";
 import { logout } from "@/lib/api/auth";
 import {
+  ProfileHttpError,
   getMyProfile,
   searchProfiles,
   type SearchProfileOutput,
@@ -13,8 +14,6 @@ import {
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const logoSrc = `${basePath}/mensa-empresarios-logo.svg`;
-const SESSION_COOKIE_KEY = "mensa_session";
-const SESSION_MEMORY_KEY = "current-session-memory";
 
 type TopBarProps = {
   navItems: NavItem[];
@@ -24,6 +23,7 @@ export function TopBar({ navItems }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = useState("");
+  const [isLoadingUserName, setIsLoadingUserName] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<SearchProfileOutput[]>([]);
   const [searchMessage, setSearchMessage] = useState("");
@@ -39,18 +39,7 @@ export function TopBar({ navItems }: TopBarProps) {
     return pathname.startsWith(href);
   };
 
-  const clearClientSession = () => {
-    document.cookie = `${SESSION_COOKIE_KEY}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
-
-    try {
-      sessionStorage.removeItem(SESSION_MEMORY_KEY);
-    } catch {
-      // sessionStorage might be unavailable, ignore
-    }
-  };
-
   const forceLogout = () => {
-    clearClientSession();
     router.replace("/login");
     router.refresh();
   };
@@ -71,18 +60,23 @@ export function TopBar({ navItems }: TopBarProps) {
 
         const fullName = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
         setUserName(fullName);
+        setIsLoadingUserName(false);
       } catch (error) {
         if (!isMounted || controller.signal.aborted) {
           return;
         }
 
-        if (error instanceof Error && /Unable to fetch profile: (401|403)$/.test(error.message)) {
+        if (
+          error instanceof ProfileHttpError &&
+          (error.status === 401 || error.status === 403)
+        ) {
           await logout();
           forceLogout();
           return;
         }
 
         setUserName("");
+        setIsLoadingUserName(false);
       }
     };
 
@@ -224,9 +218,16 @@ export function TopBar({ navItems }: TopBarProps) {
         </nav>
 
         <div className="flex items-center gap-2 pl-1">
-          <span className="hidden max-w-28 truncate text-xs font-semibold text-slate-600 xl:block">
-            {userName}
-          </span>
+          {isLoadingUserName ? (
+            <span
+              className="hidden h-4 w-20 animate-pulse rounded bg-slate-200 xl:block"
+              aria-hidden="true"
+            />
+          ) : (
+            <span className="hidden max-w-28 truncate text-xs font-semibold text-slate-600 xl:block">
+              {userName}
+            </span>
+          )}
           <button
             type="button"
             onClick={onLogout}

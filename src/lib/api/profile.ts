@@ -36,6 +36,16 @@ export class ProfileSourceEmptyError extends Error {
   }
 }
 
+export class ProfileHttpError extends Error {
+  status: number;
+
+  constructor(status: number, message?: string) {
+    super(message ?? `Profile request failed: ${status}`);
+    this.name = "ProfileHttpError";
+    this.status = status;
+  }
+}
+
 type ProfileMeResponse = {
   success: boolean;
   message: string;
@@ -171,7 +181,10 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
   }
 
   if (!response.ok) {
-    throw new Error(`Unable to fetch profile: ${response.status}`);
+    throw new ProfileHttpError(
+      response.status,
+      `Unable to fetch profile: ${response.status}`
+    );
   }
 
   const payload = await parseDataResponse<ProfileDataEnvelope>(
@@ -191,7 +204,10 @@ export async function getProfileByUserId(
   });
 
   if (!response.ok) {
-    throw new Error(`Unable to fetch profile by userId: ${response.status}`);
+    throw new ProfileHttpError(
+      response.status,
+      `Unable to fetch profile by userId: ${response.status}`
+    );
   }
 
   const payload = await parseDataResponse<ProfileDataEnvelope>(
