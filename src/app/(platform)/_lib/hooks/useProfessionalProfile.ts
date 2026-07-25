@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { emptyProfile } from "../constants";
 import { Experience, Profile } from "../types";
-import { readSession } from "@/lib/auth/session";
 import {
   EmploymentHistoryInput,
   EmploymentHistoryOutput,
@@ -19,12 +18,9 @@ import {
   WorkExperienceOperation,
 } from "@/lib/api/profile";
 
-const DEFAULT_PROFILE_ID = "profile-default";
-
 type ProfessionalProfileState = {
   profile: Profile;
   experiences: Experience[];
-  profileId: string;
 };
 
 function normalizeExperience(item: Experience): Experience {
@@ -129,12 +125,9 @@ function mapProfileToSaveInput(
 }
 
 function buildInitialProfileState(): ProfessionalProfileState {
-  const session = readSession();
-
   return {
     profile: emptyProfile,
     experiences: [],
-    profileId: (session?.user.email || DEFAULT_PROFILE_ID).toLowerCase(),
   };
 }
 
@@ -152,6 +145,10 @@ const isFutureYearMonth = (value: string) => {
 export const useProfessionalProfile = () => {
   const searchParams = useSearchParams();
   const selectedUserId = searchParams.get("userId")?.trim() ?? "";
+  
+  // If userId param exists, we're viewing someone else's profile
+  const canEditProfile = !selectedUserId;
+
   const [state, setState] = useState<ProfessionalProfileState>(
     buildInitialProfileState
   );
@@ -163,7 +160,6 @@ export const useProfessionalProfile = () => {
   const [isSavingExperiences, setIsSavingExperiences] = useState(false);
   const [experienceSaveError, setExperienceSaveError] = useState<string | null>(null);
   const profile = state.profile;
-  const activeProfileIdResolved = selectedUserId || state.profileId;
 
   const loadProfile = async (signal?: AbortSignal) => {
     const remoteProfile = selectedUserId
@@ -176,7 +172,6 @@ export const useProfessionalProfile = () => {
       experiences: mapEmploymentHistoryToExperience(
         remoteProfile.employmentHistory ?? []
       ),
-      ...(selectedUserId ? { profileId: selectedUserId } : {}),
     }));
     setNeedsProfileInitialization(false);
   };
@@ -328,7 +323,8 @@ export const useProfessionalProfile = () => {
   return {
     profile,
     sortedExperiences,
-    activeProfileId: activeProfileIdResolved,
+    activeProfileId: selectedUserId,
+    canEditProfile,
     profileCompletion,
     isProfileLoading,
     isSavingProfile,

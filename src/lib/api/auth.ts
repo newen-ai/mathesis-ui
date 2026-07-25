@@ -14,6 +14,8 @@ type LoginInput = {
 	password: string;
 };
 
+export type SessionState = "authenticated" | "unauthenticated" | "unknown";
+
 export async function register(
 	input: RegisterInput
 ): Promise<AuthServiceResponse> {
@@ -72,18 +74,19 @@ export async function login(
 	}
 }
 
-export async function hasSession(): Promise<boolean> {
+export async function getSessionState(): Promise<SessionState> {
 	try {
-		const response = await apiRequest("/profile/me");
+		const sessionResponse = await apiRequest("/auth/session");
 
-		if (response.status === 404) return true;
+		if (sessionResponse.status === 401 || sessionResponse.status === 403) {
+			return "unauthenticated";
+		}
 
-		if (!response.ok) return false;
+		if (sessionResponse.ok) return "authenticated";
 
-		const payload = (await response.json()) as Partial<AuthServiceResponse>;
-		return payload.success === true;
+		return "unknown";
 	} catch {
-		return false;
+		return "unknown";
 	}
 }
 

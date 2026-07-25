@@ -4,9 +4,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { NavItem } from "../_lib/constants";
-import { clearSession, readSession } from "@/lib/auth/session";
 import { logout } from "@/lib/api/auth";
-import { searchProfiles, type SearchProfileOutput } from "@/lib/api/profile";
+import {
+  ProfileHttpError,
+  getMyProfile,
+  searchProfiles,
+  type SearchProfileOutput,
+} from "@/lib/api/profile";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const logoSrc = `${basePath}/mensa-empresarios-logo.svg`;
@@ -18,7 +22,8 @@ type TopBarProps = {
 export function TopBar({ navItems }: TopBarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [userName] = useState(() => readSession()?.user.name ?? "Miembro");
+  const [userName, setUserName] = useState("");
+  const [isLoadingUserName, setIsLoadingUserName] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<SearchProfileOutput[]>([]);
   const [searchMessage, setSearchMessage] = useState("");
@@ -34,12 +39,54 @@ export function TopBar({ navItems }: TopBarProps) {
     return pathname.startsWith(href);
   };
 
-  const onLogout = async () => {
-    await logout();
-    clearSession();
+  const forceLogout = () => {
     router.replace("/login");
     router.refresh();
   };
+
+  const onLogout = async () => {
+    await logout();
+    forceLogout();
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadCurrentUserName = async () => {
+      try {
+        const profile = await getMyProfile(controller.signal);
+        if (!isMounted) return;
+
+        const fullName = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
+        setUserName(fullName);
+        setIsLoadingUserName(false);
+      } catch (error) {
+        if (!isMounted || controller.signal.aborted) {
+          return;
+        }
+
+        if (
+          error instanceof ProfileHttpError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          await logout();
+          forceLogout();
+          return;
+        }
+
+        setUserName("");
+        setIsLoadingUserName(false);
+      }
+    };
+
+    void loadCurrentUserName();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [router]);
 
   useEffect(() => {
     if (!normalizedSearchText) {
@@ -171,9 +218,16 @@ export function TopBar({ navItems }: TopBarProps) {
         </nav>
 
         <div className="flex items-center gap-2 pl-1">
-          <span className="hidden max-w-28 truncate text-xs font-semibold text-slate-600 xl:block">
-            {userName}
-          </span>
+          {isLoadingUserName ? (
+            <span
+              className="hidden h-4 w-20 animate-pulse rounded bg-slate-200 xl:block"
+              aria-hidden="true"
+            />
+          ) : (
+            <span className="hidden max-w-28 truncate text-xs font-semibold text-slate-600 xl:block">
+              {userName}
+            </span>
+          )}
           <button
             type="button"
             onClick={onLogout}

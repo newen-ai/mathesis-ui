@@ -4,6 +4,7 @@ import type { Profile } from "../../_lib/types";
 
 type ProfileFormCardProps = {
   profile: Profile;
+  canEdit: boolean;
   profileCompletion: number;
   isLoading: boolean;
   isSaving: boolean;
@@ -19,6 +20,7 @@ type ProfileEntry = {
 
 export function ProfileFormCard({
   profile,
+  canEdit,
   profileCompletion,
   isLoading,
   isSaving,
@@ -35,6 +37,12 @@ export function ProfileFormCard({
     }
   }, [isEditing, profile]);
 
+  useEffect(() => {
+    if (!canEdit) {
+      setIsEditing(false);
+    }
+  }, [canEdit]);
+
   const fields: ProfileEntry[] = [
     { label: "Nombre", value: profile.nombre },
     { label: "Apellido", value: profile.apellido },
@@ -45,6 +53,10 @@ export function ProfileFormCard({
   ].filter((item) => Boolean(item.value?.trim()));
 
   const onEdit = () => {
+    if (!canEdit) {
+      return;
+    }
+
     onClearSaveError();
     setFormState(profile);
     setIsEditing(true);
@@ -84,7 +96,7 @@ export function ProfileFormCard({
           Perfil profesional
         </h2>
 
-        {!isLoading && !isEditing ? (
+        {canEdit && !isLoading && !isEditing ? (
           <button
             type="button"
             onClick={onEdit}
@@ -97,7 +109,9 @@ export function ProfileFormCard({
       <p className="mt-1 text-sm text-slate-600">
         {isEditing
           ? "Completa tu informacion basica y guarda los cambios."
-          : "Se muestran solo los datos recibidos y completos desde el servicio."}
+          : canEdit
+            ? "Se muestran solo los datos recibidos y completos desde el servicio."
+            : "Vista de solo lectura del perfil."}
       </p>
 
       <div className="mt-4">
@@ -116,7 +130,7 @@ export function ProfileFormCard({
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {isLoading ? (
           <p className="text-sm text-slate-600">Cargando perfil...</p>
-        ) : isEditing ? (
+        ) : isEditing && canEdit ? (
           <>
             <label className="mensa-field">
               Nombre
