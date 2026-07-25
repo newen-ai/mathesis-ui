@@ -43,6 +43,7 @@ const emptyDraft: ExperienceDraft = {
 
 type ExperienceCardProps = {
   experiences: Experience[];
+  canEdit: boolean;
   isSaving: boolean;
   saveError: string | null;
   onSaveOperations: (
@@ -53,6 +54,7 @@ type ExperienceCardProps = {
 
 export function ExperienceCard({
   experiences,
+  canEdit,
   isSaving,
   saveError,
   onSaveOperations,
@@ -70,6 +72,13 @@ export function ExperienceCard({
       setWorkingExperiences(experiences);
     }
   }, [experiences, isEditing]);
+
+  useEffect(() => {
+    if (!canEdit) {
+      setIsEditing(false);
+      resetDraft();
+    }
+  }, [canEdit]);
 
   const beginDate = splitYearMonth(draft.fechaComienzo);
   const endDate = splitYearMonth(draft.fechaFinalizacion);
@@ -317,7 +326,7 @@ export function ExperienceCard({
         <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
           Experiencia laboral
         </h3>
-        {isEditing ? (
+        {canEdit && isEditing ? (
           <button
             type="button"
             onClick={onCancelEditing}
@@ -326,7 +335,7 @@ export function ExperienceCard({
           >
             Cancelar edicion
           </button>
-        ) : (
+        ) : canEdit ? (
           <button
             type="button"
             onClick={onStartEditing}
@@ -334,10 +343,10 @@ export function ExperienceCard({
           >
             Editar
           </button>
-        )}
+        ) : null}
       </div>
 
-      {isEditing ? (
+      {canEdit && isEditing ? (
         <form onSubmit={onSubmitExperience} className="mt-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="mensa-field sm:col-span-1">
@@ -478,7 +487,7 @@ export function ExperienceCard({
                   </p>
                 </div>
 
-                {isEditing ? (
+                {canEdit && isEditing ? (
                   <div className="mt-3 flex gap-4 text-xs font-semibold">
                     <button
                       type="button"
@@ -509,7 +518,7 @@ export function ExperienceCard({
           </p>
         ) : null}
 
-        {isEditing ? (
+        {canEdit && isEditing ? (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               type="button"

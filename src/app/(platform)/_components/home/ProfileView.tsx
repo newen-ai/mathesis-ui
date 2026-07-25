@@ -18,6 +18,7 @@ export function ProfileView() {
   const {
     profile,
     sortedExperiences,
+    canEditProfile,
     profileCompletion,
     isProfileLoading,
     isSavingProfile,
@@ -61,6 +62,7 @@ export function ProfileView() {
         <section className="mensa-fade-up-delay space-y-4">
           <ProfileFormCard
             profile={profile}
+            canEdit={canEditProfile}
             profileCompletion={profileCompletion}
             isLoading={isProfileLoading}
             isSaving={isSavingProfile}
@@ -70,6 +72,7 @@ export function ProfileView() {
           />
           <ExperienceCard
             experiences={sortedExperiences}
+            canEdit={canEditProfile}
             isSaving={isSavingExperiences}
             saveError={experienceSaveError}
             onSaveOperations={onSaveExperienceOperations}

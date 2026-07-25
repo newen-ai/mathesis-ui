@@ -72,6 +72,7 @@ export type MockRegisteredUser = {
 
 let cachedSessionRawValue: string | null = null;
 let cachedSessionSnapshot: MockSession | null = null;
+const SESSION_MEMORY_KEY = "current-session-memory";
 
 type SessionSeed = {
   name?: string;
@@ -142,13 +143,14 @@ function resolveSessionDisplayName(seed: SessionSeed): string {
 function writeSessionCookie(session: MockSession) {
   if (!isBrowser()) return;
 
+  const rawSession = JSON.stringify(session);
   const maxAgeSeconds = Math.max(
-    0,
+    1,
     Math.floor((session.expiresAt - Date.now()) / 1000)
   );
 
   document.cookie = `${SESSION_COOKIE_KEY}=${encodeURIComponent(
-    session.sessionId
+    rawSession
   )}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`;
 }
 
@@ -296,40 +298,93 @@ export function authenticateMockUser(input: {
 export function saveSession(session: MockSession) {
   if (!isBrowser()) return;
 
-  const rawValue = JSON.stringify(session);
-  localStorage.setItem(SESSION_STORAGE_KEY, rawValue);
-  cachedSessionRawValue = rawValue;
+  const rawSession = JSON.stringify(session);
+  cachedSessionRawValue = rawSession;
   cachedSessionSnapshot = session;
   writeSessionCookie(session);
+  try {
+    sessionStorage.setItem(SESSION_MEMORY_KEY, rawSession);
+  } catch {
+    // sessionStorage might be full or unavailable, ignore
+  }
 }
 
 export function clearSession() {
   if (!isBrowser()) return;
 
-  localStorage.removeItem(SESSION_STORAGE_KEY);
   cachedSessionRawValue = null;
   cachedSessionSnapshot = null;
   clearSessionCookie();
+  try {
+    sessionStorage.removeItem(SESSION_MEMORY_KEY);
+  } catch {
+    // sessionStorage might be unavailable, ignore
+  }
+}
+
+function readCookie(name: string): string | null {
+  if (!isBrowser()) return null;
+
+  const cookiePrefix = `${name}=`;
+  const cookies = document.cookie ? document.cookie.split(";") : [];
+
+  for (const cookie of cookies) {
+    const normalizedCookie = cookie.trim();
+
+    if (normalizedCookie.startsWith(cookiePrefix)) {
+      return normalizedCookie.slice(cookiePrefix.length);
+    }
+  }
+
+  return null;
 }
 
 export function readSession(): MockSession | null {
   if (!isBrowser()) return null;
 
-  const rawValue = localStorage.getItem(SESSION_STORAGE_KEY);
-  if (!rawValue) return null;
+  // Check in-memory cache first
+  if (cachedSessionRawValue && cachedSessionSnapshot) {
+    if (!cachedSessionSnapshot?.expiresAt || cachedSessionSnapshot.expiresAt <= Date.now()) {
+      clearSession();
+      return null;
+    }
+    return cachedSessionSnapshot;
+  }
 
-  if (cachedSessionRawValue === rawValue) {
+  // Try to read from cookie
+  let rawSession: string | null = null;
+  const encodedCookieValue = readCookie(SESSION_COOKIE_KEY);
+  if (encodedCookieValue) {
+    try {
+      rawSession = decodeURIComponent(encodedCookieValue);
+    } catch {
+      rawSession = null;
+    }
+  }
+
+  // Fall back to sessionStorage if cookie not available
+  if (!rawSession) {
+    try {
+      rawSession = sessionStorage.getItem(SESSION_MEMORY_KEY);
+    } catch {
+      rawSession = null;
+    }
+  }
+
+  if (!rawSession) return null;
+
+  if (cachedSessionRawValue === rawSession) {
     return cachedSessionSnapshot;
   }
 
   try {
-    const parsed = JSON.parse(rawValue) as MockSession;
+    const parsed = JSON.parse(rawSession) as MockSession;
     if (!parsed?.expiresAt || parsed.expiresAt <= Date.now()) {
       clearSession();
       return null;
     }
 
-    cachedSessionRawValue = rawValue;
+    cachedSessionRawValue = rawSession;
     cachedSessionSnapshot = parsed;
     return parsed;
   } catch {

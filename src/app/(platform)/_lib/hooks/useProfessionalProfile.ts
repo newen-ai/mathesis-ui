@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { emptyProfile } from "../constants";
 import { Experience, Profile } from "../types";
-import { readSession } from "@/lib/auth/session";
 import {
   EmploymentHistoryInput,
   EmploymentHistoryOutput,
@@ -129,12 +128,10 @@ function mapProfileToSaveInput(
 }
 
 function buildInitialProfileState(): ProfessionalProfileState {
-  const session = readSession();
-
   return {
     profile: emptyProfile,
     experiences: [],
-    profileId: (session?.user.email || DEFAULT_PROFILE_ID).toLowerCase(),
+    profileId: DEFAULT_PROFILE_ID,
   };
 }
 
@@ -152,6 +149,10 @@ const isFutureYearMonth = (value: string) => {
 export const useProfessionalProfile = () => {
   const searchParams = useSearchParams();
   const selectedUserId = searchParams.get("userId")?.trim() ?? "";
+  
+  // If userId param exists, we're viewing someone else's profile
+  const canEditProfile = !selectedUserId;
+
   const [state, setState] = useState<ProfessionalProfileState>(
     buildInitialProfileState
   );
@@ -329,6 +330,7 @@ export const useProfessionalProfile = () => {
     profile,
     sortedExperiences,
     activeProfileId: activeProfileIdResolved,
+    canEditProfile,
     profileCompletion,
     isProfileLoading,
     isSavingProfile,
