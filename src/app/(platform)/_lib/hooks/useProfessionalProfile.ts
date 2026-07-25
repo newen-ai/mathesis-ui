@@ -18,12 +18,9 @@ import {
   WorkExperienceOperation,
 } from "@/lib/api/profile";
 
-const DEFAULT_PROFILE_ID = "profile-default";
-
 type ProfessionalProfileState = {
   profile: Profile;
   experiences: Experience[];
-  profileId: string;
 };
 
 function normalizeExperience(item: Experience): Experience {
@@ -131,7 +128,6 @@ function buildInitialProfileState(): ProfessionalProfileState {
   return {
     profile: emptyProfile,
     experiences: [],
-    profileId: DEFAULT_PROFILE_ID,
   };
 }
 
@@ -164,7 +160,6 @@ export const useProfessionalProfile = () => {
   const [isSavingExperiences, setIsSavingExperiences] = useState(false);
   const [experienceSaveError, setExperienceSaveError] = useState<string | null>(null);
   const profile = state.profile;
-  const activeProfileIdResolved = selectedUserId || state.profileId;
 
   const loadProfile = async (signal?: AbortSignal) => {
     const remoteProfile = selectedUserId
@@ -177,7 +172,6 @@ export const useProfessionalProfile = () => {
       experiences: mapEmploymentHistoryToExperience(
         remoteProfile.employmentHistory ?? []
       ),
-      ...(selectedUserId ? { profileId: selectedUserId } : {}),
     }));
     setNeedsProfileInitialization(false);
   };
@@ -329,7 +323,7 @@ export const useProfessionalProfile = () => {
   return {
     profile,
     sortedExperiences,
-    activeProfileId: activeProfileIdResolved,
+    activeProfileId: selectedUserId,
     canEditProfile,
     profileCompletion,
     isProfileLoading,
