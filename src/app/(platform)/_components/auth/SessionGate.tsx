@@ -58,7 +58,7 @@ export function SessionGate({ children }: SessionGateProps) {
             Verificando sesion
           </p>
           <p className="mt-2 text-sm text-slate-600">
-            Estamos validando tu acceso seguro a Mensa Empresarios.
+            Estamos validando tu acceso seguro a Mathesis.
           </p>
         </div>
       </div>

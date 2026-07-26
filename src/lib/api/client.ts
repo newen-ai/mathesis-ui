@@ -35,17 +35,32 @@ export async function apiRequest(
 
 	const { body, headers, method = "GET", signal } = options;
 	const resolvedHeaders = new Headers(headers);
+	const isFormData = body instanceof FormData;
+	const isUrlSearchParams = body instanceof URLSearchParams;
+	const isBlob = body instanceof Blob;
+	const isArrayBuffer = body instanceof ArrayBuffer;
+	const isArrayBufferView = ArrayBuffer.isView(body);
+	const isStringBody = typeof body === "string";
+	const isRawBody =
+		isFormData || isUrlSearchParams || isBlob || isArrayBuffer || isArrayBufferView || isStringBody;
 
-	if (body !== undefined && !resolvedHeaders.has("Content-Type")) {
+	if (body !== undefined && !resolvedHeaders.has("Content-Type") && !isRawBody) {
 		resolvedHeaders.set("Content-Type", "application/json");
 	}
+
+	const resolvedBody =
+		body === undefined
+			? undefined
+			: isFormData || isUrlSearchParams || isBlob || isArrayBuffer || isArrayBufferView || isStringBody
+				? body
+				: JSON.stringify(body);
 
 	return fetch(`${API_BASE_URL}${path}`, {
 		method,
 		signal,
 		credentials: "include",
 		headers: resolvedHeaders,
-		...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+		...(resolvedBody !== undefined ? { body: resolvedBody } : {}),
 	});
 }
 

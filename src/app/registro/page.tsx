@@ -16,7 +16,7 @@ type ValidationErrors = {
 };
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const logoSrc = `${basePath}/mensa-empresarios-logo.svg`;
+const logoSrc = `${basePath}/mathesis-logo-full.png`;
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -110,15 +110,16 @@ export default function RegistroPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={logoSrc}
-              alt="Logo Mensa Empresarios"
-              width={40}
-              height={40}
+              alt="Logo Mathesis"
+              width={128}
+              height={34}
               loading="eager"
               decoding="async"
+              className="h-8 w-auto"
             />
             <div>
               <p className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
-                Mensa Empresarios
+                Mathesis
               </p>
               <p className="text-xs text-slate-500">Registro de cuenta</p>
             </div>
@@ -206,7 +207,7 @@ export default function RegistroPage() {
                 checked={acceptedTerms}
                 onChange={(event) => setAcceptedTerms(event.target.checked)}
               />
-              Acepto las condiciones de uso y privacidad interna de Mensa Empresarios.
+              Acepto las condiciones de uso y privacidad interna de Mathesis.
             </label>
             {errors.terms ? (
               <p className="text-xs font-medium text-red-700">{errors.terms}</p>
