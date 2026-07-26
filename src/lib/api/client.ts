@@ -39,7 +39,8 @@ export async function apiRequest(
 	const isUrlSearchParams = body instanceof URLSearchParams;
 	const isBlob = body instanceof Blob;
 	const isArrayBuffer = body instanceof ArrayBuffer;
-	const isArrayBufferView = ArrayBuffer.isView(body);
+	const isArrayBufferView =
+		ArrayBuffer.isView(body) && body.buffer instanceof ArrayBuffer;
 	const isStringBody = typeof body === "string";
 	const isRawBody =
 		isFormData || isUrlSearchParams || isBlob || isArrayBuffer || isArrayBufferView || isStringBody;
@@ -48,12 +49,24 @@ export async function apiRequest(
 		resolvedHeaders.set("Content-Type", "application/json");
 	}
 
-	const resolvedBody =
-		body === undefined
-			? undefined
-			: isFormData || isUrlSearchParams || isBlob || isArrayBuffer || isArrayBufferView || isStringBody
-				? body
-				: JSON.stringify(body);
+	let resolvedBody: BodyInit | undefined;
+
+	if (body === undefined) {
+		resolvedBody = undefined;
+	} else if (isFormData || isUrlSearchParams || isBlob || isArrayBuffer || isArrayBufferView || isStringBody) {
+		if (isArrayBufferView) {
+			const view = body as ArrayBufferView;
+			resolvedBody = new Uint8Array(
+				view.buffer as ArrayBuffer,
+				view.byteOffset,
+				view.byteLength
+			);
+		} else {
+			resolvedBody = body as BodyInit;
+		}
+	} else {
+		resolvedBody = JSON.stringify(body);
+	}
 
 	return fetch(`${API_BASE_URL}${path}`, {
 		method,

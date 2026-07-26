@@ -23,6 +23,19 @@ type TopBarProps = {
 
 type ThemeMode = "light" | "dark";
 
+type TopBarMenuItem = {
+  label: string;
+  href: string;
+  icon: string;
+  disabledText?: string;
+  activeAuxText?: string;
+};
+
+type TopBarMenuSection = {
+  title: string;
+  items: TopBarMenuItem[];
+};
+
 const desktopLabelByHref: Record<string, string> = {
   "/": "Feed",
   "/mensajes": "Mensajes",
@@ -31,7 +44,7 @@ const desktopLabelByHref: Record<string, string> = {
   "/perfil": "Perfil",
 };
 
-const menuSections = [
+const menuSections: TopBarMenuSection[] = [
   {
     title: "PERSONAL",
     items: [
@@ -55,7 +68,7 @@ const menuSections = [
     title: "MATHESIS",
     items: [{ label: "ABM de Mathesis", href: "#", icon: "sun" }],
   },
-] as const;
+];
 
 function NavIcon({ icon }: { icon: string }) {
   const className = "h-5 w-5";
