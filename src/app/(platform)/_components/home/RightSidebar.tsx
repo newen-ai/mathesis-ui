@@ -9,10 +9,10 @@ export function RightSidebar({ professionalStampLines }: RightSidebarProps) {
     <aside className="mensa-fade-up hidden space-y-4 lg:sticky lg:top-24 lg:block">
       <AppCard className="p-6">
         <h3 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-[var(--navy-900)]">
-          ∫ Mensa Empresarios
+          ∫ Mathesis
         </h3>
         <p className="mt-4 text-lg leading-snug text-[var(--text-primary)]">
-          Directorio de empresas y feed empresarial para Miembros con negocio propio.
+          Directorio de empresas y feed profesional para miembros con negocio propio.
         </p>
 
         <button

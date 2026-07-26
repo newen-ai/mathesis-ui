@@ -1,105 +1,245 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { defaultFeedPosts, FEED_STORAGE_KEY } from "../constants";
-import type { FeedPost } from "../types";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getMyProfileIdentity } from "@/lib/api/profile";
+import {
+	createFeedPost,
+	deleteFeedPost,
+	listFeedPosts,
+	type FeedPost,
+	type FeedSortBy,
+} from "@/lib/api/feed";
 
-export const useHomeFeed = (activeProfileId: string) => {
-  const [customPosts, setCustomPosts] = useState<FeedPost[]>([]);
-  const [readyToSave, setReadyToSave] = useState(false);
+const FEED_PAGE_SIZE = 10;
+const FEED_SORT_BY: FeedSortBy = "HOT";
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(FEED_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as FeedPost[];
-        if (Array.isArray(parsed)) {
-          const migratedPosts = parsed.map((post) => ({
-            ...post,
-            ownerProfileId: post.ownerProfileId ?? activeProfileId,
-          }));
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setCustomPosts(migratedPosts);
-        }
-      }
-    } catch {
-      localStorage.removeItem(FEED_STORAGE_KEY);
-    } finally {
-      setReadyToSave(true);
-    }
-  }, [activeProfileId]);
+type CreateFeedPostInput = {
+	content: string;
+	pdfFiles: File[];
+	imageFiles: File[];
+};
 
-  useEffect(() => {
-    if (!readyToSave) return;
-    localStorage.setItem(FEED_STORAGE_KEY, JSON.stringify(customPosts));
-  }, [customPosts, readyToSave]);
+const getFileSizeLabel = (sizeBytes: number) => {
+	if (sizeBytes < 1024) return `${sizeBytes} B`;
+	if (sizeBytes < 1024 * 1024) return `${(sizeBytes / 1024).toFixed(1)} KB`;
+	return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
-  const feedPosts = useMemo(
-    () => [...customPosts, ...defaultFeedPosts],
-    [customPosts]
-  );
+export const useHomeFeed = () => {
+	const [posts, setPosts] = useState<FeedPost[]>([]);
+	const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+	const [limit, setLimit] = useState(FEED_PAGE_SIZE);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
+	const [isMutating, setIsMutating] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [hasMore, setHasMore] = useState(true);
 
-  const customPostIds = useMemo(
-    () =>
-      new Set(
-        customPosts
-          .filter((post) => post.ownerProfileId === activeProfileId)
-          .map((post) => post.id)
-      ),
-    [customPosts, activeProfileId]
-  );
+	useEffect(() => {
+		let isMounted = true;
 
-  const addPost = ({
-    autor,
-    cargo,
-    contenido,
-  }: {
-    autor: string;
-    cargo: string;
-    contenido: string;
-  }) => {
-    const trimmed = contenido.trim();
-    if (!trimmed) return;
+		const loadCurrentUserId = async () => {
+			const nextUserId = await getMyProfileIdentity();
+			if (!isMounted) return;
+			setCurrentUserId(nextUserId);
+		};
 
-    const newPost: FeedPost = {
-      id: crypto.randomUUID(),
-      autor,
-      cargo,
-      contenido: trimmed,
-      tiempo: "Ahora",
-      etiqueta: "Tu publicacion",
-      ownerProfileId: activeProfileId,
-    };
+		void loadCurrentUserId();
 
-    setCustomPosts((current) => [newPost, ...current]);
-  };
+		return () => {
+			isMounted = false;
+		};
+	}, []);
 
-  const updatePost = ({ id, contenido }: { id: string; contenido: string }) => {
-    const trimmed = contenido.trim();
-    if (!trimmed) return;
+	const loadFeed = useCallback(
+		async (nextLimit: number, signal?: AbortSignal) => {
+			const payload = await listFeedPosts({
+				limit: nextLimit,
+				sortBy: FEED_SORT_BY,
+				signal,
+			});
 
-    setCustomPosts((current) =>
-      current.map((post) =>
-        post.id === id && post.ownerProfileId === activeProfileId
-          ? { ...post, contenido: trimmed, tiempo: "Editado ahora" }
-          : post
-      )
-    );
-  };
+			setPosts(payload.data.posts);
+			setHasMore(payload.data.posts.length >= nextLimit);
+			setError(null);
+		},
+		[]
+	);
 
-  const deletePost = (id: string) => {
-    setCustomPosts((current) =>
-      current.filter(
-        (post) => !(post.id === id && post.ownerProfileId === activeProfileId)
-      )
-    );
-  };
+	useEffect(() => {
+		let isMounted = true;
+		const controller = new AbortController();
 
-  return {
-    feedPosts,
-    customPostIds,
-    addPost,
-    updatePost,
-    deletePost,
-  };
+		const run = async () => {
+			try {
+				await loadFeed(limit, controller.signal);
+			} catch (error) {
+				if (!isMounted || controller.signal.aborted) return;
+
+				const message =
+					error instanceof Error &&
+					error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+						? "NEXT_PUBLIC_API_BASE_URL no está configurada."
+						: "No pudimos cargar el feed.";
+
+				setError(message);
+				setPosts([]);
+				setHasMore(false);
+			} finally {
+				if (!isMounted || controller.signal.aborted) return;
+				setIsLoading(false);
+				setIsLoadingMore(false);
+			}
+		};
+
+		void run();
+
+		return () => {
+			isMounted = false;
+			controller.abort();
+		};
+	}, [loadFeed, limit]);
+
+	const refresh = useCallback(async () => {
+		setIsLoading(true);
+		setError(null);
+		try {
+			await loadFeed(limit);
+		} catch (error) {
+			const message =
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no está configurada."
+					: "No pudimos cargar el feed.";
+
+			setError(message);
+			setPosts([]);
+			setHasMore(false);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [limit, loadFeed]);
+
+	const loadMore = useCallback(() => {
+		if (!hasMore || isLoadingMore || isLoading) return;
+		setIsLoadingMore(true);
+		setLimit((current) => current + FEED_PAGE_SIZE);
+	}, [hasMore, isLoading, isLoadingMore]);
+
+	const createPost = useCallback(
+		async ({ content, pdfFiles, imageFiles }: CreateFeedPostInput) => {
+			const trimmedContent = content.trim();
+
+			if (imageFiles.length > 0) {
+				return {
+					ok: false,
+					message:
+						"Las imágenes todavía no se pueden publicar desde el backend del feed.",
+				};
+			}
+
+			if (!trimmedContent && pdfFiles.length === 0) {
+				return {
+					ok: false,
+					message: "Escribe un texto o adjunta al menos un PDF.",
+				};
+			}
+
+			if (pdfFiles.length > 5) {
+				return {
+					ok: false,
+					message: "Solo se pueden adjuntar hasta 5 PDFs por publicación.",
+				};
+			}
+
+			for (const file of pdfFiles) {
+				if (file.type !== "application/pdf") {
+					return {
+						ok: false,
+						message: `El archivo ${file.name} no es un PDF válido.`,
+					};
+				}
+
+				if (file.size > 10 * 1024 * 1024) {
+					return {
+						ok: false,
+						message: `El archivo ${file.name} supera el máximo de 10 MB.`,
+					};
+				}
+			}
+
+			setIsMutating(true);
+			setError(null);
+
+			try {
+				const payload = await createFeedPost({
+					content: trimmedContent || undefined,
+					pdfFiles,
+				});
+
+				setPosts((current) => [payload.data.post, ...current]);
+				setHasMore(true);
+				return { ok: true };
+			} catch (error) {
+				const message =
+					error instanceof Error &&
+					error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+						? "NEXT_PUBLIC_API_BASE_URL no está configurada."
+						: "No pudimos crear la publicación.";
+
+				return { ok: false, message };
+			} finally {
+				setIsMutating(false);
+			}
+		},
+		[]
+	);
+
+	const removePost = useCallback(async (postId: string) => {
+		setIsMutating(true);
+		setError(null);
+
+		try {
+			const response = await deleteFeedPost(postId);
+			if (!response.success) {
+				return { ok: false, message: response.message };
+			}
+
+			setPosts((current) => current.filter((post) => post.id !== postId));
+			return { ok: true };
+		} catch (error) {
+			const message =
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no está configurada."
+					: "No pudimos eliminar la publicación.";
+
+			return { ok: false, message };
+		} finally {
+			setIsMutating(false);
+		}
+	}, []);
+
+	const feedState = useMemo(
+		() => ({
+			currentUserId,
+			posts,
+			isLoading,
+			isLoadingMore,
+			isMutating,
+			error,
+			hasMore,
+		}),
+		[currentUserId, error, hasMore, isLoading, isLoadingMore, isMutating, posts]
+	);
+
+	return {
+		...feedState,
+		createPost,
+		deletePost: removePost,
+		loadMore,
+		refresh,
+		pageSize: FEED_PAGE_SIZE,
+		getFileSizeLabel,
+	};
 };

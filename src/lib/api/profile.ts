@@ -61,6 +61,27 @@ type ProfileDataEnvelope = ProfileMeResponse["data"] | ProfileOutput;
 
 type ProfileMutationResponse = ApiServiceResponse;
 
+export async function getMyProfileIdentity(signal?: AbortSignal): Promise<string | null> {
+  try {
+    const response = await apiRequest("/profile/me", {
+      signal,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await parseDataResponse<ProfileMeResponse["data"]>(
+      response,
+      "Invalid profile response"
+    );
+
+    return payload.data.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function extractProfileFromEnvelope(data: unknown): ProfileOutput {
   if (!data || typeof data !== "object") {
     throw new ProfileSourceEmptyError();
