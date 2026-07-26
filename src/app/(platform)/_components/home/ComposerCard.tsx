@@ -21,18 +21,18 @@ export function ComposerCard({ initials, onPublish }: ComposerCardProps) {
   };
 
   return (
-    <AppCard className="p-4">
+    <AppCard className="rounded-none border-x-0 p-4 md:rounded-2xl md:border-x">
       <form onSubmit={onSubmit}>
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-sm font-bold text-white">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)] text-lg font-bold text-[var(--brand-500)]">
             {initials || "ME"}
           </span>
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="linkedin-composer-trigger w-full rounded-full border border-slate-300 px-4 py-2 text-left text-sm text-slate-500"
+            className="linkedin-composer-trigger w-full rounded-full border border-[var(--line-strong)] bg-[var(--surface)] px-4 py-2.5 text-left text-lg font-medium text-[var(--text-secondary)]"
           >
-            Comparte una idea con la red Mensa Argentina...
+            ¿Que queres compartir con la comunidad?
           </button>
         </div>
 
@@ -44,12 +44,12 @@ export function ComposerCard({ initials, onPublish }: ComposerCardProps) {
               rows={4}
               autoFocus
               placeholder="Escribe tu publicacion..."
-              className="mt-3 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-[var(--brand-700)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-100)]"
+              className="mt-3 w-full rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--brand-700)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-100)]"
             />
             <div className="mt-3 flex items-center gap-2">
               <button
                 type="submit"
-                className="rounded-full bg-[var(--brand-700)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--brand-800)]"
+                className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-xs font-semibold text-[var(--navy-900)] transition hover:brightness-95"
               >
                 Publicar
               </button>
@@ -59,7 +59,7 @@ export function ComposerCard({ initials, onPublish }: ComposerCardProps) {
                   setIsOpen(false);
                   setContent("");
                 }}
-                className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                className="rounded-full border border-[var(--line)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)]"
               >
                 Cancelar
               </button>
@@ -67,15 +67,6 @@ export function ComposerCard({ initials, onPublish }: ComposerCardProps) {
           </>
         )}
       </form>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <span className="linkedin-tag">Insight rapido</span>
-        <span className="linkedin-tag">Oportunidad laboral</span>
-        <span className="linkedin-tag">Conexion estrategica</span>
-      </div>
-      <p className="mt-3 rounded-lg bg-[#f3f9ff] px-3 py-2 text-xs font-medium text-[#0b4f89]">
-        Frase sugerida: &quot;Mentes brillantes, negocios mejores&quot;.
-      </p>
     </AppCard>
   );
 }

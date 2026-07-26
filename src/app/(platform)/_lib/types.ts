@@ -26,4 +26,12 @@ export type FeedPost = {
   contenido: string;
   etiqueta?: string;
   ownerProfileId?: string;
+  attachment?: {
+    type: "pdf" | "image";
+    title: string;
+    subtitle: string;
+    sourceLabel?: string;
+    url?: string;
+    isAvailable?: boolean;
+  };
 };
