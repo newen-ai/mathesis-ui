@@ -130,11 +130,11 @@ export default function RegistroPage() {
   const stepLabel =
     step === 1 ? "Paso 1 de 2 · Verificación de Miembro" : "Paso 2 de 2 · Crear acceso";
   const stepTitle = step === 1 ? "Verificá tu membresía" : "Creá tu acceso";
-  const brandSubtitle =
-    step === 1
-      ? "Mathesis verifica tu identidad con los datos que ya tenés registrados en tu organización — no hace falta ningún trámite adicional."
-      : "Ya verificamos tu membresía. Creá tu contraseña para terminar.";
   const formHeading = step === 1 ? "Registrate" : "Creá tu acceso";
+  const formSub =
+    step === 1
+      ? "Verificamos tu membresía con Mensa Argentina."
+      : "Ya verificamos tu membresía. Creá tu contraseña para terminar.";
 
   return (
     <>
@@ -146,12 +146,12 @@ export default function RegistroPage() {
         onClose={() => setPopupInfo(null)}
       />
 
-      <main className="lg:flex lg:min-h-screen lg:items-center lg:justify-center lg:bg-[#EDE9E2] lg:p-8">
-        <div className="flex h-dvh flex-col bg-[#FAF8F5] lg:h-auto lg:w-full lg:max-w-4xl lg:flex-row lg:overflow-hidden lg:rounded-2xl lg:border lg:border-[#E8E5E0] lg:bg-white lg:shadow-[0_18px_50px_rgba(10,37,64,0.16)]">
-          {/* Navy: header en mobile / columna de marca en desktop */}
-          <div className="bg-[#0A2540] px-4 py-3 lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:justify-between lg:px-10 lg:py-11">
+      <main className="flex h-dvh flex-col bg-[#FAF8F5] font-[family-name:Arial] lg:bg-white">
+        <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+          {/* Navy: header en mobile / columna de marca a pantalla completa en desktop */}
+          <div className="bg-[#0A2540] px-4 py-3 lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:px-12 lg:py-12">
             {/* Desktop: logo */}
-            <div className="hidden lg:flex lg:items-center lg:gap-2.5">
+            <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={logoSrc}
@@ -162,7 +162,7 @@ export default function RegistroPage() {
                 decoding="async"
                 className="h-8 w-8"
               />
-              <span className="font-[family-name:var(--font-spectral)] text-lg font-bold tracking-[0.1em] text-[#FAF8F5]">
+              <span className="font-[family-name:Georgia] text-lg font-bold tracking-[0.1em] text-[#FAF8F5]">
                 Mathesis
               </span>
             </div>
@@ -182,22 +182,51 @@ export default function RegistroPage() {
               </div>
             </div>
 
-            {/* Desktop: eyebrow + título + subtítulo */}
-            <div className="hidden lg:block">
+            {/* Desktop: contenido de marca (centrado vertical y horizontalmente) */}
+            <div className="hidden lg:my-auto lg:block lg:text-center">
               <div className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#C9A84C]/80">
                 {stepLabel}
               </div>
-              <div className="mt-3 font-[family-name:var(--font-spectral)] text-2xl font-bold leading-snug text-[#FAF8F5]">
-                {stepTitle}
-              </div>
-              <div className="mt-3 max-w-xs text-sm leading-relaxed text-[#FAF8F5]/70">
-                {brandSubtitle}
-              </div>
+              {step === 1 ? (
+                <>
+                  <div className="mt-3 font-[family-name:Georgia] text-2xl font-bold leading-snug text-[#FAF8F5]">
+                    Verificá tu membresía
+                  </div>
+                  <div className="mt-4 text-sm leading-relaxed text-[#FAF8F5]/70 lg:mx-auto lg:max-w-xs">
+                    Mathesis verifica tu identidad con los datos que ya tenés registrados en tu
+                    organización — no hace falta ningún trámite adicional.
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mt-3 font-[family-name:Georgia] text-2xl font-bold leading-snug text-[#FAF8F5]">
+                    ¡Bienvenido!
+                  </div>
+                  <div className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#C9A84C]">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="m8 12 3 3 5-6" />
+                    </svg>
+                    Membresía verificada
+                  </div>
+                  <div className="mt-3 text-sm text-[#FAF8F5]/70">{organization}</div>
+                </>
+              )}
             </div>
 
             {/* Mobile: título + barra de progreso */}
             <div className="lg:hidden">
-              <div className="font-[family-name:var(--font-spectral)] text-lg font-bold text-[#FAF8F5]">
+              <div className="font-[family-name:Georgia] text-lg font-bold text-[#FAF8F5]">
                 {stepTitle}
               </div>
               <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-white/15">
@@ -209,8 +238,8 @@ export default function RegistroPage() {
               </div>
             </div>
 
-            {/* Desktop: stepper */}
-            <div className="hidden lg:flex lg:flex-col lg:gap-3">
+            {/* Desktop: stepper (al fondo) */}
+            <div className="hidden lg:flex lg:flex-col lg:gap-5">
               <div className="flex items-center gap-2.5">
                 <span
                   className={`flex h-5 w-5 items-center justify-center rounded-full border text-[0.6rem] font-bold ${
@@ -249,18 +278,14 @@ export default function RegistroPage() {
           </div>
 
           {/* Formulario: cuerpo scrolleable en mobile / columna derecha en desktop */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 lg:overflow-visible lg:px-12 lg:py-11">
+          <div className="flex flex-1 flex-col overflow-y-auto px-4 py-4 lg:overflow-visible lg:px-12 lg:py-12">
             <div className="lg:mx-auto lg:max-w-[440px]">
               {/* Desktop: encabezado del formulario */}
               <div className="mb-5 hidden lg:block">
-                <div className="font-[family-name:var(--font-spectral)] text-2xl font-bold text-[#0A2540]">
+                <div className="font-[family-name:Georgia] text-2xl font-bold text-[#0A2540]">
                   {formHeading}
                 </div>
-                {step === 1 ? (
-                  <div className="mt-1 text-sm text-[#666666]">
-                    Verificamos tu membresía con Mensa Argentina.
-                  </div>
-                ) : null}
+                <div className="mt-1 text-sm text-[#666666]">{formSub}</div>
               </div>
 
               {step === 1 ? (
@@ -310,7 +335,7 @@ export default function RegistroPage() {
                       id="email"
                       autoComplete="email"
                       inputMode="email"
-                      placeholder="tu@mail.com"
+                      placeholder="tu@email.com"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       aria-invalid={Boolean(errors.email)}
@@ -325,7 +350,7 @@ export default function RegistroPage() {
                     ) : null}
                   </div>
 
-                  <label className="inline-flex items-start gap-2 text-sm text-[#666666]">
+                  <label className="mt-6 inline-flex items-start gap-2 text-sm text-[#666666]">
                     <input
                       type="checkbox"
                       className="mt-0.5 h-4 w-4 rounded border-[#c6ced8] text-[#C9A84C] focus:ring-[#C9A84C]"
@@ -340,16 +365,30 @@ export default function RegistroPage() {
 
                   <button
                     type="submit"
-                    className="mt-1 w-full rounded-full bg-[#C9A84C] px-6 py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:bg-[#b8973f]"
+                    className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-full bg-[#C9A84C] px-6 py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:bg-[#b8973f]"
                   >
-                    ✓ Verificar y continuar
+                    <svg
+                      className="lg:hidden"
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    Verificar y continuar
                   </button>
 
                   <p className="rounded-lg bg-white px-3 py-2 text-[0.7rem] leading-relaxed text-[#666666] lg:bg-[#FAF8F5]">
                     Si el DNI y el email no coinciden con lo que Mensa Argentina tiene registrado, no
                     vamos a poder crear tu cuenta todavía. El piloto es exclusivo para Miembros de
-                    Mensa Argentina. Este DNI se usa solo para verificar en el momento del registro —
-                    Mathesis no lo guarda.
+                    Mensa Argentina. Este DNI se usa solo para verificar contra Mensa Argentina en el
+                    momento del registro — Mathesis no lo guarda.
                   </p>
 
                   <p className="text-center text-xs text-[#666666]">
@@ -361,7 +400,7 @@ export default function RegistroPage() {
                 </form>
               ) : (
                 <form className="flex flex-col gap-2.5" onSubmit={onCreateAccount} noValidate>
-                  <div className="rounded-lg border border-[#C9A84C]/40 bg-white px-3.5 py-3 lg:bg-[#FAF8F5]">
+                  <div className="rounded-lg border border-[#C9A84C]/40 bg-white px-3.5 py-3 lg:hidden">
                     <div className="flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[#7A6435]">
                       <svg
                         width="14"
@@ -432,7 +471,7 @@ export default function RegistroPage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="confirmPassword" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      Confirmar contraseña
+                      Repetir contraseña
                     </label>
                     <div className="relative">
                       <input
@@ -517,6 +556,9 @@ export default function RegistroPage() {
               )}
             </div>
           </div>
+        </div>
+        <div className="shrink-0 border-t border-[#E8E5E0] bg-white py-2.5 text-center text-[0.65rem] tracking-wide text-[#666666]">
+          Powered by <span className="font-bold text-[#7A6435]">Newen.solutions</span>
         </div>
       </main>
     </>
