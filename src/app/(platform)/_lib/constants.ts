@@ -67,29 +67,43 @@ export const professionalStampLines = [
 export const defaultFeedPosts: FeedPost[] = [
   {
     id: "seed-1",
-    autor: "Sofia Rinaldi",
-    cargo: "Directora de Innovacion | Mensa Argentina",
-    tiempo: "Hace 2 horas",
-    etiqueta: "Tendencias",
+    autor: "Martin Rodriguez",
+    cargo: "Fisico teorico · IAFE · Buenos Aires",
+    tiempo: "hace 3h",
+    etiqueta: "∫ AR",
     contenido:
-      "En mercados inciertos, la ventaja competitiva esta en la velocidad de aprendizaje. Estamos lanzando una mesa de trabajo para analizar IA aplicada a operaciones empresariales.",
+      "Terminamos de escribir el paper sobre decoherencia en sistemas de spin acoplado. Si a alguien de la comunidad le interesa mecanica cuantica aplicada, encantado de compartir el draft antes de mandarlo a revision.",
+    attachment: {
+      type: "pdf",
+      title: "Decoherencia en sistemas de spin acoplado - draft.pdf",
+      subtitle: "PDF · 2.4 MB",
+      url: "#",
+      isAvailable: true,
+    },
   },
   {
     id: "seed-2",
-    autor: "Esteban Lopez",
-    cargo: "Founder @ Nodo Andino",
-    tiempo: "Hace 5 horas",
-    etiqueta: "Networking",
+    autor: "Sofia Herrera",
+    cargo: "Escritora · Docente UNT",
+    tiempo: "hace 5 h",
+    etiqueta: "∫ AR",
     contenido:
-      "Busco conectar con perfiles de estrategia comercial y crecimiento B2B para un proyecto regional. Si te interesa colaborar, escribime por Mensajes.",
+      "El Congreso Mensa Tucuman fue increible. 87 miembros, 3 dias de debates y conexiones que no esperaba.",
+    attachment: {
+      type: "image",
+      title: "foto · congreso_mensa_tuc.jpg",
+      subtitle: "Imagen",
+      sourceLabel: "Galeria del evento",
+      isAvailable: false,
+    },
   },
   {
     id: "seed-3",
-    autor: "Lucia Ferrer",
-    cargo: "People & Culture Lead",
-    tiempo: "Ayer",
-    etiqueta: "Comunidad",
+    autor: "Carlos Vega",
+    cargo: "CEO · TechFlow · ∫ Mensa Empresarios",
+    tiempo: "hace 1 dia",
+    etiqueta: "ME",
     contenido:
-      "Cuando el talento se conecta con proposito, aparecen oportunidades que no estaban en el radar. Gran valor en la ultima ronda de presentaciones de la red.",
+      "Lanzamos la segunda version de nuestro producto de automatizacion con IA para pymes. Reducimos 40% el tiempo en tareas administrativas de nuestros primeros clientes.",
   },
 ];

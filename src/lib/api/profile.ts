@@ -36,6 +36,16 @@ export class ProfileSourceEmptyError extends Error {
   }
 }
 
+export class ProfileHttpError extends Error {
+  status: number;
+
+  constructor(status: number, message?: string) {
+    super(message ?? `Profile request failed: ${status}`);
+    this.name = "ProfileHttpError";
+    this.status = status;
+  }
+}
+
 type ProfileMeResponse = {
   success: boolean;
   message: string;
@@ -50,6 +60,27 @@ type ProfileMeResponse = {
 type ProfileDataEnvelope = ProfileMeResponse["data"] | ProfileOutput;
 
 type ProfileMutationResponse = ApiServiceResponse;
+
+export async function getMyProfileIdentity(signal?: AbortSignal): Promise<string | null> {
+  try {
+    const response = await apiRequest("/profile/me", {
+      signal,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await parseDataResponse<ProfileMeResponse["data"]>(
+      response,
+      "Invalid profile response"
+    );
+
+    return payload.data.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function extractProfileFromEnvelope(data: unknown): ProfileOutput {
   if (!data || typeof data !== "object") {
@@ -171,7 +202,10 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
   }
 
   if (!response.ok) {
-    throw new Error(`Unable to fetch profile: ${response.status}`);
+    throw new ProfileHttpError(
+      response.status,
+      `Unable to fetch profile: ${response.status}`
+    );
   }
 
   const payload = await parseDataResponse<ProfileDataEnvelope>(
@@ -191,7 +225,10 @@ export async function getProfileByUserId(
   });
 
   if (!response.ok) {
-    throw new Error(`Unable to fetch profile by userId: ${response.status}`);
+    throw new ProfileHttpError(
+      response.status,
+      `Unable to fetch profile by userId: ${response.status}`
+    );
   }
 
   const payload = await parseDataResponse<ProfileDataEnvelope>(

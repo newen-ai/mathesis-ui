@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { hasSession } from "@/lib/api/auth";
+import { getSessionState, type SessionState } from "@/lib/api/auth";
 
 type SessionGateProps = {
   children: ReactNode;
@@ -21,7 +21,9 @@ function buildLoginPath(pathname: string) {
 export function SessionGate({ children }: SessionGateProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sessionState, setSessionState] = useState<SessionState | "checking">(
+    "checking"
+  );
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   const loginPath = useMemo(() => buildLoginPath(pathname), [pathname]);
@@ -30,13 +32,13 @@ export function SessionGate({ children }: SessionGateProps) {
     let isMounted = true;
 
     const verifySession = async () => {
-      const authenticated = await hasSession();
+      const nextSessionState = await getSessionState();
       if (!isMounted) return;
 
-      setIsAuthenticated(authenticated);
+      setSessionState(nextSessionState);
       setIsCheckingSession(false);
 
-      if (!authenticated) {
+      if (nextSessionState === "unauthenticated") {
         router.replace(loginPath);
       }
     };
@@ -48,7 +50,7 @@ export function SessionGate({ children }: SessionGateProps) {
     };
   }, [loginPath, router]);
 
-  if (isCheckingSession || !isAuthenticated) {
+  if (isCheckingSession || sessionState === "checking") {
     return (
       <div className="linkedin-shell flex min-h-screen items-center justify-center px-4">
         <div className="linkedin-card w-full max-w-md p-6 text-center">
@@ -56,12 +58,25 @@ export function SessionGate({ children }: SessionGateProps) {
             Verificando sesion
           </p>
           <p className="mt-2 text-sm text-slate-600">
-            Estamos validando tu acceso seguro a Mensa Empresarios.
+            Estamos validando tu acceso seguro a Mathesis.
           </p>
         </div>
       </div>
     );
   }
 
-  return <>{children}</>;
+  if (sessionState === "unauthenticated") {
+    return null;
+  }
+
+  return (
+    <>
+      {sessionState === "unknown" ? (
+        <div className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50/95 px-4 py-1 text-center text-xs font-medium text-amber-700 backdrop-blur-sm">
+          Reconectando sesion...
+        </div>
+      ) : null}
+      {children}
+    </>
+  );
 }

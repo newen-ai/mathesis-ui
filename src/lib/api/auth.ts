@@ -14,6 +14,32 @@ type LoginInput = {
 	password: string;
 };
 
+export type SessionState = "authenticated" | "unauthenticated" | "unknown";
+
+type SessionUserPayload = {
+	data?: {
+		id?: string;
+		userId?: string;
+		user?: {
+			id?: string;
+			userId?: string;
+		};
+	};
+	userId?: string;
+	id?: string;
+	user?: {
+		id?: string;
+		userId?: string;
+	};
+};
+
+function extractSessionUserId(payload: SessionUserPayload | null | undefined) {
+	const candidateId =
+		payload?.data?.id;
+
+	return typeof candidateId === "string" && candidateId.trim() ? candidateId : null;
+}
+
 export async function register(
 	input: RegisterInput
 ): Promise<AuthServiceResponse> {
@@ -72,18 +98,38 @@ export async function login(
 	}
 }
 
-export async function hasSession(): Promise<boolean> {
+export async function getSessionState(): Promise<SessionState> {
 	try {
-		const response = await apiRequest("/profile/me");
+		const sessionResponse = await apiRequest("/auth/session");
 
-		if (response.status === 404) return true;
+		if (sessionResponse.status === 401 || sessionResponse.status === 403) {
+			return "unauthenticated";
+		}
 
-		if (!response.ok) return false;
+		if (sessionResponse.ok) return "authenticated";
 
-		const payload = (await response.json()) as Partial<AuthServiceResponse>;
-		return payload.success === true;
+		return "unknown";
 	} catch {
-		return false;
+		return "unknown";
+	}
+}
+
+export async function getSessionUserId(): Promise<string | null> {
+	try {
+		const sessionResponse = await apiRequest("/auth/session");
+
+		if (sessionResponse.status === 401 || sessionResponse.status === 403) {
+			return null;
+		}
+
+		if (!sessionResponse.ok) {
+			return null;
+		}
+
+		const payload = (await sessionResponse.json()) as SessionUserPayload;
+		return extractSessionUserId(payload);
+	} catch {
+		return null;
 	}
 }
 
