@@ -4,6 +4,8 @@ import {
 	parseServiceResponse,
 } from "@/lib/api/client";
 
+export type SessionRole = "user" | "admin";
+
 type RegisterInput = {
 	email: string;
 	password: string;
@@ -15,6 +17,26 @@ type LoginInput = {
 };
 
 export type SessionState = "authenticated" | "unauthenticated" | "unknown";
+
+export type SessionAccessDecision = {
+	sessionState: SessionState;
+	role?: SessionRole;
+	isWhitelisted: boolean;
+};
+
+type WhitelistErrorDetails = {
+	code?: string;
+};
+
+type SessionPayload = {
+	data?: {
+		user?: {
+			role?: SessionRole;
+			isWhitelisted?: boolean;
+		};
+	};
+	details?: WhitelistErrorDetails;
+};
 
 type SessionUserPayload = {
 	data?: {
@@ -114,6 +136,51 @@ export async function getSessionState(): Promise<SessionState> {
 	}
 }
 
+export async function getSessionAccessDecision(): Promise<SessionAccessDecision> {
+	try {
+		const sessionResponse = await apiRequest("/auth/session");
+
+		if (sessionResponse.status === 401) {
+			return { sessionState: "unauthenticated", isWhitelisted: false };
+		}
+
+		if (sessionResponse.status === 403) {
+			let payload: SessionPayload | null = null;
+			try {
+				payload = (await sessionResponse.json()) as SessionPayload;
+			} catch {
+				payload = null;
+			}
+
+			if (payload?.details?.code === "USER_NOT_WHITELISTED") {
+				return {
+					sessionState: "authenticated",
+					role: payload?.data?.user?.role,
+					isWhitelisted: false,
+				};
+			}
+
+			return { sessionState: "unauthenticated", isWhitelisted: false };
+		}
+
+		if (!sessionResponse.ok) {
+			return { sessionState: "unknown", isWhitelisted: false };
+		}
+
+		const payload = (await sessionResponse.json()) as SessionPayload;
+		const role = payload?.data?.user?.role;
+		const isWhitelisted = payload?.data?.user?.isWhitelisted ?? true;
+
+		return {
+			sessionState: "authenticated",
+			role,
+			isWhitelisted,
+		};
+	} catch {
+		return { sessionState: "unknown", isWhitelisted: false };
+	}
+}
+
 export async function getSessionUserId(): Promise<string | null> {
 	try {
 		const sessionResponse = await apiRequest("/auth/session");
@@ -153,6 +220,32 @@ export async function logout(): Promise<AuthServiceResponse> {
 				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
 					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
 					: "No pudimos conectar con el servicio de logout.",
+			details: "Error de red o CORS.",
+		};
+	}
+}
+
+export async function requestWhitelistAccess(message?: string): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest("/auth/whitelist-request", {
+			method: "POST",
+			body: {
+				message,
+			},
+		});
+
+		return parseServiceResponse(
+			response,
+			"Respuesta invalida del servicio de solicitud de whitelist."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
+					: "No pudimos enviar tu solicitud de whitelist.",
 			details: "Error de red o CORS.",
 		};
 	}
