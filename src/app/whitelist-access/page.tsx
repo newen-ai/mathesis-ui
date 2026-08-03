@@ -1,13 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getSessionAccessDecision, logout, requestWhitelistAccess } from "@/lib/api/auth";
-
-type RequestState = {
-  type: "idle" | "success" | "error";
-  message?: string;
-};
+import { toast } from "sonner";
+import { logout, requestWhitelistAccess } from "@/lib/api/auth";
+import { apiRequest } from "@/lib/api/client";
 
 export default function WhitelistAccessPage() {
   const router = useRouter();
@@ -15,8 +12,6 @@ export default function WhitelistAccessPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isRetryingAccess, setIsRetryingAccess] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [requestState, setRequestState] = useState<RequestState>({ type: "idle" });
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -26,63 +21,60 @@ export default function WhitelistAccessPage() {
     setIsSubmitting(false);
 
     if (!result.success) {
-      setRequestState({
-        type: "error",
-        message: result.message
-      });
+      toast.error(result.message || "No pudimos enviar tu solicitud.");
       return;
     }
 
-    setRequestState({
-      type: "success",
-      message: "Solicitud enviada. Te avisaremos cuando tu acceso sea aprobado."
-    });
+    toast.success("Solicitud enviada. Te avisaremos cuando tu acceso sea aprobado.");
   };
 
   const onGoToLogin = async () => {
     setIsLoggingOut(true);
-    await logout();
+    const result = await logout();
+    if (!result.success) {
+      toast.warning("No pudimos cerrar sesion en el servidor.");
+    }
     router.replace("/login");
   };
 
   const onRetryAccess = async () => {
     setIsRetryingAccess(true);
-    const accessDecision = await getSessionAccessDecision();
-    setIsRetryingAccess(false);
+    try {
+      const response = await apiRequest("/profile/me");
 
-    if (accessDecision.sessionState === "unauthenticated") {
-      router.replace("/login");
-      return;
+      if (response.ok) {
+        router.replace("/");
+        return;
+      }
+
+      if (response.status === 401) {
+        router.replace("/login");
+        return;
+      }
+
+      if (response.status === 403) {
+        let code: string | undefined;
+
+        try {
+          const payload = (await response.json()) as { details?: { code?: string } };
+          code = payload.details?.code;
+        } catch {
+          code = undefined;
+        }
+
+        if (code === "USER_NOT_WHITELISTED") {
+          toast.warning("Not in whitelist");
+          return;
+        }
+      }
+
+      toast.warning("Not in whitelist");
+    } catch {
+      toast.error("No pudimos validar tu acceso. Intenta de nuevo.");
+    } finally {
+      setIsRetryingAccess(false);
     }
-
-    if (
-      accessDecision.sessionState === "authenticated" &&
-      accessDecision.role !== "admin" &&
-      !accessDecision.isWhitelisted
-    ) {
-      setToastMessage("Not in whitelist");
-      return;
-    }
-
-    if (accessDecision.sessionState === "authenticated") {
-      router.replace("/");
-      return;
-    }
-
-    setToastMessage("Not in whitelist");
   };
-
-  useEffect(() => {
-    if (!toastMessage) return;
-
-    const timeoutId = window.setTimeout(() => {
-      setToastMessage(null);
-    }, 1800);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [toastMessage]);
 
   return (
     <main className="min-h-screen bg-[#F4EFE8] px-4 py-10">
@@ -118,17 +110,6 @@ export default function WhitelistAccessPage() {
           </button>
         </form>
 
-        {requestState.type === "success" ? (
-          <p className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {requestState.message}
-          </p>
-        ) : null}
-        {requestState.type === "error" ? (
-          <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {requestState.message ?? "No pudimos enviar tu solicitud."}
-          </p>
-        ) : null}
-
         <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-[#4A5565]">
           <button
             type="button"
@@ -148,12 +129,6 @@ export default function WhitelistAccessPage() {
             {isRetryingAccess ? "Verificando..." : "Reintentar acceso"}
           </button>
         </div>
-
-        {toastMessage ? (
-          <div className="mensa-toast fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] shadow-lg lg:bottom-8">
-            {toastMessage}
-          </div>
-        ) : null}
       </div>
     </main>
   );

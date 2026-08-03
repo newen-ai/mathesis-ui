@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora, Spectral } from "next/font/google";
+import { AppToaster } from "@/components/ui/AppToaster";
 import "./globals.css";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -37,7 +38,10 @@ export default function RootLayout({
       lang="es"
       className={`${sora.variable} ${spectral.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <AppToaster />
+      </body>
     </html>
   );
 }
