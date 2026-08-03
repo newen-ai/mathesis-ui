@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { requestWhitelistAccess } from "@/lib/api/auth";
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getSessionAccessDecision, logout, requestWhitelistAccess } from "@/lib/api/auth";
 
 type RequestState = {
   type: "idle" | "success" | "error";
@@ -10,8 +10,12 @@ type RequestState = {
 };
 
 export default function WhitelistAccessPage() {
+  const router = useRouter();
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isRetryingAccess, setIsRetryingAccess] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [requestState, setRequestState] = useState<RequestState>({ type: "idle" });
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -34,6 +38,51 @@ export default function WhitelistAccessPage() {
       message: "Solicitud enviada. Te avisaremos cuando tu acceso sea aprobado."
     });
   };
+
+  const onGoToLogin = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    router.replace("/login");
+  };
+
+  const onRetryAccess = async () => {
+    setIsRetryingAccess(true);
+    const accessDecision = await getSessionAccessDecision();
+    setIsRetryingAccess(false);
+
+    if (accessDecision.sessionState === "unauthenticated") {
+      router.replace("/login");
+      return;
+    }
+
+    if (
+      accessDecision.sessionState === "authenticated" &&
+      accessDecision.role !== "admin" &&
+      !accessDecision.isWhitelisted
+    ) {
+      setToastMessage("Not in whitelist");
+      return;
+    }
+
+    if (accessDecision.sessionState === "authenticated") {
+      router.replace("/");
+      return;
+    }
+
+    setToastMessage("Not in whitelist");
+  };
+
+  useEffect(() => {
+    if (!toastMessage) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setToastMessage(null);
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [toastMessage]);
 
   return (
     <main className="min-h-screen bg-[#F4EFE8] px-4 py-10">
@@ -81,14 +130,30 @@ export default function WhitelistAccessPage() {
         ) : null}
 
         <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-[#4A5565]">
-          <Link href="/login" className="font-semibold text-[#8D6E3E] underline-offset-4 hover:underline">
-            Ir al login
-          </Link>
+          <button
+            type="button"
+            onClick={onGoToLogin}
+            disabled={isLoggingOut}
+            className="font-semibold text-[#8D6E3E] underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoggingOut ? "Cerrando sesion..." : "Ir al login"}
+          </button>
           <span aria-hidden>•</span>
-          <Link href="/" className="font-semibold text-[#8D6E3E] underline-offset-4 hover:underline">
-            Reintentar acceso
-          </Link>
+          <button
+            type="button"
+            onClick={onRetryAccess}
+            disabled={isRetryingAccess}
+            className="font-semibold text-[#8D6E3E] underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isRetryingAccess ? "Verificando..." : "Reintentar acceso"}
+          </button>
         </div>
+
+        {toastMessage ? (
+          <div className="mensa-toast fixed bottom-6 left-1/2 z-[90] -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] shadow-lg lg:bottom-8">
+            {toastMessage}
+          </div>
+        ) : null}
       </div>
     </main>
   );
