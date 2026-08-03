@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getSessionState, type SessionState } from "@/lib/api/auth";
+import { getSessionAccessDecision, type SessionState } from "@/lib/api/auth";
 
 type SessionGateProps = {
   children: ReactNode;
@@ -18,6 +18,8 @@ function buildLoginPath(pathname: string) {
   return queryString ? `/login?${queryString}` : "/login";
 }
 
+const FALLBACK_WHITELIST_PATH = "/whitelist-access";
+
 export function SessionGate({ children }: SessionGateProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,15 +34,29 @@ export function SessionGate({ children }: SessionGateProps) {
     let isMounted = true;
 
     const verifySession = async () => {
-      const nextSessionState = await getSessionState();
+      const accessDecision = await getSessionAccessDecision();
+      const nextSessionState = accessDecision.sessionState;
       if (!isMounted) return;
 
       setSessionState(nextSessionState);
-      setIsCheckingSession(false);
 
       if (nextSessionState === "unauthenticated") {
+        setIsCheckingSession(false);
         router.replace(loginPath);
+        return;
       }
+
+      if (
+        nextSessionState === "authenticated" &&
+        accessDecision.role !== "admin" &&
+        !accessDecision.isWhitelisted
+      ) {
+        setIsCheckingSession(false);
+          router.replace(FALLBACK_WHITELIST_PATH);
+        return;
+      }
+
+      setIsCheckingSession(false);
     };
 
     void verifySession();

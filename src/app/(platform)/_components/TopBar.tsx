@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NavItem } from "../_lib/constants";
-import { logout } from "@/lib/api/auth";
+import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
 import {
   ProfileHttpError,
   getMyProfile,
@@ -22,6 +22,10 @@ type TopBarProps = {
 };
 
 type ThemeMode = "light" | "dark";
+
+type SessionAccess = {
+  role: SessionRole | null;
+};
 
 type TopBarMenuItem = {
   label: string;
@@ -178,9 +182,11 @@ export function TopBar({ navItems }: TopBarProps) {
   const [searchResults, setSearchResults] = useState<SearchProfileOutput[]>([]);
   const [searchMessage, setSearchMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [sessionAccess, setSessionAccess] = useState<SessionAccess>({ role: null });
 
   const normalizedSearchText = useMemo(() => searchText.trim(), [searchText]);
   const userInitial = userName.charAt(0).toUpperCase() || "M";
+  const isAdmin = sessionAccess.role === "admin";
 
   const desktopNavItems = useMemo(
     () =>
@@ -214,6 +220,30 @@ export function TopBar({ navItems }: TopBarProps) {
   const toggleTheme = () => {
     setTheme((current) => (current === "light" ? "dark" : "light"));
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadSessionAccess = async () => {
+      try {
+        const decision = await getSessionAccessDecision();
+        if (!isMounted || controller.signal.aborted) return;
+
+        setSessionAccess({ role: decision.role ?? null });
+      } catch {
+        if (!isMounted || controller.signal.aborted) return;
+        setSessionAccess({ role: null });
+      }
+    };
+
+    void loadSessionAccess();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -253,6 +283,14 @@ export function TopBar({ navItems }: TopBarProps) {
           error instanceof ProfileHttpError &&
           (error.status === 401 || error.status === 403)
         ) {
+          if (
+            error.status === 403 &&
+            error.details?.code === "USER_NOT_WHITELISTED"
+          ) {
+            router.replace(error.details.redirectTo ?? "/whitelist-access");
+            return;
+          }
+
           await logout();
           forceLogout();
           return;
@@ -424,6 +462,16 @@ export function TopBar({ navItems }: TopBarProps) {
             </Link>
           ))}
 
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className={`linkedin-nav-item ${isNavItemActive("/admin") ? "is-active" : ""}`}
+            >
+              <span className="linkedin-nav-dot" aria-hidden="true" />
+              <span>Admin dashboard</span>
+            </Link>
+          ) : null}
+
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
@@ -525,6 +573,26 @@ export function TopBar({ navItems }: TopBarProps) {
                 })}
               </section>
             ))}
+
+            {isAdmin ? (
+              <section className="border-b border-[var(--line)]">
+                <h4 className="px-6 py-3 text-xs font-bold tracking-[0.16em] text-[var(--brand-500)]">ADMIN</h4>
+                <Link
+                  href="/admin"
+                  className={`flex w-full items-center justify-between border-t border-[color:color-mix(in_srgb,var(--line)_65%,transparent)] px-6 py-4 text-left ${
+                    isNavItemActive("/admin") ? "bg-[var(--surface-muted)]" : "bg-[var(--surface)]"
+                  }`}
+                  onClick={() => setDrawerOpen(false)}
+                >
+                  <span className="flex items-center gap-4 text-xl font-medium text-[var(--text-primary)]">
+                    <span className="text-[var(--text-secondary)]">
+                      <NavIcon icon="mark" />
+                    </span>
+                    Admin dashboard
+                  </span>
+                </Link>
+              </section>
+            ) : null}
 
             <div className="space-y-3 border-t border-[var(--line)] p-5">
               <button

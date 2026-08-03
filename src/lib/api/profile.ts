@@ -38,11 +38,23 @@ export class ProfileSourceEmptyError extends Error {
 
 export class ProfileHttpError extends Error {
   status: number;
+  details?: {
+    code?: string;
+    redirectTo?: string;
+  };
 
-  constructor(status: number, message?: string) {
+  constructor(
+    status: number,
+    message?: string,
+    details?: {
+      code?: string;
+      redirectTo?: string;
+    }
+  ) {
     super(message ?? `Profile request failed: ${status}`);
     this.name = "ProfileHttpError";
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -202,9 +214,25 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
   }
 
   if (!response.ok) {
+    let details: { code?: string; redirectTo?: string } | undefined;
+
+    try {
+      const payload = (await response.json()) as {
+        details?: {
+          code?: string;
+          redirectTo?: string;
+        };
+      };
+
+      details = payload.details;
+    } catch {
+      details = undefined;
+    }
+
     throw new ProfileHttpError(
       response.status,
-      `Unable to fetch profile: ${response.status}`
+      `Unable to fetch profile: ${response.status}`,
+      details
     );
   }
 
@@ -225,9 +253,25 @@ export async function getProfileByUserId(
   });
 
   if (!response.ok) {
+    let details: { code?: string; redirectTo?: string } | undefined;
+
+    try {
+      const payload = (await response.json()) as {
+        details?: {
+          code?: string;
+          redirectTo?: string;
+        };
+      };
+
+      details = payload.details;
+    } catch {
+      details = undefined;
+    }
+
     throw new ProfileHttpError(
       response.status,
-      `Unable to fetch profile by userId: ${response.status}`
+      `Unable to fetch profile by userId: ${response.status}`,
+      details
     );
   }
 
