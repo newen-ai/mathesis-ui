@@ -59,10 +59,10 @@ export function ProfileInitializationView({
       <main className="mx-auto flex w-full max-w-4xl items-start px-4 py-6 sm:px-6 lg:px-8">
         <AppCard className="w-full p-5 sm:p-7">
           <div className="space-y-1">
-            <h1 className="font-[family-name:var(--font-spectral)] text-3xl font-semibold text-slate-900">
+            <h1 className="font-[family-name:var(--font-spectral)] text-3xl font-semibold text-[var(--text-primary)]">
               Inicializa tu perfil
             </h1>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-[var(--text-secondary)]">
               No encontramos datos de perfil para tu cuenta. Completa los campos y
               guardaremos la informacion en el backend para crear o actualizar tu perfil.
             </p>

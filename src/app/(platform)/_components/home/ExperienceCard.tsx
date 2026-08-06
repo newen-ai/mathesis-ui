@@ -320,10 +320,10 @@ export function ExperienceCard({
                 className={`flex items-center justify-between px-4 py-5 ${index < listItems.length - 1 ? "border-b border-[var(--line)]" : ""}`}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-[1.2rem] leading-none text-slate-500">⋮⋮</span>
+                  <span className="text-[1.2rem] leading-none text-[var(--text-soft)]">⋮⋮</span>
                   <div>
-                    <p className="text-[0.72rem] font-bold leading-tight text-slate-900">{item.puestoTrabajo}</p>
-                    <p className="mt-[0.1rem] text-[0.62rem] text-slate-500">
+                    <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
+                    <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)]">
                       {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
                     </p>
                   </div>
@@ -334,7 +334,7 @@ export function ExperienceCard({
                     type="button"
                     onClick={() => onEditExperience(item)}
                     disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-slate-500 hover:text-[var(--navy-900)]"
+                    className="text-[1.1rem] leading-none text-[var(--text-soft)] hover:text-[var(--navy-900)]"
                     aria-label="Editar experiencia"
                   >
                     ✎
@@ -343,7 +343,7 @@ export function ExperienceCard({
                     type="button"
                     onClick={() => onDeleteExperience(item.id)}
                     disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-rose-700 hover:text-rose-800"
+                    className="text-[1.1rem] leading-none text-[var(--danger-500)] hover:opacity-85"
                     aria-label="Eliminar experiencia"
                   >
                     🗑
@@ -353,7 +353,7 @@ export function ExperienceCard({
             ))}
           </div>
         ) : (
-          <p className="mt-5 text-[0.7rem] text-slate-600">Todavia no agregaste experiencias laborales.</p>
+          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste experiencias laborales.</p>
         )}
 
         {isFormOpen ? (
@@ -411,7 +411,7 @@ export function ExperienceCard({
                       setStartMonth(month);
                       pushDatePart("fechaComienzo", startYear, month);
                     }}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
                   >
                     <option value="">Mes</option>
                     {monthOptions.map((month) => (
@@ -434,7 +434,7 @@ export function ExperienceCard({
                       setStartMonth(normalizedMonth);
                       pushDatePart("fechaComienzo", year, normalizedMonth);
                     }}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
                   >
                     <option value="">Año</option>
                     {yearOptions.map((year) => (
@@ -462,7 +462,7 @@ export function ExperienceCard({
                       pushDatePart("fechaFinalizacion", endYear, month);
                     }}
                     disabled={draft.trabajoActual}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:bg-[var(--surface-2)] disabled:text-[var(--text-soft)]"
                   >
                     <option value="">Mes</option>
                     {monthOptions.map((month) => (
@@ -486,7 +486,7 @@ export function ExperienceCard({
                       pushDatePart("fechaFinalizacion", year, normalizedMonth);
                     }}
                     disabled={draft.trabajoActual}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:bg-[var(--surface-2)] disabled:text-[var(--text-soft)]"
                   >
                     <option value="">Año</option>
                     {yearOptions.map((year) => (
@@ -498,13 +498,13 @@ export function ExperienceCard({
                 </div>
               </label>
 
-              <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
                 <input
                   name="trabajoActual"
                   type="checkbox"
                   checked={draft.trabajoActual}
                   onChange={onDraftChange}
-                  className="h-4 w-4 rounded border-slate-300 text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
+                  className="h-4 w-4 rounded border-[var(--line)] text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
                 />
                 Actualmente trabajo aqui
               </label>
@@ -518,7 +518,7 @@ export function ExperienceCard({
                   maxLength={300}
                   rows={4}
                 />
-                <span className="text-right text-xs text-slate-500">{draft.descripcion.length}/300</span>
+                <span className="text-right text-xs text-[var(--text-soft)]">{draft.descripcion.length}/300</span>
               </label>
             </div>
 
@@ -563,7 +563,7 @@ export function ExperienceCard({
             type="button"
             onClick={onDiscardChanges}
             disabled={isSaving}
-            className="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             Descartar cambios
           </button>
@@ -590,9 +590,9 @@ export function ExperienceCard({
         ) : null}
       </div>
 
-      <div className="mt-2 border-t border-slate-100 pt-2">
+      <div className="mt-2 border-t border-[var(--line)] pt-2">
         {listItems.length === 0 ? (
-          <p className="text-[0.7rem] text-slate-600">Todavia no agregaste experiencias laborales.</p>
+          <p className="text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste experiencias laborales.</p>
         ) : (
           <ul>
             {listItems.map((item) => (
@@ -601,15 +601,15 @@ export function ExperienceCard({
                 className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
               >
                 <div>
-                  <p className="text-[0.72rem] font-bold leading-tight text-slate-900">{item.puestoTrabajo}</p>
-                  <p className="mt-[0.1rem] text-[0.62rem] text-slate-500">
+                  <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
+                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)]">
                     {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
                     {defaultLocation?.trim() ? ` · ${defaultLocation.trim()}` : ""}
                   </p>
                   {item.descripcion.trim() ? (
                     <>
                       <p
-                        className="mt-1 text-[0.64rem] leading-[1.5] text-slate-700"
+                        className="mt-1 text-[0.64rem] leading-[1.5] text-[var(--text-secondary)]"
                         style={
                           !expandedDescriptions[item.id]
                             ? {

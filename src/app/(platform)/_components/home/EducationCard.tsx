@@ -390,10 +390,10 @@ export function EducationCard({
                 className={`flex items-center justify-between px-4 py-5 ${index < listItems.length - 1 ? "border-b border-[var(--line)]" : ""}`}
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-[1.2rem] leading-none text-slate-500">⋮⋮</span>
+                  <span className="text-[1.2rem] leading-none text-[var(--text-soft)]">⋮⋮</span>
                   <div>
-                    <p className="text-[0.72rem] font-bold leading-tight text-slate-900">{item.titulo}</p>
-                    <p className="mt-[0.1rem] text-[0.62rem] text-slate-500">
+                    <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.titulo}</p>
+                    <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)]">
                       {item.institucion} · {toDateLabel(item.fechaComienzo)} - {item.estudiandoActualmente ? "Actualidad" : toDateLabel(item.fechaFinalizacion)}
                     </p>
                   </div>
@@ -404,7 +404,7 @@ export function EducationCard({
                     type="button"
                     onClick={() => onEditEducation(item)}
                     disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-slate-500 hover:text-[var(--navy-900)]"
+                    className="text-[1.1rem] leading-none text-[var(--text-soft)] hover:text-[var(--navy-900)]"
                     aria-label="Editar formacion"
                   >
                     ✎
@@ -413,7 +413,7 @@ export function EducationCard({
                     type="button"
                     onClick={() => onDeleteEducation(item.id)}
                     disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-rose-700 hover:text-rose-800"
+                    className="text-[1.1rem] leading-none text-[var(--danger-500)] hover:opacity-85"
                     aria-label="Eliminar formacion"
                   >
                     🗑
@@ -423,7 +423,7 @@ export function EducationCard({
             ))}
           </div>
         ) : (
-          <p className="mt-5 text-[0.7rem] text-slate-600">Todavia no agregaste formacion academica.</p>
+          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste formacion academica.</p>
         )}
 
         {isFormOpen ? (
@@ -482,7 +482,7 @@ export function EducationCard({
                   <select
                     value={startMonth}
                     onChange={(event) => onStartMonthChange(event.target.value)}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
                   >
                     <option value="">Mes</option>
                     {monthOptions.map((month) => (
@@ -499,7 +499,7 @@ export function EducationCard({
                   <select
                     value={startYear}
                     onChange={(event) => onStartYearChange(event.target.value)}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
                   >
                     <option value="">Año</option>
                     {yearOptions.map((year) => (
@@ -518,7 +518,7 @@ export function EducationCard({
                     value={endMonth}
                     onChange={(event) => onEndMonthChange(event.target.value)}
                     disabled={draft.estudiandoActualmente}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:bg-[var(--surface-2)] disabled:text-[var(--text-soft)]"
                   >
                     <option value="">Mes</option>
                     {monthOptions.map((month) => (
@@ -536,7 +536,7 @@ export function EducationCard({
                     value={endYear}
                     onChange={(event) => onEndYearChange(event.target.value)}
                     disabled={draft.estudiandoActualmente}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
+                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:bg-[var(--surface-2)] disabled:text-[var(--text-soft)]"
                   >
                     <option value="">Año</option>
                     {yearOptions.map((year) => (
@@ -548,13 +548,13 @@ export function EducationCard({
                 </div>
               </label>
 
-              <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
                 <input
                   name="estudiandoActualmente"
                   type="checkbox"
                   checked={draft.estudiandoActualmente}
                   onChange={onDraftChange}
-                  className="h-4 w-4 rounded border-slate-300 text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
+                  className="h-4 w-4 rounded border-[var(--line)] text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
                 />
                 Actualmente estudio aqui
               </label>
@@ -612,7 +612,7 @@ export function EducationCard({
             type="button"
             onClick={onCancelEditing}
             disabled={isSaving}
-            className="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
           >
             Descartar cambios
           </button>
@@ -639,9 +639,9 @@ export function EducationCard({
         ) : null}
       </div>
 
-      <div className="mt-2 border-t border-slate-100 pt-2">
+      <div className="mt-2 border-t border-[var(--line)] pt-2">
         {listItems.length === 0 ? (
-          <p className="text-[0.7rem] text-slate-600">Todavia no agregaste formacion academica.</p>
+          <p className="text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste formacion academica.</p>
         ) : (
           <ul>
             {listItems.map((item) => (
@@ -650,15 +650,15 @@ export function EducationCard({
                 className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
               >
                 <div>
-                  <p className="text-[0.72rem] font-bold text-slate-900">{item.titulo}</p>
-                  <p className="mt-[0.1rem] text-[0.62rem] text-slate-600">
+                  <p className="text-[0.72rem] font-bold text-[var(--text-primary)]">{item.titulo}</p>
+                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-secondary)]">
                     {item.institucion} · {toDateLabel(item.fechaComienzo)} - {item.estudiandoActualmente ? "Actualidad" : toDateLabel(item.fechaFinalizacion)}
                   </p>
                   {item.campoEstudio ? (
-                    <p className="mt-1 text-[0.64rem] text-slate-700">{item.campoEstudio}</p>
+                    <p className="mt-1 text-[0.64rem] text-[var(--text-secondary)]">{item.campoEstudio}</p>
                   ) : null}
                   {item.descripcion ? (
-                    <p className="mt-2 text-[0.64rem] leading-[1.5] text-slate-600">{item.descripcion}</p>
+                    <p className="mt-2 text-[0.64rem] leading-[1.5] text-[var(--text-secondary)]">{item.descripcion}</p>
                   ) : null}
                 </div>
               </li>

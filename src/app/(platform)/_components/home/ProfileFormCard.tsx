@@ -71,11 +71,11 @@ export function ProfileFormCard({
 
       {canEdit && isEditingMode ? (
         <div className="mt-3">
-          <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+          <div className="flex items-center justify-between text-xs font-medium text-[var(--text-secondary)]">
             <span>Completitud del perfil</span>
             <span>{profileCompletion}%</span>
           </div>
-          <div className="mt-2 h-2 rounded-full bg-slate-200">
+          <div className="mt-2 h-2 rounded-full bg-[var(--surface-muted)]">
             <div
               className="h-2 rounded-full bg-[var(--brand-700)] transition-all"
               style={{ width: `${profileCompletion}%` }}
@@ -86,7 +86,7 @@ export function ProfileFormCard({
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {isLoading ? (
-          <p className="text-[0.68rem] text-slate-600">Cargando perfil...</p>
+          <p className="text-[0.68rem] text-[var(--text-secondary)]">Cargando perfil...</p>
         ) : canEdit && isEditingMode ? (
           <>
             <label className="mensa-field">
@@ -129,7 +129,7 @@ export function ProfileFormCard({
                 maxLength={80}
                 onChange={(event) => onFormChange("puesto", event.target.value)}
               />
-              <span className="text-right text-xs text-slate-500">{formState.puesto.length}/80</span>
+              <span className="text-right text-xs text-[var(--text-soft)]">{formState.puesto.length}/80</span>
             </label>
             <label className="mensa-field sm:col-span-2">
               Empresa actual
@@ -185,7 +185,7 @@ export function ProfileFormCard({
                 rows={5}
                 onChange={(event) => onFormChange("about", event.target.value)}
               />
-              <span className="text-right text-xs text-slate-500">{formState.about.length}/800</span>
+              <span className="text-right text-xs text-[var(--text-soft)]">{formState.about.length}/800</span>
             </label>
 
             {saveError ? (
@@ -207,7 +207,7 @@ export function ProfileFormCard({
                 type="button"
                 onClick={onCancel}
                 disabled={isSaving}
-                className="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Cancelar
               </button>

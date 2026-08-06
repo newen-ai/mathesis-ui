@@ -781,14 +781,14 @@ export function ProfileView() {
             <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--navy-900)]">
               Ajustar imagen de banner
             </h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
               Arrastra para mover y usa la rueda del mouse para acercar o alejar. Esta vista muestra lo que se vera en tu encabezado.
             </p>
 
             <div className="mt-4 flex justify-center">
               <div
                 ref={bannerPreviewRef}
-                className="relative w-full max-w-[900px] overflow-hidden rounded-xl border border-slate-200 bg-[#173A5C]"
+                className="relative w-full max-w-[900px] overflow-hidden rounded-xl border border-[var(--line)] bg-[#173A5C]"
                 style={{
                   touchAction: "none",
                   aspectRatio: `${bannerEditor.targetWidth} / ${bannerEditor.targetHeight}`,
@@ -839,7 +839,7 @@ export function ProfileView() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+            <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)]">
               Tip: mueve el banner hasta alinear la zona importante. El resto quedara fuera del area visible.
             </div>
 
@@ -856,7 +856,7 @@ export function ProfileView() {
                 type="button"
                 onClick={() => setBannerEditor(null)}
                 disabled={isSavingProfile}
-                className="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Cancelar
               </button>
@@ -871,7 +871,7 @@ export function ProfileView() {
             <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--navy-900)]">
               Ajustar foto de perfil
             </h3>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
               Mueve y ajusta la imagen para previsualizar exactamente lo que se vera en el circulo.
             </p>
 
@@ -925,7 +925,7 @@ export function ProfileView() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+            <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)]">
               Arrastra la imagen con el mouse para posicionarla. Usa la rueda del mouse para acercar o alejar.
             </div>
 
@@ -942,7 +942,7 @@ export function ProfileView() {
                 type="button"
                 onClick={() => setAvatarEditor(null)}
                 disabled={isSavingProfile}
-                className="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Cancelar
               </button>
