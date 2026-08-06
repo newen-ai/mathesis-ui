@@ -21,4 +21,9 @@ Required session entry fields:
 - Next actions
 
 If these files conflict with task request, document the conflict in `agent-live-context.md` and proceed with explicit scope notes.
+
+# Command Autonomy
+- Agents should run non-destructive verification commands automatically after meaningful edits, without asking for conversational confirmation first.
+- Pre-approved verification commands include: npm run lint, npm run typecheck, npm run build, npm test.
+- Agents should still avoid destructive or state-changing commands unless explicitly requested (for example: database reset, hard git reset, force push).
 <!-- END:nextjs-agent-rules -->

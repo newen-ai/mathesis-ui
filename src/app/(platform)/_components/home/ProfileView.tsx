@@ -64,7 +64,10 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-function getTouchDistance(first: Touch, second: Touch) {
+function getTouchDistance(
+  first: { clientX: number; clientY: number },
+  second: { clientX: number; clientY: number }
+) {
   const deltaX = second.clientX - first.clientX;
   const deltaY = second.clientY - first.clientY;
   return Math.hypot(deltaX, deltaY);
