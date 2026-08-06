@@ -23,6 +23,21 @@ jobs:
       NEXT_PUBLIC_BASE_PATH: ""
       NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL}}
     steps:
+      - name: Debug workflow trigger
+        run: |
+          echo "event_name=$GITHUB_EVENT_NAME"
+          echo "ref=$GITHUB_REF"
+          echo "ref_name=$GITHUB_REF_NAME"
+          echo "sha=$GITHUB_SHA"
+          echo "actor=$GITHUB_ACTOR"
+          echo "repository=$GITHUB_REPOSITORY"
+          echo "workflow=$GITHUB_WORKFLOW"
+          if [ -n "$NEXT_PUBLIC_API_BASE_URL" ]; then
+            echo "NEXT_PUBLIC_API_BASE_URL is set"
+          else
+            echo "NEXT_PUBLIC_API_BASE_URL is empty"
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
