@@ -1,7 +1,8 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
-import type { Experience, ExperienceDraft } from "../../_lib/types";
-import type { WorkExperienceOperation } from "@/lib/api/profile";
+import { toDateLabel } from "../../_lib/utils/date";
+import type { Education, EducationDraft } from "../../_lib/types";
+import type { EducationOperation } from "@/lib/api/profile";
 
 const monthOptions = [
   { value: "01", label: "Enero" },
@@ -23,54 +24,61 @@ const currentYear = today.getFullYear();
 const currentMonth = today.getMonth() + 1;
 const yearOptions = Array.from({ length: 70 }, (_, index) => String(currentYear - index));
 
-const emptyDraft: ExperienceDraft = {
-  puestoTrabajo: "",
-  lugarTrabajo: "",
-  descripcion: "",
-  fechaComienzo: "",
-  fechaFinalizacion: "",
-  trabajoActual: false,
+const splitYearMonth = (value: string) => {
+  if (!value || value.length < 7) {
+    return { year: "", month: "" };
+  }
+
+  const [year, month] = value.split("-");
+  return { year: year ?? "", month: month ?? "" };
 };
 
-type ExperienceCardProps = {
-  experiences: Experience[];
+const emptyDraft: EducationDraft = {
+  institucion: "",
+  titulo: "",
+  campoEstudio: "",
+  fechaComienzo: "",
+  fechaFinalizacion: "",
+  estudiandoActualmente: false,
+  descripcion: "",
+};
+
+type EducationCardProps = {
+  educations: Education[];
   canEdit: boolean;
   isEditingMode: boolean;
   onStartEditing: () => void;
   onCloseEditing: () => void;
-  defaultLocation?: string;
   isSaving: boolean;
   saveError: string | null;
   onSaveOperations: (
-    operations: WorkExperienceOperation[]
+    operations: EducationOperation[]
   ) => Promise<{ ok: boolean; message?: string }>;
   onClearSaveError: () => void;
 };
 
-export function ExperienceCard({
-  experiences,
+export function EducationCard({
+  educations,
   canEdit,
   isEditingMode,
   onStartEditing,
   onCloseEditing,
-  defaultLocation,
   isSaving,
   saveError,
   onSaveOperations,
   onClearSaveError,
-}: ExperienceCardProps) {
-  const [draft, setDraft] = useState<ExperienceDraft>(emptyDraft);
+}: EducationCardProps) {
+  const [draft, setDraft] = useState<EducationDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [workingExperiences, setWorkingExperiences] = useState<Experience[]>(experiences);
+  const [workingEducations, setWorkingEducations] = useState<Education[]>(educations);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [startMonth, setStartMonth] = useState("");
   const [startYear, setStartYear] = useState("");
   const [endMonth, setEndMonth] = useState("");
   const [endYear, setEndYear] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
 
-  const isExperienceManagerMode = canEdit && isEditingMode;
+  const isEducationManagerMode = canEdit && isEditingMode;
 
   const isFutureMonthForYear = (monthValue: string, yearValue: string) => {
     if (!monthValue || !yearValue) return false;
@@ -85,20 +93,74 @@ export function ExperienceCard({
     nextMonth: string
   ) => {
     const value = nextYear && nextMonth ? `${nextYear}-${nextMonth}` : "";
+
     setDraft((current) => ({
       ...current,
       [fieldName]: value,
     }));
   };
 
-  const onDraftChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const applyDateParts = (dateValue: string, field: "start" | "end") => {
+    const parsed = splitYearMonth(dateValue);
+
+    if (field === "start") {
+      setStartYear(parsed.year);
+      setStartMonth(parsed.month);
+      return;
+    }
+
+    setEndYear(parsed.year);
+    setEndMonth(parsed.month);
+  };
+
+  const onStartMonthChange = (month: string) => {
+    if (isFutureMonthForYear(month, startYear)) {
+      setStartMonth("");
+      pushDatePart("fechaComienzo", startYear, "");
+      return;
+    }
+
+    setStartMonth(month);
+    pushDatePart("fechaComienzo", startYear, month);
+  };
+
+  const onStartYearChange = (year: string) => {
+    const normalizedMonth = isFutureMonthForYear(startMonth, year) ? "" : startMonth;
+
+    setStartYear(year);
+    setStartMonth(normalizedMonth);
+    pushDatePart("fechaComienzo", year, normalizedMonth);
+  };
+
+  const onEndMonthChange = (month: string) => {
+    if (isFutureMonthForYear(month, endYear)) {
+      setEndMonth("");
+      pushDatePart("fechaFinalizacion", endYear, "");
+      return;
+    }
+
+    setEndMonth(month);
+    pushDatePart("fechaFinalizacion", endYear, month);
+  };
+
+  const onEndYearChange = (year: string) => {
+    const normalizedMonth = isFutureMonthForYear(endMonth, year) ? "" : endMonth;
+
+    setEndYear(year);
+    setEndMonth(normalizedMonth);
+    pushDatePart("fechaFinalizacion", year, normalizedMonth);
+  };
+
+  const onDraftChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, type, value } = event.target;
     const checked = "checked" in event.target ? event.target.checked : false;
 
-    if (name === "trabajoActual") {
+    if (name === "estudiandoActualmente") {
       setDraft((current) => ({
         ...current,
-        trabajoActual: checked,
+        estudiandoActualmente: checked,
         fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
       }));
 
@@ -106,6 +168,7 @@ export function ExperienceCard({
         setEndMonth("");
         setEndYear("");
       }
+
       return;
     }
 
@@ -118,62 +181,113 @@ export function ExperienceCard({
   const resetDraft = () => {
     setDraft(emptyDraft);
     setEditingId(null);
+    setDraftError(null);
     setStartMonth("");
     setStartYear("");
     setEndMonth("");
     setEndYear("");
   };
 
-  const formatYearRange = (start: string, end: string, isCurrent: boolean) => {
-    const startYear = start.slice(0, 4);
-    if (isCurrent || !end) {
-      return `${startYear} - Presente`;
-    }
-    return `${startYear} - ${end.slice(0, 4)}`;
+  const onCancelEditing = () => {
+    onClearSaveError();
+    setDraftError(null);
+    setWorkingEducations(educations);
+    resetDraft();
+    setIsFormOpen(false);
+    onCloseEditing();
   };
 
-  const areSameExperience = (a: Experience, b: Experience) =>
-    a.lugarTrabajo === b.lugarTrabajo &&
-    a.puestoTrabajo === b.puestoTrabajo &&
-    a.descripcion === b.descripcion &&
+  const areSameEducation = (a: Education, b: Education) =>
+    a.institucion === b.institucion &&
+    a.titulo === b.titulo &&
+    a.campoEstudio === b.campoEstudio &&
     a.fechaComienzo === b.fechaComienzo &&
     a.fechaFinalizacion === b.fechaFinalizacion &&
-    a.trabajoActual === b.trabajoActual;
+    a.estudiandoActualmente === b.estudiandoActualmente &&
+    a.descripcion === b.descripcion;
 
-  const buildOperations = (): WorkExperienceOperation[] => {
-    const originalById = new Map(experiences.map((item) => [item.id, item]));
-    const stagedById = new Map(workingExperiences.map((item) => [item.id, item]));
-    const operations: WorkExperienceOperation[] = [];
+  const buildOperations = (): EducationOperation[] => {
+    const originalById = new Map(educations.map((item) => [item.id, item]));
+    const stagedById = new Map(workingEducations.map((item) => [item.id, item]));
 
-    experiences.forEach((item) => {
+    const operations: EducationOperation[] = [];
+
+    educations.forEach((item) => {
       if (!stagedById.has(item.id)) {
         operations.push({ action: "REMOVE", id: item.id });
       }
     });
 
-    workingExperiences.forEach((item) => {
+    workingEducations.forEach((item) => {
       const original = originalById.get(item.id);
-      const payload = {
-        company: item.lugarTrabajo,
-        jobTitle: item.puestoTrabajo,
-        description: item.descripcion.trim(),
-        startYearMonth: item.fechaComienzo,
-        ...(item.trabajoActual || !item.fechaFinalizacion
-          ? {}
-          : { endYearMonth: item.fechaFinalizacion }),
-      };
 
       if (!original) {
-        operations.push({ action: "ADD", ...payload });
+        operations.push({
+          action: "ADD",
+          institution: item.institucion,
+          degree: item.titulo,
+          ...(item.campoEstudio.trim() ? { fieldOfStudy: item.campoEstudio.trim() } : {}),
+          startYearMonth: item.fechaComienzo,
+          ...(item.estudiandoActualmente || !item.fechaFinalizacion
+            ? {}
+            : { endYearMonth: item.fechaFinalizacion }),
+          ...(item.descripcion.trim() ? { description: item.descripcion.trim() } : {}),
+        });
         return;
       }
 
-      if (!areSameExperience(original, item)) {
-        operations.push({ action: "EDIT", id: item.id, ...payload });
+      if (!areSameEducation(original, item)) {
+        operations.push({
+          action: "EDIT",
+          id: item.id,
+          institution: item.institucion,
+          degree: item.titulo,
+          ...(item.campoEstudio.trim() ? { fieldOfStudy: item.campoEstudio.trim() } : {}),
+          startYearMonth: item.fechaComienzo,
+          ...(item.estudiandoActualmente || !item.fechaFinalizacion
+            ? {}
+            : { endYearMonth: item.fechaFinalizacion }),
+          description: item.descripcion,
+        });
       }
     });
 
     return operations;
+  };
+
+  const onSubmitEducation = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (
+      !draft.institucion ||
+      !draft.titulo ||
+      !draft.fechaComienzo ||
+      (!draft.estudiandoActualmente && !draft.fechaFinalizacion)
+    ) {
+      setDraftError("Completa todos los campos requeridos para agregar o actualizar una formacion.");
+      return;
+    }
+
+    setDraftError(null);
+
+    if (editingId) {
+      setWorkingEducations((current) =>
+        current.map((item) => (item.id === editingId ? { ...item, ...draft } : item))
+      );
+      resetDraft();
+      setIsFormOpen(false);
+      return;
+    }
+
+    setWorkingEducations((current) => [
+      ...current,
+      {
+        id: `tmp-${crypto.randomUUID()}`,
+        ...draft,
+      },
+    ]);
+    resetDraft();
+    setIsFormOpen(false);
   };
 
   const onStartAdding = () => {
@@ -182,77 +296,48 @@ export function ExperienceCard({
     setIsFormOpen(true);
   };
 
-  const onEditExperience = (item: Experience) => {
+  const onEditEducation = (item: Education) => {
     setEditingId(item.id);
     setDraftError(null);
     setDraft({
-      puestoTrabajo: item.puestoTrabajo,
-      lugarTrabajo: item.lugarTrabajo,
-      descripcion: item.descripcion,
+      institucion: item.institucion,
+      titulo: item.titulo,
+      campoEstudio: item.campoEstudio,
       fechaComienzo: item.fechaComienzo,
       fechaFinalizacion: item.fechaFinalizacion,
-      trabajoActual: item.trabajoActual,
+      estudiandoActualmente: item.estudiandoActualmente,
+      descripcion: item.descripcion,
     });
 
-    setStartYear(item.fechaComienzo.slice(0, 4));
-    setStartMonth(item.fechaComienzo.slice(5, 7));
-    setEndYear(item.fechaFinalizacion ? item.fechaFinalizacion.slice(0, 4) : "");
-    setEndMonth(item.fechaFinalizacion ? item.fechaFinalizacion.slice(5, 7) : "");
+    applyDateParts(item.fechaComienzo, "start");
+    applyDateParts(item.fechaFinalizacion, "end");
     setIsFormOpen(true);
   };
 
-  const onDeleteExperience = (id: string) => {
-    setWorkingExperiences((current) => current.filter((item) => item.id !== id));
+  const onDeleteEducation = (id: string) => {
+    setWorkingEducations((current) => current.filter((item) => item.id !== id));
+
     if (editingId === id) {
       resetDraft();
       setIsFormOpen(false);
     }
   };
 
-  const onSubmitExperience = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (
-      !draft.puestoTrabajo ||
-      !draft.lugarTrabajo ||
-      !draft.fechaComienzo ||
-      (!draft.trabajoActual && !draft.fechaFinalizacion)
-    ) {
-      setDraftError("Completa todos los campos requeridos para agregar o actualizar una experiencia.");
-      return;
-    }
-
-    if (editingId) {
-      setWorkingExperiences((current) =>
-        current.map((item) => (item.id === editingId ? { ...item, ...draft } : item))
-      );
-    } else {
-      setWorkingExperiences((current) => [
-        ...current,
-        {
-          id: `tmp-${crypto.randomUUID()}`,
-          ...draft,
-        },
-      ]);
-    }
-
-    setDraftError(null);
-    resetDraft();
-    setIsFormOpen(false);
-  };
-
   const onSaveAll = async () => {
     if (
-      draft.puestoTrabajo.trim() ||
-      draft.lugarTrabajo.trim() ||
-      draft.descripcion.trim() ||
+      draft.institucion.trim() ||
+      draft.titulo.trim() ||
+      draft.campoEstudio.trim() ||
       draft.fechaComienzo ||
-      draft.fechaFinalizacion
+      draft.fechaFinalizacion ||
+      draft.descripcion.trim()
     ) {
-      setDraftError("Tienes una experiencia en edicion. Guardala o cerrala antes de guardar cambios.");
+      setDraftError("Tienes una formacion en edicion. Haz click en 'Agregar formacion' o 'Actualizar formacion' antes de guardar.");
       return;
     }
 
     const operations = buildOperations();
+
     if (operations.length === 0) {
       setDraftError("No hay cambios para guardar.");
       return;
@@ -260,38 +345,23 @@ export function ExperienceCard({
 
     setDraftError(null);
     const result = await onSaveOperations(operations);
+
     if (result.ok) {
       onClearSaveError();
-      setIsFormOpen(false);
       resetDraft();
+      setIsFormOpen(false);
     }
   };
 
-  const onDiscardChanges = () => {
-    onClearSaveError();
-    setWorkingExperiences(experiences);
-    setDraftError(null);
-    resetDraft();
-    setIsFormOpen(false);
-    onCloseEditing();
-  };
+  const listItems = isEducationManagerMode ? workingEducations : educations;
 
-  const toggleDescription = (id: string) => {
-    setExpandedDescriptions((current) => ({
-      ...current,
-      [id]: !current[id],
-    }));
-  };
-
-  const listItems = isExperienceManagerMode ? workingExperiences : experiences;
-
-  if (isExperienceManagerMode) {
+  if (isEducationManagerMode) {
     return (
       <AppCard className="px-3 py-3 sm:px-4 sm:py-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={onDiscardChanges}
+            onClick={onCancelEditing}
             disabled={isSaving}
             className="text-[1.25rem] leading-none text-[var(--navy-900)] disabled:opacity-60"
             aria-label="Volver"
@@ -299,7 +369,7 @@ export function ExperienceCard({
             ‹
           </button>
           <h3 className="font-[family-name:var(--font-spectral)] text-[2rem] font-semibold text-[var(--navy-900)]">
-            Experiencia
+            Formacion academica
           </h3>
         </div>
 
@@ -309,7 +379,7 @@ export function ExperienceCard({
           disabled={isSaving}
           className="mt-5 inline-flex items-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-[0.95rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)] disabled:opacity-60"
         >
-          + Agregar experiencia
+          + Agregar formacion
         </button>
 
         {listItems.length > 0 ? (
@@ -322,9 +392,9 @@ export function ExperienceCard({
                 <div className="flex items-center gap-4">
                   <span className="text-[1.2rem] leading-none text-slate-500">⋮⋮</span>
                   <div>
-                    <p className="text-[0.72rem] font-bold leading-tight text-slate-900">{item.puestoTrabajo}</p>
+                    <p className="text-[0.72rem] font-bold leading-tight text-slate-900">{item.titulo}</p>
                     <p className="mt-[0.1rem] text-[0.62rem] text-slate-500">
-                      {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
+                      {item.institucion} · {toDateLabel(item.fechaComienzo)} - {item.estudiandoActualmente ? "Actualidad" : toDateLabel(item.fechaFinalizacion)}
                     </p>
                   </div>
                 </div>
@@ -332,19 +402,19 @@ export function ExperienceCard({
                 <div className="ml-4 flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => onEditExperience(item)}
+                    onClick={() => onEditEducation(item)}
                     disabled={isSaving}
                     className="text-[1.1rem] leading-none text-slate-500 hover:text-[var(--navy-900)]"
-                    aria-label="Editar experiencia"
+                    aria-label="Editar formacion"
                   >
                     ✎
                   </button>
                   <button
                     type="button"
-                    onClick={() => onDeleteExperience(item.id)}
+                    onClick={() => onDeleteEducation(item.id)}
                     disabled={isSaving}
                     className="text-[1.1rem] leading-none text-rose-700 hover:text-rose-800"
-                    aria-label="Eliminar experiencia"
+                    aria-label="Eliminar formacion"
                   >
                     🗑
                   </button>
@@ -353,14 +423,14 @@ export function ExperienceCard({
             ))}
           </div>
         ) : (
-          <p className="mt-5 text-[0.7rem] text-slate-600">Todavia no agregaste experiencias laborales.</p>
+          <p className="mt-5 text-[0.7rem] text-slate-600">Todavia no agregaste formacion academica.</p>
         )}
 
         {isFormOpen ? (
-          <form onSubmit={onSubmitExperience} className="mt-5 rounded-xl border border-[var(--line)] bg-white p-4">
+          <form onSubmit={onSubmitEducation} className="mt-5 rounded-xl border border-[var(--line)] bg-white p-4">
             <div className="mb-3 flex items-center justify-between">
               <h4 className="text-[0.8rem] font-semibold text-[var(--navy-900)]">
-                {editingId ? "Editar experiencia" : "Nueva experiencia"}
+                {editingId ? "Editar formacion" : "Nueva formacion"}
               </h4>
               <button
                 type="button"
@@ -377,22 +447,32 @@ export function ExperienceCard({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="mensa-field sm:col-span-1">
-                Lugar de trabajo
+                Institucion
                 <input
-                  name="lugarTrabajo"
-                  value={draft.lugarTrabajo}
+                  name="institucion"
+                  value={draft.institucion}
                   onChange={onDraftChange}
-                  placeholder="Mensa Empresarios"
+                  placeholder="Universidad de Buenos Aires"
                 />
               </label>
 
               <label className="mensa-field sm:col-span-1">
-                Puesto de trabajo
+                Titulo
                 <input
-                  name="puestoTrabajo"
-                  value={draft.puestoTrabajo}
+                  name="titulo"
+                  value={draft.titulo}
                   onChange={onDraftChange}
-                  placeholder="Analista de Estrategia"
+                  placeholder="Licenciatura"
+                />
+              </label>
+
+              <label className="mensa-field sm:col-span-2">
+                Campo de estudio
+                <input
+                  name="campoEstudio"
+                  value={draft.campoEstudio}
+                  onChange={onDraftChange}
+                  placeholder="Fisica teorica"
                 />
               </label>
 
@@ -401,16 +481,7 @@ export function ExperienceCard({
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={startMonth}
-                    onChange={(event) => {
-                      const month = event.target.value;
-                      if (isFutureMonthForYear(month, startYear)) {
-                        setStartMonth("");
-                        pushDatePart("fechaComienzo", startYear, "");
-                        return;
-                      }
-                      setStartMonth(month);
-                      pushDatePart("fechaComienzo", startYear, month);
-                    }}
+                    onChange={(event) => onStartMonthChange(event.target.value)}
                     className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
                   >
                     <option value="">Mes</option>
@@ -427,13 +498,7 @@ export function ExperienceCard({
 
                   <select
                     value={startYear}
-                    onChange={(event) => {
-                      const year = event.target.value;
-                      const normalizedMonth = isFutureMonthForYear(startMonth, year) ? "" : startMonth;
-                      setStartYear(year);
-                      setStartMonth(normalizedMonth);
-                      pushDatePart("fechaComienzo", year, normalizedMonth);
-                    }}
+                    onChange={(event) => onStartYearChange(event.target.value)}
                     className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
                   >
                     <option value="">Año</option>
@@ -451,17 +516,8 @@ export function ExperienceCard({
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={endMonth}
-                    onChange={(event) => {
-                      const month = event.target.value;
-                      if (isFutureMonthForYear(month, endYear)) {
-                        setEndMonth("");
-                        pushDatePart("fechaFinalizacion", endYear, "");
-                        return;
-                      }
-                      setEndMonth(month);
-                      pushDatePart("fechaFinalizacion", endYear, month);
-                    }}
-                    disabled={draft.trabajoActual}
+                    onChange={(event) => onEndMonthChange(event.target.value)}
+                    disabled={draft.estudiandoActualmente}
                     className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
                   >
                     <option value="">Mes</option>
@@ -478,14 +534,8 @@ export function ExperienceCard({
 
                   <select
                     value={endYear}
-                    onChange={(event) => {
-                      const year = event.target.value;
-                      const normalizedMonth = isFutureMonthForYear(endMonth, year) ? "" : endMonth;
-                      setEndYear(year);
-                      setEndMonth(normalizedMonth);
-                      pushDatePart("fechaFinalizacion", year, normalizedMonth);
-                    }}
-                    disabled={draft.trabajoActual}
+                    onChange={(event) => onEndYearChange(event.target.value)}
+                    disabled={draft.estudiandoActualmente}
                     className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
                   >
                     <option value="">Año</option>
@@ -500,13 +550,13 @@ export function ExperienceCard({
 
               <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-slate-700">
                 <input
-                  name="trabajoActual"
+                  name="estudiandoActualmente"
                   type="checkbox"
-                  checked={draft.trabajoActual}
+                  checked={draft.estudiandoActualmente}
                   onChange={onDraftChange}
                   className="h-4 w-4 rounded border-slate-300 text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
                 />
-                Actualmente trabajo aqui
+                Actualmente estudio aqui
               </label>
 
               <label className="mensa-field sm:col-span-2">
@@ -518,7 +568,6 @@ export function ExperienceCard({
                   maxLength={300}
                   rows={4}
                 />
-                <span className="text-right text-xs text-slate-500">{draft.descripcion.length}/300</span>
               </label>
             </div>
 
@@ -527,7 +576,7 @@ export function ExperienceCard({
               disabled={isSaving}
               className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
             >
-              {editingId ? "Actualizar experiencia" : "Agregar experiencia"}
+              {editingId ? "Actualizar formacion" : "Agregar formacion"}
             </button>
 
             {draftError ? (
@@ -561,7 +610,7 @@ export function ExperienceCard({
           </button>
           <button
             type="button"
-            onClick={onDiscardChanges}
+            onClick={onCancelEditing}
             disabled={isSaving}
             className="inline-flex items-center rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
           >
@@ -576,7 +625,7 @@ export function ExperienceCard({
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
       <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
         <h3 className="font-[family-name:var(--font-spectral)] text-[0.85rem] font-bold text-[var(--navy-900)]">
-          Experiencia
+          Formacion academica
         </h3>
         {canEdit ? (
           <button
@@ -592,7 +641,7 @@ export function ExperienceCard({
 
       <div className="mt-2 border-t border-slate-100 pt-2">
         {listItems.length === 0 ? (
-          <p className="text-[0.7rem] text-slate-600">Todavia no agregaste experiencias laborales.</p>
+          <p className="text-[0.7rem] text-slate-600">Todavia no agregaste formacion academica.</p>
         ) : (
           <ul>
             {listItems.map((item) => (
@@ -601,38 +650,15 @@ export function ExperienceCard({
                 className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
               >
                 <div>
-                  <p className="text-[0.72rem] font-bold leading-tight text-slate-900">{item.puestoTrabajo}</p>
-                  <p className="mt-[0.1rem] text-[0.62rem] text-slate-500">
-                    {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
-                    {defaultLocation?.trim() ? ` · ${defaultLocation.trim()}` : ""}
+                  <p className="text-[0.72rem] font-bold text-slate-900">{item.titulo}</p>
+                  <p className="mt-[0.1rem] text-[0.62rem] text-slate-600">
+                    {item.institucion} · {toDateLabel(item.fechaComienzo)} - {item.estudiandoActualmente ? "Actualidad" : toDateLabel(item.fechaFinalizacion)}
                   </p>
-                  {item.descripcion.trim() ? (
-                    <>
-                      <p
-                        className="mt-1 text-[0.64rem] leading-[1.5] text-slate-700"
-                        style={
-                          !expandedDescriptions[item.id]
-                            ? {
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                              }
-                            : undefined
-                        }
-                      >
-                        {item.descripcion}
-                      </p>
-                      {item.descripcion.length > 120 ? (
-                        <button
-                          type="button"
-                          onClick={() => toggleDescription(item.id)}
-                          className="mt-1 text-[0.6rem] font-bold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
-                        >
-                          {expandedDescriptions[item.id] ? "menos" : "más"}
-                        </button>
-                      ) : null}
-                    </>
+                  {item.campoEstudio ? (
+                    <p className="mt-1 text-[0.64rem] text-slate-700">{item.campoEstudio}</p>
+                  ) : null}
+                  {item.descripcion ? (
+                    <p className="mt-2 text-[0.64rem] leading-[1.5] text-slate-600">{item.descripcion}</p>
                   ) : null}
                 </div>
               </li>

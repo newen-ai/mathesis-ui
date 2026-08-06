@@ -168,6 +168,24 @@ html {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
 }
 
+.mensa-field textarea,
+.mensa-field select {
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background-color: var(--surface);
+  padding: 0.64rem 0.75rem;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.mensa-field textarea:focus,
+.mensa-field select:focus {
+  outline: none;
+  border-color: var(--brand-700);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
+}
+
 .mensa-icon-button {
   border: 1px solid var(--line);
   color: var(--text-secondary);
@@ -226,4 +244,16 @@ html {
 
 .mensa-fade-up-delay {
   animation: fadeUp 460ms ease both;
+}
+
+.mensa-profile-stack .mensa-field {
+  font-size: 0.65rem;
+  gap: 0.35rem;
+}
+
+.mensa-profile-stack .mensa-field input,
+.mensa-profile-stack .mensa-field textarea,
+.mensa-profile-stack .mensa-field select {
+  font-size: 0.68rem;
+  padding: 0.5rem 0.62rem;
 }

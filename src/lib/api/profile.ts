@@ -9,8 +9,19 @@ export type EmploymentHistoryOutput = {
   id: string;
   company: string;
   jobTitle: string;
+  description: string | null;
   startYearMonth: string;
   endYearMonth: string | null;
+};
+
+export type EducationHistoryOutput = {
+  id: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy: string | null;
+  startYearMonth: string;
+  endYearMonth: string | null;
+  description: string | null;
 };
 
 export type ProfileOutput = {
@@ -20,7 +31,14 @@ export type ProfileOutput = {
   nationality: string | null;
   currentJobTitle: string | null;
   currentCompany: string | null;
+  about: string | null;
+  locationCountry: string | null;
+  locationCity: string | null;
+  locationPostalCode: string | null;
+  profileImageUrl: string | null;
+  profileBannerImageUrl: string | null;
   employmentHistory: EmploymentHistoryOutput[];
+  educationHistory: EducationHistoryOutput[];
 };
 
 export type SearchProfileOutput = {
@@ -118,6 +136,7 @@ export function isProfileSourceEmptyError(error: unknown) {
 export type EmploymentHistoryInput = {
   company: string;
   jobTitle: string;
+  description?: string;
   startYearMonth: string;
   endYearMonth?: string;
 };
@@ -127,6 +146,7 @@ export type WorkExperienceOperation =
       action: "ADD";
       company: string;
       jobTitle: string;
+      description?: string;
       startYearMonth: string;
       endYearMonth?: string;
     }
@@ -135,6 +155,7 @@ export type WorkExperienceOperation =
       id: string;
       company?: string;
       jobTitle?: string;
+      description?: string;
       startYearMonth?: string;
       endYearMonth?: string;
     }
@@ -147,6 +168,44 @@ export type PatchWorkExperiencesInput = {
   operations: WorkExperienceOperation[];
 };
 
+export type EducationHistoryInput = {
+  institution: string;
+  degree: string;
+  fieldOfStudy?: string;
+  startYearMonth: string;
+  endYearMonth?: string;
+  description?: string;
+};
+
+export type EducationOperation =
+  | {
+      action: "ADD";
+      institution: string;
+      degree: string;
+      fieldOfStudy?: string;
+      startYearMonth: string;
+      endYearMonth?: string;
+      description?: string;
+    }
+  | {
+      action: "EDIT";
+      id: string;
+      institution?: string;
+      degree?: string;
+      fieldOfStudy?: string;
+      startYearMonth?: string;
+      endYearMonth?: string;
+      description?: string;
+    }
+  | {
+      action: "REMOVE";
+      id: string;
+    };
+
+export type PatchEducationHistoryInput = {
+  operations: EducationOperation[];
+};
+
 export type SaveProfileInput = {
   firstName: string;
   lastName: string;
@@ -154,7 +213,14 @@ export type SaveProfileInput = {
   nationality?: string;
   currentJobTitle?: string;
   currentCompany?: string;
+  about?: string;
+  locationCountry?: string;
+  locationCity?: string;
+  locationPostalCode?: string;
+  profileImageUrl?: string;
+  profileBannerImageUrl?: string;
   employmentHistory?: EmploymentHistoryInput[];
+  educationHistory?: EducationHistoryInput[];
 };
 
 export async function searchProfiles(
@@ -329,6 +395,31 @@ export async function patchWorkExperiences(
         error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
           ? "NEXT_PUBLIC_API_BASE_URL is not configured"
           : "Could not connect to work experiences service",
+    };
+  }
+}
+
+export async function patchEducationHistory(
+  input: PatchEducationHistoryInput
+): Promise<ProfileMutationResponse> {
+  try {
+    const response = await apiRequest("/profile/education-history", {
+      method: "PATCH",
+      body: input,
+    });
+
+    return parseServiceResponse(
+      response,
+      `Invalid education history response (${response.status})`
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error &&
+        error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+          ? "NEXT_PUBLIC_API_BASE_URL is not configured"
+          : "Could not connect to education history service",
     };
   }
 }

@@ -15,11 +15,18 @@ export const emptyProfile: Profile = {
   nacionalidad: "",
   puesto: "",
   empresaActual: "",
+  about: "",
+  locationCountry: "",
+  locationCity: "",
+  locationPostalCode: "",
+  imagenPerfilUrl: "",
+  imagenBannerUrl: "",
 };
 
 export const emptyExperience: ExperienceDraft = {
   puestoTrabajo: "",
   lugarTrabajo: "",
+  descripcion: "",
   fechaComienzo: "",
   fechaFinalizacion: "",
   trabajoActual: false,

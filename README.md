@@ -55,6 +55,15 @@ Available files:
 
 > Note: Internally, Next.js still runs with its own runtime mode (`development` for `next dev`, `production` for `next build/start`) so framework behavior remains correct.
 
+## Live Spec Workflow
+
+Profile implementation in this workspace is guided by backend live files:
+
+- `../mathesis-backend/docs/ui-spec-live.md`
+- `../mathesis-backend/docs/agent-live-context.md`
+
+Read both before coding profile features, then update them after meaningful scope or status changes.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -19,6 +19,12 @@ const emptyProfileState: Profile = {
   nacionalidad: "",
   puesto: "",
   empresaActual: "",
+  about: "",
+  locationCountry: "",
+  locationCity: "",
+  locationPostalCode: "",
+  imagenPerfilUrl: "",
+  imagenBannerUrl: "",
 };
 
 export function ProfileInitializationView({
@@ -97,9 +103,10 @@ export function ProfileInitializationView({
               />
             </label>
             <label className="mensa-field sm:col-span-2">
-              Puesto de trabajo
+              Titular profesional (max. 80)
               <input
                 value={formState.puesto}
+                maxLength={80}
                 onChange={(event) => onFormChange("puesto", event.target.value)}
               />
             </label>
@@ -108,6 +115,52 @@ export function ProfileInitializationView({
               <input
                 value={formState.empresaActual}
                 onChange={(event) => onFormChange("empresaActual", event.target.value)}
+              />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              URL imagen de perfil
+              <input
+                value={formState.imagenPerfilUrl}
+                onChange={(event) => onFormChange("imagenPerfilUrl", event.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              URL imagen de banner
+              <input
+                value={formState.imagenBannerUrl}
+                onChange={(event) => onFormChange("imagenBannerUrl", event.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label className="mensa-field">
+              Pais
+              <input
+                value={formState.locationCountry}
+                onChange={(event) => onFormChange("locationCountry", event.target.value)}
+              />
+            </label>
+            <label className="mensa-field">
+              Ciudad
+              <input
+                value={formState.locationCity}
+                onChange={(event) => onFormChange("locationCity", event.target.value)}
+              />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              Codigo postal
+              <input
+                value={formState.locationPostalCode}
+                onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
+              />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              Acerca de (max. 800)
+              <textarea
+                value={formState.about}
+                maxLength={800}
+                rows={5}
+                onChange={(event) => onFormChange("about", event.target.value)}
               />
             </label>
           </div>
