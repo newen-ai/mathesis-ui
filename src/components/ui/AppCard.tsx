@@ -1,10 +1,13 @@
-import { ReactNode } from "react";
+import { ComponentPropsWithoutRef, ReactNode } from "react";
 
-type AppCardProps = {
+type AppCardProps = ComponentPropsWithoutRef<"section"> & {
   children: ReactNode;
-  className?: string;
 };
 
-export function AppCard({ children, className = "" }: AppCardProps) {
-  return <section className={`linkedin-card ${className}`.trim()}>{children}</section>;
+export function AppCard({ children, className = "", ...rest }: AppCardProps) {
+  return (
+    <section {...rest} className={`linkedin-card ${className}`.trim()}>
+      {children}
+    </section>
+  );
 }

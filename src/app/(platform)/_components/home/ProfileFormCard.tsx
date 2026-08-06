@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import type { Profile } from "../../_lib/types";
 
 type ProfileFormCardProps = {
   profile: Profile;
   canEdit: boolean;
+  isEditingMode: boolean;
+  onStartEditing: () => void;
+  onCloseEditing: () => void;
   profileCompletion: number;
   isLoading: boolean;
   isSaving: boolean;
@@ -13,14 +16,12 @@ type ProfileFormCardProps = {
   onClearSaveError: () => void;
 };
 
-type ProfileEntry = {
-  label: string;
-  value: string;
-};
-
 export function ProfileFormCard({
   profile,
   canEdit,
+  isEditingMode,
+  onStartEditing,
+  onCloseEditing,
   profileCompletion,
   isLoading,
   isSaving,
@@ -28,57 +29,18 @@ export function ProfileFormCard({
   onSave,
   onClearSaveError,
 }: ProfileFormCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [formState, setFormState] = useState<Profile>(profile);
 
-  useEffect(() => {
-    if (!isEditing) {
-      setFormState(profile);
-    }
-  }, [isEditing, profile]);
-
-  useEffect(() => {
-    if (!canEdit) {
-      setIsEditing(false);
-    }
-  }, [canEdit]);
-
-  const fields: ProfileEntry[] = [
-    { label: "Nombre", value: profile.nombre },
-    { label: "Apellido", value: profile.apellido },
-    { label: "Fecha de nacimiento", value: profile.fechaNacimiento },
-    { label: "Nacionalidad", value: profile.nacionalidad },
-    { label: "Puesto de trabajo", value: profile.puesto },
-    { label: "Empresa actual", value: profile.empresaActual },
-  ].filter((item) => Boolean(item.value?.trim()));
-
-  const onEdit = () => {
-    if (!canEdit) {
-      return;
-    }
-
-    onClearSaveError();
-    setFormState(profile);
-    setIsEditing(true);
-  };
-
   const onCancel = () => {
-    setFormState({
-      nombre: "",
-      apellido: "",
-      fechaNacimiento: "",
-      nacionalidad: "",
-      puesto: "",
-      empresaActual: "",
-    });
+    setFormState(profile);
     onClearSaveError();
-    setIsEditing(false);
+    onCloseEditing();
   };
 
   const onSubmitSave = async () => {
     const result = await onSave(formState);
     if (result.ok) {
-      setIsEditing(false);
+      setFormState(profile);
     }
   };
 
@@ -90,47 +52,42 @@ export function ProfileFormCard({
   };
 
   return (
-    <AppCard className="p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-slate-900">
-          Perfil profesional
+    <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3" id="profile-form-card">
+      <div className="flex items-start justify-between gap-3 border-b border-[var(--line)] pb-2">
+        <h2 className="font-[family-name:var(--font-spectral)] text-[0.85rem] font-bold text-[var(--navy-900)]">
+          {canEdit && isEditingMode ? "Editar perfil" : "Acerca de"}
         </h2>
-
-        {canEdit && !isLoading && !isEditing ? (
+        {canEdit && !isEditingMode ? (
           <button
             type="button"
-            onClick={onEdit}
-            className="inline-flex items-center rounded-xl border border-[var(--brand-700)] px-3 py-1.5 text-xs font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)]"
+            onClick={onStartEditing}
+            className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] px-3 py-1 text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)]"
           >
+            <span aria-hidden="true">✎</span>
             Editar
           </button>
         ) : null}
       </div>
-      <p className="mt-1 text-sm text-slate-600">
-        {isEditing
-          ? "Completa tu informacion basica y guarda los cambios."
-          : canEdit
-            ? "Se muestran solo los datos recibidos y completos desde el servicio."
-            : "Vista de solo lectura del perfil."}
-      </p>
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between text-xs font-medium text-slate-600">
-          <span>Completitud del perfil</span>
-          <span>{profileCompletion}%</span>
+      {canEdit && isEditingMode ? (
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-600">
+            <span>Completitud del perfil</span>
+            <span>{profileCompletion}%</span>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-slate-200">
+            <div
+              className="h-2 rounded-full bg-[var(--brand-700)] transition-all"
+              style={{ width: `${profileCompletion}%` }}
+            />
+          </div>
         </div>
-        <div className="mt-2 h-2 rounded-full bg-slate-200">
-          <div
-            className="h-2 rounded-full bg-[var(--brand-700)] transition-all"
-            style={{ width: `${profileCompletion}%` }}
-          />
-        </div>
-      </div>
+      ) : null}
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {isLoading ? (
-          <p className="text-sm text-slate-600">Cargando perfil...</p>
-        ) : isEditing && canEdit ? (
+          <p className="text-[0.68rem] text-slate-600">Cargando perfil...</p>
+        ) : canEdit && isEditingMode ? (
           <>
             <label className="mensa-field">
               Nombre
@@ -166,11 +123,13 @@ export function ProfileFormCard({
               />
             </label>
             <label className="mensa-field sm:col-span-2">
-              Puesto de trabajo
+              Titular profesional (max. 80)
               <input
                 value={formState.puesto}
+                maxLength={80}
                 onChange={(event) => onFormChange("puesto", event.target.value)}
               />
+              <span className="text-right text-xs text-slate-500">{formState.puesto.length}/80</span>
             </label>
             <label className="mensa-field sm:col-span-2">
               Empresa actual
@@ -180,6 +139,53 @@ export function ProfileFormCard({
                   onFormChange("empresaActual", event.target.value)
                 }
               />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              URL imagen de perfil
+              <input
+                value={formState.imagenPerfilUrl}
+                onChange={(event) => onFormChange("imagenPerfilUrl", event.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              URL imagen de banner
+              <input
+                value={formState.imagenBannerUrl}
+                onChange={(event) => onFormChange("imagenBannerUrl", event.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label className="mensa-field">
+              Pais
+              <input
+                value={formState.locationCountry}
+                onChange={(event) => onFormChange("locationCountry", event.target.value)}
+              />
+            </label>
+            <label className="mensa-field">
+              Ciudad
+              <input
+                value={formState.locationCity}
+                onChange={(event) => onFormChange("locationCity", event.target.value)}
+              />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              Codigo postal
+              <input
+                value={formState.locationPostalCode}
+                onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
+              />
+            </label>
+            <label className="mensa-field sm:col-span-2">
+              Acerca de (max. 800)
+              <textarea
+                value={formState.about}
+                maxLength={800}
+                rows={5}
+                onChange={(event) => onFormChange("about", event.target.value)}
+              />
+              <span className="text-right text-xs text-slate-500">{formState.about.length}/800</span>
             </label>
 
             {saveError ? (
@@ -207,15 +213,14 @@ export function ProfileFormCard({
               </button>
             </div>
           </>
-        ) : fields.length === 0 ? (
-          <p className="text-sm text-slate-600">No hay datos completos para mostrar.</p>
         ) : (
-          fields.map((field) => (
-            <div key={field.label} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{field.label}</p>
-              <p className="mt-1 text-sm text-slate-900">{field.value}</p>
+          <>
+            <div className="sm:col-span-2 pt-1">
+              <p className="text-[0.7rem] leading-[1.55] text-[var(--text-primary)]">
+                {profile.about?.trim() || "Aun no agregaste una descripcion profesional."}
+              </p>
             </div>
-          ))
+          </>
         )}
       </div>
     </AppCard>

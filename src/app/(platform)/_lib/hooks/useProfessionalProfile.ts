@@ -1,16 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { emptyProfile } from "../constants";
-import { Experience, Profile } from "../types";
+import { Education, Experience, Profile } from "../types";
 import {
+  EducationHistoryInput,
+  EducationHistoryOutput,
+  EducationOperation,
   EmploymentHistoryInput,
   EmploymentHistoryOutput,
+  getMyProfileIdentity,
   getProfileByUserId,
   getMyProfile,
   isProfileSourceEmptyError,
+  patchEducationHistory,
   patchWorkExperiences,
+  PatchEducationHistoryInput,
   PatchWorkExperiencesInput,
   ProfileOutput,
   saveMyProfile,
@@ -21,23 +27,8 @@ import {
 type ProfessionalProfileState = {
   profile: Profile;
   experiences: Experience[];
+  educations: Education[];
 };
-
-function normalizeExperience(item: Experience): Experience {
-  return {
-    ...item,
-    puestoTrabajo: item.puestoTrabajo ?? "",
-    fechaComienzo:
-      item.fechaComienzo?.length === 10
-        ? item.fechaComienzo.slice(0, 7)
-        : item.fechaComienzo,
-    fechaFinalizacion:
-      item.fechaFinalizacion?.length === 10
-        ? item.fechaFinalizacion.slice(0, 7)
-        : item.fechaFinalizacion,
-    trabajoActual: item.trabajoActual ?? !item.fechaFinalizacion,
-  };
-}
 
 function normalizeYearMonth(value: string | null | undefined) {
   if (!value) return "";
@@ -54,9 +45,7 @@ function normalizeDateInputValue(value: Date | string | null | undefined) {
   return value.length >= 10 ? value.slice(0, 10) : value;
 }
 
-function mapProfileOutputToProfile(
-  source: ProfileOutput
-): Profile {
+function mapProfileOutputToProfile(source: ProfileOutput): Profile {
   return {
     nombre: source.firstName ?? "",
     apellido: source.lastName ?? "",
@@ -64,12 +53,16 @@ function mapProfileOutputToProfile(
     nacionalidad: source.nationality ?? "",
     puesto: source.currentJobTitle ?? "",
     empresaActual: source.currentCompany ?? "",
+    about: source.about ?? "",
+    locationCountry: source.locationCountry ?? "",
+    locationCity: source.locationCity ?? "",
+    locationPostalCode: source.locationPostalCode ?? "",
+    imagenPerfilUrl: source.profileImageUrl ?? "",
+    imagenBannerUrl: source.profileBannerImageUrl ?? "",
   };
 }
 
-function mapEmploymentHistoryToExperience(
-  items: EmploymentHistoryOutput[]
-): Experience[] {
+function mapEmploymentHistoryToExperience(items: EmploymentHistoryOutput[]): Experience[] {
   return items.map((item) => {
     const fechaFinalizacion = normalizeYearMonth(item.endYearMonth);
 
@@ -77,6 +70,7 @@ function mapEmploymentHistoryToExperience(
       id: item.id,
       puestoTrabajo: item.jobTitle,
       lugarTrabajo: item.company,
+      descripcion: item.description ?? "",
       fechaComienzo: normalizeYearMonth(item.startYearMonth),
       fechaFinalizacion,
       trabajoActual: !fechaFinalizacion,
@@ -84,12 +78,28 @@ function mapEmploymentHistoryToExperience(
   });
 }
 
-function mapExperiencesToEmploymentHistoryInput(
-  items: Experience[]
-): EmploymentHistoryInput[] {
+function mapEducationHistoryToEducation(items: EducationHistoryOutput[]): Education[] {
+  return items.map((item) => {
+    const fechaFinalizacion = normalizeYearMonth(item.endYearMonth);
+
+    return {
+      id: item.id,
+      institucion: item.institution,
+      titulo: item.degree,
+      campoEstudio: item.fieldOfStudy ?? "",
+      fechaComienzo: normalizeYearMonth(item.startYearMonth),
+      fechaFinalizacion,
+      estudiandoActualmente: !fechaFinalizacion,
+      descripcion: item.description ?? "",
+    };
+  });
+}
+
+function mapExperiencesToEmploymentHistoryInput(items: Experience[]): EmploymentHistoryInput[] {
   return items.map((item) => ({
     company: item.lugarTrabajo,
     jobTitle: item.puestoTrabajo,
+    description: item.descripcion.trim(),
     startYearMonth: item.fechaComienzo,
     ...(item.trabajoActual || !item.fechaFinalizacion
       ? {}
@@ -97,9 +107,23 @@ function mapExperiencesToEmploymentHistoryInput(
   }));
 }
 
+function mapEducationsToEducationHistoryInput(items: Education[]): EducationHistoryInput[] {
+  return items.map((item) => ({
+    institution: item.institucion,
+    degree: item.titulo,
+    ...(item.campoEstudio.trim() ? { fieldOfStudy: item.campoEstudio.trim() } : {}),
+    startYearMonth: item.fechaComienzo,
+    ...(item.estudiandoActualmente || !item.fechaFinalizacion
+      ? {}
+      : { endYearMonth: item.fechaFinalizacion }),
+    ...(item.descripcion.trim() ? { description: item.descripcion.trim() } : {}),
+  }));
+}
+
 function mapProfileToSaveInput(
   profile: Profile,
-  experiences: Experience[]
+  experiences: Experience[],
+  educations: Education[]
 ): SaveProfileInput {
   const isoDateOfBirth = profile.fechaNacimiento
     ? new Date(`${profile.fechaNacimiento}T00:00:00.000Z`).toISOString()
@@ -109,16 +133,29 @@ function mapProfileToSaveInput(
     firstName: profile.nombre.trim(),
     lastName: profile.apellido.trim(),
     ...(isoDateOfBirth ? { dateOfBirth: isoDateOfBirth } : {}),
-    ...(profile.nacionalidad.trim()
-      ? { nationality: profile.nacionalidad.trim() }
-      : {}),
+    ...(profile.nacionalidad.trim() ? { nationality: profile.nacionalidad.trim() } : {}),
     ...(profile.puesto.trim() ? { currentJobTitle: profile.puesto.trim() } : {}),
-    ...(profile.empresaActual.trim()
-      ? { currentCompany: profile.empresaActual.trim() }
+    ...(profile.empresaActual.trim() ? { currentCompany: profile.empresaActual.trim() } : {}),
+    ...(profile.about.trim() ? { about: profile.about.trim() } : {}),
+    ...(profile.locationCountry.trim() ? { locationCountry: profile.locationCountry.trim() } : {}),
+    ...(profile.locationCity.trim() ? { locationCity: profile.locationCity.trim() } : {}),
+    ...(profile.locationPostalCode.trim()
+      ? { locationPostalCode: profile.locationPostalCode.trim() }
+      : {}),
+    ...(profile.imagenPerfilUrl.trim()
+      ? { profileImageUrl: profile.imagenPerfilUrl.trim() }
+      : {}),
+    ...(profile.imagenBannerUrl.trim()
+      ? { profileBannerImageUrl: profile.imagenBannerUrl.trim() }
       : {}),
     ...(experiences.length > 0
       ? {
           employmentHistory: mapExperiencesToEmploymentHistoryInput(experiences),
+        }
+      : {}),
+    ...(educations.length > 0
+      ? {
+          educationHistory: mapEducationsToEducationHistoryInput(educations),
         }
       : {}),
   };
@@ -128,66 +165,63 @@ function buildInitialProfileState(): ProfessionalProfileState {
   return {
     profile: emptyProfile,
     experiences: [],
+    educations: [],
   };
 }
-
-const isFutureYearMonth = (value: string) => {
-  if (!value) return false;
-
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const currentYearMonth = `${year}-${month}`;
-
-  return value > currentYearMonth;
-};
 
 export const useProfessionalProfile = () => {
   const searchParams = useSearchParams();
   const selectedUserId = searchParams.get("userId")?.trim() ?? "";
-  
-  // If userId param exists, we're viewing someone else's profile
+
   const canEditProfile = !selectedUserId;
 
-  const [state, setState] = useState<ProfessionalProfileState>(
-    buildInitialProfileState
-  );
+  const [state, setState] = useState<ProfessionalProfileState>(buildInitialProfileState);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
-  const [needsProfileInitialization, setNeedsProfileInitialization] =
-    useState(false);
+  const [needsProfileInitialization, setNeedsProfileInitialization] = useState(false);
   const [isSavingExperiences, setIsSavingExperiences] = useState(false);
   const [experienceSaveError, setExperienceSaveError] = useState<string | null>(null);
+  const [isSavingEducations, setIsSavingEducations] = useState(false);
+  const [educationSaveError, setEducationSaveError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const profile = state.profile;
 
-  const loadProfile = async (signal?: AbortSignal) => {
-    const remoteProfile = selectedUserId
-      ? await getProfileByUserId(selectedUserId, signal)
-      : await getMyProfile(signal);
+  const loadProfile = useCallback(
+    async (signal?: AbortSignal, withLoading = true) => {
+      if (withLoading) {
+        setIsProfileLoading(true);
+      }
 
-    setState((current) => ({
-      ...current,
-      profile: mapProfileOutputToProfile(remoteProfile),
-      experiences: mapEmploymentHistoryToExperience(
-        remoteProfile.employmentHistory ?? []
-      ),
-    }));
-    setNeedsProfileInitialization(false);
-  };
+      const remoteProfile = selectedUserId
+        ? await getProfileByUserId(selectedUserId, signal)
+        : await getMyProfile(signal);
+
+      setState((current) => ({
+        ...current,
+        profile: mapProfileOutputToProfile(remoteProfile),
+        experiences: mapEmploymentHistoryToExperience(remoteProfile.employmentHistory ?? []),
+        educations: mapEducationHistoryToEducation(remoteProfile.educationHistory ?? []),
+      }));
+
+      if (selectedUserId) {
+        setCurrentUserId(null);
+      } else {
+        const ownUserId = await getMyProfileIdentity(signal);
+        setCurrentUserId(ownUserId);
+      }
+
+      setNeedsProfileInitialization(false);
+    },
+    [selectedUserId]
+  );
 
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
 
-    setIsProfileLoading(true);
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadProfile(controller.signal)
-      .then(() => {
-        if (!isMounted) {
-          return;
-        }
-      })
       .catch((error) => {
         if (!isMounted || controller.signal.aborted) {
           return;
@@ -201,6 +235,7 @@ export const useProfessionalProfile = () => {
           ...current,
           profile: emptyProfile,
           experiences: [],
+          educations: [],
         }));
       })
       .finally(() => {
@@ -215,7 +250,7 @@ export const useProfessionalProfile = () => {
       isMounted = false;
       controller.abort();
     };
-  }, [selectedUserId]);
+  }, [loadProfile, selectedUserId]);
 
   const sortedExperiences = useMemo(() => {
     return [...state.experiences].sort((a, b) => {
@@ -225,8 +260,16 @@ export const useProfessionalProfile = () => {
     });
   }, [state.experiences]);
 
+  const sortedEducations = useMemo(() => {
+    return [...state.educations].sort((a, b) => {
+      const startDiff = b.fechaComienzo.localeCompare(a.fechaComienzo);
+      if (startDiff !== 0) return startDiff;
+      return b.fechaFinalizacion.localeCompare(a.fechaFinalizacion);
+    });
+  }, [state.educations]);
+
   const profileCompletion = useMemo(() => {
-    const totalFields = 6;
+    const totalFields = 12;
     const completed = [
       profile.nombre,
       profile.apellido,
@@ -234,7 +277,13 @@ export const useProfessionalProfile = () => {
       profile.nacionalidad,
       profile.puesto,
       profile.empresaActual,
-    ].filter(Boolean).length;
+      profile.about,
+      profile.locationCountry,
+      profile.locationCity,
+      profile.locationPostalCode,
+      profile.imagenPerfilUrl,
+      profile.imagenBannerUrl,
+    ].filter((item) => Boolean(item.trim())).length;
 
     return Math.round((completed / totalFields) * 100);
   }, [profile]);
@@ -244,12 +293,10 @@ export const useProfessionalProfile = () => {
       ? `${profile.nombre} ${profile.apellido}`.trim()
       : "Nombre y apellido";
 
-  const initials = `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`
-    .toUpperCase()
-    .trim();
+  const initials = `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase().trim();
 
   const refreshProfile = async () => {
-    await loadProfile();
+    await loadProfile(undefined, false);
   };
 
   const persistWorkExperienceOperations = async (
@@ -277,9 +324,32 @@ export const useProfessionalProfile = () => {
     }
   };
 
-  const onSaveExperienceOperations = async (
-    operations: WorkExperienceOperation[]
+  const persistEducationOperations = async (
+    operations: PatchEducationHistoryInput["operations"]
   ) => {
+    setEducationSaveError(null);
+    setIsSavingEducations(true);
+
+    const result = await patchEducationHistory({ operations });
+
+    if (!result.success) {
+      setEducationSaveError(result.message);
+      setIsSavingEducations(false);
+      return false;
+    }
+
+    try {
+      await refreshProfile();
+      return true;
+    } catch {
+      setEducationSaveError("Education was saved but refresh failed");
+      return false;
+    } finally {
+      setIsSavingEducations(false);
+    }
+  };
+
+  const onSaveExperienceOperations = async (operations: WorkExperienceOperation[]) => {
     if (operations.length === 0) {
       return { ok: true };
     }
@@ -292,12 +362,25 @@ export const useProfessionalProfile = () => {
     return { ok: true };
   };
 
+  const onSaveEducationOperations = async (operations: EducationOperation[]) => {
+    if (operations.length === 0) {
+      return { ok: true };
+    }
+
+    const saved = await persistEducationOperations(operations);
+    if (!saved) {
+      return { ok: false, message: educationSaveError ?? "Save failed" };
+    }
+
+    return { ok: true };
+  };
+
   const onSaveProfile = async (nextProfile: Profile) => {
     setProfileSaveError(null);
     setIsSavingProfile(true);
 
     const result = await saveMyProfile(
-      mapProfileToSaveInput(nextProfile, state.experiences)
+      mapProfileToSaveInput(nextProfile, state.experiences, state.educations)
     );
 
     if (!result.success) {
@@ -323,7 +406,9 @@ export const useProfessionalProfile = () => {
   return {
     profile,
     sortedExperiences,
+    sortedEducations,
     activeProfileId: selectedUserId,
+    currentUserId,
     canEditProfile,
     profileCompletion,
     isProfileLoading,
@@ -332,11 +417,15 @@ export const useProfessionalProfile = () => {
     needsProfileInitialization,
     isSavingExperiences,
     experienceSaveError,
+    isSavingEducations,
+    educationSaveError,
     userDisplayName,
     initials,
     onSaveProfile,
     onSaveExperienceOperations,
+    onSaveEducationOperations,
     clearProfileSaveError: () => setProfileSaveError(null),
     clearExperienceSaveError: () => setExperienceSaveError(null),
+    clearEducationSaveError: () => setEducationSaveError(null),
   };
 };
