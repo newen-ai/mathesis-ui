@@ -123,7 +123,7 @@ export default function RegistroPage() {
       return;
     }
 
-    router.replace("/");
+    router.replace(`/registro/enviado?email=${encodeURIComponent(email.trim().toLowerCase())}`);
     router.refresh();
   };
 

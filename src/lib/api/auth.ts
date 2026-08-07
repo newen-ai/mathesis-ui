@@ -120,6 +120,27 @@ export async function login(
 	}
 }
 
+export async function verifyEmail(token: string): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest(`/auth/confirm?token=${encodeURIComponent(token)}`);
+
+		return parseServiceResponse(
+			response,
+			"Respuesta invalida del servicio de confirmacion."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
+					: "No pudimos confirmar tu correo.",
+			details: "Error de red o CORS.",
+		};
+	}
+}
+
 export async function getSessionState(): Promise<SessionState> {
 	try {
 		const sessionResponse = await apiRequest("/auth/session");
