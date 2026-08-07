@@ -9,9 +9,11 @@ For every coding task in this workspace, agents must:
 
 1. Read `../mathesis-backend/docs/ui-spec-live.md` before implementation.
 2. Read `../mathesis-backend/docs/agent-live-context.md` before implementation.
-3. Reconcile requested scope with statuses in `ui-spec-live.md`.
-4. If scope/status changed, update `ui-spec-live.md` first.
-5. Append a session entry in `agent-live-context.md` after meaningful changes.
+3. Read `docs/ui-agent-live-guidelines.md` before implementation.
+4. Reconcile requested scope with statuses in `ui-spec-live.md`.
+5. If scope/status changed, update `ui-spec-live.md` first.
+6. Append a session entry in `agent-live-context.md` after meaningful changes.
+7. If new UI direction is provided (font size, spacing, color usage, interaction rules), update `docs/ui-agent-live-guidelines.md` before or alongside UI code changes.
 
 Required session entry fields:
 - Date/time

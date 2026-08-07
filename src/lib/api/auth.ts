@@ -16,6 +16,15 @@ type LoginInput = {
 	password: string;
 };
 
+type RequestPasswordResetInput = {
+	email: string;
+};
+
+type ResetPasswordInput = {
+	token: string;
+	newPassword: string;
+};
+
 export type SessionState = "authenticated" | "unauthenticated" | "unknown";
 
 export type SessionAccessDecision = {
@@ -120,6 +129,34 @@ export async function login(
 	}
 }
 
+export async function requestPasswordReset(
+	input: RequestPasswordResetInput
+): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest("/auth/request-reset", {
+			method: "POST",
+			body: {
+				email: input.email,
+			},
+		});
+
+		return parseServiceResponse(
+			response,
+			"Respuesta invalida del servicio de recuperación."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
+					: "No pudimos conectar con el servicio de recuperación.",
+			details: "Error de red o CORS.",
+		};
+	}
+}
+
 export async function verifyEmail(token: string): Promise<AuthServiceResponse> {
 	try {
 		const response = await apiRequest(`/auth/confirm?token=${encodeURIComponent(token)}`);
@@ -136,6 +173,35 @@ export async function verifyEmail(token: string): Promise<AuthServiceResponse> {
 				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
 					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
 					: "No pudimos confirmar tu correo.",
+			details: "Error de red o CORS.",
+		};
+	}
+}
+
+export async function resetPassword(
+	input: ResetPasswordInput
+): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest("/auth/confirm-reset", {
+			method: "POST",
+			body: {
+				token: input.token,
+				newPassword: input.newPassword,
+			},
+		});
+
+		return parseServiceResponse(
+			response,
+			"Respuesta invalida del servicio de restablecimiento."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
+					: "No pudimos restablecer tu contraseña.",
 			details: "Error de red o CORS.",
 		};
 	}

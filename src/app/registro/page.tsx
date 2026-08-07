@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { register } from "@/lib/api/auth";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
+import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { normalizeEmailInput } from "@/lib/utils/email";
 
 type ValidationErrors = {
   dni?: string;
@@ -16,9 +18,6 @@ type ValidationErrors = {
   terms?: string;
   general?: string;
 };
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const logoSrc = `${basePath}/mathesis-logo.png`;
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -62,7 +61,7 @@ export default function RegistroPage() {
   const onVerify = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeEmailInput(email);
     const nextErrors: ValidationErrors = {};
 
     if (!dni.trim() || !/^\d{6,}$/.test(dni.trim())) {
@@ -86,6 +85,7 @@ export default function RegistroPage() {
 
   const onCreateAccount = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const normalizedEmail = normalizeEmailInput(email);
 
     const nextErrors: ValidationErrors = {};
 
@@ -106,7 +106,7 @@ export default function RegistroPage() {
 
     setIsSubmitting(true);
     const result = await register({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password,
     });
 
@@ -123,7 +123,7 @@ export default function RegistroPage() {
       return;
     }
 
-    router.replace(`/registro/enviado?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+    router.replace(`/registro/enviado?email=${encodeURIComponent(normalizedEmail)}`);
     router.refresh();
   };
 
@@ -154,7 +154,7 @@ export default function RegistroPage() {
             <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={logoSrc}
+                  src={BRAND_LOGO_SRC}
                 alt="Logo Mathesis"
                 width={32}
                 height={32}

@@ -6,15 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { login } from "@/lib/api/auth";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
+import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { normalizeEmailInput } from "@/lib/utils/email";
 
 type ValidationErrors = {
   email?: string;
   password?: string;
   credentials?: string;
 };
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const logoSrc = `${basePath}/mathesis-logo.png`;
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -36,7 +35,7 @@ function LoginPageContent() {
 
   const initialEmail = useMemo(() => {
     const candidate = searchParams.get("email");
-    return candidate?.trim().toLowerCase() ?? "";
+    return normalizeEmailInput(candidate);
   }, [searchParams]);
 
   const [email, setEmail] = useState(initialEmail);
@@ -55,7 +54,7 @@ function LoginPageContent() {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedEmail = normalizeEmailInput(email);
     const nextErrors: ValidationErrors = {};
 
     if (!trimmedEmail || !isValidEmail(trimmedEmail)) {
@@ -116,7 +115,7 @@ function LoginPageContent() {
             <div className="flex flex-col items-center lg:flex-row lg:items-center lg:gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={logoSrc}
+                src={BRAND_LOGO_SRC}
                 alt="Logo Mathesis"
                 width={64}
                 height={64}
@@ -237,6 +236,7 @@ function LoginPageContent() {
 
                 <button
                   type="button"
+                  onClick={() => router.push("/forgot-password")}
                   className="text-center text-xs text-[#7A6435] transition hover:underline"
                 >
                   ¿Olvidaste tu contraseña?

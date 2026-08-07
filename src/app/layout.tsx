@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Sora, Spectral } from "next/font/google";
 import { AppToaster } from "@/components/ui/AppToaster";
+import { withBasePath } from "@/lib/assets";
 import "./globals.css";
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const withBasePath = (path: string) => `${basePath}${path}`;
 
 const sora = Sora({
   variable: "--font-sora",

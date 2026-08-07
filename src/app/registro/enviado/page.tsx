@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resolveEmailParam } from "@/lib/utils/email";
 
 type PageProps = {
   searchParams?: {
@@ -6,18 +7,8 @@ type PageProps = {
   };
 };
 
-function resolveEmail(searchEmail: string | string[] | undefined): string | null {
-  const value = Array.isArray(searchEmail) ? searchEmail[0] : searchEmail;
-
-  if (!value || !value.trim()) {
-    return null;
-  }
-
-  return value.trim().toLowerCase();
-}
-
 export default function RegistroEnviadoPage({ searchParams }: PageProps) {
-  const email = resolveEmail(searchParams?.email);
+  const email = resolveEmailParam(searchParams?.email);
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-[#FAF8F5] px-6 py-16">
