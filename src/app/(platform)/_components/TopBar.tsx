@@ -5,16 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NavItem } from "../_lib/constants";
 import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
+import { BRAND_LOGO_FULL_SRC, BRAND_LOGO_SRC } from "@/lib/assets";
 import {
   ProfileHttpError,
   getMyProfile,
   searchProfiles,
   type SearchProfileOutput,
 } from "@/lib/api/profile";
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const mobileLogoSrc = `${basePath}/mathesis-logo.png`;
-const desktopLogoSrc = `${basePath}/mathesis-logo-full.png`;
 const UI_THEME_STORAGE_KEY = "mathesis-ui-theme";
 
 type TopBarProps = {
@@ -307,7 +304,7 @@ export function TopBar({ navItems }: TopBarProps) {
       isMounted = false;
       controller.abort();
     };
-  }, [forceLogout]);
+  }, [forceLogout, router]);
 
   const onSearchTextChange = (value: string) => {
     setSearchText(value);
@@ -365,7 +362,7 @@ export function TopBar({ navItems }: TopBarProps) {
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-md px-1 py-1 transition hover:bg-[var(--surface-2)]/70">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={mobileLogoSrc}
+            src={BRAND_LOGO_SRC}
             alt="Logo Mathesis"
             width={56}
             height={56}
@@ -375,7 +372,7 @@ export function TopBar({ navItems }: TopBarProps) {
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={desktopLogoSrc}
+            src={BRAND_LOGO_FULL_SRC}
             alt="Logo Mathesis"
             width={160}
             height={42}
