@@ -72,6 +72,22 @@ html {
   font-size: 14px;
 }
 
+:root {
+  --menu-profile-name-size: 1.18rem;
+  --menu-profile-meta-size: 0.76rem;
+  --menu-item-size: 0.86rem;
+  --menu-section-size: 0.67rem;
+  --menu-logout-size: 0.86rem;
+}
+
+[data-theme="dark"] {
+  --menu-profile-name-size: 1.18rem;
+  --menu-profile-meta-size: 0.76rem;
+  --menu-item-size: 0.86rem;
+  --menu-section-size: 0.67rem;
+  --menu-logout-size: 0.86rem;
+}
+
 .linkedin-shell {
   background: var(--background);
 }

@@ -68,3 +68,9 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
   - Normal: left and middle bars yellow.
   - Strong: all three bars green.
 - After successful reset-password submit, show an inline success state first, then auto-redirect to `/login` after 2 seconds, with a manual "Ir ahora a iniciar sesión" action.
+
+## Current Active UI Directions (2026-08-08)
+- New profile menu pass is desktop-first and must be opened from the topbar user-initial trigger (not a persistent left sidebar).
+- Match provided screenshot hierarchy for menu structure and copy where feasible while preserving existing theme tokens.
+- Keep mobile menu behavior unchanged for this pass; mobile redesign will be implemented later.
+- Menu interactions for this pass: keep `Cerrar sesión` fully functional; keep profile and any existing route-backed entries navigable; keep non-routed entries visible with hover/click affordances but no navigation.
