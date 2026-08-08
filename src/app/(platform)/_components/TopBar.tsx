@@ -26,7 +26,7 @@ type SessionAccess = {
 
 type TopBarMenuItem = {
   label: string;
-  href: string;
+  href?: string;
   icon: string;
   disabledText?: string;
   activeAuxText?: string;
@@ -68,6 +68,29 @@ const menuSections: TopBarMenuSection[] = [
   {
     title: "MATHESIS",
     items: [{ label: "ABM de Mathesis", href: "#", icon: "sun" }],
+  },
+];
+
+const desktopTopMenuItems: TopBarMenuItem[] = [
+  { label: "Mi Perfil", href: "/perfil", icon: "user" },
+  { label: "Configuración", icon: "settings" },
+];
+
+const desktopMenuSections: TopBarMenuSection[] = [
+  {
+    title: "EMPRESARIAL",
+    items: [
+      { label: "Mis Empresas", icon: "building" },
+      { label: "Mensa Empresarios", href: "/red", icon: "wave" },
+      { label: "Feed Empresarial", href: "/", icon: "doc", activeAuxText: "solo ME" },
+    ],
+  },
+  {
+    title: "CUENTA",
+    items: [
+      { label: "Bloqueados", icon: "ban" },
+      { label: "Contactar a Mathesis", icon: "message" },
+    ],
   },
 ];
 
@@ -127,6 +150,15 @@ function NavIcon({ icon }: { icon: string }) {
     );
   }
 
+  if (icon === "settings") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="3.2" />
+        <path d="M12 3.8v2.1M12 18.1v2.1M20.2 12h-2.1M5.9 12H3.8M18 6l-1.5 1.5M7.5 16.5 6 18M18 18l-1.5-1.5M7.5 7.5 6 6" />
+      </svg>
+    );
+  }
+
   if (icon === "building") {
     return (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -153,6 +185,41 @@ function NavIcon({ icon }: { icon: string }) {
     );
   }
 
+  if (icon === "wave") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M7 18c1.2 0 2-1.3 2-3.1 0-2.8 1.1-6.8 3.4-9.4" />
+      </svg>
+    );
+  }
+
+  if (icon === "ban") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="12" cy="12" r="8" />
+        <path d="m7 7 10 10" />
+      </svg>
+    );
+  }
+
+  if (icon === "message") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M4.5 6.8A1.8 1.8 0 0 1 6.3 5h11.4a1.8 1.8 0 0 1 1.8 1.8v7.1a1.8 1.8 0 0 1-1.8 1.8H8.5L5 19v-3.3h-1a1.8 1.8 0 0 1-1.8-1.8V6.8a1.8 1.8 0 0 1 1.8-1.8" />
+      </svg>
+    );
+  }
+
+  if (icon === "logout") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.9">
+        <path d="M10 6H5.8A1.8 1.8 0 0 0 4 7.8v8.4A1.8 1.8 0 0 0 5.8 18H10" />
+        <path d="M14 8.5 18 12l-4 3.5" />
+        <path d="M9 12h9" />
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
       <circle cx="12" cy="12" r="7" />
@@ -174,6 +241,7 @@ export function TopBar({ navItems }: TopBarProps) {
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userIdentityLine, setUserIdentityLine] = useState("");
   const [isLoadingUserName, setIsLoadingUserName] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<SearchProfileOutput[]>([]);
@@ -253,9 +321,29 @@ export function TopBar({ navItems }: TopBarProps) {
       return;
     }
 
+    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
+    if (!isMobileViewport) {
+      return;
+    }
+
     document.body.style.setProperty("overflow", "hidden");
     return () => {
       document.body.style.removeProperty("overflow");
+    };
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDrawerOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, [drawerOpen]);
 
@@ -269,7 +357,11 @@ export function TopBar({ navItems }: TopBarProps) {
         if (!isMounted) return;
 
         const fullName = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
+        const subtitle = [profile.currentJobTitle, profile.currentCompany]
+          .filter((value) => typeof value === "string" && value.trim().length > 0)
+          .join(" · ");
         setUserName(fullName);
+        setUserIdentityLine(subtitle);
         setIsLoadingUserName(false);
       } catch (error) {
         if (!isMounted || controller.signal.aborted) {
@@ -294,6 +386,7 @@ export function TopBar({ navItems }: TopBarProps) {
         }
 
         setUserName("");
+        setUserIdentityLine("");
         setIsLoadingUserName(false);
       }
     };
@@ -471,7 +564,7 @@ export function TopBar({ navItems }: TopBarProps) {
 
           <button
             type="button"
-            onClick={() => setDrawerOpen(true)}
+            onClick={() => setDrawerOpen((current) => !current)}
             className="ml-1 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)] text-lg font-bold text-[var(--brand-500)]"
             aria-label="Abrir menu"
           >
@@ -497,6 +590,120 @@ export function TopBar({ navItems }: TopBarProps) {
         <>
           <button
             type="button"
+            className="fixed inset-0 z-[60] hidden bg-transparent md:block"
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Cerrar menu de escritorio"
+          />
+
+          <aside className="fixed right-4 top-[6.2rem] z-[70] hidden h-fit max-h-[calc(100dvh-6.85rem)] w-[min(90vw,23.4rem)] overflow-y-auto rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_22px_50px_rgba(0,0,0,0.18)] md:block">
+            <div className="border-b border-[var(--line)] px-5 py-4.5">
+              <p className="font-[family-name:var(--font-spectral)] text-[var(--menu-profile-name-size)] font-semibold leading-[1.05] text-[var(--navy-900)]">
+                {isLoadingUserName ? "Cargando..." : userName || "Mi perfil"}
+              </p>
+              <p className="mt-1 text-[var(--menu-profile-meta-size)] font-semibold leading-[1.15] text-[var(--text-secondary)]">
+                {userIdentityLine || "Miembro de Mathesis"}
+              </p>
+            </div>
+
+            <div className="border-b border-[var(--line)] py-1.5">
+              {desktopTopMenuItems.map((item) => {
+                const isActive = item.href ? isNavItemActive(item.href) : false;
+                    const itemClass = `flex w-full items-center justify-between px-5 py-2.5 text-left transition hover:bg-[var(--surface-2)] active:bg-[var(--surface-muted)] ${
+                  isActive ? "bg-[var(--surface-muted)]" : ""
+                }`;
+
+                const content = (
+                  <>
+                        <span className="flex items-center gap-2.5 text-[var(--menu-item-size)] font-semibold leading-none text-[var(--text-primary)]">
+                      <span className="text-[var(--text-secondary)]">
+                        <NavIcon icon={item.icon} />
+                      </span>
+                      {item.label}
+                    </span>
+                  </>
+                );
+
+                if (item.href) {
+                  return (
+                    <Link
+                      key={`desktop-top-${item.label}`}
+                      href={item.href}
+                      className={itemClass}
+                      onClick={() => setDrawerOpen(false)}
+                    >
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <button key={`desktop-top-${item.label}`} type="button" className={itemClass}>
+                    {content}
+                  </button>
+                );
+              })}
+            </div>
+
+            {desktopMenuSections.map((section) => (
+              <section key={`desktop-${section.title}`} className="border-b border-[var(--line)] py-1.5">
+                <h4 className="px-5 pb-1.5 pt-2.5 text-[var(--menu-section-size)] font-bold tracking-[0.16em] text-[var(--text-soft)]">{section.title}</h4>
+                {section.items.map((item) => {
+                  const isActive = item.href ? isNavItemActive(item.href) : false;
+                  const itemClass = `flex w-full items-center justify-between px-5 py-2.5 text-left transition hover:bg-[var(--surface-2)] active:bg-[var(--surface-muted)] ${
+                    isActive ? "bg-[var(--surface-muted)]" : ""
+                  }`;
+                  const content = (
+                    <>
+                      <span className="flex items-center gap-2.5 text-[var(--menu-item-size)] font-semibold leading-none text-[var(--text-primary)]">
+                        <span className="text-[var(--text-secondary)]">
+                          <NavIcon icon={item.icon} />
+                        </span>
+                        {item.label}
+                      </span>
+                      {item.activeAuxText ? (
+                        <span className="text-[0.64rem] font-semibold text-[color:color-mix(in_srgb,var(--brand-500)_72%,#5f4e2a)]">{item.activeAuxText}</span>
+                      ) : null}
+                    </>
+                  );
+
+                  if (item.href) {
+                    return (
+                      <Link
+                        key={`desktop-${section.title}-${item.label}`}
+                        href={item.href}
+                        className={itemClass}
+                        onClick={() => setDrawerOpen(false)}
+                      >
+                        {content}
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <button key={`desktop-${section.title}-${item.label}`} type="button" className={itemClass}>
+                      {content}
+                    </button>
+                  );
+                })}
+              </section>
+            ))}
+
+            <div className="px-5 py-4">
+              <button
+                type="button"
+                onClick={onLogout}
+                className="flex w-full items-center gap-2.5 rounded-xl py-1.5 text-left text-[var(--menu-logout-size)] font-semibold text-[var(--danger-500)] transition hover:bg-[color:color-mix(in_srgb,var(--danger-500)_8%,transparent)]"
+              >
+                <span aria-hidden="true">
+                  <NavIcon icon="logout" />
+                </span>
+                Cerrar sesión
+              </button>
+            </div>
+          </aside>
+
+          <button
+            type="button"
             className="fixed inset-0 z-[60] bg-[var(--accent-overlay)] md:hidden"
             onClick={() => setDrawerOpen(false)}
             aria-label="Cerrar menu"
@@ -512,7 +719,7 @@ export function TopBar({ navItems }: TopBarProps) {
                     {isLoadingUserName ? "Cargando..." : userName || "Mi perfil"}
                   </p>
                   <p className="mt-2 text-sm font-medium text-[var(--text-secondary)]">
-                    CEO · Mathesis & Newen Solutions
+                    {userIdentityLine || "Miembro de Mathesis"}
                   </p>
                 </div>
               </div>
@@ -527,7 +734,9 @@ export function TopBar({ navItems }: TopBarProps) {
               <section key={section.title} className="border-b border-[var(--line)]">
                 <h4 className="px-6 py-3 text-xs font-bold tracking-[0.16em] text-[var(--brand-500)]">{section.title}</h4>
                 {section.items.map((item) => {
-                  const active = item.href !== "#" && isNavItemActive(item.href);
+                  const routeHref = item.href ?? "#";
+                  const hasRoute = routeHref !== "#";
+                  const active = hasRoute ? isNavItemActive(routeHref) : false;
                   const commonClass = `flex w-full items-center justify-between border-t border-[color:color-mix(in_srgb,var(--line)_65%,transparent)] px-6 py-4 text-left ${
                     active ? "bg-[var(--surface-muted)]" : "bg-[var(--surface)]"
                   } ${item.disabledText ? "opacity-60" : ""}`;
@@ -549,7 +758,7 @@ export function TopBar({ navItems }: TopBarProps) {
                     </>
                   );
 
-                  if (item.href === "#") {
+                  if (!hasRoute) {
                     return (
                       <button key={`${section.title}-${item.label}`} type="button" className={commonClass}>
                         {content}
@@ -560,7 +769,7 @@ export function TopBar({ navItems }: TopBarProps) {
                   return (
                     <Link
                       key={`${section.title}-${item.label}`}
-                      href={item.href}
+                      href={routeHref}
                       className={commonClass}
                       onClick={() => setDrawerOpen(false)}
                     >
@@ -604,7 +813,7 @@ export function TopBar({ navItems }: TopBarProps) {
                 onClick={onLogout}
                 className="w-full rounded-xl border border-[color:color-mix(in_srgb,var(--danger-500)_35%,transparent)] px-4 py-3 text-sm font-semibold text-[var(--danger-500)]"
               >
-                Cerrar sesion
+                Cerrar sesión
               </button>
             </div>
           </aside>
