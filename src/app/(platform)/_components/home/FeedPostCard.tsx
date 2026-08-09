@@ -12,6 +12,7 @@ type FeedPostCardProps = {
 	post: FeedPost;
 	currentUserId: string | null;
 	onDelete: (postId: string) => Promise<{ ok: boolean; message?: string }>;
+	onToggleReaction: (postId: string) => Promise<{ ok: boolean; message?: string }>;
 	onShowComingSoon?: () => void;
 };
 
@@ -45,6 +46,7 @@ export function FeedPostCard({
 	post,
 	currentUserId,
 	onDelete,
+	onToggleReaction,
 	onShowComingSoon,
 }: FeedPostCardProps) {
 	const [menuOpen, setMenuOpen] = useState(false);
@@ -53,8 +55,7 @@ export function FeedPostCard({
 	const [actionError, setActionError] = useState<string | null>(null);
 	const [attachmentDownloadState, setAttachmentDownloadState] = useState<Record<string, boolean>>({});
 	const [attachmentDownloadErrors, setAttachmentDownloadErrors] = useState<Record<string, string>>({});
-	const [isRecommended, setIsRecommended] = useState(false);
-	const [isRecommending, setIsRecommending] = useState(false);
+	const [isTogglingReaction, setIsTogglingReaction] = useState(false);
 
 	const isOwnPost = currentUserId !== null && currentUserId === post.authorUserId;
 
@@ -72,15 +73,21 @@ export function FeedPostCard({
 
 	const attachmentCount = post.attachments.length;
 	const timeLabel = formatRelativeTime(post.createdAt);
+	const isReacted = post.currentUserReactionValue !== null;
 
-	const onRecommend = () => {
-		if (isRecommending || isRecommended) return;
+	const handleToggleReaction = async () => {
+		if (isTogglingReaction) return;
 
-		setIsRecommended(true);
-		setIsRecommending(true);
-		window.setTimeout(() => {
-			setIsRecommending(false);
-		}, 900);
+		setActionError(null);
+		setIsTogglingReaction(true);
+		try {
+			const result = await onToggleReaction(post.id);
+			if (!result.ok) {
+				setActionError(result.message ?? "No pudimos actualizar la reacción.");
+			}
+		} finally {
+			setIsTogglingReaction(false);
+		}
 	};
 
 	const onConfirmDelete = async () => {
@@ -288,15 +295,16 @@ export function FeedPostCard({
 				<div className="flex items-center justify-between px-4 py-3">
 					<button
 						type="button"
-						onClick={onRecommend}
+						onClick={handleToggleReaction}
+						disabled={isTogglingReaction}
 						className={`rounded-lg px-3 py-1 text-[1rem] font-semibold transition hover:brightness-95 ${
-							isRecommended
+							isReacted
 								? "bg-[var(--surface-muted)] text-[var(--brand-700)]"
 								: "bg-[var(--surface-2)] text-[var(--text-secondary)]"
 						}`}
 					>
-						▲ {isRecommended ? "Valorado" : "Recomendar"}
-						{isRecommending ? (
+						▲ {isReacted ? "Valorado" : "Valorar"}
+						{isTogglingReaction ? (
 							<span className="mensa-spin ml-2 inline-block h-3 w-3 rounded-full border border-current border-r-transparent" aria-hidden="true" />
 						) : null}
 					</button>

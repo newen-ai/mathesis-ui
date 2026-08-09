@@ -4,6 +4,7 @@ import {
 } from "@/lib/api/client";
 
 export type FeedSortBy = "NEWEST" | "OLDEST" | "RECENTLY_UPDATED" | "HOT";
+export type FeedReactionValue = "value";
 
 export type FeedAuthor = {
 	userId: string;
@@ -26,6 +27,8 @@ export type FeedPost = {
 	author: FeedAuthor;
 	content: string | null;
 	attachments: FeedAttachment[];
+	reactionCount: number;
+	currentUserReactionValue: FeedReactionValue | null;
 	createdAt: string;
 	updatedAt: string;
 };
@@ -47,6 +50,10 @@ export type FeedPostCreatedData = {
 export type FeedPostDeletedData = {
 	postId: string;
 	deletedAt: string;
+};
+
+export type FeedPostReactionToggledData = {
+	post: FeedPost;
 };
 
 export type FeedAttachmentDownloadErrorCode =
@@ -144,6 +151,25 @@ export async function deleteFeedPost(postId: string, signal?: AbortSignal) {
 	return parseDataResponse<FeedPostDeletedData>(
 		response,
 		"Invalid feed delete response"
+	);
+}
+
+export async function toggleFeedPostReaction(
+	postId: string,
+	reactionValue: FeedReactionValue = "value",
+	signal?: AbortSignal
+) {
+	const response = await apiRequest(`/feed/${encodeURIComponent(postId)}/reactions`, {
+		method: "POST",
+		body: {
+			reactionValue,
+		},
+		signal,
+	});
+
+	return parseDataResponse<FeedPostReactionToggledData>(
+		response,
+		"Invalid feed reaction toggle response"
 	);
 }
 

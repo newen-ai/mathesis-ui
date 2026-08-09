@@ -74,3 +74,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Match provided screenshot hierarchy for menu structure and copy where feasible while preserving existing theme tokens.
 - Keep mobile menu behavior unchanged for this pass; mobile redesign will be implemented later.
 - Menu interactions for this pass: keep `Cerrar sesión` fully functional; keep profile and any existing route-backed entries navigable; keep non-routed entries visible with hover/click affordances but no navigation.
+
+## Current Active UI Directions (2026-08-09)
+- Feed post reaction action should remain a single toggle for now, with button text switching between `Valorar` and `Valorado` based on the current user's reaction state.
+- Do not introduce a reaction picker in the UI until the backend exposes more than one usable reaction.
