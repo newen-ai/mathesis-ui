@@ -63,7 +63,7 @@ export function CatchyPhrasesBanner({ lines }: CatchyPhrasesBannerProps) {
   const currentLine = lines[activeLineIndex] ?? "";
 
   return (
-    <section className="linkedin-phrase-band border-b border-[var(--line)]">
+    <section className="mathesis-phrase-band border-b border-[var(--line)]">
       <div
         className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8"
         onMouseEnter={() => setIsPaused(true)}
@@ -75,10 +75,10 @@ export function CatchyPhrasesBanner({ lines }: CatchyPhrasesBannerProps) {
           Frases que pegan
         </span>
 
-        <div className="linkedin-phrase-stage">
+        <div className="mathesis-phrase-stage">
           <p
             key={`${activeLineIndex}-${rotation.position}`}
-            className="linkedin-phrase-text text-sm font-medium text-white sm:text-base"
+            className="mathesis-phrase-text text-sm font-medium text-white sm:text-base"
           >
             {currentLine}
           </p>
@@ -89,7 +89,7 @@ export function CatchyPhrasesBanner({ lines }: CatchyPhrasesBannerProps) {
         <div className="h-0.5 rounded-full bg-white/15">
           <div
             key={`${activeLineIndex}-${isPaused ? "paused" : "running"}`}
-            className={`linkedin-phrase-progress ${isPaused ? "is-paused" : ""}`}
+            className={`mathesis-phrase-progress ${isPaused ? "is-paused" : ""}`}
             style={{ animationDuration: `${ROTATION_MS}ms` }}
           />
         </div>

@@ -68,8 +68,8 @@ export function SessionGate({ children }: SessionGateProps) {
 
   if (isCheckingSession || sessionState === "checking") {
     return (
-      <div className="linkedin-shell flex min-h-screen items-center justify-center px-4">
-        <div className="linkedin-card w-full max-w-md p-6 text-center">
+      <div className="mathesis-shell flex min-h-screen items-center justify-center px-4">
+        <div className="mathesis-card w-full max-w-md p-6 text-center">
           <p className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-slate-900">
             Verificando sesion
           </p>

@@ -88,66 +88,66 @@ html {
   --menu-logout-size: 0.86rem;
 }
 
-.linkedin-shell {
+.mathesis-shell {
   background: var(--background);
 }
 
-.linkedin-topbar {
+.mathesis-topbar {
   box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent);
 }
 
-.linkedin-card {
+.mathesis-card {
   border: 1px solid var(--line);
   border-radius: 1rem;
   background: var(--surface);
   box-shadow: 0 1px 1px color-mix(in srgb, var(--navy-900) 7%, transparent);
 }
 
-.linkedin-nav-item {
+.mathesis-nav-item {
   display: inline-flex;
-  min-width: 106px;
+  min-width: 108px;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.24rem;
   border-radius: 0.95rem;
-  border: 1px solid transparent;
-  padding: 0.56rem 0.76rem;
+  background: color-mix(in srgb, var(--brand-100) 18%, var(--surface));
+  padding: 0.52rem 0.7rem;
   font-size: 0.79rem;
   font-weight: 600;
   color: var(--text-secondary);
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
-.linkedin-nav-item:hover {
-  background: color-mix(in srgb, var(--brand-100) 55%, transparent);
+.mathesis-nav-item:hover {
+  background: color-mix(in srgb, var(--brand-100) 70%, var(--surface));
   color: var(--text-primary);
 }
 
-.linkedin-nav-item.is-active {
-  background: var(--surface-muted);
+.mathesis-nav-item.is-active {
+  background: color-mix(in srgb, var(--surface-muted) 82%, var(--surface));
   border-color: color-mix(in srgb, var(--brand-300) 70%, transparent);
   color: var(--brand-700);
 }
 
-.linkedin-nav-dot {
-  height: 0.46rem;
-  width: 0.46rem;
-  border-radius: 9999px;
-  background: currentColor;
-  opacity: 0.82;
+.mathesis-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
-.linkedin-composer-trigger {
+.mathesis-composer-trigger {
   transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease;
 }
 
-.linkedin-composer-trigger:hover {
+.mathesis-composer-trigger:hover {
   background-color: var(--surface-2);
   border-color: var(--line-strong);
   color: var(--text-primary);
 }
 
-.linkedin-tag {
+.mathesis-tag {
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;

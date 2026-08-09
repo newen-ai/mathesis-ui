@@ -575,11 +575,11 @@ export function ProfileView() {
   }
 
   return (
-    <div className="linkedin-shell min-h-screen">
+    <div className="mathesis-shell min-h-screen">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto w-full max-w-7xl space-y-3 px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
-        <section className="linkedin-card overflow-hidden">
+        <section className="mathesis-card overflow-hidden">
           <div className="group relative">
             <div
               ref={bannerDisplayRef}

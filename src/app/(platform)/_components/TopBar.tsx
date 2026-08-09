@@ -7,6 +7,10 @@ import type { NavItem } from "../_lib/constants";
 import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
 import { BRAND_LOGO_FULL_SRC, BRAND_LOGO_SRC } from "@/lib/assets";
 import {
+  DesktopTopbarIcon,
+  type DesktopTopbarIconName,
+} from "./DesktopTopbarIcons";
+import {
   ProfileHttpError,
   getMyProfile,
   searchProfiles,
@@ -37,12 +41,22 @@ type TopBarMenuSection = {
   items: TopBarMenuItem[];
 };
 
-const desktopLabelByHref: Record<string, string> = {
-  "/": "Feed",
-  "/mensajes": "Mensajes",
-  "/notificaciones": "Notificaciones",
-  "/red": "Admin",
-  "/perfil": "Perfil",
+type DesktopTopbarItem = {
+  href: string;
+  label: string;
+  icon: DesktopTopbarIconName;
+};
+
+const desktopBaseTopbarItems: DesktopTopbarItem[] = [
+  { href: "/", label: "Feed", icon: "feed" },
+  { href: "/mensajes", label: "Mensajes", icon: "message" },
+  { href: "/notificaciones", label: "Notificaciones", icon: "bell" },
+];
+
+const desktopAdminTopbarItem: DesktopTopbarItem = {
+  href: "/admin",
+  label: "Admin",
+  icon: "admin",
 };
 
 const menuSections: TopBarMenuSection[] = [
@@ -229,6 +243,8 @@ function NavIcon({ icon }: { icon: string }) {
 }
 
 export function TopBar({ navItems }: TopBarProps) {
+  void navItems;
+
   const pathname = usePathname();
   const router = useRouter();
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -253,16 +269,13 @@ export function TopBar({ navItems }: TopBarProps) {
   const userInitial = userName.charAt(0).toUpperCase() || "M";
   const isAdmin = sessionAccess.role === "admin";
 
-  const desktopNavItems = useMemo(
-    () =>
-      navItems
-        .filter((item) => ["/", "/mensajes", "/notificaciones", "/red", "/perfil"].includes(item.href))
-        .map((item) => ({
-          ...item,
-          displayLabel: desktopLabelByHref[item.href] ?? item.label,
-        })),
-    [navItems]
-  );
+  const desktopTopbarItems = useMemo(() => {
+    if (!isAdmin) {
+      return desktopBaseTopbarItems;
+    }
+
+    return [...desktopBaseTopbarItems, desktopAdminTopbarItem];
+  }, [isAdmin]);
 
   const isNavItemActive = (href: string) => {
     if (href === "/") {
@@ -450,7 +463,7 @@ export function TopBar({ navItems }: TopBarProps) {
     normalizedSearchText.length > 0 && (isSearching || searchResults.length > 0 || !!searchMessage);
 
   return (
-    <header className="linkedin-topbar sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
+    <header className="mathesis-topbar sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-[1350px] items-center gap-3 px-4 md:h-[5.5rem] md:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-md px-1 py-1 transition hover:bg-[var(--surface-2)]/70">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -539,28 +552,20 @@ export function TopBar({ navItems }: TopBarProps) {
             {theme === "light" ? "Dark" : "Light"}
           </button>
 
-          {desktopNavItems.map((item) => (
+          {desktopTopbarItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`linkedin-nav-item ${
+              className={`mathesis-nav-item ${
                 isNavItemActive(item.href) ? "is-active" : ""
               }`}
             >
-              <span className="linkedin-nav-dot" aria-hidden="true" />
-              <span>{item.displayLabel}</span>
+              <span className="mathesis-nav-icon" aria-hidden="true">
+                <DesktopTopbarIcon name={item.icon} />
+              </span>
+              <span>{item.label}</span>
             </Link>
           ))}
-
-          {isAdmin ? (
-            <Link
-              href="/admin"
-              className={`linkedin-nav-item ${isNavItemActive("/admin") ? "is-active" : ""}`}
-            >
-              <span className="linkedin-nav-dot" aria-hidden="true" />
-              <span>Admin dashboard</span>
-            </Link>
-          ) : null}
 
           <button
             type="button"
