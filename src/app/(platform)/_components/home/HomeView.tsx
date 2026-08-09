@@ -137,7 +137,7 @@ export function HomeView() {
 	}
 
 	return (
-		<div className="linkedin-shell min-h-screen pb-24 lg:pb-0">
+		<div className="mathesis-shell min-h-screen pb-24 lg:pb-0">
 			<TopBar navItems={navItems} />
 
 			<main className="mx-auto grid w-full max-w-[1370px] gap-5 px-0 py-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:px-8 lg:py-4">

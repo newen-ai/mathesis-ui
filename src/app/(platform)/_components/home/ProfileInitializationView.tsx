@@ -52,7 +52,7 @@ export function ProfileInitializationView({
   };
 
   return (
-    <div className="linkedin-shell min-h-screen">
+    <div className="mathesis-shell min-h-screen">
       <TopBar navItems={navItems} />
       <CatchyPhrasesBanner lines={catchyLines} />
 

@@ -12,7 +12,7 @@ type ModulePageProps = {
 
 export function ModulePage({ title, subtitle, children }: ModulePageProps) {
   return (
-    <div className="linkedin-shell min-h-screen">
+    <div className="mathesis-shell min-h-screen">
       <TopBar navItems={navItems} />
       <CatchyPhrasesBanner lines={catchyLines} />
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
