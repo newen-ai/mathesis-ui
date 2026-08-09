@@ -94,6 +94,7 @@ export function HomeView() {
 		hasMore,
 		createPost,
 		deletePost,
+		toggleReaction,
 		loadMore,
 	} = useHomeFeed();
 	const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -164,6 +165,7 @@ export function HomeView() {
 							post={post}
 							currentUserId={currentUserId}
 							onDelete={deletePost}
+							onToggleReaction={toggleReaction}
 							onShowComingSoon={onShowComingSoon}
 						/>
 					))}

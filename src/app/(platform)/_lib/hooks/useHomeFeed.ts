@@ -6,6 +6,7 @@ import {
 	createFeedPost,
 	deleteFeedPost,
 	listFeedPosts,
+	toggleFeedPostReaction,
 	type FeedPost,
 	type FeedSortBy,
 } from "@/lib/api/feed";
@@ -195,6 +196,27 @@ export const useHomeFeed = () => {
 		[]
 	);
 
+	const toggleReaction = useCallback(async (postId: string) => {
+		setError(null);
+
+		try {
+			const response = await toggleFeedPostReaction(postId);
+
+			setPosts((current) =>
+				current.map((post) => (post.id === response.data.post.id ? response.data.post : post))
+			);
+			return { ok: true };
+		} catch (error) {
+			const message =
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no está configurada."
+					: "No pudimos actualizar la reacción.";
+
+			return { ok: false, message };
+		}
+	}, []);
+
 	const removePost = useCallback(async (postId: string) => {
 		setIsMutating(true);
 		setError(null);
@@ -237,6 +259,7 @@ export const useHomeFeed = () => {
 		...feedState,
 		createPost,
 		deletePost: removePost,
+		toggleReaction,
 		loadMore,
 		refresh,
 		pageSize: FEED_PAGE_SIZE,
