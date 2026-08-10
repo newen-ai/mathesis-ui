@@ -16,6 +16,8 @@ import {
   searchProfiles,
   type SearchProfileOutput,
 } from "@/lib/api/profile";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { getTwoInitials } from "@/lib/utils/name";
 const UI_THEME_STORAGE_KEY = "mathesis-ui-theme";
 
 type TopBarProps = {
@@ -257,6 +259,7 @@ export function TopBar({ navItems }: TopBarProps) {
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userProfileImageUrl, setUserProfileImageUrl] = useState<string | null>(null);
   const [userIdentityLine, setUserIdentityLine] = useState("");
   const [isLoadingUserName, setIsLoadingUserName] = useState(true);
   const [searchText, setSearchText] = useState("");
@@ -266,7 +269,10 @@ export function TopBar({ navItems }: TopBarProps) {
   const [sessionAccess, setSessionAccess] = useState<SessionAccess>({ role: null });
 
   const normalizedSearchText = useMemo(() => searchText.trim(), [searchText]);
-  const userInitial = userName.charAt(0).toUpperCase() || "M";
+  const userInitials = useMemo(
+    () => getTwoInitials({ fullName: userName, fallback: "ME" }),
+    [userName]
+  );
   const isAdmin = sessionAccess.role === "admin";
 
   const desktopTopbarItems = useMemo(() => {
@@ -374,6 +380,7 @@ export function TopBar({ navItems }: TopBarProps) {
           .filter((value) => typeof value === "string" && value.trim().length > 0)
           .join(" · ");
         setUserName(fullName);
+        setUserProfileImageUrl(profile.profileImageUrl ?? null);
         setUserIdentityLine(subtitle);
         setIsLoadingUserName(false);
       } catch (error) {
@@ -399,6 +406,7 @@ export function TopBar({ navItems }: TopBarProps) {
         }
 
         setUserName("");
+        setUserProfileImageUrl(null);
         setUserIdentityLine("");
         setIsLoadingUserName(false);
       }
@@ -570,10 +578,16 @@ export function TopBar({ navItems }: TopBarProps) {
           <button
             type="button"
             onClick={() => setDrawerOpen((current) => !current)}
-            className="ml-1 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)] text-lg font-bold text-[var(--brand-500)]"
+            className="ml-1 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)]"
             aria-label="Abrir menu"
           >
-            {userInitial}
+            <UserAvatar
+              imageUrl={userProfileImageUrl}
+              initials={userInitials}
+              label="Foto de perfil"
+              className="flex h-full w-full items-center justify-center"
+              initialsClassName="text-lg font-bold text-[var(--brand-500)]"
+            />
           </button>
         </nav>
 
@@ -716,9 +730,13 @@ export function TopBar({ navItems }: TopBarProps) {
           <aside className="fixed right-0 top-[6.2rem] z-[70] h-[calc(100dvh-6.2rem)] w-[78vw] max-w-[420px] overflow-y-auto border-l border-[var(--line)] bg-[var(--surface)] md:hidden">
             <div className="border-b border-[var(--line)] bg-[var(--navy-900)] p-6 text-white">
               <div className="flex items-start gap-4">
-                <span className="flex h-16 w-16 items-center justify-center rounded-full border border-[var(--line-strong)] text-3xl font-semibold text-[var(--brand-500)]">
-                  {userInitial}
-                </span>
+                <UserAvatar
+                  imageUrl={userProfileImageUrl}
+                  initials={userInitials}
+                  label="Foto de perfil"
+                  className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)]"
+                  initialsClassName="text-3xl font-semibold text-[var(--brand-500)]"
+                />
                 <div>
                   <p className="font-[family-name:var(--font-spectral)] text-3xl font-semibold leading-none">
                     {isLoadingUserName ? "Cargando..." : userName || "Mi perfil"}

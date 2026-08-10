@@ -10,6 +10,7 @@ export type FeedAuthor = {
 	userId: string;
 	firstName: string | null;
 	lastName: string | null;
+	profileImageUrl?: string | null;
 	currentJobTitle: string | null;
 	currentCompany: string | null;
 };

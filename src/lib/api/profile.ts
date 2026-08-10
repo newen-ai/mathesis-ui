@@ -45,6 +45,7 @@ export type SearchProfileOutput = {
   userId: string;
   firstName: string;
   lastName: string;
+  profileImageUrl?: string | null;
 };
 
 export class ProfileSourceEmptyError extends Error {

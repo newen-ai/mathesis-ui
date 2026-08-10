@@ -631,7 +631,7 @@ export function ProfileView() {
                   style={{ backgroundImage: `url(${profile.imagenPerfilUrl.trim()})` }}
                 />
               ) : (
-                initials || "M"
+                initials || "ME"
               )}
               {canEditProfile ? (
                 <button

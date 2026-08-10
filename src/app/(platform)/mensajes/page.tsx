@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModulePage } from "../_components/ModulePage";
 import { getMyProfileIdentity, searchProfiles } from "@/lib/api/profile";
+import { getTwoInitials } from "@/lib/utils/name";
 import {
   ChatDetail,
   ChatMessageSummary,
@@ -23,12 +25,14 @@ type Thread = {
   detail: ChatDetail;
   displayName: string;
   roleLine: string;
+  profileImageUrl: string | null;
 };
 
 type ContactOption = {
   userId: string;
   fullName: string;
   roleLine: string;
+  profileImageUrl: string | null;
 };
 
 const CHAT_LIST_LIMIT = 30;
@@ -76,6 +80,7 @@ function deriveThreadPresentation(
       detail,
       displayName: detail.title?.trim() || "Grupo sin titulo",
       roleLine: `${detail.members.length} miembros`,
+      profileImageUrl: null,
     };
   }
 
@@ -86,6 +91,7 @@ function deriveThreadPresentation(
     detail,
     displayName: otherMember ? formatFullName(otherMember.user) : "Chat directo",
     roleLine: otherMember ? formatRoleLine(otherMember.user) : "Contacto",
+    profileImageUrl: otherMember?.user.profileImageUrl ?? null,
   };
 }
 
@@ -156,6 +162,7 @@ export default function MensajesPage() {
             userId: member.user.userId,
             fullName: formatFullName(member.user),
             roleLine: formatRoleLine(member.user),
+            profileImageUrl: member.user.profileImageUrl ?? null,
           });
         }
       }
@@ -608,6 +615,7 @@ export default function MensajesPage() {
                 userId: item.userId,
                 fullName: `${item.firstName} ${item.lastName}`.trim(),
                 roleLine: "Resultado de busqueda",
+                profileImageUrl: item.profileImageUrl ?? null,
               }))
           );
         }
@@ -662,12 +670,7 @@ export default function MensajesPage() {
               ) : null}
 
               {threads.map((thread) => {
-                const initials = thread.displayName
-                  .split(" ")
-                  .slice(0, 2)
-                  .map((word) => word[0])
-                  .join("")
-                  .toUpperCase();
+                const initials = getTwoInitials({ fullName: thread.displayName });
                 const isActive = !isComposerOpen && selectedThreadId === thread.summary.id;
                 const lastPreview = thread.summary.lastMessagePreview || "Sin mensajes por ahora";
 
@@ -691,9 +694,13 @@ export default function MensajesPage() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-xs font-bold text-[var(--brand-300)]">
-                        {initials || "M"}
-                      </span>
+                      <UserAvatar
+                        imageUrl={thread.profileImageUrl}
+                        initials={initials}
+                        label={`Foto de perfil de ${thread.displayName}`}
+                        className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+                        initialsClassName="text-xs font-bold text-[var(--brand-300)]"
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <p className="truncate text-[1rem] font-semibold text-[var(--text-primary)]">
@@ -798,12 +805,7 @@ export default function MensajesPage() {
                   <div className="space-y-2">
                     {displayedContacts.map((contact) => {
                       const selected = recipientUserIds.includes(contact.userId);
-                      const initials = contact.fullName
-                        .split(" ")
-                        .slice(0, 2)
-                        .map((word) => word[0])
-                        .join("")
-                        .toUpperCase();
+                      const initials = getTwoInitials({ fullName: contact.fullName });
 
                       return (
                         <div
@@ -811,9 +813,13 @@ export default function MensajesPage() {
                           className="flex items-center justify-between gap-3 border-b border-[var(--line)] pb-2"
                         >
                           <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--navy-800)] text-xs font-bold text-[var(--brand-300)]">
-                              {initials || "M"}
-                            </span>
+                            <UserAvatar
+                              imageUrl={contact.profileImageUrl}
+                              initials={initials}
+                              label={`Foto de perfil de ${contact.fullName}`}
+                              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-800)]"
+                              initialsClassName="text-xs font-bold text-[var(--brand-300)]"
+                            />
                             <div className="min-w-0">
                               <p className="truncate text-lg font-semibold text-[var(--text-primary)]">
                                 {contact.fullName}

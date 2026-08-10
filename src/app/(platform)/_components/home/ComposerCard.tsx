@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AppCard } from "@/components/ui/AppCard";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 const MAX_PDF_FILES = 5;
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
@@ -20,6 +21,7 @@ type ComposerPublishResult = {
 
 type ComposerCardProps = {
 	initials: string;
+	avatarImageUrl?: string | null;
 	isSubmitting: boolean;
 	onPublish: (input: ComposerPublishInput) => Promise<ComposerPublishResult>;
 };
@@ -32,6 +34,7 @@ function formatFileSize(sizeBytes: number) {
 
 export function ComposerCard({
 	initials,
+	avatarImageUrl,
 	isSubmitting,
 	onPublish,
 }: ComposerCardProps) {
@@ -149,9 +152,13 @@ export function ComposerCard({
 		<AppCard className="rounded-none border-x-0 p-4 md:rounded-2xl md:border-x">
 			<form onSubmit={onSubmit}>
 				<div className="flex items-center gap-3">
-					<span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)] text-lg font-bold text-[var(--brand-500)]">
-						{initials || "M"}
-					</span>
+					<UserAvatar
+						imageUrl={avatarImageUrl}
+						initials={initials}
+						label="Foto de perfil"
+						className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)]"
+						initialsClassName="text-lg font-bold text-[var(--brand-500)]"
+					/>
 					<button
 						type="button"
 						onClick={() => setIsOpen(true)}

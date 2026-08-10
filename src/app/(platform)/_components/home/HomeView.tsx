@@ -77,6 +77,7 @@ function FeedSkeleton() {
 
 export function HomeView() {
 	const {
+		profile,
 		initials,
 		needsProfileInitialization,
 		isSavingProfile,
@@ -143,7 +144,12 @@ export function HomeView() {
 
 			<main className="mx-auto grid w-full max-w-[1370px] gap-5 px-0 py-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:px-8 lg:py-4">
 				<section className="mensa-fade-up-delay space-y-4 px-0 md:px-4 lg:px-0">
-					<ComposerCard initials={initials} isSubmitting={isMutating} onPublish={onPublishPost} />
+					<ComposerCard
+						initials={initials}
+						avatarImageUrl={profile.imagenPerfilUrl}
+						isSubmitting={isMutating}
+						onPublish={onPublishPost}
+					/>
 
 					{error ? (
 						<div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">

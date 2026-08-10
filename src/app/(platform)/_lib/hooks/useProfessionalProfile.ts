@@ -23,6 +23,7 @@ import {
   SaveProfileInput,
   WorkExperienceOperation,
 } from "@/lib/api/profile";
+import { getTwoInitials } from "@/lib/utils/name";
 
 type ProfessionalProfileState = {
   profile: Profile;
@@ -293,7 +294,10 @@ export const useProfessionalProfile = () => {
       ? `${profile.nombre} ${profile.apellido}`.trim()
       : "Nombre y apellido";
 
-  const initials = `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`.toUpperCase().trim();
+  const initials = getTwoInitials({
+    firstName: profile.nombre,
+    lastName: profile.apellido,
+  });
 
   const refreshProfile = async () => {
     await loadProfile(undefined, false);

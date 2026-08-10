@@ -2,11 +2,13 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
 	downloadFeedAttachmentFile,
 	FeedAttachmentDownloadError,
 	type FeedPost,
 } from "@/lib/api/feed";
+import { getTwoInitials } from "@/lib/utils/name";
 
 type FeedPostCardProps = {
 	post: FeedPost;
@@ -70,6 +72,15 @@ export function FeedPostCard({
 			.join(" · ");
 		return jobParts;
 	}, [post.author.currentCompany, post.author.currentJobTitle]);
+
+	const authorInitials = useMemo(
+		() =>
+			getTwoInitials({
+				firstName: post.author.firstName,
+				lastName: post.author.lastName,
+			}),
+		[post.author.firstName, post.author.lastName]
+	);
 
 	const attachmentCount = post.attachments.length;
 	const timeLabel = formatRelativeTime(post.createdAt);
@@ -161,9 +172,13 @@ export function FeedPostCard({
 				<div className="px-4 pt-4">
 					<div className="flex items-start justify-between gap-3">
 						<div className="flex items-start gap-3">
-							<span className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)] text-xl font-bold text-[var(--brand-500)]">
-								{(post.author.firstName ?? post.author.lastName ?? "M").charAt(0).toUpperCase()}
-							</span>
+								<UserAvatar
+									imageUrl={post.author.profileImageUrl}
+									initials={authorInitials}
+									label={`Foto de perfil de ${authorName}`}
+									className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)]"
+									initialsClassName="text-xl font-bold text-[var(--brand-500)]"
+								/>
 
 							<div>
 								<div className="flex flex-wrap items-center gap-2">
