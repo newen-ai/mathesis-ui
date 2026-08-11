@@ -19,9 +19,9 @@ export function getTwoInitials({
   firstName,
   lastName,
   fullName,
-  fallback = "ME",
+  fallback = "M",
 }: TwoInitialsInput) {
-  const safeFallback = firstTwoChars(fallback) || "ME";
+  const safeFallback = firstTwoChars(fallback) || "M";
 
   const first = firstName?.trim() ?? "";
   const last = lastName?.trim() ?? "";

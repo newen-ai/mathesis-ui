@@ -25,6 +25,11 @@ type ResetPasswordInput = {
 	newPassword: string;
 };
 
+type ChangePasswordInput = {
+	currentPassword: string;
+	newPassword: string;
+};
+
 export type SessionState = "authenticated" | "unauthenticated" | "unknown";
 
 export type SessionAccessDecision = {
@@ -202,6 +207,35 @@ export async function resetPassword(
 				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
 					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
 					: "No pudimos restablecer tu contraseña.",
+			details: "Error de red o CORS.",
+		};
+	}
+}
+
+export async function changePassword(
+	input: ChangePasswordInput
+): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest("/auth/change-password", {
+			method: "POST",
+			body: {
+				currentPassword: input.currentPassword,
+				newPassword: input.newPassword,
+			},
+		});
+
+		return parseServiceResponse(
+			response,
+			"Respuesta invalida del servicio de cambio de contraseña."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
+					: "No pudimos cambiar tu contraseña.",
 			details: "Error de red o CORS.",
 		};
 	}

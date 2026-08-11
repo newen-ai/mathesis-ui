@@ -446,7 +446,7 @@ export function EducationCard({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Institucion
                 <input
                   name="institucion"
@@ -456,7 +456,7 @@ export function EducationCard({
                 />
               </label>
 
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Titulo
                 <input
                   name="titulo"
@@ -466,7 +466,7 @@ export function EducationCard({
                 />
               </label>
 
-              <label className="mensa-field sm:col-span-2">
+              <label className="mathesis-field sm:col-span-2">
                 Campo de estudio
                 <input
                   name="campoEstudio"
@@ -476,7 +476,7 @@ export function EducationCard({
                 />
               </label>
 
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Fecha de comienzo
                 <div className="grid grid-cols-2 gap-2">
                   <select
@@ -511,7 +511,7 @@ export function EducationCard({
                 </div>
               </label>
 
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Fecha de finalizacion
                 <div className="grid grid-cols-2 gap-2">
                   <select
@@ -559,7 +559,7 @@ export function EducationCard({
                 Actualmente estudio aqui
               </label>
 
-              <label className="mensa-field sm:col-span-2">
+              <label className="mathesis-field sm:col-span-2">
                 Descripcion (max. 300)
                 <textarea
                   name="descripcion"

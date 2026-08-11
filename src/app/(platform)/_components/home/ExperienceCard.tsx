@@ -376,7 +376,7 @@ export function ExperienceCard({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Lugar de trabajo
                 <input
                   name="lugarTrabajo"
@@ -386,7 +386,7 @@ export function ExperienceCard({
                 />
               </label>
 
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Puesto de trabajo
                 <input
                   name="puestoTrabajo"
@@ -396,7 +396,7 @@ export function ExperienceCard({
                 />
               </label>
 
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Fecha de comienzo
                 <div className="grid grid-cols-2 gap-2">
                   <select
@@ -446,7 +446,7 @@ export function ExperienceCard({
                 </div>
               </label>
 
-              <label className="mensa-field sm:col-span-1">
+              <label className="mathesis-field sm:col-span-1">
                 Fecha de finalizacion
                 <div className="grid grid-cols-2 gap-2">
                   <select
@@ -509,7 +509,7 @@ export function ExperienceCard({
                 Actualmente trabajo aqui
               </label>
 
-              <label className="mensa-field sm:col-span-2">
+              <label className="mathesis-field sm:col-span-2">
                 Descripcion (max. 300)
                 <textarea
                   name="descripcion"

@@ -143,7 +143,7 @@ export function HomeView() {
 			<TopBar navItems={navItems} />
 
 			<main className="mx-auto grid w-full max-w-[1370px] gap-5 px-0 py-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:px-8 lg:py-4">
-				<section className="mensa-fade-up-delay space-y-4 px-0 md:px-4 lg:px-0">
+				<section className="mathesis-fade-up-delay space-y-4 px-0 md:px-4 lg:px-0">
 					<ComposerCard
 						initials={initials}
 						avatarImageUrl={profile.imagenPerfilUrl}
@@ -196,7 +196,7 @@ export function HomeView() {
 			<MobileBottomNav />
 
 			{toastMessage ? (
-				<div className="mensa-toast fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] shadow-lg lg:bottom-6 lg:left-auto lg:right-6 lg:translate-x-0">
+				<div className="mathesis-toast fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] shadow-lg lg:bottom-6 lg:left-auto lg:right-6 lg:translate-x-0">
 					{toastMessage}
 				</div>
 			) : null}

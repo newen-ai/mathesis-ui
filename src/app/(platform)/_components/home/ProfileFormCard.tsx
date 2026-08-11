@@ -89,21 +89,21 @@ export function ProfileFormCard({
           <p className="text-[0.68rem] text-[var(--text-secondary)]">Cargando perfil...</p>
         ) : canEdit && isEditingMode ? (
           <>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Nombre
               <input
                 value={formState.nombre}
                 onChange={(event) => onFormChange("nombre", event.target.value)}
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Apellido
               <input
                 value={formState.apellido}
                 onChange={(event) => onFormChange("apellido", event.target.value)}
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Fecha de nacimiento
               <input
                 type="date"
@@ -113,7 +113,7 @@ export function ProfileFormCard({
                 }
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Nacionalidad
               <input
                 value={formState.nacionalidad}
@@ -122,7 +122,7 @@ export function ProfileFormCard({
                 }
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Titular profesional (max. 80)
               <input
                 value={formState.puesto}
@@ -131,7 +131,7 @@ export function ProfileFormCard({
               />
               <span className="text-right text-xs text-[var(--text-soft)]">{formState.puesto.length}/80</span>
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Empresa actual
               <input
                 value={formState.empresaActual}
@@ -140,7 +140,7 @@ export function ProfileFormCard({
                 }
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               URL imagen de perfil
               <input
                 value={formState.imagenPerfilUrl}
@@ -148,7 +148,7 @@ export function ProfileFormCard({
                 placeholder="https://..."
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               URL imagen de banner
               <input
                 value={formState.imagenBannerUrl}
@@ -156,28 +156,28 @@ export function ProfileFormCard({
                 placeholder="https://..."
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Pais
               <input
                 value={formState.locationCountry}
                 onChange={(event) => onFormChange("locationCountry", event.target.value)}
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Ciudad
               <input
                 value={formState.locationCity}
                 onChange={(event) => onFormChange("locationCity", event.target.value)}
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Codigo postal
               <input
                 value={formState.locationPostalCode}
                 onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Acerca de (max. 800)
               <textarea
                 value={formState.about}

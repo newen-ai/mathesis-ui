@@ -16,15 +16,13 @@ import {
   searchProfiles,
   type SearchProfileOutput,
 } from "@/lib/api/profile";
+import { useUiTheme } from "@/lib/theme/useUiTheme";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { getTwoInitials } from "@/lib/utils/name";
-const UI_THEME_STORAGE_KEY = "mathesis-ui-theme";
 
 type TopBarProps = {
   navItems: NavItem[];
 };
-
-type ThemeMode = "light" | "dark";
 
 type SessionAccess = {
   role: SessionRole | null;
@@ -89,8 +87,13 @@ const menuSections: TopBarMenuSection[] = [
 
 const desktopTopMenuItems: TopBarMenuItem[] = [
   { label: "Mi Perfil", href: "/perfil", icon: "user" },
-  { label: "Configuración", icon: "settings" },
+  { label: "Configuración", href: "/account/configuration", icon: "settings" },
 ];
+
+const accountMenuSection: TopBarMenuSection = {
+  title: "CUENTA",
+  items: [{ label: "Configuración", href: "/account/configuration", icon: "settings" }],
+};
 
 const desktopMenuSections: TopBarMenuSection[] = [
   {
@@ -249,14 +252,7 @@ export function TopBar({ navItems }: TopBarProps) {
 
   const pathname = usePathname();
   const router = useRouter();
-  const [theme, setTheme] = useState<ThemeMode>(() => {
-    if (typeof window === "undefined") {
-      return "light";
-    }
-
-    const savedTheme = window.localStorage.getItem(UI_THEME_STORAGE_KEY);
-    return savedTheme === "dark" ? "dark" : "light";
-  });
+  useUiTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [userProfileImageUrl, setUserProfileImageUrl] = useState<string | null>(null);
@@ -270,7 +266,7 @@ export function TopBar({ navItems }: TopBarProps) {
 
   const normalizedSearchText = useMemo(() => searchText.trim(), [searchText]);
   const userInitials = useMemo(
-    () => getTwoInitials({ fullName: userName, fallback: "ME" }),
+    () => getTwoInitials({ fullName: userName, fallback: "M" }),
     [userName]
   );
   const isAdmin = sessionAccess.role === "admin";
@@ -301,10 +297,6 @@ export function TopBar({ navItems }: TopBarProps) {
     forceLogout();
   };
 
-  const toggleTheme = () => {
-    setTheme((current) => (current === "light" ? "dark" : "light"));
-  };
-
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
@@ -328,11 +320,6 @@ export function TopBar({ navItems }: TopBarProps) {
       controller.abort();
     };
   }, []);
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    window.localStorage.setItem(UI_THEME_STORAGE_KEY, theme);
-  }, [theme]);
 
   useEffect(() => {
     if (!drawerOpen) {
@@ -551,15 +538,6 @@ export function TopBar({ navItems }: TopBarProps) {
         </div>
 
         <nav className="ml-auto hidden items-center gap-2 md:flex">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="mensa-icon-button h-11 px-4 text-xs font-semibold"
-            aria-label="Cambiar tema"
-          >
-            {theme === "light" ? "Dark" : "Light"}
-          </button>
-
           {desktopTopbarItems.map((item) => (
             <Link
               key={item.href}
@@ -707,6 +685,34 @@ export function TopBar({ navItems }: TopBarProps) {
               </section>
             ))}
 
+            <section className="border-b border-[var(--line)] py-1.5">
+              <h4 className="px-5 pb-1.5 pt-2.5 text-[var(--menu-section-size)] font-bold tracking-[0.16em] text-[var(--text-soft)]">
+                {accountMenuSection.title}
+              </h4>
+              {accountMenuSection.items.map((item) => {
+                const isActive = item.href ? isNavItemActive(item.href) : false;
+                const itemClass = `flex w-full items-center justify-between px-5 py-2.5 text-left transition hover:bg-[var(--surface-2)] active:bg-[var(--surface-muted)] ${
+                  isActive ? "bg-[var(--surface-muted)]" : ""
+                }`;
+
+                return (
+                  <Link
+                    key={`mobile-${accountMenuSection.title}-${item.label}`}
+                    href={item.href ?? "#"}
+                    className={itemClass}
+                    onClick={() => setDrawerOpen(false)}
+                  >
+                    <span className="flex items-center gap-2.5 text-[var(--menu-item-size)] font-semibold leading-none text-[var(--text-primary)]">
+                      <span className="text-[var(--text-secondary)]">
+                        <NavIcon icon={item.icon} />
+                      </span>
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </section>
+
             <div className="px-5 py-4">
               <button
                 type="button"
@@ -823,14 +829,32 @@ export function TopBar({ navItems }: TopBarProps) {
               </section>
             ) : null}
 
+            <section className="border-b border-[var(--line)]">
+              <h4 className="px-6 py-3 text-xs font-bold tracking-[0.16em] text-[var(--brand-500)]">
+                {accountMenuSection.title}
+              </h4>
+              {accountMenuSection.items.map((item) => (
+                <Link
+                  key={`mobile-${item.label}`}
+                  href={item.href ?? "#"}
+                  className={`flex w-full items-center justify-between border-t border-[color:color-mix(in_srgb,var(--line)_65%,transparent)] px-6 py-4 text-left ${
+                    item.href && isNavItemActive(item.href)
+                      ? "bg-[var(--surface-muted)]"
+                      : "bg-[var(--surface)]"
+                  }`}
+                  onClick={() => setDrawerOpen(false)}
+                >
+                  <span className="flex items-center gap-4 text-xl font-medium text-[var(--text-primary)]">
+                    <span className="text-[var(--text-secondary)]">
+                      <NavIcon icon={item.icon} />
+                    </span>
+                    {item.label}
+                  </span>
+                </Link>
+              ))}
+            </section>
+
             <div className="space-y-3 border-t border-[var(--line)] p-5">
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="w-full rounded-xl border border-[var(--line)] px-4 py-3 text-sm font-semibold text-[var(--text-primary)]"
-              >
-                Tema: {theme === "light" ? "Light" : "Dark"}
-              </button>
               <button
                 type="button"
                 onClick={onLogout}

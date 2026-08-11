@@ -16,12 +16,12 @@ export function LeftSidebar({
   profileCompletion,
 }: LeftSidebarProps) {
   return (
-    <aside className="mensa-fade-up space-y-4 lg:sticky lg:top-20">
+    <aside className="mathesis-fade-up space-y-4 lg:sticky lg:top-20">
       <AppCard className="overflow-hidden">
         <div className="h-16 bg-gradient-to-r from-[#0a66c2] to-[#20a4b8]" />
         <div className="-mt-8 px-4 pb-4">
           <span className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-slate-800 text-lg font-bold text-white">
-            {initials || "ME"}
+            {initials || "M"}
           </span>
           <h1 className="mt-2 font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
             {userDisplayName}

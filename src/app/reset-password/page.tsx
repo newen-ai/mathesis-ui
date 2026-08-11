@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { resetPassword } from "@/lib/api/auth";
@@ -226,9 +227,8 @@ function ResetPasswordContent() {
                   >
                     Nueva contraseña
                   </label>
-                  <input
+                  <PasswordInput
                     id="password"
-                    type="password"
                     autoComplete="new-password"
                     placeholder="••••••••"
                     value={password}
@@ -277,9 +277,8 @@ function ResetPasswordContent() {
                   >
                     Repetir nueva contraseña
                   </label>
-                  <input
+                  <PasswordInput
                     id="confirmPassword"
-                    type="password"
                     autoComplete="new-password"
                     placeholder="••••••••"
                     value={confirmPassword}
