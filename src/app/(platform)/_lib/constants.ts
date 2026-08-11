@@ -107,9 +107,9 @@ export const defaultFeedPosts: FeedPost[] = [
   {
     id: "seed-3",
     autor: "Carlos Vega",
-    cargo: "CEO · TechFlow · ∫ Mensa Empresarios",
+    cargo: "CEO · TechFlow · ∫ Mathesis",
     tiempo: "hace 1 dia",
-    etiqueta: "ME",
+    etiqueta: "M",
     contenido:
       "Lanzamos la segunda version de nuestro producto de automatizacion con IA para pymes. Reducimos 40% el tiempo en tareas administrativas de nuestros primeros clientes.",
   },

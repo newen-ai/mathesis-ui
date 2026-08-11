@@ -117,7 +117,3 @@ In your GitHub repository:
 2. In `Build and deployment`, set `Source` to `GitHub Actions`.
 
 After that, every push to `main` triggers deployment.
-
-Your app will be available at:
-
-- `https://newen-ai.github.io/mensa-empresarios/`

@@ -78,3 +78,12 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-08-09)
 - Feed post reaction action should remain a single toggle for now, with button text switching between `Valorar` and `Valorado` based on the current user's reaction state.
 - Do not introduce a reaction picker in the UI until the backend exposes more than one usable reaction.
+
+## Current Active UI Directions (2026-08-10)
+- Main Configuración route for this pass is /account/configuration while visible UI copy remains Spanish.
+- The first configuration pass must ship both mobile and desktop together.
+- On mobile, the initial Configuración view must match the provided screenshot structure and density before follow-up subpages are implemented.
+- On desktop, keep the existing HTML v0.2 settings information architecture and align presentation to the current app shell/tokens.
+- Remove the standalone theme toggle from the topbar and mobile drawer; the active dark-mode control belongs inside Configuración for this pass.
+- Bloqueados should be implemented as a dedicated page (not an overlay) and visually match the provided screenshot with a two-column desktop layout and an explicit back button next to the page title.
+- Password visibility (eye) controls must use the brand gold token in dark mode to maintain contrast and visual consistency.

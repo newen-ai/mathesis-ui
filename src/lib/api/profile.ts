@@ -55,6 +55,13 @@ export class ProfileSourceEmptyError extends Error {
   }
 }
 
+export type ContactMessageCategory =
+  | "GENERAL_INQUIRY"
+  | "TECHNICAL_ISSUE"
+  | "SUGGESTION"
+  | "BUG_REPORT"
+  | "OTHER";
+
 export class ProfileHttpError extends Error {
   status: number;
   details?: {
@@ -421,6 +428,74 @@ export async function patchEducationHistory(
         error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
           ? "NEXT_PUBLIC_API_BASE_URL is not configured"
           : "Could not connect to education history service",
+    };
+  }
+}
+
+export async function sendContactMessage(
+  category: ContactMessageCategory,
+  details: string
+): Promise<ProfileMutationResponse> {
+  try {
+    const response = await apiRequest("/support/contact", {
+      method: "POST",
+      body: { category, details },
+    });
+
+    return parseServiceResponse(
+      response,
+      `Invalid contact message response (${response.status})`
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error &&
+        error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+          ? "NEXT_PUBLIC_API_BASE_URL is not configured"
+          : "Could not connect to support service",
+    };
+  }
+}
+
+export async function getMyPreferences(): Promise<{ themePreference: string } | null> {
+  try {
+    const response = await apiRequest("/profile/me/preferences");
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await parseDataResponse<{ themePreference: string }>(
+      response,
+      "Invalid preferences response"
+    );
+
+    return payload.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateMyPreferences(themePreference: string): Promise<ProfileMutationResponse> {
+  try {
+    const response = await apiRequest("/profile/me/preferences", {
+      method: "PATCH",
+      body: { themePreference },
+    });
+
+    return parseServiceResponse(
+      response,
+      `Invalid preferences response (${response.status})`
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error &&
+        error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+          ? "NEXT_PUBLIC_API_BASE_URL is not configured"
+          : "Could not connect to profile service",
     };
   }
 }

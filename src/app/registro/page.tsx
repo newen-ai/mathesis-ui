@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/api/auth";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { normalizeEmailInput } from "@/lib/utils/email";
@@ -37,7 +38,6 @@ export default function RegistroPage() {
   // Paso 2 — crear acceso
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -426,40 +426,15 @@ export default function RegistroPage() {
                     <label htmlFor="password" className="text-xs font-bold tracking-wide text-[#0A2540]">
                       Contraseña
                     </label>
-                    <div className="relative">
-                      <input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="new-password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(event) => setPassword(event.target.value)}
-                        aria-invalid={Boolean(errors.password)}
-                        className="w-full rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 pr-16 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] transition hover:text-[#0A2540]"
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-                          <circle cx="12" cy="12" r="3" />
-                          {showPassword ? <line x1="3" y1="3" x2="21" y2="21" /> : null}
-                        </svg>
-                      </button>
-                    </div>
+                    <PasswordInput
+                      id="password"
+                      autoComplete="new-password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      aria-invalid={Boolean(errors.password)}
+                      className="w-full rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
+                    />
                     <p className="text-[0.7rem] leading-relaxed text-[#666666]">
                       Mínimo 8 caracteres, con al menos una mayúscula, una minúscula, un número y un
                       carácter especial (ej: ! @ # $).
@@ -473,40 +448,15 @@ export default function RegistroPage() {
                     <label htmlFor="confirmPassword" className="text-xs font-bold tracking-wide text-[#0A2540]">
                       Repetir contraseña
                     </label>
-                    <div className="relative">
-                      <input
-                        id="confirmPassword"
-                        type={showPassword ? "text" : "password"}
-                        autoComplete="new-password"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(event) => setConfirmPassword(event.target.value)}
-                        aria-invalid={Boolean(errors.confirmPassword)}
-                        className="w-full rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 pr-11 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] transition hover:text-[#0A2540]"
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-                          <circle cx="12" cy="12" r="3" />
-                          {showPassword ? <line x1="3" y1="3" x2="21" y2="21" /> : null}
-                        </svg>
-                      </button>
-                    </div>
+                    <PasswordInput
+                      id="confirmPassword"
+                      autoComplete="new-password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                      aria-invalid={Boolean(errors.confirmPassword)}
+                      className="w-full rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
+                    />
                     {errors.confirmPassword ? (
                       <p className="text-xs font-medium text-red-700">{errors.confirmPassword}</p>
                     ) : null}

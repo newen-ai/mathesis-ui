@@ -69,7 +69,7 @@ export function ProfileInitializationView({
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Nombre
               <input
                 value={formState.nombre}
@@ -77,7 +77,7 @@ export function ProfileInitializationView({
                 required
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Apellido
               <input
                 value={formState.apellido}
@@ -85,7 +85,7 @@ export function ProfileInitializationView({
                 required
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Fecha de nacimiento
               <input
                 type="date"
@@ -95,14 +95,14 @@ export function ProfileInitializationView({
                 }
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Nacionalidad
               <input
                 value={formState.nacionalidad}
                 onChange={(event) => onFormChange("nacionalidad", event.target.value)}
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Titular profesional (max. 80)
               <input
                 value={formState.puesto}
@@ -110,14 +110,14 @@ export function ProfileInitializationView({
                 onChange={(event) => onFormChange("puesto", event.target.value)}
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Empresa actual
               <input
                 value={formState.empresaActual}
                 onChange={(event) => onFormChange("empresaActual", event.target.value)}
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               URL imagen de perfil
               <input
                 value={formState.imagenPerfilUrl}
@@ -125,7 +125,7 @@ export function ProfileInitializationView({
                 placeholder="https://..."
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               URL imagen de banner
               <input
                 value={formState.imagenBannerUrl}
@@ -133,28 +133,28 @@ export function ProfileInitializationView({
                 placeholder="https://..."
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Pais
               <input
                 value={formState.locationCountry}
                 onChange={(event) => onFormChange("locationCountry", event.target.value)}
               />
             </label>
-            <label className="mensa-field">
+            <label className="mathesis-field">
               Ciudad
               <input
                 value={formState.locationCity}
                 onChange={(event) => onFormChange("locationCity", event.target.value)}
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Codigo postal
               <input
                 value={formState.locationPostalCode}
                 onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
               />
             </label>
-            <label className="mensa-field sm:col-span-2">
+            <label className="mathesis-field sm:col-span-2">
               Acerca de (max. 800)
               <textarea
                 value={formState.about}

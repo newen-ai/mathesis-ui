@@ -631,7 +631,7 @@ export function ProfileView() {
                   style={{ backgroundImage: `url(${profile.imagenPerfilUrl.trim()})` }}
                 />
               ) : (
-                initials || "ME"
+                initials || "M"
               )}
               {canEditProfile ? (
                 <button
@@ -717,7 +717,7 @@ export function ProfileView() {
           </div>
         </section>
 
-        <section className="mensa-fade-up-delay mensa-profile-stack space-y-2">
+        <section className="mathesis-fade-up-delay mathesis-profile-stack space-y-2">
           <ProfileFormCard
             key={`profile-form-${editSessionId}`}
             profile={profile}

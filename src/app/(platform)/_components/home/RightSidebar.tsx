@@ -6,7 +6,7 @@ type RightSidebarProps = {
 
 export function RightSidebar({ professionalStampLines }: RightSidebarProps) {
   return (
-    <aside className="mensa-fade-up hidden space-y-4 lg:sticky lg:top-24 lg:block">
+    <aside className="mathesis-fade-up hidden space-y-4 lg:sticky lg:top-24 lg:block">
       <AppCard className="p-6">
         <h3 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-[var(--navy-900)]">
           ∫ Mathesis

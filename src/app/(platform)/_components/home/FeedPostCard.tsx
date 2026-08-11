@@ -194,7 +194,7 @@ export function FeedPostCard({
 						<div className="relative">
 							<button
 								type="button"
-								className="mensa-icon-button flex h-9 w-9 items-center justify-center"
+								className="mathesis-icon-button flex h-9 w-9 items-center justify-center"
 								aria-label="Más acciones"
 								onClick={() => setMenuOpen((current) => !current)}
 							>
@@ -320,7 +320,7 @@ export function FeedPostCard({
 					>
 						▲ {isReacted ? "Valorado" : "Valorar"}
 						{isTogglingReaction ? (
-							<span className="mensa-spin ml-2 inline-block h-3 w-3 rounded-full border border-current border-r-transparent" aria-hidden="true" />
+							<span className="mathesis-spin ml-2 inline-block h-3 w-3 rounded-full border border-current border-r-transparent" aria-hidden="true" />
 						) : null}
 					</button>
 
