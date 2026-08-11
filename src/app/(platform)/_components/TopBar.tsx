@@ -685,34 +685,6 @@ export function TopBar({ navItems }: TopBarProps) {
               </section>
             ))}
 
-            <section className="border-b border-[var(--line)] py-1.5">
-              <h4 className="px-5 pb-1.5 pt-2.5 text-[var(--menu-section-size)] font-bold tracking-[0.16em] text-[var(--text-soft)]">
-                {accountMenuSection.title}
-              </h4>
-              {accountMenuSection.items.map((item) => {
-                const isActive = item.href ? isNavItemActive(item.href) : false;
-                const itemClass = `flex w-full items-center justify-between px-5 py-2.5 text-left transition hover:bg-[var(--surface-2)] active:bg-[var(--surface-muted)] ${
-                  isActive ? "bg-[var(--surface-muted)]" : ""
-                }`;
-
-                return (
-                  <Link
-                    key={`mobile-${accountMenuSection.title}-${item.label}`}
-                    href={item.href ?? "#"}
-                    className={itemClass}
-                    onClick={() => setDrawerOpen(false)}
-                  >
-                    <span className="flex items-center gap-2.5 text-[var(--menu-item-size)] font-semibold leading-none text-[var(--text-primary)]">
-                      <span className="text-[var(--text-secondary)]">
-                        <NavIcon icon={item.icon} />
-                      </span>
-                      {item.label}
-                    </span>
-                  </Link>
-                );
-              })}
-            </section>
-
             <div className="px-5 py-4">
               <button
                 type="button"
