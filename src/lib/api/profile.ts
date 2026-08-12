@@ -24,6 +24,10 @@ export type EducationHistoryOutput = {
   description: string | null;
 };
 
+export type BadgeOutput = {
+  slug: string;
+};
+
 export type ProfileOutput = {
   firstName: string;
   lastName: string;
@@ -37,6 +41,7 @@ export type ProfileOutput = {
   locationPostalCode: string | null;
   profileImageUrl: string | null;
   profileBannerImageUrl: string | null;
+  badges: BadgeOutput[];
   employmentHistory: EmploymentHistoryOutput[];
   educationHistory: EducationHistoryOutput[];
 };

@@ -87,3 +87,8 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Remove the standalone theme toggle from the topbar and mobile drawer; the active dark-mode control belongs inside Configuración for this pass.
 - Bloqueados should be implemented as a dedicated page (not an overlay) and visually match the provided screenshot with a two-column desktop layout and an explicit back button next to the page title.
 - Password visibility (eye) controls must use the brand gold token in dark mode to maintain contrast and visual consistency.
+
+## Current Active UI Directions (2026-08-12)
+- In perfil header, render zero or more badge chips below the display name from backend-provided active badges.
+- Badge chip label must be generated from slug: split by underscore, replace underscores with spaces, and capitalize first letter of each word.
+- Badge chips must include the integral sign prefix `∫` before the formatted badge label.
