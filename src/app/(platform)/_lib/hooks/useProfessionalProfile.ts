@@ -29,6 +29,7 @@ type ProfessionalProfileState = {
   profile: Profile;
   experiences: Experience[];
   educations: Education[];
+  badges: string[];
 };
 
 function normalizeYearMonth(value: string | null | undefined) {
@@ -167,6 +168,7 @@ function buildInitialProfileState(): ProfessionalProfileState {
     profile: emptyProfile,
     experiences: [],
     educations: [],
+    badges: [],
   };
 }
 
@@ -203,6 +205,7 @@ export const useProfessionalProfile = () => {
         profile: mapProfileOutputToProfile(remoteProfile),
         experiences: mapEmploymentHistoryToExperience(remoteProfile.employmentHistory ?? []),
         educations: mapEducationHistoryToEducation(remoteProfile.educationHistory ?? []),
+        badges: (remoteProfile.badges ?? []).map((badge) => badge.slug),
       }));
 
       if (selectedUserId) {
@@ -237,6 +240,7 @@ export const useProfessionalProfile = () => {
           profile: emptyProfile,
           experiences: [],
           educations: [],
+          badges: [],
         }));
       })
       .finally(() => {
@@ -411,6 +415,7 @@ export const useProfessionalProfile = () => {
     profile,
     sortedExperiences,
     sortedEducations,
+    badges: state.badges,
     activeProfileId: selectedUserId,
     currentUserId,
     canEditProfile,

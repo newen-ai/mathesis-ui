@@ -7,6 +7,7 @@ import {
 } from "../../_lib/constants";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
 import type { Profile } from "../../_lib/types";
+import { formatBadgeSlug } from "@/lib/utils/badge";
 import { TopBar } from "../TopBar";
 import { EducationCard } from "./EducationCard";
 import { ExperienceCard } from "./ExperienceCard";
@@ -198,6 +199,7 @@ export function ProfileView() {
     educationSaveError,
     userDisplayName,
     initials,
+    badges,
     onSaveProfile,
     onSaveExperienceOperations,
     onSaveEducationOperations,
@@ -663,9 +665,18 @@ export function ProfileView() {
                 <h1 className="font-[family-name:var(--font-spectral)] text-[1.05rem] font-semibold leading-tight text-[var(--navy-900)] sm:text-[1.3rem]">
                   {userDisplayName}
                 </h1>
-                <div className="mt-1.5 inline-flex rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-[0.55rem] py-[0.22rem] text-[0.56rem] font-semibold text-[var(--brand-700)]">
-                  ∫ Mensa AR
-                </div>
+                {badges.length > 0 ? (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    {badges.map((slug, index) => (
+                      <div
+                        key={`${slug}-${index}`}
+                        className="inline-flex rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-[0.55rem] py-[0.22rem] text-[0.56rem] font-semibold text-[var(--brand-700)]"
+                      >
+                        {`∫ ${formatBadgeSlug(slug)}`}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <p className="mt-1.5 text-[0.72rem] text-[var(--text-primary)] sm:mt-2 sm:text-[0.85rem]">{headline}</p>
               </div>
 
