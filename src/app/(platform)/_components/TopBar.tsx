@@ -74,7 +74,7 @@ const menuSections: TopBarMenuSection[] = [
   {
     title: "EMPRESARIAL",
     items: [
-      { label: "Mis Empresas", href: "#", icon: "building" },
+      { label: "Mis Empresas", href: "/my-enterprises", icon: "building" },
       { label: "Mathesis", href: "/red", icon: "mark" },
       { label: "Feed Empresarial", href: "#", icon: "doc", activeAuxText: "solo ME" },
     ],
@@ -99,7 +99,7 @@ const desktopMenuSections: TopBarMenuSection[] = [
   {
     title: "EMPRESARIAL",
     items: [
-      { label: "Mis Empresas", icon: "building" },
+      { label: "Mis Empresas", href: "/my-enterprises", icon: "building" },
       { label: "Mensa Empresarios", href: "/red", icon: "wave" },
       { label: "Feed Empresarial", href: "/", icon: "doc", activeAuxText: "solo ME" },
     ],
