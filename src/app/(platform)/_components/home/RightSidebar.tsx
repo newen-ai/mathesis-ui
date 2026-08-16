@@ -1,10 +1,27 @@
 import { AppCard } from "@/components/ui/AppCard";
 
+type MembershipCtaVariant = "brand" | "danger";
+
 type RightSidebarProps = {
   professionalStampLines: string[];
+  membershipCtaLabel: string;
+  membershipCtaVariant: MembershipCtaVariant;
+  isMembershipCtaDisabled: boolean;
+  onMembershipCtaClick: () => void;
 };
 
-export function RightSidebar({ professionalStampLines }: RightSidebarProps) {
+export function RightSidebar({
+  professionalStampLines,
+  membershipCtaLabel,
+  membershipCtaVariant,
+  isMembershipCtaDisabled,
+  onMembershipCtaClick,
+}: RightSidebarProps) {
+  const membershipCtaClassName =
+    membershipCtaVariant === "danger"
+      ? "mt-6 rounded-full bg-[var(--danger-500)] px-6 py-3 text-base font-semibold text-white transition hover:bg-[var(--danger-400)]"
+      : "mt-6 rounded-full bg-[var(--brand-500)] px-6 py-3 text-base font-semibold text-[var(--navy-900)] transition hover:brightness-95";
+
   return (
     <aside className="mathesis-fade-up hidden space-y-4 lg:sticky lg:top-24 lg:block">
       <AppCard className="p-6">
@@ -17,9 +34,11 @@ export function RightSidebar({ professionalStampLines }: RightSidebarProps) {
 
         <button
           type="button"
-          className="mt-6 rounded-full bg-[var(--brand-500)] px-6 py-3 text-base font-semibold text-[var(--navy-900)] transition hover:brightness-95"
+          onClick={onMembershipCtaClick}
+          disabled={isMembershipCtaDisabled}
+          className={`${membershipCtaClassName} disabled:cursor-not-allowed disabled:opacity-70`}
         >
-          Solicitar membresia
+          {membershipCtaLabel}
         </button>
 
         <ul className="mt-6 space-y-2 text-sm text-[var(--text-secondary)]">

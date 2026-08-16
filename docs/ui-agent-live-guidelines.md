@@ -105,3 +105,21 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Any UI change must be validated in both light and dark themes before signoff.
 - New color usage should be introduced in `globals.css` as semantic tokens/classes first, then consumed by pages/components.
 - Avoid light-only navy text colors in dark mode paths; use theme-aware semantic heading/text tokens.
+
+## Current Active UI Directions (2026-08-15 Admin Tabs)
+- In admin dashboards, tab controls must stay readable in all themes by avoiding white-on-white states.
+- Use brand navy/blue styling for inactive tab states.
+- Use brand gold styling for active/selected tab states.
+- In the Mathesis admin Mensa section, the visible admin list must include only current Mensa Empresarios admins.
+- Use blue/navy row backgrounds for the Mensa admin list (avoid white list rows there).
+- Provide an "Agregar admin" popup flow with searchable users to grant Mensa Empresarios admin access.
+- Prioritize high-contrast text for summary/subtitle/helper copy on admin screens.
+- The dedicated Mensa admin URL is `/admin/companies-admin`.
+- On `companies-admin`, use tabs for `Solicitudes pendientes` and `Usuarios aprobados`.
+- Pending requests in `companies-admin` must use icon-only approve/reject actions (check and cross) with semantic success/danger colors.
+- Approved users in `companies-admin` must include an icon action to remove access from the Mensa Empresarios group.
+- On `companies-admin`, apply the same blue-background + white-text readability rules used in Mathesis admin lists.
+- In Home right sidebar, the Mensa Empresarios CTA must be state-driven:
+  - `Solicitar membresía` when user has no badge and no open request.
+  - `Cancelar solicitud` (danger/negative color) when user has an open pending request and no badge.
+  - `Ir a Mensa Empresarios` when user already has the badge.

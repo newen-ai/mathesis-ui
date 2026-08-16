@@ -7,10 +7,11 @@ import { CatchyPhrasesBanner } from "./home/CatchyPhrasesBanner";
 type ModulePageProps = {
   title: string;
   subtitle: string;
+  subtitleClassName?: string;
   children: ReactNode;
 };
 
-export function ModulePage({ title, subtitle, children }: ModulePageProps) {
+export function ModulePage({ title, subtitle, subtitleClassName, children }: ModulePageProps) {
   return (
     <div className="mathesis-shell min-h-screen">
       <TopBar navItems={navItems} />
@@ -20,7 +21,7 @@ export function ModulePage({ title, subtitle, children }: ModulePageProps) {
           <h1 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-slate-900 sm:text-3xl">
             {title}
           </h1>
-          <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+          <p className={subtitleClassName ?? "mt-1 text-sm text-slate-600"}>{subtitle}</p>
         </AppCard>
 
         <section className="mt-4 space-y-4">{children}</section>
