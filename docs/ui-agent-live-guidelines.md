@@ -123,3 +123,5 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
   - `Solicitar membresía` when user has no badge and no open request.
   - `Cancelar solicitud` (danger/negative color) when user has an open pending request and no badge.
   - `Ir a Mensa Empresarios` when user already has the badge.
+- Add a temporary topbar shortcut for ME admins only that links directly to `/admin/companies-admin` for testing.
+- Keep the shortcut hidden for users who do not pass the ME admin access check.

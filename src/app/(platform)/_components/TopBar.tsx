@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { NavItem } from "../_lib/constants";
+import { checkCompaniesAdminAccess } from "@/lib/api/admin";
 import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
 import { BRAND_LOGO_FULL_SRC, BRAND_LOGO_SRC } from "@/lib/assets";
 import {
@@ -56,6 +57,12 @@ const desktopBaseTopbarItems: DesktopTopbarItem[] = [
 const desktopAdminTopbarItem: DesktopTopbarItem = {
   href: "/admin",
   label: "Admin",
+  icon: "admin",
+};
+
+const desktopCompaniesAdminTopbarItem: DesktopTopbarItem = {
+  href: "/admin/companies-admin",
+  label: "ME Admin",
   icon: "admin",
 };
 
@@ -263,6 +270,7 @@ export function TopBar({ navItems }: TopBarProps) {
   const [searchMessage, setSearchMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [sessionAccess, setSessionAccess] = useState<SessionAccess>({ role: null });
+  const [hasCompaniesAdminAccess, setHasCompaniesAdminAccess] = useState(false);
 
   const normalizedSearchText = useMemo(() => searchText.trim(), [searchText]);
   const userInitials = useMemo(
@@ -272,12 +280,18 @@ export function TopBar({ navItems }: TopBarProps) {
   const isAdmin = sessionAccess.role === "admin";
 
   const desktopTopbarItems = useMemo(() => {
-    if (!isAdmin) {
-      return desktopBaseTopbarItems;
+    const items = [...desktopBaseTopbarItems];
+
+    if (hasCompaniesAdminAccess) {
+      items.push(desktopCompaniesAdminTopbarItem);
     }
 
-    return [...desktopBaseTopbarItems, desktopAdminTopbarItem];
-  }, [isAdmin]);
+    if (isAdmin) {
+      items.push(desktopAdminTopbarItem);
+    }
+
+    return items;
+  }, [hasCompaniesAdminAccess, isAdmin]);
 
   const isNavItemActive = (href: string) => {
     if (href === "/") {
@@ -314,6 +328,30 @@ export function TopBar({ navItems }: TopBarProps) {
     };
 
     void loadSessionAccess();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadCompaniesAccess = async () => {
+      try {
+        const { status } = await checkCompaniesAdminAccess(controller.signal);
+        if (!isMounted || controller.signal.aborted) return;
+
+        setHasCompaniesAdminAccess(status === 200);
+      } catch {
+        if (!isMounted || controller.signal.aborted) return;
+        setHasCompaniesAdminAccess(false);
+      }
+    };
+
+    void loadCompaniesAccess();
 
     return () => {
       isMounted = false;
