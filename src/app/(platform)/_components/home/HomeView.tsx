@@ -1,14 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { navItems, professionalStampLines } from "../../_lib/constants";
 import { useHomeFeed } from "../../_lib/hooks/useHomeFeed";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
+import {
+	cancelCompaniesMembershipRequest,
+	createCompaniesMembershipRequest,
+	getCompaniesMembershipState,
+	type CompaniesMembershipState,
+} from "@/lib/api/admin";
 import { TopBar } from "../TopBar";
 import { ComposerCard } from "./ComposerCard";
 import { FeedPostCard } from "./FeedPostCard";
 import { ProfileInitializationView } from "./ProfileInitializationView";
 import { RightSidebar } from "./RightSidebar";
+
+type MembershipCtaMode = "loading" | "request" | "cancel" | "go";
+
+function resolveMembershipCtaMode(state: CompaniesMembershipState): MembershipCtaMode {
+	if (state.hasBadge) return "go";
+	if (state.hasOpenRequest) return "cancel";
+	return "request";
+}
 
 function MobileBottomNav() {
 	return (
@@ -99,6 +113,13 @@ export function HomeView() {
 		loadMore,
 	} = useHomeFeed();
 	const [toastMessage, setToastMessage] = useState<string | null>(null);
+	const [membershipCtaMode, setMembershipCtaMode] = useState<MembershipCtaMode>("loading");
+	const [isMembershipActionPending, setIsMembershipActionPending] = useState(false);
+
+	const reloadMembershipState = useCallback(async (signal?: AbortSignal) => {
+		const membershipState = await getCompaniesMembershipState(signal);
+		setMembershipCtaMode(resolveMembershipCtaMode(membershipState));
+	}, []);
 
 	const onPublishPost = async ({
 		content,
@@ -115,6 +136,56 @@ export function HomeView() {
 	const onShowComingSoon = () => {
 		setToastMessage("Coming soon...");
 	};
+
+	const onMembershipCtaClick = async () => {
+		if (membershipCtaMode === "loading" || isMembershipActionPending) {
+			return;
+		}
+
+		if (membershipCtaMode === "go") {
+			setToastMessage("Redirección a Mensa Empresarios próximamente.");
+			return;
+		}
+
+		setIsMembershipActionPending(true);
+		try {
+			if (membershipCtaMode === "request") {
+				const result = await createCompaniesMembershipRequest();
+				if (!result.success) {
+					setToastMessage(result.message || "No se pudo enviar la solicitud.");
+					return;
+				}
+				setToastMessage("Solicitud enviada.");
+			} else if (membershipCtaMode === "cancel") {
+				const result = await cancelCompaniesMembershipRequest();
+				if (!result.success) {
+					setToastMessage(result.message || "No se pudo cancelar la solicitud.");
+					return;
+				}
+				setToastMessage("Solicitud cancelada.");
+			}
+
+			await reloadMembershipState();
+		} catch {
+			setToastMessage("No pudimos actualizar tu membresía en este momento.");
+		} finally {
+			setIsMembershipActionPending(false);
+		}
+	};
+
+	useEffect(() => {
+		const controller = new AbortController();
+		const run = async () => {
+			try {
+				await reloadMembershipState(controller.signal);
+			} catch {
+				setMembershipCtaMode("request");
+			}
+		};
+
+		void run();
+		return () => controller.abort();
+	}, [reloadMembershipState]);
 
 	useEffect(() => {
 		if (!toastMessage) return;
@@ -137,6 +208,16 @@ export function HomeView() {
 			/>
 		);
 	}
+
+	const membershipCtaLabel =
+		membershipCtaMode === "go"
+			? "Ir a Mensa Empresarios"
+			: membershipCtaMode === "cancel"
+				? "Cancelar solicitud"
+				: "Solicitar membresía";
+
+	const membershipCtaVariant = membershipCtaMode === "cancel" ? "danger" : "brand";
+	const isMembershipCtaDisabled = membershipCtaMode === "loading" || isMembershipActionPending;
 
 	return (
 		<div className="mathesis-shell min-h-screen pb-24 lg:pb-0">
@@ -190,7 +271,13 @@ export function HomeView() {
 					) : null}
 				</section>
 
-				<RightSidebar professionalStampLines={professionalStampLines} />
+				<RightSidebar
+					professionalStampLines={professionalStampLines}
+					membershipCtaLabel={membershipCtaLabel}
+					membershipCtaVariant={membershipCtaVariant}
+					isMembershipCtaDisabled={isMembershipCtaDisabled}
+					onMembershipCtaClick={onMembershipCtaClick}
+				/>
 			</main>
 
 			<MobileBottomNav />

@@ -19,6 +19,9 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
   - Navy surfaces for auth hero/header areas.
   - Gold accent for call-to-action and section separators.
 - Ensure contrast stays readable in both light and dark themes.
+- Do not use hardcoded hex colors in component class names for text/background/border unless there is an explicit approved exception; prefer semantic global tokens/classes from `globals.css`.
+- For headings and high-emphasis text, use semantic heading tokens/classes (for example `--heading-primary` / `.mathesis-heading-primary`) so dark mode does not inherit light-only navy values.
+- For filled brand buttons, use semantic foreground tokens/classes (for example `--on-brand` / `.mathesis-on-brand`) instead of fixed text hex values.
 
 ## Shared Asset Rules
 - Do not redefine `basePath` + logo path constants in each page/component.
@@ -92,3 +95,31 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - In perfil header, render zero or more badge chips below the display name from backend-provided active badges.
 - Badge chip label must be generated from slug: split by underscore, replace underscores with spaces, and capitalize first letter of each word.
 - Badge chips must include the integral sign prefix `∫` before the formatted badge label.
+
+## Current Active UI Directions (2026-08-12 Typography)
+- Use the shared global type-scale utility classes for product UI text to prevent ad-hoc size inflation: `.text-scale-1`, `.text-scale-2`, `.text-scale-3`, `.text-scale-4`, `.text-scale-5`.
+- Prefer these classes for new UI work instead of one-off `text-[...]` values unless a screenshot explicitly requires an exception.
+- For page composition by default: helper/meta/chips use `text-scale-1`; action labels and compact buttons use `text-scale-2`; body copy uses `text-scale-3`; section headings use `text-scale-4`; page titles use `text-scale-5`.
+
+## Current Active UI Directions (2026-08-12 Theme Parity)
+- Any UI change must be validated in both light and dark themes before signoff.
+- New color usage should be introduced in `globals.css` as semantic tokens/classes first, then consumed by pages/components.
+- Avoid light-only navy text colors in dark mode paths; use theme-aware semantic heading/text tokens.
+
+## Current Active UI Directions (2026-08-15 Admin Tabs)
+- In admin dashboards, tab controls must stay readable in all themes by avoiding white-on-white states.
+- Use brand navy/blue styling for inactive tab states.
+- Use brand gold styling for active/selected tab states.
+- In the Mathesis admin Mensa section, the visible admin list must include only current Mensa Empresarios admins.
+- Use blue/navy row backgrounds for the Mensa admin list (avoid white list rows there).
+- Provide an "Agregar admin" popup flow with searchable users to grant Mensa Empresarios admin access.
+- Prioritize high-contrast text for summary/subtitle/helper copy on admin screens.
+- The dedicated Mensa admin URL is `/admin/companies-admin`.
+- On `companies-admin`, use tabs for `Solicitudes pendientes` and `Usuarios aprobados`.
+- Pending requests in `companies-admin` must use icon-only approve/reject actions (check and cross) with semantic success/danger colors.
+- Approved users in `companies-admin` must include an icon action to remove access from the Mensa Empresarios group.
+- On `companies-admin`, apply the same blue-background + white-text readability rules used in Mathesis admin lists.
+- In Home right sidebar, the Mensa Empresarios CTA must be state-driven:
+  - `Solicitar membresía` when user has no badge and no open request.
+  - `Cancelar solicitud` (danger/negative color) when user has an open pending request and no badge.
+  - `Ir a Mensa Empresarios` when user already has the badge.

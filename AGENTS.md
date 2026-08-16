@@ -14,6 +14,7 @@ For every coding task in this workspace, agents must:
 5. If scope/status changed, update `ui-spec-live.md` first.
 6. Append a session entry in `agent-live-context.md` after meaningful changes.
 7. If new UI direction is provided (font size, spacing, color usage, interaction rules), update `docs/ui-agent-live-guidelines.md` before or alongside UI code changes.
+8. Validate UI changes in both light and dark themes; prefer semantic theme tokens/classes from `globals.css` over hardcoded color values.
 
 Required session entry fields:
 - Date/time
