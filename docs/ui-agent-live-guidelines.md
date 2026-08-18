@@ -125,3 +125,14 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
   - `Ir a Mensa Empresarios` when user already has the badge.
 - Add a temporary topbar shortcut for ME admins only that links directly to `/admin/companies-admin` for testing.
 - Keep the shortcut hidden for users who do not pass the ME admin access check.
+
+## Current Active UI Directions (2026-08-16 Ateneo Explore)
+- Implement Ateneo flow one screen at a time; pause after each screen for user review before proceeding to the next screen.
+- For the explore-groups screen, replace stacked section headers with tabs in this order: `Tus grupos`, `Descubrir`, `Grupos que administrás`.
+- Preserve existing repo color tokens and spacing language while matching the screenshot layout for both desktop and mobile.
+
+## Current Active UI Directions (2026-08-17 Ateneo Topic Detail)
+- Keep the shared 3-column Ateneo shell intact and only swap the middle content when the user opens a topic.
+- For the topic detail view, ignore the highlight banner and badge at the top of the feed; render only the post content block in the middle column.
+- Use the feed reaction pattern and copy for the main action row, with the bookmark/save control triggering a toast with the exact message `Coming soon`.
+- Keep comment/reaction affordances lightweight and platform-consistent until real comment/back-end data exists.

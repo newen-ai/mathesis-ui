@@ -1,0 +1,40 @@
+import type { AteneoGroupTopic } from "../_components/AteneoGroupFeed";
+
+export const popularTopics: AteneoGroupTopic[] = [
+  {
+    id: "topic-libro-clarke",
+    authorInitial: "L",
+    groupLabel: "Café Mathesis",
+    authorName: "Laura M.",
+    timeLabel: "hace 2 h",
+    title: "¿Cuál fue el último libro que no pudiste soltar?",
+    description: '"Piranesi" de Susanna Clarke. Lo terminé en dos noches, no podía soltarlo...',
+    tone: "LIBRE",
+    reactions: 6,
+    comments: 34,
+  },
+  {
+    id: "topic-base-premium-grupos",
+    authorInitial: "C",
+    groupLabel: "Comunicación Mensa Argentina",
+    authorName: "Carlos V.",
+    timeLabel: "hace 1 d",
+    title: "Resumen de cómo se aplicó Base/Premium en Grupos",
+    description: "Incluye criterios de visibilidad, acceso y ejemplos de moderación por tipo de grupo.",
+    tone: "SERIO",
+    reactions: 15,
+    comments: 15,
+  },
+  {
+    id: "topic-partida-online",
+    authorInitial: "S",
+    groupLabel: "Ajedrez y Estrategia",
+    authorName: "Sofía P.",
+    timeLabel: "hace 5 h",
+    title: "¿Alguien para una partida online el finde?",
+    description: "Armamos mesa el sábado a las 18h, entran 6. Nivel principiante-intermedio.",
+    tone: "LIBRE",
+    reactions: 9,
+    comments: 8,
+  },
+];

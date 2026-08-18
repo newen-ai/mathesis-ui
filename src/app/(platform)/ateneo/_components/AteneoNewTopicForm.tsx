@@ -1,0 +1,140 @@
+"use client";
+
+import { useState } from "react";
+
+const toneOptions = ["Serio", "Mix", "Libre"] as const;
+
+export function AteneoNewTopicForm() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedTone, setSelectedTone] = useState<(typeof toneOptions)[number]>("Mix");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Volver"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)]"
+          >
+            <span aria-hidden="true">&lt;</span>
+          </button>
+          <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+            Nuevo tema
+          </h1>
+        </div>
+
+        <button
+          type="button"
+          className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95"
+        >
+          Publicar
+        </button>
+      </div>
+
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
+        <div className="flex items-center gap-3">
+          <label className="min-w-0 flex-1">
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Café Mathesis</span>
+            <div className="relative">
+              <select
+                defaultValue="cafe"
+                className="w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
+              >
+                <option value="cafe">Café Mathesis</option>
+                <option value="comunicacion">Comunicación Mensa Argentina</option>
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-secondary)]">
+                ⌄
+              </span>
+            </div>
+          </label>
+        </div>
+
+        <div className="mt-5 space-y-5">
+          <label className="block">
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Título</span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Título del tema..."
+              className="w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--brand-700)]"
+            />
+            <div className="mt-1 text-right text-scale-1 text-[var(--text-secondary)]">{title.length}/100</div>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Descripción</span>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Contá de qué se trata..."
+              rows={6}
+              className="w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--brand-700)]"
+            />
+            <div className="mt-1 text-right text-scale-1 text-[var(--text-secondary)]">{description.length}/1000</div>
+          </label>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-scale-3 font-semibold text-[var(--heading-primary)]">Adjuntar</span>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
+                >
+                  <span aria-hidden="true">◫</span>
+                  Foto
+                </button>
+
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
+                >
+                  <span aria-hidden="true">▣</span>
+                  Archivo
+                </button>
+              </div>
+
+              <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-2 text-[var(--text-secondary)]">
+                Foto: JPG, PNG o HEIC · Archivo: solo PDF
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-1">
+            <div className="mb-3 text-scale-3 font-semibold text-[var(--heading-primary)]">Tono del tema (opcional, indicativo)</div>
+            <div className="grid grid-cols-3 gap-2">
+              {toneOptions.map((tone) => {
+                const isSelected = selectedTone === tone;
+
+                return (
+                  <button
+                    key={tone}
+                    type="button"
+                    onClick={() => setSelectedTone(tone)}
+                    className={[
+                      "rounded-xl border px-3 py-2.5 text-scale-2 font-medium transition",
+                      isSelected
+                        ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-800)]"
+                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
+                    ].join(" ")}
+                  >
+                    {tone}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">
+              Solo indicativo — no cambia moderación ni el Sermonio real de reacciones.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

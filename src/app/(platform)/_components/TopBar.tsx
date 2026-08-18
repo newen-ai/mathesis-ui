@@ -50,6 +50,7 @@ type DesktopTopbarItem = {
 
 const desktopBaseTopbarItems: DesktopTopbarItem[] = [
   { href: "/", label: "Feed", icon: "feed" },
+  { href: "/ateneo", label: "Ateneo", icon: "ateneo" },
   { href: "/mensajes", label: "Mensajes", icon: "message" },
   { href: "/notificaciones", label: "Notificaciones", icon: "bell" },
 ];
@@ -71,6 +72,7 @@ const menuSections: TopBarMenuSection[] = [
     title: "PERSONAL",
     items: [
       { label: "Feed", href: "/", icon: "grid" },
+      { label: "Ateneo", href: "/ateneo", icon: "groups" },
       { label: "Mensajes", href: "/mensajes", icon: "chat" },
       { label: "Notificaciones", href: "/notificaciones", icon: "bell" },
       { label: "Mi Perfil", href: "/perfil", icon: "user" },
@@ -136,6 +138,17 @@ function NavIcon({ icon }: { icon: string }) {
     return (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16h-8L5 20v-4H6.5A2.5 2.5 0 0 1 4 13.5v-7Z" />
+      </svg>
+    );
+  }
+
+  if (icon === "groups") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <circle cx="8.5" cy="9" r="2.2" />
+        <circle cx="15.5" cy="10.5" r="2.2" />
+        <path d="M4.5 18.5a4 4 0 0 1 8 0" />
+        <path d="M11.5 18.5a4 4 0 0 1 8 0" />
       </svg>
     );
   }
