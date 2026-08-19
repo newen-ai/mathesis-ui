@@ -1,13 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import { createAteneoTopic, getAteneoGroup } from "@/lib/api/ateneo";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-const toneOptions = ["Serio", "Mix", "Libre"] as const;
+const toneOptions = ["SERIO", "RECOMENDADO", "LIBRE"] as const;
 
-export function AteneoNewTopicForm() {
+type AteneoNewTopicFormProps = {
+  groupId: string;
+};
+
+export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
+  const router = useRouter();
+  const [groupName, setGroupName] = useState("Cargando...");
+  const [canCreateTopics, setCanCreateTopics] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedTone, setSelectedTone] = useState<(typeof toneOptions)[number]>("Mix");
+  const [selectedTone, setSelectedTone] = useState<(typeof toneOptions)[number]>("LIBRE");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getAteneoGroup(groupId)
+      .then((response) => {
+        if (!cancelled) {
+          setGroupName(response.data.group.name);
+          setCanCreateTopics(response.data.group.createTopicsMode !== "admins" || response.data.group.isAdmin);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGroupName("Grupo");
+          setCanCreateTopics(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId]);
+
+  const handleSubmit = async () => {
+    const safeTitle = title.trim();
+    const safeDescription = description.trim();
+
+    if (!safeTitle || !safeDescription) {
+      toast.info("Completá título y descripción antes de publicar.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await createAteneoTopic(groupId, {
+        title: safeTitle,
+        description: safeDescription,
+        tone: selectedTone
+      });
+
+      toast.success("Tema publicado");
+      router.push(`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(response.data.topic.id)}`);
+    } catch {
+      toast.error("No pudimos publicar el tema.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -25,26 +84,34 @@ export function AteneoNewTopicForm() {
           </h1>
         </div>
 
-        <button
-          type="button"
-          className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95"
-        >
-          Publicar
-        </button>
+        {canCreateTopics ? (
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => void handleSubmit()}
+            className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95"
+          >
+            {isSubmitting ? "Publicando..." : "Publicar"}
+          </button>
+        ) : null}
       </div>
 
-      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
+      {!canCreateTopics ? (
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
+          Solo los administradores pueden crear temas en este grupo.
+        </div>
+      ) : null}
+
+      <div className={`rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5 ${!canCreateTopics ? "pointer-events-none opacity-60" : ""}`}>
         <div className="flex items-center gap-3">
           <label className="min-w-0 flex-1">
-            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Café Mathesis</span>
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Grupo</span>
             <div className="relative">
-              <select
-                defaultValue="cafe"
-                className="w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
-              >
-                <option value="cafe">Café Mathesis</option>
-                <option value="comunicacion">Comunicación Mensa Argentina</option>
-              </select>
+              <input
+                readOnly
+                value={groupName}
+                className="w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none"
+              />
               <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-secondary)]">
                 ⌄
               </span>
@@ -107,7 +174,7 @@ export function AteneoNewTopicForm() {
           </div>
 
           <div className="pt-1">
-            <div className="mb-3 text-scale-3 font-semibold text-[var(--heading-primary)]">Tono del tema (opcional, indicativo)</div>
+              <div className="mb-3 text-scale-3 font-semibold text-[var(--heading-primary)]">Tono del tema (opcional, indicativo)</div>
             <div className="grid grid-cols-3 gap-2">
               {toneOptions.map((tone) => {
                 const isSelected = selectedTone === tone;
