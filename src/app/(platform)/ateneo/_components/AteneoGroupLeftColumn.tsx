@@ -7,7 +7,7 @@ type AteneoGroupLeftColumnProps = {
 
 export function AteneoGroupLeftColumn({ children, className = "" }: AteneoGroupLeftColumnProps) {
   return (
-    <aside className={`hidden lg:flex lg:min-h-[640px] lg:items-center lg:justify-center lg:border-r lg:border-[var(--line)] ${className}`}>
+    <aside className={`hidden lg:flex lg:min-h-[640px] lg:items-start lg:justify-start lg:border-r lg:border-[var(--line)] ${className}`}>
       {children}
     </aside>
   );

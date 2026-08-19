@@ -1,47 +1,153 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { AteneoGroup } from "../_lib/mock-data";
-import type { AteneoGroupTopic } from "./AteneoGroupFeed";
+import {
+  createAteneoTopicComment,
+  getAteneoGroup,
+  getAteneoTopic,
+  listAteneoTopicComments,
+  toggleAteneoCommentReaction,
+  toggleAteneoTopicReaction,
+  type AteneoComment,
+  type AteneoGroup,
+  type AteneoTopic
+} from "@/lib/api/ateneo";
 
 type AteneoTopicDiscussionProps = {
-  group: AteneoGroup;
-  topic: AteneoGroupTopic;
+  groupId: string;
+  topicId: string;
 };
 
-const topicComments = [
-  {
-    id: "c1",
-    author: "Micaela",
-    initials: "MI",
-    text: "Me gustó mucho la parte de la moderación: especialmente el punto de mantener el foco del grupo. Eso hace una gran diferencia.",
-    time: "hace 28 min",
-  },
-  {
-    id: "c2",
-    author: "Gonzalo",
-    initials: "GO",
-    text: "Estoy de acuerdo. En mi grupo lo que más cuesta es que aparezcan temas demasiado amplios. Limitar el enfoque ayuda mucho.",
-    time: "hace 1 h",
-  },
-  {
-    id: "c3",
-    author: "Ana",
-    initials: "AN",
-    text: "Yo usé una regla parecida en el equipo. Al principio se sentía estricto, pero después se volvió mucho más productivo.",
-    time: "hace 2 h",
-  },
-];
+function FlagIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+      <path d="M6 4.5v15" />
+      <path d="M6 5.5h9l-1.2 3 1.2 3H6" />
+    </svg>
+  );
+}
 
-export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionProps) {
+function fullName(comment: AteneoComment): string {
+  return [comment.author.firstName, comment.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
+}
+
+function mentionFromContent(content: string): string | null {
+  const match = content.match(/^@(\S+)/);
+  return match?.[1] ?? null;
+}
+
+export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussionProps) {
+  const [group, setGroup] = useState<AteneoGroup | null>(null);
+  const [topic, setTopic] = useState<AteneoTopic | null>(null);
+  const [topicComments, setTopicComments] = useState<AteneoComment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
-  const [isPostValued, setIsPostValued] = useState(false);
-  const [valuedComments, setValuedComments] = useState<Record<string, boolean>>({});
   const [reportOpenFor, setReportOpenFor] = useState<string | null>(null);
 
-  const handleReplySubmit = (commentId: string) => {
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+
+      try {
+        const [groupRes, topicRes, commentsRes] = await Promise.all([
+          getAteneoGroup(groupId),
+          getAteneoTopic(groupId, topicId),
+          listAteneoTopicComments(groupId, topicId)
+        ]);
+
+        if (cancelled) return;
+
+        setGroup(groupRes.data.group);
+        setTopic(topicRes.data.topic);
+        setTopicComments(commentsRes.data.comments);
+      } catch {
+        if (cancelled) return;
+        setGroup(null);
+        setTopic(null);
+        setTopicComments([]);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId, topicId]);
+
+  const isPostValued = topic?.currentUserReactionValue === "value";
+  const topicAuthorName = [topic?.author.firstName, topic?.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
+  const canComment = group?.commentsMode !== "admins" || Boolean(group?.isAdmin);
+  const valuedComments = useMemo(
+    () =>
+      topicComments.reduce<Record<string, boolean>>((acc, comment) => {
+        acc[comment.id] = comment.currentUserReactionValue === "value";
+        return acc;
+      }, {}),
+    [topicComments]
+  );
+
+  const commentsById = useMemo(() => {
+    const map = new Map<string, AteneoComment>();
+    topicComments.forEach((comment) => {
+      map.set(comment.id, comment);
+    });
+    return map;
+  }, [topicComments]);
+
+  const orderedComments = useMemo(() => {
+    const roots = topicComments.filter((comment) => !comment.parentCommentId);
+    const byParent = new Map<string, AteneoComment[]>();
+
+    topicComments.forEach((comment) => {
+      if (!comment.parentCommentId) {
+        return;
+      }
+
+      const topLevelParentId = commentsById.get(comment.parentCommentId)?.parentCommentId ?? comment.parentCommentId;
+      const current = byParent.get(topLevelParentId) ?? [];
+      current.push(comment);
+      byParent.set(topLevelParentId, current);
+    });
+
+    const result: AteneoComment[] = [];
+
+    roots.forEach((root) => {
+      result.push(root);
+      const replies = byParent.get(root.id) ?? [];
+      replies.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      result.push(...replies);
+    });
+
+    return result;
+  }, [commentsById, topicComments]);
+
+  const resolveReplyParentId = (commentId: string): string | undefined => {
+    if (commentId === "new-comment") {
+      return undefined;
+    }
+
+    const target = commentsById.get(commentId);
+    if (!target) {
+      return commentId;
+    }
+
+    return target.parentCommentId ?? target.id;
+  };
+
+  const handleReplySubmit = async (commentId: string) => {
+    if (!topic) {
+      return;
+    }
+
     const value = (replyDraft[commentId] ?? "").trim();
 
     if (!value) {
@@ -49,17 +155,84 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
       return;
     }
 
-    toast.success("Comentario enviado");
+    const targetComment = topicComments.find((comment) => comment.id === commentId);
+
+    try {
+      const response = await createAteneoTopicComment(groupId, topic.id, {
+        content: value,
+        parentCommentId: resolveReplyParentId(commentId),
+        mentionUserId: targetComment?.author.userId
+      });
+
+      setTopicComments((current) => [...current, response.data.comment]);
+      setTopic((current) => (current ? { ...current, comments: current.comments + 1 } : current));
+    } catch {
+      toast.error("No pudimos publicar tu comentario.");
+      return;
+    }
+
+    const mentioned = mentionFromContent(value);
+    if (mentioned) {
+      toast.success(`Comentario enviado. Se notificará a @${mentioned}.`);
+    } else {
+      toast.success("Comentario enviado");
+    }
+
     setReplyDraft((current) => ({ ...current, [commentId]: "" }));
     setOpenReplyFor(null);
   };
 
-  const toggleCommentValue = (commentId: string) => {
-    setValuedComments((current) => ({
+  const toggleCommentValue = async (commentId: string) => {
+    if (!topic) {
+      return;
+    }
+
+    try {
+      const response = await toggleAteneoCommentReaction(groupId, topic.id, commentId);
+      setTopicComments((current) =>
+        current.map((comment) => (comment.id === commentId ? response.data.comment : comment))
+      );
+    } catch {
+      toast.error("No pudimos actualizar la valoración.");
+    }
+  };
+
+  const startReplyFor = (commentId: string, author: string) => {
+    setOpenReplyFor(commentId);
+    setReplyDraft((current) => ({
       ...current,
-      [commentId]: !current[commentId],
+      [commentId]: `@${author} `,
     }));
   };
+
+  const toggleTopicValue = async () => {
+    if (!topic) {
+      return;
+    }
+
+    try {
+      const response = await toggleAteneoTopicReaction(groupId, topic.id);
+      setTopic(response.data.topic);
+    } catch {
+      toast.error("No pudimos actualizar la valoración.");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
+        <p className="text-scale-3 text-[var(--text-secondary)]">Cargando tema...</p>
+      </section>
+    );
+  }
+
+  if (!group || !topic) {
+    return (
+      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
+        <p className="text-scale-3 text-[var(--text-secondary)]">No pudimos cargar este tema.</p>
+      </section>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -78,26 +251,57 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
             </div>
           </div>
 
-          <button
-            type="button"
-            aria-label="Guardar tema"
-            onClick={() => toast.info("Coming soon")}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)]"
-          >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M6 4.5h12a1 1 0 0 1 1 1v14l-7-5-7 5v-14a1 1 0 0 1 1-1Z" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Guardar tema"
+              onClick={() => toast.info("Coming soon")}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)]"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M6 4.5h12a1 1 0 0 1 1 1v14l-7-5-7 5v-14a1 1 0 0 1 1-1Z" />
+              </svg>
+            </button>
+
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Más opciones del tema"
+                onClick={() => setReportOpenFor((current) => (current === "post" ? null : "post"))}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-xl leading-none text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)]"
+              >
+                ⋯
+              </button>
+
+              {reportOpenFor === "post" && (
+                <div className="absolute right-0 top-12 z-10 min-w-[140px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toast.info("Tema reportado");
+                      setReportOpenFor(null);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-600)] hover:bg-[var(--danger-50)]"
+                  >
+                    <span className="text-[var(--danger-600)]">
+                      <FlagIcon />
+                    </span>
+                    <span>Denunciar</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--navy-900)] text-lg font-bold text-[var(--surface)]">
-            {topic.authorInitial}
+            {topic.author.initials}
           </div>
 
           <div className="min-w-0 flex-1">
             <h2 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
-              {topic.authorName}
+              {topicAuthorName}
             </h2>
           </div>
 
@@ -128,7 +332,7 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
 
           <button
             type="button"
-            onClick={() => setIsPostValued((current) => !current)}
+            onClick={toggleTopicValue}
             className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
               isPostValued
                 ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
@@ -146,16 +350,18 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
           <h4 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
             Comentarios
           </h4>
-          <button
-            type="button"
-            onClick={() => setOpenReplyFor("new-comment")}
-            className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
-          >
-            Comentar
-          </button>
+          {canComment ? (
+            <button
+              type="button"
+              onClick={() => setOpenReplyFor("new-comment")}
+              className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
+            >
+              Comentar
+            </button>
+          ) : null}
         </div>
 
-        {openReplyFor === "new-comment" && (
+        {canComment && openReplyFor === "new-comment" && (
           <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
             <textarea
               value={replyDraft["new-comment"] ?? ""}
@@ -182,8 +388,11 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
         )}
 
         <div className="mt-4 space-y-3">
-          {topicComments.map((comment) => (
-            <div key={comment.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
+          {orderedComments.map((comment) => (
+            <div
+              key={comment.id}
+              className={`rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 ${comment.parentCommentId ? "ml-6" : ""}`}
+            >
               <div className="flex items-start gap-3">
                 <button
                   type="button"
@@ -192,15 +401,15 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-xs font-bold text-[var(--surface)]">
-                      {comment.initials}
+                      {comment.author.initials}
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold text-[var(--heading-primary)]">{comment.author}</p>
-                        <span className="text-scale-1 text-[var(--text-secondary)]">{comment.time}</span>
+                        <p className="font-semibold text-[var(--heading-primary)]">{fullName(comment)}</p>
+                        <span className="text-scale-1 text-[var(--text-secondary)]">{comment.timeLabel}</span>
                       </div>
-                      <p className="mt-1 text-scale-3 leading-7 text-[var(--text-primary)]">{comment.text}</p>
+                      <p className="mt-1 text-scale-3 leading-7 text-[var(--text-primary)]">{comment.content}</p>
                     </div>
                   </div>
                 </button>
@@ -223,9 +432,12 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
                           toast.info("Comentario reportado");
                           setReportOpenFor(null);
                         }}
-                        className="w-full rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-600)] hover:bg-[var(--danger-50)]"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-600)] hover:bg-[var(--danger-50)]"
                       >
-                        Denunciar
+                        <span className="text-[var(--danger-600)]">
+                          <FlagIcon />
+                        </span>
+                        <span>Denunciar</span>
                       </button>
                     </div>
                   )}
@@ -233,13 +445,15 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
               </div>
 
               <div className="mt-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpenReplyFor((current) => (current === comment.id ? null : comment.id))}
-                  className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
-                >
-                  Responder
-                </button>
+                {canComment ? (
+                  <button
+                    type="button"
+                    onClick={() => startReplyFor(comment.id, fullName(comment))}
+                    className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
+                  >
+                    Responder
+                  </button>
+                ) : null}
 
                 <button
                   type="button"
@@ -254,9 +468,10 @@ export function AteneoTopicDiscussion({ group, topic }: AteneoTopicDiscussionPro
                 </button>
               </div>
 
-              {openReplyFor === comment.id && (
+              {canComment && openReplyFor === comment.id && (
                 <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3">
                   <textarea
+                    autoFocus
                     value={replyDraft[comment.id] ?? ""}
                     onChange={(event) =>
                       setReplyDraft((current) => ({

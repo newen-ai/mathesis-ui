@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { TopBar } from "../../../../_components/TopBar";
 import { navItems } from "../../../../_lib/constants";
-import { AteneoExploreGroups } from "../../../_components/AteneoExploreGroups";
-import { AteneoThreeColumnLayout } from "../../../_components/AteneoThreeColumnLayout";
-import { DiscoverMathesis } from "../../../_components/DiscoverMathesis";
-import { AteneoGroupLeftColumn } from "../../../_components/AteneoGroupLeftColumn";
-import { AteneoGroupMiddleColumn } from "../../../_components/AteneoGroupMiddleColumn";
-import { AteneoGroupRightColumn } from "../../../_components/AteneoGroupRightColumn";
-import { AteneoNewTopicForm } from "../../../_components/AteneoNewTopicForm";
+import { AteneoExploreGroups } from "../../../../ateneo/_components/AteneoExploreGroups";
+import { AteneoThreeColumnLayout } from "../../../../ateneo/_components/AteneoThreeColumnLayout";
+import { DiscoverMathesis } from "../../../../ateneo/_components/DiscoverMathesis";
+import { AteneoGroupLeftColumn } from "../../../../ateneo/_components/AteneoGroupLeftColumn";
+import { AteneoGroupMiddleColumn } from "../../../../ateneo/_components/AteneoGroupMiddleColumn";
+import { AteneoGroupRightColumn } from "../../../../ateneo/_components/AteneoGroupRightColumn";
+import { AteneoGroupEditPanel } from "../../../../ateneo/_components/AteneoGroupEditPanel";
 
-type AteneoNewTopicPageProps = {
+type AteneoGroupEditPageProps = {
   params: Promise<{ groupId: string }>;
 };
 
-export default async function AteneoNewTopicPage({ params }: AteneoNewTopicPageProps) {
+export default async function AteneoGroupEditPage({ params }: AteneoGroupEditPageProps) {
   const { groupId } = await params;
   const decodedGroupId = decodeURIComponent(groupId);
 
@@ -25,7 +25,7 @@ export default async function AteneoNewTopicPage({ params }: AteneoNewTopicPageP
         <AteneoThreeColumnLayout
           left={
             <AteneoGroupLeftColumn>
-              <AteneoExploreGroups />
+              <AteneoExploreGroups currentGroupId={decodedGroupId} />
             </AteneoGroupLeftColumn>
           }
           middle={
@@ -36,11 +36,11 @@ export default async function AteneoNewTopicPage({ params }: AteneoNewTopicPageP
                   className="inline-flex items-center gap-2 text-scale-3 font-semibold mathesis-link-accent"
                 >
                   <span aria-hidden="true">&lt;</span>
-                  Volver
+                  Volver al grupo
                 </Link>
               }
             >
-              <AteneoNewTopicForm groupId={decodedGroupId} />
+              <AteneoGroupEditPanel groupId={decodedGroupId} />
             </AteneoGroupMiddleColumn>
           }
           right={

@@ -1,21 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { toast } from "sonner";
-import { createAteneoGroup } from "@/lib/api/ateneo";
-import { TopBar } from "../../_components/TopBar";
-import { navItems } from "../../_lib/constants";
-import {
-  ateneoBadgeOptions,
-  ateneoIconOptions,
-  ateneoLanguageOptions,
-  ateneoPermissionOptions,
-  type AteneoPermissionMode,
-} from "../_lib/mock-data";
+import { ateneoBadgeOptions, ateneoIconOptions, ateneoLanguageOptions, ateneoPermissionOptions, type AteneoPermissionMode } from "../_lib/mock-data";
 
-type CreateGroupForm = {
+type GroupFormValues = {
   iconId: string;
   name: string;
   description: string;
@@ -27,9 +18,18 @@ type CreateGroupForm = {
   commentsMode: AteneoPermissionMode;
 };
 
-type CreateGroupErrors = {
+type GroupFormErrors = {
   name?: string;
   description?: string;
+};
+
+type AteneoGroupFormProps = {
+  title: string;
+  submitLabel: string;
+  backHref: string;
+  backLabel: string;
+  initialValues?: Partial<GroupFormValues>;
+  onSubmit: (values: GroupFormValues) => Promise<void>;
 };
 
 const NAME_LIMIT = 40;
@@ -128,22 +128,21 @@ function iconPreview(iconId: string) {
   );
 }
 
-export default function AteneoCreateGroupPage() {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<CreateGroupErrors>({});
+export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initialValues, onSubmit }: AteneoGroupFormProps) {
+  const [errors, setErrors] = useState<GroupFormErrors>({});
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isBadgesPickerOpen, setIsBadgesPickerOpen] = useState(false);
-  const [form, setForm] = useState<CreateGroupForm>({
-    iconId: ateneoIconOptions[0]?.id ?? "cube",
-    name: "",
-    description: "",
-    rules: "",
-    language: ateneoLanguageOptions[0],
-    badges: [],
-    isOfficialGroup: false,
-    createTopicsMode: "free",
-    commentsMode: "free",
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form, setForm] = useState<GroupFormValues>({
+    iconId: initialValues?.iconId ?? ateneoIconOptions[0]?.id ?? "cube",
+    name: initialValues?.name ?? "",
+    description: initialValues?.description ?? "",
+    rules: initialValues?.rules ?? "",
+    language: initialValues?.language ?? ateneoLanguageOptions[0],
+    badges: initialValues?.badges ?? [],
+    isOfficialGroup: initialValues?.isOfficialGroup ?? false,
+    createTopicsMode: initialValues?.createTopicsMode ?? "free",
+    commentsMode: initialValues?.commentsMode ?? "free"
   });
 
   const selectedIconLabel = useMemo(() => {
@@ -162,7 +161,7 @@ export default function AteneoCreateGroupPage() {
       .join(" · ");
   }, [form.badges]);
 
-  const onFieldChange = <K extends keyof CreateGroupForm>(field: K, value: CreateGroupForm[K]) => {
+  const onFieldChange = <K extends keyof GroupFormValues>(field: K, value: GroupFormValues[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
 
     if (field === "name" && typeof value === "string" && value.trim().length > 0) {
@@ -179,17 +178,15 @@ export default function AteneoCreateGroupPage() {
       const hasBadge = current.badges.includes(badgeId);
       return {
         ...current,
-        badges: hasBadge
-          ? current.badges.filter((value) => value !== badgeId)
-          : [...current.badges, badgeId],
+        badges: hasBadge ? current.badges.filter((value) => value !== badgeId) : [...current.badges, badgeId]
       };
     });
   };
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submitForm = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const nextErrors: CreateGroupErrors = {};
+    const nextErrors: GroupFormErrors = {};
 
     if (form.name.trim().length === 0) {
       nextErrors.name = "El nombre del grupo es obligatorio.";
@@ -205,27 +202,10 @@ export default function AteneoCreateGroupPage() {
     }
 
     setIsSubmitting(true);
-
     try {
-      const rules = form.rules
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-      const response = await createAteneoGroup({
-        name: form.name.trim(),
-        description: form.description.trim(),
-        icon: form.iconId,
-        isOfficial: form.isOfficialGroup,
-        rules,
-        createTopicsMode: form.createTopicsMode,
-        commentsMode: form.commentsMode
-      });
-
-      toast.success("Grupo creado");
-      router.push(`/ateneo/groups/${encodeURIComponent(response.data.group.id)}`);
+      await onSubmit(form);
     } catch {
-      toast.error("No pudimos crear el grupo.");
+      toast.error("No pudimos guardar el grupo.");
     } finally {
       setIsSubmitting(false);
     }
@@ -233,15 +213,13 @@ export default function AteneoCreateGroupPage() {
 
   return (
     <div className="mathesis-shell min-h-screen bg-[var(--background)]">
-      <TopBar navItems={navItems} />
-
-      <main className="mx-auto w-full max-w-[1450px] px-4 py-6 sm:px-6 lg:px-10">
-        <form onSubmit={onSubmit} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-6" noValidate>
+      <div className="mx-auto w-full max-w-[1450px] px-4 py-6 sm:px-6 lg:px-10">
+        <form onSubmit={submitForm} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-6" noValidate>
           <div className="flex items-center gap-3">
             <Link
-              href="/ateneo"
+              href={backHref}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
-              aria-label="Volver a explorar grupos"
+              aria-label={backLabel}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="m14.5 5.5-6 6 6 6" />
@@ -249,7 +227,7 @@ export default function AteneoCreateGroupPage() {
             </Link>
 
             <h1 className="font-[family-name:var(--font-spectral)] text-[1.7rem] font-semibold leading-tight text-[var(--heading-primary)]">
-              Nuevo grupo
+              {title}
             </h1>
           </div>
 
@@ -365,7 +343,7 @@ export default function AteneoCreateGroupPage() {
                 <span className="mb-2 block text-scale-2 font-semibold text-[var(--heading-primary)]">Idioma</span>
                 <select
                   value={form.language}
-                  onChange={(event) => onFieldChange("language", event.target.value as CreateGroupForm["language"])}
+                  onChange={(event) => onFieldChange("language", event.target.value as GroupFormValues["language"])}
                   className="w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
                 >
                   {ateneoLanguageOptions.map((language) => (
@@ -485,8 +463,8 @@ export default function AteneoCreateGroupPage() {
             </section>
 
             <div className="pt-1 text-center">
-              <Link href="/ateneo" className="text-scale-3 font-semibold mathesis-link-accent">
-                ← Volver a explorar grupos
+              <Link href={backHref} className="text-scale-3 font-semibold mathesis-link-accent">
+                ← {backLabel}
               </Link>
             </div>
 
@@ -496,12 +474,12 @@ export default function AteneoCreateGroupPage() {
                 disabled={isSubmitting}
                 className="inline-flex items-center justify-center rounded-full bg-[var(--brand-500)] px-7 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSubmitting ? "Creando..." : "Crear"}
+                {isSubmitting ? "Guardando..." : submitLabel}
               </button>
             </div>
           </div>
         </form>
-      </main>
+      </div>
     </div>
   );
 }

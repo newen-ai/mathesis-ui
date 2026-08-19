@@ -136,3 +136,27 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - For the topic detail view, ignore the highlight banner and badge at the top of the feed; render only the post content block in the middle column.
 - Use the feed reaction pattern and copy for the main action row, with the bookmark/save control triggering a toast with the exact message `Coming soon`.
 - Keep comment/reaction affordances lightweight and platform-consistent until real comment/back-end data exists.
+
+## Current Active UI Directions (2026-08-19 Ateneo Topic/Create Polish)
+- In the Ateneo create-group form, render `Grupo oficial` as visibly disabled and add an information icon on the right with a hover tooltip that says `Coming soon`.
+- In the Ateneo topic detail view, add a three-dotted overflow button on the post itself with a `Denunciar` action.
+- The `Denunciar` action must include a flag icon and use the danger red color for both icon and text.
+- In the Ateneo new-topic form, the first field label should read `Grupo`.
+- In topic comments, clicking `Responder` should open the input prefilled with `@<autor> ` so replies can target and notify the addressed user.
+
+## Current Active UI Directions (2026-08-19 Ateneo Left Rail)
+- Replace the Ateneo left-rail placeholder with the actual group list content from `/ateneo`.
+- The first fixed left-rail option must be `Feed`.
+- The `Fijado` section must show a `Coming soon` label beneath its title.
+- Limit `Administrás`, `Tus grupos`, and `Recomendados para vos` to three visible groups by default, then reveal up to five more with `Ver más`; if more groups remain after that, show `Ver todos` for a future redirect.
+- Add four bottom shortcut buttons; `Guardado` and `Salud del grupo` must look disabled and show `Coming soon` on hover.
+
+## Current Active UI Directions (2026-08-19 Ateneo Feed Page)
+- Add a dedicated `/ateneo` 3-column feed page that reuses the same left and right rails as the group/topic views.
+- The feed middle column should mix topics from groups the user is already in with some recommended topics.
+- The left-rail `Feed` shortcut should navigate to `/ateneo`.
+- Keep `/ateneo/feed` as a redirect to `/ateneo` for compatibility.
+
+## Current Active UI Directions (2026-08-19 Ateneo Groups Page)
+- Move the explore-groups screen to `/ateneo/groups`.
+- Preserve the existing explore-groups layout, search, tabs, and left-rail grouping behavior on that page.

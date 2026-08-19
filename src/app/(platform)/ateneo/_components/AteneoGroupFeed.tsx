@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import type { AteneoGroup } from "../_lib/mock-data";
+import { useEffect, useState } from "react";
+import { getAteneoGroup, joinAteneoGroup, listAteneoTopics, type AteneoGroup, type AteneoTopic } from "@/lib/api/ateneo";
+import { AteneoGroupHeaderActions } from "./AteneoGroupHeaderActions";
 
 export type AteneoGroupTopic = {
   id: string;
@@ -15,9 +19,7 @@ export type AteneoGroupTopic = {
 };
 
 type AteneoGroupFeedProps = {
-  group: AteneoGroup;
   groupId: string;
-  topics: AteneoGroupTopic[];
 };
 
 function GroupHeaderIcon() {
@@ -33,7 +35,153 @@ function GroupHeaderIcon() {
   );
 }
 
-export function AteneoGroupFeed({ group, groupId, topics }: AteneoGroupFeedProps) {
+function mapTopic(topic: AteneoTopic): AteneoGroupTopic {
+  const authorName = [topic.author.firstName, topic.author.lastName].filter(Boolean).join(" ").trim();
+
+  return {
+    id: topic.id,
+    authorInitial: topic.author.initials,
+    groupLabel: topic.groupLabel,
+    authorName: authorName || "Usuario",
+    timeLabel: topic.timeLabel,
+    title: topic.title,
+    description: topic.description,
+    tone: topic.tone,
+    reactions: topic.reactions,
+    comments: topic.comments
+  };
+}
+
+export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
+  const [group, setGroup] = useState<AteneoGroup | null>(null);
+  const [rules, setRules] = useState<string[]>([]);
+  const [topics, setTopics] = useState<AteneoGroupTopic[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isJoining, setIsJoining] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const groupRes = await getAteneoGroup(groupId);
+
+        if (cancelled) return;
+
+        setGroup(groupRes.data.group);
+        setRules(groupRes.data.rules);
+
+        if (!groupRes.data.group.isMember) {
+          setTopics([]);
+          return;
+        }
+
+        const topicsRes = await listAteneoTopics(groupId);
+        if (cancelled) return;
+        setTopics(topicsRes.data.topics.map((topic) => mapTopic(topic)));
+      } catch {
+        if (cancelled) return;
+        setGroup(null);
+        setRules([]);
+        setTopics([]);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId]);
+
+  const onJoin = async () => {
+    if (isJoining) return;
+
+    setIsJoining(true);
+    try {
+      await joinAteneoGroup(groupId);
+      const [groupRes, topicsRes] = await Promise.all([
+        getAteneoGroup(groupId),
+        listAteneoTopics(groupId)
+      ]);
+
+      setGroup(groupRes.data.group);
+      setRules(groupRes.data.rules);
+      setTopics(topicsRes.data.topics.map((topic) => mapTopic(topic)));
+    } catch {
+      // Keep current preview state if join fails.
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
+        <p className="text-scale-3 text-[var(--text-secondary)]">Cargando grupo...</p>
+      </section>
+    );
+  }
+
+  if (!group) {
+    return (
+      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
+        <p className="text-scale-3 text-[var(--text-secondary)]">No pudimos cargar este grupo.</p>
+      </section>
+    );
+  }
+
+  if (!group.isMember) {
+    return (
+      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
+        <div className="flex min-w-0 items-start gap-3">
+          <GroupHeaderIcon />
+          <div>
+            <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+              {group.name}
+            </h1>
+            <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
+              {group.subtitle} <span className="mx-1">·</span> {group.activity}
+            </p>
+          </div>
+        </div>
+
+        {group.description ? (
+          <p className="mt-4 text-scale-3 text-[var(--text-primary)]">{group.description}</p>
+        ) : null}
+
+        <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-4">
+          <h2 className="text-scale-4 font-semibold text-[var(--heading-primary)]">Reglas del grupo</h2>
+          <ul className="mt-2 list-disc space-y-1.5 pl-5 text-scale-3 text-[var(--text-primary)]">
+            {rules.map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-5">
+          <button
+            type="button"
+            onClick={() => {
+              void onJoin();
+            }}
+            disabled={isJoining}
+            className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isJoining ? "Uniéndote..." : "Unirse al grupo"}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const canCreateTopics = group.createTopicsMode !== "admins" || group.isAdmin;
+
   return (
     <>
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
@@ -50,18 +198,24 @@ export function AteneoGroupFeed({ group, groupId, topics }: AteneoGroupFeedProps
             </div>
           </div>
 
-          <Link
-            href={`/ateneo/groups/${encodeURIComponent(groupId)}/new-topic`}
-            className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95"
-          >
-            + Nuevo tema
-          </Link>
+          <AteneoGroupHeaderActions groupId={groupId} isAdmin={group.isAdmin} />
         </div>
+
+        {canCreateTopics ? (
+          <div className="mt-4">
+            <Link
+              href={`/ateneo/groups/${encodeURIComponent(groupId)}/new-topic`}
+              className="flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95"
+            >
+              + Nuevo tema
+            </Link>
+          </div>
+        ) : null}
 
         <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-4">
           <h2 className="text-scale-4 font-semibold text-[var(--heading-primary)]">Reglas del grupo</h2>
           <ul className="mt-2 list-disc space-y-1.5 pl-5 text-scale-3 text-[var(--text-primary)]">
-            {group.rules.map((rule) => (
+            {rules.map((rule) => (
               <li key={rule}>{rule}</li>
             ))}
           </ul>
