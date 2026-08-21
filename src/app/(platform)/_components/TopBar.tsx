@@ -51,6 +51,7 @@ type DesktopTopbarItem = {
 const desktopBaseTopbarItems: DesktopTopbarItem[] = [
   { href: "/", label: "Feed", icon: "feed" },
   { href: "/ateneo", label: "Ateneo", icon: "ateneo" },
+  { href: "/directorio", label: "Directorio", icon: "directory" },
   { href: "/mensajes", label: "Mensajes", icon: "message" },
   { href: "/notificaciones", label: "Notificaciones", icon: "bell" },
 ];
@@ -108,8 +109,8 @@ const desktopMenuSections: TopBarMenuSection[] = [
   {
     title: "EMPRESARIAL",
     items: [
+      { label: "Directorio", href: "/directorio", icon: "building" },
       { label: "Mis Empresas", href: "/my-enterprises", icon: "building" },
-      { label: "Mensa Empresarios", href: "/red", icon: "wave" },
       { label: "Feed Empresarial", href: "/", icon: "doc", activeAuxText: "solo ME" },
     ],
   },

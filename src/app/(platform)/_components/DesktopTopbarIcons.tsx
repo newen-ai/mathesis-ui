@@ -4,7 +4,7 @@ type DesktopTopbarIconProps = {
   className?: string;
 };
 
-type DesktopTopbarIconName = "feed" | "ateneo" | "message" | "bell" | "admin";
+type DesktopTopbarIconName = "feed" | "ateneo" | "directory" | "message" | "bell" | "admin";
 
 function IconFrame({ className, children }: DesktopTopbarIconProps & { children: ReactNode }) {
   return (
@@ -60,6 +60,16 @@ function BellIcon({ className }: DesktopTopbarIconProps) {
   );
 }
 
+function DirectoryIcon({ className }: DesktopTopbarIconProps) {
+  return (
+    <IconFrame className={className}>
+      <path d="M6 20V7.5A1.5 1.5 0 0 1 7.5 6H10v14H6Z" />
+      <path d="M10 6h7.5A1.5 1.5 0 0 1 19 7.5V20h-9V6Z" />
+      <path d="M10 10h9M10 14h9M13 6v14" />
+    </IconFrame>
+  );
+}
+
 function AdminIcon({ className }: DesktopTopbarIconProps) {
   return (
     <IconFrame className={className}>
@@ -87,6 +97,10 @@ export function DesktopTopbarIcon({
 
   if (name === "bell") {
     return <BellIcon className={className} />;
+  }
+
+  if (name === "directory") {
+    return <DirectoryIcon className={className} />;
   }
 
   return <AdminIcon className={className} />;

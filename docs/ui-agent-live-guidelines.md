@@ -160,3 +160,10 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-08-19 Ateneo Groups Page)
 - Move the explore-groups screen to `/ateneo/groups`.
 - Preserve the existing explore-groups layout, search, tabs, and left-rail grouping behavior on that page.
+
+## Current Active UI Directions (2026-08-21 Directorio Mensa Empresarios)
+- Add a topbar entry called `Directorio` that routes to `/directorio` and stays aligned with the e-commerce/business section of the app shell.
+- The directory page should mirror the provided mockup: a community header with the Mensa Empresarios badge tone, a `Recién lanzado` banner, and enterprise cards showing founder, sector tag, description, city/size/website, and a CTA link at the lower right.
+- The top-of-page `Solicitar membresía Empresarios` action must be visually present but disabled for now; the hover/focus tooltip text must read `Próximamente`.
+- Use the existing theme tokens and card styling conventions instead of introducing ad-hoc contrast values.
+- Keep the directory content representative but static for this pass until the backend exposes a dedicated verified-directory endpoint.

@@ -15,6 +15,19 @@ export type Enterprise = {
   updatedAt: string;
 };
 
+export type DirectoryEnterprise = {
+  id: string;
+  name: string;
+  role: string;
+  website: string | null;
+  description: string | null;
+  founder: string | null;
+  location: string | null;
+  badgeSlug: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CreateEnterpriseInput = {
   companyName: string;
   role: string;
@@ -34,6 +47,25 @@ export async function listMyEnterprises(signal?: AbortSignal): Promise<Enterpris
   const payload = await parseDataResponse<{ enterprises: Enterprise[] }>(
     response,
     "Invalid enterprises list response"
+  );
+
+  return payload.data.enterprises;
+}
+
+export async function listVerifiedDirectory(
+  signal?: AbortSignal
+): Promise<DirectoryEnterprise[]> {
+  const response = await apiRequest("/enterprises/directory", {
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to fetch directory enterprises: ${response.status}`);
+  }
+
+  const payload = await parseDataResponse<{ enterprises: DirectoryEnterprise[] }>(
+    response,
+    "Invalid directory enterprises response"
   );
 
   return payload.data.enterprises;
