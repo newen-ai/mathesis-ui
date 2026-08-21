@@ -323,7 +323,6 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--brand-700)]">
             {topic.tone}
           </span>
-          <span className="text-scale-2 text-[var(--text-secondary)]">{topic.comments} comentarios</span>
         </div>
 
         <div className="mt-5 flex items-center gap-3">

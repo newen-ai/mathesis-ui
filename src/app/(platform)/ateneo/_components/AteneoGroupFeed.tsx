@@ -260,7 +260,6 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
                       <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2.5 py-0.5 font-semibold text-[var(--brand-800)]">
                         {topic.tone}
                       </span>
-                      <span>○ {topic.reactions}</span>
                       <span>💬 {topic.comments}</span>
                     </div>
                   </div>

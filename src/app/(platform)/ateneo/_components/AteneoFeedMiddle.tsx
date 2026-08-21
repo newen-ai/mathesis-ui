@@ -98,7 +98,6 @@ function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
                   Recomendado para vos
                 </span>
               ) : null}
-              <span>○ {topic.reactions}</span>
               <span>💬 {topic.comments}</span>
             </div>
           </div>
