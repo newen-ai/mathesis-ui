@@ -1,6 +1,6 @@
 "use client";
 
-import { createAteneoTopic, getAteneoGroup } from "@/lib/api/ateneo";
+import { createAteneoTopic, getAteneoGroup, listAteneoGroups } from "@/lib/api/ateneo";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -13,9 +13,16 @@ type AteneoNewTopicFormProps = {
   groupId: string;
 };
 
+type TopicGroupOption = {
+  id: string;
+  name: string;
+  canCreateTopics: boolean;
+};
+
 export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const router = useRouter();
-  const [groupName, setGroupName] = useState("Cargando...");
+  const [groupOptions, setGroupOptions] = useState<TopicGroupOption[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState(groupId);
   const [canCreateTopics, setCanCreateTopics] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -34,16 +41,41 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   useEffect(() => {
     let cancelled = false;
 
-    void getAteneoGroup(groupId)
-      .then((response) => {
-        if (!cancelled) {
-          setGroupName(response.data.group.name);
-          setCanCreateTopics(response.data.group.createTopicsMode !== "admins" || response.data.group.isAdmin);
+    void Promise.all([getAteneoGroup(groupId), listAteneoGroups("mine", 50)])
+      .then(([groupResponse, mineGroupsResponse]) => {
+        if (cancelled) {
+          return;
         }
+
+        const mineGroupOptions = mineGroupsResponse.data.groups.map((group) => ({
+          id: group.id,
+          name: group.name,
+          canCreateTopics: group.createTopicsMode !== "admins" || group.isAdmin,
+        }));
+
+        const currentGroup = groupResponse.data.group;
+        const hasCurrentGroupInMine = mineGroupOptions.some((option) => option.id === currentGroup.id);
+        const nextOptions = hasCurrentGroupInMine
+          ? mineGroupOptions
+          : [
+              {
+                id: currentGroup.id,
+                name: currentGroup.name,
+                canCreateTopics: currentGroup.createTopicsMode !== "admins" || currentGroup.isAdmin,
+              },
+              ...mineGroupOptions,
+            ];
+
+        setGroupOptions(nextOptions);
+
+        const defaultGroupId = nextOptions.some((option) => option.id === groupId) ? groupId : (nextOptions[0]?.id ?? groupId);
+        setSelectedGroupId(defaultGroupId);
+        const selectedGroup = nextOptions.find((option) => option.id === defaultGroupId);
+        setCanCreateTopics(Boolean(selectedGroup?.canCreateTopics));
       })
       .catch(() => {
         if (!cancelled) {
-          setGroupName("Grupo");
+          setGroupOptions([]);
           setCanCreateTopics(false);
         }
       });
@@ -53,9 +85,21 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     };
   }, [groupId]);
 
+  const handleGroupChange = (nextGroupId: string) => {
+    setSelectedGroupId(nextGroupId);
+    const nextGroup = groupOptions.find((group) => group.id === nextGroupId);
+    setCanCreateTopics(Boolean(nextGroup?.canCreateTopics));
+  };
+
   const handleSubmit = async () => {
+    const targetGroupId = selectedGroupId.trim();
     const safeTitle = title.trim();
     const safeDescription = description.trim();
+
+    if (!targetGroupId) {
+      toast.info("Elegí un grupo antes de publicar.");
+      return;
+    }
 
     if (!safeTitle || !safeDescription) {
       toast.info("Completá título y descripción antes de publicar.");
@@ -69,14 +113,14 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
     setIsSubmitting(true);
     try {
-      const response = await createAteneoTopic(groupId, {
+      const response = await createAteneoTopic(targetGroupId, {
         title: safeTitle,
         description: safeDescription,
         tone: selectedTone
       });
 
       toast.success("Tema publicado");
-      router.push(`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(response.data.topic.id)}`);
+      router.push(`/ateneo/groups/${encodeURIComponent(targetGroupId)}/topics/${encodeURIComponent(response.data.topic.id)}`);
     } catch {
       toast.error("No pudimos publicar el tema.");
     } finally {
@@ -123,12 +167,19 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           <label className="min-w-0 flex-1">
             <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Grupo</span>
             <div className="relative">
-              <input
-                readOnly
-                value={groupName}
-                className="w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none"
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-secondary)]">
+              <select
+                value={selectedGroupId}
+                onChange={(event) => handleGroupChange(event.target.value)}
+                className="w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
+              >
+                {groupOptions.length === 0 ? <option value="">No hay grupos disponibles</option> : null}
+                {groupOptions.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+              <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-secondary)]">
                 ⌄
               </span>
             </div>
