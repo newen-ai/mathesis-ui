@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAteneoGroup, listAteneoGroupMembers, joinAteneoGroup, type AteneoGroup, type AteneoGroupMember } from "@/lib/api/ateneo";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 type AteneoGroupMembersPanelProps = {
   groupId: string;
@@ -150,9 +151,13 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
 
           return (
             <article key={member.userId} className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-sm font-semibold text-[var(--surface)]">
-                {member.initials}
-              </div>
+              <UserAvatar
+                imageUrl={member.profileImageUrl}
+                initials={member.initials}
+                label={`Foto de perfil de ${fullName}`}
+                className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+                initialsClassName="text-sm font-semibold text-[var(--surface)]"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <h2 className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{fullName}</h2>

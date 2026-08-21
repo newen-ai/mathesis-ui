@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
   createAteneoTopicComment,
   getAteneoGroup,
@@ -295,9 +296,13 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
         </div>
 
         <div className="mt-5 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--navy-900)] text-lg font-bold text-[var(--surface)]">
-            {topic.author.initials}
-          </div>
+          <UserAvatar
+            imageUrl={topic.author.profileImageUrl}
+            initials={topic.author.initials}
+            label={`Foto de perfil de ${topicAuthorName}`}
+            className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+            initialsClassName="text-lg font-bold text-[var(--surface)]"
+          />
 
           <div className="min-w-0 flex-1">
             <h2 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
@@ -400,9 +405,13 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                   className="w-full text-left"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-xs font-bold text-[var(--surface)]">
-                      {comment.author.initials}
-                    </div>
+                    <UserAvatar
+                      imageUrl={comment.author.profileImageUrl}
+                      initials={comment.author.initials}
+                      label={`Foto de perfil de ${fullName(comment)}`}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+                      initialsClassName="text-xs font-bold text-[var(--surface)]"
+                    />
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">

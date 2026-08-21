@@ -569,16 +569,26 @@ export function TopBar({ navItems }: TopBarProps) {
                       key={profile.userId}
                       type="button"
                       onClick={() => {
-                        const selectedName = `${profile.firstName} ${profile.lastName}`;
+                        const selectedName = `${profile.firstName} ${profile.lastName}`.trim();
                         setSearchText(selectedName);
                         setSearchResults([]);
                         setSearchMessage("");
                         setDrawerOpen(false);
                         router.push(`/perfil?userId=${encodeURIComponent(profile.userId)}`);
                       }}
-                      className="flex w-full flex-col items-start rounded-md px-3 py-2 text-left transition hover:bg-[var(--surface-2)]"
+                      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition hover:bg-[var(--surface-2)]"
                     >
-                      <span className="text-sm font-medium text-[var(--text-primary)]">
+                      <UserAvatar
+                        imageUrl={profile.profileImageUrl}
+                        initials={getTwoInitials({
+                          fullName: `${profile.firstName} ${profile.lastName}`.trim(),
+                          fallback: "M",
+                        })}
+                        label={`Foto de perfil de ${`${profile.firstName} ${profile.lastName}`.trim()}`}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-800)]"
+                        initialsClassName="text-xs font-bold text-[var(--brand-300)]"
+                      />
+                      <span className="min-w-0 truncate text-sm font-medium text-[var(--text-primary)]">
                         {profile.firstName} {profile.lastName}
                       </span>
                     </button>
