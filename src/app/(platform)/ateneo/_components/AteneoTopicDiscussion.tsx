@@ -335,6 +335,17 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
             <span>{topic.comments}</span>
           </button>
 
+          {canComment ? (
+            <button
+              type="button"
+              onClick={() => setOpenReplyFor((current) => (current === "new-comment" ? null : "new-comment"))}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
+            >
+              <span aria-hidden="true">💬</span>
+              <span>Comentar</span>
+            </button>
+          ) : null}
+
           <button
             type="button"
             onClick={toggleTopicValue}
@@ -355,15 +366,6 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           <h4 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
             Comentarios
           </h4>
-          {canComment ? (
-            <button
-              type="button"
-              onClick={() => setOpenReplyFor("new-comment")}
-              className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
-            >
-              Comentar
-            </button>
-          ) : null}
         </div>
 
         {canComment && openReplyFor === "new-comment" && (
