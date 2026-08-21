@@ -8,6 +8,7 @@ export type AteneoUserSummary = {
   userId: string;
   firstName: string | null;
   lastName: string | null;
+  profileImageUrl: string | null;
   initials: string;
 };
 
@@ -36,6 +37,7 @@ export type AteneoGroupMember = {
   userId: string;
   firstName: string | null;
   lastName: string | null;
+  profileImageUrl: string | null;
   initials: string;
   isAdmin: boolean;
   isPinned: boolean;

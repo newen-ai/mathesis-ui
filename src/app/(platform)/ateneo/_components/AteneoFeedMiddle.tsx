@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listAteneoFeed, listAteneoGroups, type AteneoTopic } from "@/lib/api/ateneo";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 type AteneoFeedTopic = {
   id: string;
   groupId: string;
   groupLabel: string;
+  authorImageUrl: string | null;
   authorInitial: string;
   authorName: string;
   timeLabel: string;
@@ -28,6 +30,7 @@ function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
     id: topic.id,
     groupId: topic.groupId,
     groupLabel: topic.groupLabel,
+    authorImageUrl: topic.author.profileImageUrl,
     authorInitial: topic.author.initials,
     authorName: authorName || "Usuario",
     timeLabel: topic.timeLabel,
@@ -48,9 +51,13 @@ function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
     >
       <article>
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-sm font-semibold text-[var(--surface)]">
-            {topic.authorInitial}
-          </div>
+          <UserAvatar
+            imageUrl={topic.authorImageUrl}
+            initials={topic.authorInitial}
+            label={`Foto de perfil de ${topic.authorName}`}
+            className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+            initialsClassName="text-sm font-semibold text-[var(--surface)]"
+          />
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-scale-1 text-[var(--text-secondary)]">

@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getAteneoGroup, joinAteneoGroup, listAteneoTopics, type AteneoGroup, type AteneoTopic } from "@/lib/api/ateneo";
 import { AteneoGroupHeaderActions } from "./AteneoGroupHeaderActions";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 export type AteneoGroupTopic = {
   id: string;
   authorInitial: string;
   groupLabel: string;
   authorName: string;
+  authorImageUrl: string | null;
   timeLabel: string;
   title: string;
   description: string;
@@ -40,6 +42,7 @@ function mapTopic(topic: AteneoTopic): AteneoGroupTopic {
 
   return {
     id: topic.id,
+    authorImageUrl: topic.author.profileImageUrl,
     authorInitial: topic.author.initials,
     groupLabel: topic.groupLabel,
     authorName: authorName || "Usuario",
@@ -236,9 +239,13 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
             >
               <article>
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-sm font-semibold text-[var(--surface)]">
-                    {topic.authorInitial}
-                  </div>
+                  <UserAvatar
+                    imageUrl={topic.authorImageUrl}
+                    initials={topic.authorInitial}
+                    label={`Foto de perfil de ${topic.authorName}`}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+                    initialsClassName="text-sm font-semibold text-[var(--surface)]"
+                  />
 
                   <div className="min-w-0 flex-1">
                     <p className="text-scale-2 text-[var(--text-secondary)]">
