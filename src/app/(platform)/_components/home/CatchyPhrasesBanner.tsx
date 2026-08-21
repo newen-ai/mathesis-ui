@@ -72,13 +72,13 @@ export function CatchyPhrasesBanner({ lines }: CatchyPhrasesBannerProps) {
         onBlur={() => setIsPaused(false)}
       >
         <span className="rounded-full bg-white/65 px-3 py-1 text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-[var(--brand-900)]">
-          Frases que pegan
+          Frases que inspiran
         </span>
 
         <div className="mathesis-phrase-stage">
           <p
             key={`${activeLineIndex}-${rotation.position}`}
-            className="mathesis-phrase-text text-sm font-medium text-white sm:text-base"
+            className="mathesis-phrase-text text-sm font-medium text-[var(--text-primary)] sm:text-base"
           >
             {currentLine}
           </p>
