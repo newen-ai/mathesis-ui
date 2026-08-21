@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const toneOptions = ["SERIO", "RECOMENDADO", "LIBRE"] as const;
+const TOPIC_TITLE_LIMIT = 100;
+const TOPIC_DESCRIPTION_LIMIT = 1000;
 
 type AteneoNewTopicFormProps = {
   groupId: string;
@@ -19,6 +21,15 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const [description, setDescription] = useState("");
   const [selectedTone, setSelectedTone] = useState<(typeof toneOptions)[number]>("LIBRE");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isTitleTooLong = title.length > TOPIC_TITLE_LIMIT;
+  const isDescriptionTooLong = description.length > TOPIC_DESCRIPTION_LIMIT;
+  const isOverAnyLimit = isTitleTooLong || isDescriptionTooLong;
+  const canPublish =
+    canCreateTopics &&
+    !isSubmitting &&
+    title.trim().length > 0 &&
+    description.trim().length > 0 &&
+    !isOverAnyLimit;
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +59,11 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
     if (!safeTitle || !safeDescription) {
       toast.info("Completá título y descripción antes de publicar.");
+      return;
+    }
+
+    if (isOverAnyLimit) {
+      toast.info("Respetá los límites: título hasta 100 y descripción hasta 1000 caracteres.");
       return;
     }
 
@@ -87,9 +103,9 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         {canCreateTopics ? (
           <button
             type="button"
-            disabled={isSubmitting}
+            disabled={!canPublish}
             onClick={() => void handleSubmit()}
-            className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95"
+            className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:brightness-100"
           >
             {isSubmitting ? "Publicando..." : "Publicar"}
           </button>
@@ -126,9 +142,19 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="Título del tema..."
-              className="w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--brand-700)]"
+              className={[
+                "w-full rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
+                isTitleTooLong ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]" : "border-[var(--line)] focus:border-[var(--brand-700)]",
+              ].join(" ")}
             />
-            <div className="mt-1 text-right text-scale-1 text-[var(--text-secondary)]">{title.length}/100</div>
+            <div
+              className={[
+                "mt-1 text-right text-scale-1",
+                isTitleTooLong ? "text-[var(--danger-500)]" : "text-[var(--text-secondary)]",
+              ].join(" ")}
+            >
+              {title.length}/{TOPIC_TITLE_LIMIT}
+            </div>
           </label>
 
           <label className="block">
@@ -138,9 +164,21 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Contá de qué se trata..."
               rows={6}
-              className="w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--brand-700)]"
+              className={[
+                "w-full resize-none rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
+                isDescriptionTooLong
+                  ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]"
+                  : "border-[var(--line)] focus:border-[var(--brand-700)]",
+              ].join(" ")}
             />
-            <div className="mt-1 text-right text-scale-1 text-[var(--text-secondary)]">{description.length}/1000</div>
+            <div
+              className={[
+                "mt-1 text-right text-scale-1",
+                isDescriptionTooLong ? "text-[var(--danger-500)]" : "text-[var(--text-secondary)]",
+              ].join(" ")}
+            >
+              {description.length}/{TOPIC_DESCRIPTION_LIMIT}
+            </div>
           </label>
 
           <div className="space-y-3">
