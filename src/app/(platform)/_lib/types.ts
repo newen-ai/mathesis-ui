@@ -9,6 +9,7 @@ export type Profile = {
   locationCountry: string;
   locationCity: string;
   locationPostalCode: string;
+  intereses: string[];
   imagenPerfilUrl: string;
   imagenBannerUrl: string;
 };

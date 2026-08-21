@@ -44,7 +44,7 @@ export function ProfileFormCard({
     }
   };
 
-  const onFormChange = (name: keyof Profile, value: string) => {
+  const onFormChange = (name: Exclude<keyof Profile, "intereses">, value: string) => {
     setFormState((current) => ({
       ...current,
       [name]: value,

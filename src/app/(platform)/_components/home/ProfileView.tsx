@@ -11,6 +11,7 @@ import { formatBadgeSlug } from "@/lib/utils/badge";
 import { TopBar } from "../TopBar";
 import { EducationCard } from "./EducationCard";
 import { ExperienceCard } from "./ExperienceCard";
+import { InteresesCard } from "./InteresesCard";
 import { ProfileFormCard } from "./ProfileFormCard";
 import { ProfileInitializationView } from "./ProfileInitializationView";
 
@@ -170,7 +171,7 @@ export function ProfileView() {
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const bannerDisplayRef = useRef<HTMLDivElement | null>(null);
   const bannerPreviewRef = useRef<HTMLDivElement | null>(null);
-  const [activeEditSection, setActiveEditSection] = useState<"profile" | "experience" | "education" | null>(null);
+  const [activeEditSection, setActiveEditSection] = useState<"profile" | "experience" | "education" | "interests" | null>(null);
   const [editSessionId, setEditSessionId] = useState(0);
   const [avatarEditor, setAvatarEditor] = useState<AvatarEditorState | null>(null);
   const [bannerEditor, setBannerEditor] = useState<BannerEditorState | null>(null);
@@ -214,7 +215,7 @@ export function ProfileView() {
     profile.locationCity
   );
 
-  const onStartSectionEdit = (section: "profile" | "experience" | "education") => {
+  const onStartSectionEdit = (section: "profile" | "experience" | "education" | "interests") => {
     setEditSessionId((current) => current + 1);
     setActiveEditSection(section);
   };
@@ -766,6 +767,18 @@ export function ProfileView() {
             onSaveOperations={onSaveEducationOperations}
             onClearSaveError={clearEducationSaveError}
             onStartEditing={() => onStartSectionEdit("education")}
+            onCloseEditing={onCloseSectionEdit}
+          />
+          <InteresesCard
+            key={`interests-${editSessionId}`}
+            profile={profile}
+            canEdit={canEditProfile}
+            isEditingMode={activeEditSection === "interests"}
+            isSaving={isSavingProfile || isSavingExperiences || isSavingEducations}
+            saveError={profileSaveError}
+            onSave={onSaveProfile}
+            onClearSaveError={clearProfileSaveError}
+            onStartEditing={() => onStartSectionEdit("interests")}
             onCloseEditing={onCloseSectionEdit}
           />
         </section>

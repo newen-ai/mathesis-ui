@@ -19,6 +19,7 @@ export const emptyProfile: Profile = {
   locationCountry: "",
   locationCity: "",
   locationPostalCode: "",
+  intereses: [],
   imagenPerfilUrl: "",
   imagenBannerUrl: "",
 };

@@ -23,6 +23,7 @@ const emptyProfileState: Profile = {
   locationCountry: "",
   locationCity: "",
   locationPostalCode: "",
+  intereses: [],
   imagenPerfilUrl: "",
   imagenBannerUrl: "",
 };
@@ -39,7 +40,7 @@ export function ProfileInitializationView({
     return Boolean(formState.nombre.trim() && formState.apellido.trim());
   }, [formState.apellido, formState.nombre]);
 
-  const onFormChange = (name: keyof Profile, value: string) => {
+  const onFormChange = (name: Exclude<keyof Profile, "intereses">, value: string) => {
     setFormState((current) => ({
       ...current,
       [name]: value,
