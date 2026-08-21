@@ -59,6 +59,7 @@ function mapProfileOutputToProfile(source: ProfileOutput): Profile {
     locationCountry: source.locationCountry ?? "",
     locationCity: source.locationCity ?? "",
     locationPostalCode: source.locationPostalCode ?? "",
+    intereses: source.interests ?? [],
     imagenPerfilUrl: source.profileImageUrl ?? "",
     imagenBannerUrl: source.profileBannerImageUrl ?? "",
   };
@@ -144,6 +145,7 @@ function mapProfileToSaveInput(
     ...(profile.locationPostalCode.trim()
       ? { locationPostalCode: profile.locationPostalCode.trim() }
       : {}),
+    interests: profile.intereses,
     ...(profile.imagenPerfilUrl.trim()
       ? { profileImageUrl: profile.imagenPerfilUrl.trim() }
       : {}),

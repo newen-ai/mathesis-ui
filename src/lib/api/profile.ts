@@ -39,11 +39,16 @@ export type ProfileOutput = {
   locationCountry: string | null;
   locationCity: string | null;
   locationPostalCode: string | null;
+  interests: string[];
   profileImageUrl: string | null;
   profileBannerImageUrl: string | null;
   badges: BadgeOutput[];
   employmentHistory: EmploymentHistoryOutput[];
   educationHistory: EducationHistoryOutput[];
+};
+
+export type InterestSuggestionOutput = {
+  value: string;
 };
 
 export type SearchProfileOutput = {
@@ -230,11 +235,59 @@ export type SaveProfileInput = {
   locationCountry?: string;
   locationCity?: string;
   locationPostalCode?: string;
+  interests?: string[];
   profileImageUrl?: string;
   profileBannerImageUrl?: string;
   employmentHistory?: EmploymentHistoryInput[];
   educationHistory?: EducationHistoryInput[];
 };
+
+export async function searchInterestSuggestions(
+  text: string,
+  signal?: AbortSignal
+): Promise<{ success: boolean; message: string; data: InterestSuggestionOutput[] }> {
+  const normalizedText = text.trim();
+
+  if (normalizedText.length < 3) {
+    return {
+      success: true,
+      message: "",
+      data: [],
+    };
+  }
+
+  try {
+    const query = new URLSearchParams({ text: normalizedText });
+    const response = await apiRequest(`/profile/interests/suggestions?${query.toString()}`, {
+      signal,
+    });
+
+    const payload = await parseDataResponse<InterestSuggestionOutput[]>(
+      response,
+      "Invalid interests suggestions response"
+    );
+
+    return {
+      success: payload.success,
+      message: payload.message,
+      data: payload.data,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+
+    return {
+      success: false,
+      message:
+        error instanceof Error &&
+        error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+          ? "NEXT_PUBLIC_API_BASE_URL is not configured"
+          : "Could not connect to interests suggestion service",
+      data: [],
+    };
+  }
+}
 
 export async function searchProfiles(
   text: string,
