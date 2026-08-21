@@ -313,9 +313,6 @@ function ResetPasswordContent() {
           </div>
         </section>
 
-        <p className="border-t border-[var(--line)] py-2 text-center text-[0.65rem] tracking-wide text-[var(--text-soft)]">
-          Powered by <span className="font-semibold text-[var(--brand-700)]">Newen.solutions</span>
-        </p>
       </main>
     </>
   );

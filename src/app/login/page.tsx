@@ -253,9 +253,6 @@ function LoginPageContent() {
                 </div>
               </div>
 
-              <p className="mt-6 text-center text-[0.65rem] tracking-wide text-[#999999]">
-                Powered by Newen.solutions
-              </p>
             </div>
           </div>
         </section>

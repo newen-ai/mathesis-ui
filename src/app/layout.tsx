@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sora, Spectral } from "next/font/google";
 import { AppToaster } from "@/components/ui/AppToaster";
+import { PoweredByFooter } from "@/components/ui/PoweredByFooter";
 import { withBasePath } from "@/lib/assets";
 import "./globals.css";
 
@@ -36,8 +37,9 @@ export default function RootLayout({
       lang="es"
       className={`${sora.variable} ${spectral.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {children}
+      <body className="min-h-full">
+        <div className="min-h-full pb-10 md:pb-11">{children}</div>
+        <PoweredByFooter />
         <AppToaster />
       </body>
     </html>

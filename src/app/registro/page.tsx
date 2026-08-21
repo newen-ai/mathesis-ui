@@ -507,9 +507,6 @@ export default function RegistroPage() {
             </div>
           </div>
         </div>
-        <div className="shrink-0 border-t border-[#E8E5E0] bg-white py-2.5 text-center text-[0.65rem] tracking-wide text-[#666666]">
-          Powered by <span className="font-bold text-[#7A6435]">Newen.solutions</span>
-        </div>
       </main>
     </>
   );
