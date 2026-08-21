@@ -3,6 +3,7 @@ import type { AteneoGroupTopic } from "../_components/AteneoGroupFeed";
 export const popularTopics: AteneoGroupTopic[] = [
   {
     id: "topic-libro-clarke",
+    authorImageUrl: null,
     authorInitial: "L",
     groupLabel: "Café Mathesis",
     authorName: "Laura M.",
@@ -15,6 +16,7 @@ export const popularTopics: AteneoGroupTopic[] = [
   },
   {
     id: "topic-base-premium-grupos",
+    authorImageUrl: null,
     authorInitial: "C",
     groupLabel: "Comunicación Mensa Argentina",
     authorName: "Carlos V.",
@@ -27,6 +29,7 @@ export const popularTopics: AteneoGroupTopic[] = [
   },
   {
     id: "topic-partida-online",
+    authorImageUrl: null,
     authorInitial: "S",
     groupLabel: "Ajedrez y Estrategia",
     authorName: "Sofía P.",
