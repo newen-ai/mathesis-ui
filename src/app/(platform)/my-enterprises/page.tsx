@@ -108,17 +108,6 @@ export default function MyEnterprisesPage() {
   const [enterprises, setEnterprises] = useState<Enterprise[]>([]);
   const [isLoadingEnterprises, setIsLoadingEnterprises] = useState(true);
 
-  const loadEnterprises = async (signal?: AbortSignal) => {
-    try {
-      const response = await listMyEnterprises(signal);
-      setEnterprises(response.map(mapEnterpriseFromApi));
-    } catch {
-      setEnterprises([]);
-    } finally {
-      setIsLoadingEnterprises(false);
-    }
-  };
-
   const handleDelete = async (enterpriseId: string) => {
     const response = await deleteEnterprise(enterpriseId);
 
@@ -132,7 +121,17 @@ export default function MyEnterprisesPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void loadEnterprises(controller.signal);
+
+    listMyEnterprises(controller.signal)
+      .then((response) => {
+        setEnterprises(response.map(mapEnterpriseFromApi));
+      })
+      .catch(() => {
+        setEnterprises([]);
+      })
+      .finally(() => {
+        setIsLoadingEnterprises(false);
+      });
 
     return () => {
       controller.abort();
