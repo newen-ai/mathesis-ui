@@ -7,6 +7,9 @@ import {
 export type SessionRole = "user" | "admin";
 
 type RegisterInput = {
+	firstName: string;
+	middleName?: string;
+	lastName: string;
 	email: string;
 	password: string;
 };
@@ -36,6 +39,8 @@ export type SessionAccessDecision = {
 	sessionState: SessionState;
 	role?: SessionRole;
 	isWhitelisted: boolean;
+	hasVerifiedEmail: boolean;
+	hasCompletedWelcomeOnboarding: boolean;
 };
 
 type WhitelistErrorDetails = {
@@ -47,6 +52,8 @@ type SessionPayload = {
 		user?: {
 			role?: SessionRole;
 			isWhitelisted?: boolean;
+			hasVerifiedEmail?: boolean;
+			hasCompletedWelcomeOnboarding?: boolean;
 		};
 	};
 	details?: WhitelistErrorDetails;
@@ -83,6 +90,9 @@ export async function register(
 		const response = await apiRequest("/auth/register", {
 			method: "POST",
 			body: {
+				firstName: input.firstName,
+				middleName: input.middleName,
+				lastName: input.lastName,
 				email: input.email,
 				password: input.password,
 			},
@@ -262,7 +272,12 @@ export async function getSessionAccessDecision(): Promise<SessionAccessDecision>
 		const sessionResponse = await apiRequest("/auth/session");
 
 		if (sessionResponse.status === 401) {
-			return { sessionState: "unauthenticated", isWhitelisted: false };
+			return {
+				sessionState: "unauthenticated",
+				isWhitelisted: false,
+				hasVerifiedEmail: true,
+				hasCompletedWelcomeOnboarding: true,
+			};
 		}
 
 		if (sessionResponse.status === 403) {
@@ -278,27 +293,75 @@ export async function getSessionAccessDecision(): Promise<SessionAccessDecision>
 					sessionState: "authenticated",
 					role: payload?.data?.user?.role,
 					isWhitelisted: false,
+					hasVerifiedEmail: payload?.data?.user?.hasVerifiedEmail ?? true,
+					hasCompletedWelcomeOnboarding:
+						payload?.data?.user?.hasCompletedWelcomeOnboarding ?? true,
 				};
 			}
 
-			return { sessionState: "unauthenticated", isWhitelisted: false };
+			return {
+				sessionState: "unauthenticated",
+				isWhitelisted: false,
+				hasVerifiedEmail: true,
+				hasCompletedWelcomeOnboarding: true,
+			};
 		}
 
 		if (!sessionResponse.ok) {
-			return { sessionState: "unknown", isWhitelisted: false };
+			return {
+				sessionState: "unknown",
+				isWhitelisted: false,
+				hasVerifiedEmail: true,
+				hasCompletedWelcomeOnboarding: true,
+			};
 		}
 
 		const payload = (await sessionResponse.json()) as SessionPayload;
 		const role = payload?.data?.user?.role;
 		const isWhitelisted = payload?.data?.user?.isWhitelisted ?? true;
+		const hasVerifiedEmail = payload?.data?.user?.hasVerifiedEmail ?? true;
+		const hasCompletedWelcomeOnboarding =
+			payload?.data?.user?.hasCompletedWelcomeOnboarding ?? true;
 
 		return {
 			sessionState: "authenticated",
 			role,
 			isWhitelisted,
+			hasVerifiedEmail,
+			hasCompletedWelcomeOnboarding,
 		};
 	} catch {
-		return { sessionState: "unknown", isWhitelisted: false };
+		return {
+			sessionState: "unknown",
+			isWhitelisted: false,
+			hasVerifiedEmail: true,
+			hasCompletedWelcomeOnboarding: true,
+		};
+	}
+}
+
+export async function completeWelcomeOnboarding(): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest("/auth/onboarding/complete", {
+			method: "POST",
+		});
+
+		return parseServiceResponse(
+			response,
+			response.ok
+				? "Respuesta inválida del servicio de onboarding."
+				: "No pudimos completar la bienvenida en el servidor."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no está configurada."
+					: "No pudimos completar tu bienvenida.",
+			details: "Error de red o CORS.",
+		};
 	}
 }
 

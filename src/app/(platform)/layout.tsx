@@ -7,7 +7,7 @@ export default function PlatformLayout({
 }>) {
   return (
     <SessionGate>
-      <div className="flex min-h-dvh flex-col">
+      <div className="flex min-h-dvh flex-col overflow-x-hidden">
         <main className="flex-1">{children}</main>
       </div>
     </SessionGate>

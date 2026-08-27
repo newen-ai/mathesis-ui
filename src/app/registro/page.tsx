@@ -11,6 +11,9 @@ import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { normalizeEmailInput } from "@/lib/utils/email";
 
 type ValidationErrors = {
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   dni?: string;
   email?: string;
   adult?: string;
@@ -36,6 +39,9 @@ export default function RegistroPage() {
   const [isAdult, setIsAdult] = useState(false);
 
   // Paso 2 — crear acceso
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -89,6 +95,16 @@ export default function RegistroPage() {
 
     const nextErrors: ValidationErrors = {};
 
+    if (!firstName.trim()) {
+      nextErrors.firstName = "Ingresa tu nombre.";
+    }
+    if (middleName.trim().length > 80) {
+      nextErrors.middleName = "El segundo nombre no puede superar los 80 caracteres.";
+    }
+    if (!lastName.trim()) {
+      nextErrors.lastName = "Ingresa tu apellido.";
+    }
+
     if (!password || password.length < 8) {
       nextErrors.password = "La clave debe tener al menos 8 caracteres.";
     }
@@ -106,6 +122,9 @@ export default function RegistroPage() {
 
     setIsSubmitting(true);
     const result = await register({
+      firstName: firstName.trim(),
+      middleName: middleName.trim() || undefined,
+      lastName: lastName.trim(),
       email: normalizedEmail,
       password,
     });
@@ -134,7 +153,7 @@ export default function RegistroPage() {
   const formSub =
     step === 1
       ? "Verificamos tu membresía con Mensa Argentina."
-      : "Ya verificamos tu membresía. Creá tu contraseña para terminar.";
+      : "Ya verificamos tu membresía. Completá tu nombre y tu contraseña para terminar.";
 
   return (
     <>
@@ -422,6 +441,71 @@ export default function RegistroPage() {
                     <div className="text-xs text-[#666666]">{organization}</div>
                   </div>
 
+                  <div className="grid gap-2.5 lg:grid-cols-2">
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="firstName" className="text-xs font-bold tracking-wide text-[#0A2540]">
+                        Nombre *
+                      </label>
+                      <input
+                        id="firstName"
+                        autoComplete="given-name"
+                        placeholder="Tu nombre"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                        aria-invalid={Boolean(errors.firstName)}
+                        aria-describedby={errors.firstName ? "first-name-error" : undefined}
+                        className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
+                      />
+                      {errors.firstName ? (
+                        <p id="first-name-error" className="text-xs font-medium text-red-700">
+                          {errors.firstName}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label htmlFor="middleName" className="text-xs font-bold tracking-wide text-[#0A2540]">
+                        Segundo nombre (opcional)
+                      </label>
+                      <input
+                        id="middleName"
+                        autoComplete="additional-name"
+                        placeholder="Tu segundo nombre"
+                        value={middleName}
+                        onChange={(event) => setMiddleName(event.target.value)}
+                        aria-invalid={Boolean(errors.middleName)}
+                        aria-describedby={errors.middleName ? "middle-name-error" : undefined}
+                        className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
+                      />
+                      {errors.middleName ? (
+                        <p id="middle-name-error" className="text-xs font-medium text-red-700">
+                          {errors.middleName}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="lastName" className="text-xs font-bold tracking-wide text-[#0A2540]">
+                      Apellido *
+                    </label>
+                    <input
+                      id="lastName"
+                      autoComplete="family-name"
+                      placeholder="Tu apellido"
+                      value={lastName}
+                      onChange={(event) => setLastName(event.target.value)}
+                      aria-invalid={Boolean(errors.lastName)}
+                      aria-describedby={errors.lastName ? "last-name-error" : undefined}
+                      className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
+                    />
+                    {errors.lastName ? (
+                      <p id="last-name-error" className="text-xs font-medium text-red-700">
+                        {errors.lastName}
+                      </p>
+                    ) : null}
+                  </div>
+
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="password" className="text-xs font-bold tracking-wide text-[#0A2540]">
                       Contraseña
@@ -496,7 +580,7 @@ export default function RegistroPage() {
                     disabled={isSubmitting}
                     className="mt-1 w-full rounded-full bg-[#C9A84C] px-6 py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:bg-[#b8973f] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSubmitting ? "Creando cuenta..." : "Crear cuenta y continuar"}
+                    {isSubmitting ? "Creando cuenta..." : "Crear cuenta"}
                   </button>
 
                   <p className="text-center text-xs italic text-[#666666]">

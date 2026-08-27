@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { verifyEmail } from "@/lib/api/auth";
 
 type ConfirmClientProps = {
@@ -9,6 +10,7 @@ type ConfirmClientProps = {
 };
 
 export function ConfirmClient({ token }: ConfirmClientProps) {
+  const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Confirmando tu correo...");
 
@@ -19,7 +21,7 @@ export function ConfirmClient({ token }: ConfirmClientProps) {
     void verifyEmail(resolvedToken).then((result) => {
       if (result.success) {
         setStatus("success");
-        setMessage("Tu correo ya fue verificado correctamente.");
+        setMessage("Tu correo ya fue verificado correctamente. Te estamos llevando a la bienvenida.");
         return;
       }
 
@@ -27,6 +29,20 @@ export function ConfirmClient({ token }: ConfirmClientProps) {
       setMessage(result.message || "No pudimos confirmar tu correo.");
     });
   }, [token]);
+
+  useEffect(() => {
+    if (status !== "success") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      router.replace("/bienvenida");
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [router, status]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
@@ -40,10 +56,10 @@ export function ConfirmClient({ token }: ConfirmClientProps) {
         <p className="mt-4 text-sm leading-6 text-slate-600">{message}</p>
         {status === "success" ? (
           <Link
-            href="/login"
+            href="/bienvenida"
             className="mt-6 inline-flex items-center justify-center rounded-full bg-[#0A2540] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#163a5b]"
           >
-            Ir al inicio de sesión
+            Ir a la bienvenida
           </Link>
         ) : null}
       </section>
