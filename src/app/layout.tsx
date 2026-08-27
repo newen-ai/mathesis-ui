@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Sora, Spectral } from "next/font/google";
 import { AppToaster } from "@/components/ui/AppToaster";
-<<<<<<< Updated upstream
 import { PoweredByFooter } from "@/components/ui/PoweredByFooter";
-=======
 import { ThemeInitializer } from "@/components/theme/ThemeInitializer";
->>>>>>> Stashed changes
 import { withBasePath } from "@/lib/assets";
 import "./globals.css";
 
@@ -42,15 +39,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${sora.variable} ${spectral.variable} h-full antialiased`}
     >
-<<<<<<< Updated upstream
       <body className="min-h-full">
+        <ThemeInitializer />
         <div className="min-h-full pb-10 md:pb-11">{children}</div>
         <PoweredByFooter />
-=======
-      <body className="min-h-full flex flex-col">
-        <ThemeInitializer />
-        {children}
->>>>>>> Stashed changes
         <AppToaster />
       </body>
     </html>
