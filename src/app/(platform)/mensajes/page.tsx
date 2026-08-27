@@ -150,6 +150,24 @@ export default function MensajesPage() {
     [messagesByChatId, selectedThread]
   );
 
+  const selectedThreadBlockedReason = useMemo(() => {
+    if (!selectedThread || selectedThread.detail.type !== "DIRECT") {
+      return null;
+    }
+
+    if (selectedThread.detail.isBlockedByOtherUser) {
+      return "Has sido bloqueado por este usuario";
+    }
+
+    if (selectedThread.detail.isBlockedByCurrentUser) {
+      return "Has bloqueado a este usuario";
+    }
+
+    return null;
+  }, [selectedThread]);
+
+  const isSelectedThreadComposerBlocked = !isComposerOpen && Boolean(selectedThreadBlockedReason);
+
   const contactsFromExistingChats = useMemo(() => {
     const map = new Map<string, ContactOption>();
 
@@ -495,6 +513,11 @@ export default function MensajesPage() {
       return;
     }
 
+    if (selectedThreadBlockedReason) {
+      setComposerError(selectedThreadBlockedReason);
+      return;
+    }
+
     setIsSending(true);
 
     try {
@@ -534,6 +557,7 @@ export default function MensajesPage() {
     loadLatestMessages,
     recipientUserIds,
     refreshThreads,
+    selectedThreadBlockedReason,
     selectedThreadId,
   ]);
 
@@ -936,8 +960,12 @@ export default function MensajesPage() {
                 <p className="mb-2 text-xs font-medium text-[var(--danger-500)]">{composerError}</p>
               ) : null}
 
-              <div className="flex gap-2">
+              <div
+                className="flex gap-2"
+                title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
+              >
                 <input
+                  disabled={isSelectedThreadComposerBlocked}
                   value={draftMessage}
                   onChange={(event) => setDraftMessage(event.target.value)}
                   onKeyDown={(event) => {
@@ -946,7 +974,8 @@ export default function MensajesPage() {
                       onSend();
                     }
                   }}
-                  placeholder="Escribir un mensaje..."
+                  title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
+                  placeholder={selectedThreadBlockedReason ?? "Escribir un mensaje..."}
                   className="w-full rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-300)_35%,transparent)]"
                 />
                 <button
@@ -956,7 +985,8 @@ export default function MensajesPage() {
                       setComposerError("No se pudo completar el envio.");
                     });
                   }}
-                  disabled={isSending}
+                  disabled={isSending || isSelectedThreadComposerBlocked}
+                  title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
                   className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-sm font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSending ? "Enviando..." : "Enviar"}

@@ -48,6 +48,8 @@ export type ChatDetail = {
   createdAt: string;
   updatedAt: string;
   isAdmin: boolean;
+  isBlockedByCurrentUser: boolean;
+  isBlockedByOtherUser: boolean;
   members: ChatMemberSummary[];
 };
 

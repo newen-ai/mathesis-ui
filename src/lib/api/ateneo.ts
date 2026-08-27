@@ -66,6 +66,7 @@ export type AteneoComment = {
   topicId: string;
   author: AteneoUserSummary;
   content: string;
+  isDeletedPlaceholder: boolean;
   timeLabel: string;
   createdAt: string;
   parentCommentId: string | null;

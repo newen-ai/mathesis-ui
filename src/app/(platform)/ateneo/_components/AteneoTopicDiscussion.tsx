@@ -30,6 +30,10 @@ function FlagIcon() {
 }
 
 function fullName(comment: AteneoComment): string {
+  if (comment.isDeletedPlaceholder) {
+    return "Comentario eliminado";
+  }
+
   return [comment.author.firstName, comment.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
 }
 
@@ -162,7 +166,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
       const response = await createAteneoTopicComment(groupId, topic.id, {
         content: value,
         parentCommentId: resolveReplyParentId(commentId),
-        mentionUserId: targetComment?.author.userId
+        mentionUserId: targetComment?.isDeletedPlaceholder ? undefined : targetComment?.author.userId
       });
 
       setTopicComments((current) => [...current, response.data.comment]);
@@ -400,15 +404,11 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
               className={`rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 ${comment.parentCommentId ? "ml-6" : ""}`}
             >
               <div className="flex items-start gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOpenReplyFor((current) => (current === comment.id ? null : comment.id))}
-                  className="w-full text-left"
-                >
+                <div className="w-full text-left">
                   <div className="flex items-start gap-3">
                     <UserAvatar
-                      imageUrl={comment.author.profileImageUrl}
-                      initials={comment.author.initials}
+                      imageUrl={comment.isDeletedPlaceholder ? null : comment.author.profileImageUrl}
+                      initials={comment.isDeletedPlaceholder ? "?" : comment.author.initials}
                       label={`Foto de perfil de ${fullName(comment)}`}
                       className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
                       initialsClassName="text-xs font-bold text-[var(--surface)]"
@@ -416,69 +416,77 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-semibold text-[var(--heading-primary)]">{fullName(comment)}</p>
+                        <p className={`font-semibold ${comment.isDeletedPlaceholder ? "text-[var(--text-secondary)]" : "text-[var(--heading-primary)]"}`}>
+                          {fullName(comment)}
+                        </p>
                         <span className="text-scale-1 text-[var(--text-secondary)]">{comment.timeLabel}</span>
                       </div>
-                      <p className="mt-1 text-scale-3 leading-7 text-[var(--text-primary)]">{comment.content}</p>
+                      <p className={`mt-1 text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}>
+                        {comment.content}
+                      </p>
                     </div>
                   </div>
-                </button>
-
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    aria-label="Más opciones para comentario"
-                    onClick={() => setReportOpenFor((current) => (current === comment.id ? null : comment.id))}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-lg text-[var(--text-secondary)]"
-                  >
-                    ⋯
-                  </button>
-
-                  {reportOpenFor === comment.id && (
-                    <div className="absolute right-0 top-10 z-10 min-w-[120px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          toast.info("Comentario reportado");
-                          setReportOpenFor(null);
-                        }}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-600)] hover:bg-[var(--danger-50)]"
-                      >
-                        <span className="text-[var(--danger-600)]">
-                          <FlagIcon />
-                        </span>
-                        <span>Denunciar</span>
-                      </button>
-                    </div>
-                  )}
                 </div>
+
+                {!comment.isDeletedPlaceholder ? (
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      aria-label="Más opciones para comentario"
+                      onClick={() => setReportOpenFor((current) => (current === comment.id ? null : comment.id))}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-lg text-[var(--text-secondary)]"
+                    >
+                      ⋯
+                    </button>
+
+                    {reportOpenFor === comment.id && (
+                      <div className="absolute right-0 top-10 z-10 min-w-[120px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toast.info("Comentario reportado");
+                            setReportOpenFor(null);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-600)] hover:bg-[var(--danger-50)]"
+                        >
+                          <span className="text-[var(--danger-600)]">
+                            <FlagIcon />
+                          </span>
+                          <span>Denunciar</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </div>
 
-              <div className="mt-3 flex items-center gap-2">
-                {canComment ? (
+              {!comment.isDeletedPlaceholder ? (
+                <div className="mt-3 flex items-center gap-2">
+                  {canComment ? (
+                    <button
+                      type="button"
+                      onClick={() => startReplyFor(comment.id, fullName(comment))}
+                      className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
+                    >
+                      Responder
+                    </button>
+                  ) : null}
+
                   <button
                     type="button"
-                    onClick={() => startReplyFor(comment.id, fullName(comment))}
-                    className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
+                    onClick={() => toggleCommentValue(comment.id)}
+                    className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
+                      valuedComments[comment.id]
+                        ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
+                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--brand-700)]"
+                    }`}
                   >
-                    Responder
+                    {valuedComments[comment.id] ? "Valorado" : "Valorar"}
                   </button>
-                ) : null}
+                </div>
+              ) : null}
 
-                <button
-                  type="button"
-                  onClick={() => toggleCommentValue(comment.id)}
-                  className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
-                    valuedComments[comment.id]
-                      ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
-                      : "border-[var(--line)] bg-[var(--surface)] text-[var(--brand-700)]"
-                  }`}
-                >
-                  {valuedComments[comment.id] ? "Valorado" : "Valorar"}
-                </button>
-              </div>
-
-              {canComment && openReplyFor === comment.id && (
+              {canComment && !comment.isDeletedPlaceholder && openReplyFor === comment.id && (
                 <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3">
                   <textarea
                     autoFocus

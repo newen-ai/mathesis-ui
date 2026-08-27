@@ -92,8 +92,7 @@ const SETTINGS_CATEGORIES: SettingsCategory[] = [
         key: "blocked",
         type: "placeholder",
         label: "Bloqueados",
-        icon: "block",
-        detail: "(1)",
+        icon: "block"
       },
     ],
   },
