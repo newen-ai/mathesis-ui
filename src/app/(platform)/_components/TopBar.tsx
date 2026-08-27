@@ -102,7 +102,10 @@ const desktopTopMenuItems: TopBarMenuItem[] = [
 
 const accountMenuSection: TopBarMenuSection = {
   title: "CUENTA",
-  items: [{ label: "Configuración", href: "/account/configuration", icon: "settings" }],
+  items: [
+    { label: "Configuración", href: "/account/configuration", icon: "settings" },
+    { label: "Credencial digital", href: "/perfil/credencial", icon: "badge" },
+  ],
 };
 
 const desktopMenuSections: TopBarMenuSection[] = [
@@ -118,6 +121,7 @@ const desktopMenuSections: TopBarMenuSection[] = [
     title: "CUENTA",
     items: [
       { label: "Bloqueados", icon: "ban" },
+      { label: "Credencial digital", href: "/perfil/credencial", icon: "badge" },
       { label: "Contactar a Mathesis", icon: "message" },
     ],
   },
@@ -246,6 +250,15 @@ function NavIcon({ icon }: { icon: string }) {
     return (
       <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M4.5 6.8A1.8 1.8 0 0 1 6.3 5h11.4a1.8 1.8 0 0 1 1.8 1.8v7.1a1.8 1.8 0 0 1-1.8 1.8H8.5L5 19v-3.3h-1a1.8 1.8 0 0 1-1.8-1.8V6.8a1.8 1.8 0 0 1 1.8-1.8" />
+      </svg>
+    );
+  }
+
+  if (icon === "badge") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="5" y="5" width="14" height="14" rx="2.5" />
+        <path d="M9 10h6M9 14h6M12 9v6" />
       </svg>
     );
   }

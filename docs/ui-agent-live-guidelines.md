@@ -168,8 +168,18 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Use the existing theme tokens and card styling conventions instead of introducing ad-hoc contrast values.
 - Keep the directory content representative but static for this pass until the backend exposes a dedicated verified-directory endpoint.
 
+<<<<<<< Updated upstream
 ## Current Active UI Directions (2026-08-21 Global Footer)
 - The `Powered by Newen.Solutions` footer must be implemented once in the root app shell and inherited by all routes, including auth/public and platform screens.
 - The footer must remain fixed to the viewport bottom so it stays visible while scrolling.
 - Avoid page-level footer duplication; new pages should not require any local footer markup.
 - Keep footer styling theme-aware using semantic tokens from `globals.css` and preserve light/dark readability.
+=======
+## Current Active UI Directions (2026-08-27 Digital Credential)
+- Add a new entry labeled `Credencial digital` in the profile/account menu and keep the route at `/perfil/credencial`.
+- Render the credential card with a fixed, square-ish proportion by keeping height as the anchor and deriving width from the correct aspect ratio.
+- Remove the ID block, the `Compartir` button, and the `Descargar` button from the credential card.
+- Show a QR-style square on the front panel as a visual placeholder until the backend defines the exact verification payload format.
+- Hide the online verification copy from the back card and replace it with the user’s current badge grid.
+- Keep the UI visualized as front/back flip card for the mockup stage; backend adaptation for QR payload generation and credential verification remains a follow-up task.
+>>>>>>> Stashed changes
