@@ -173,6 +173,14 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - The footer must remain fixed to the viewport bottom so it stays visible while scrolling.
 - Avoid page-level footer duplication; new pages should not require any local footer markup.
 - Keep footer styling theme-aware using semantic tokens from `globals.css` and preserve light/dark readability.
+
+## Current Active UI Directions (2026-08-27 Welcome Onboarding)
+- Registration remains the only place where new accounts collect required `Nombre` and `Apellido`; `Segundo nombre` is optional.
+- After successful email confirmation, the user should enter a one-time authenticated welcome flow instead of returning directly to `/login`.
+- Welcome page 1 should follow the first provided screenshot as a desktop-first composition, while page 2 should follow the second and third screenshots as one continuous scrollable page.
+- The first welcome CTA must read `¿Qué viene a futuro?`.
+- The final welcome CTA must route the user to `/ateneo`.
+- Keep both welcome pages theme-aware using semantic tokens from `globals.css`; preserve brand navy hero areas and gold CTA emphasis.
 ## Current Active UI Directions (2026-08-27 Digital Credential)
 - Add a new entry labeled `Credencial digital` in the profile/account menu and keep the route at `/perfil/credencial`.
 - Render the credential card with a fixed, square-ish proportion by keeping height as the anchor and deriving width from the correct aspect ratio.

@@ -39,9 +39,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${sora.variable} ${spectral.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
+      <body className="min-h-full overflow-x-hidden">
         <ThemeInitializer />
-        <div className="min-h-full pb-10 md:pb-11">{children}</div>
+        <div className="min-h-full overflow-x-hidden pb-10 md:pb-11">{children}</div>
         <PoweredByFooter />
         <AppToaster />
       </body>

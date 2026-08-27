@@ -30,6 +30,7 @@ export type BadgeOutput = {
 
 export type ProfileOutput = {
   firstName: string;
+  middleName: string | null;
   lastName: string;
   dateOfBirth: Date | null;
   nationality: string | null;

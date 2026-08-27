@@ -19,6 +19,22 @@ function buildLoginPath(pathname: string) {
 }
 
 const FALLBACK_WHITELIST_PATH = "/whitelist-access";
+const WELCOME_ENTRY_PATH = "/bienvenida";
+const WELCOME_FUTURE_PATH = "/bienvenida/futuro";
+
+function normalizePathname(pathname: string) {
+  if (!pathname) return "/";
+  if (pathname === "/") return pathname;
+  return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+}
+
+function isWelcomePath(pathname: string) {
+  const normalizedPathname = normalizePathname(pathname);
+  return (
+    normalizedPathname === WELCOME_ENTRY_PATH ||
+    normalizedPathname === WELCOME_FUTURE_PATH
+  );
+}
 
 export function SessionGate({ children }: SessionGateProps) {
   const router = useRouter();
@@ -56,6 +72,27 @@ export function SessionGate({ children }: SessionGateProps) {
         return;
       }
 
+      if (
+        nextSessionState === "authenticated" &&
+        accessDecision.hasVerifiedEmail &&
+        !accessDecision.hasCompletedWelcomeOnboarding &&
+        !isWelcomePath(pathname)
+      ) {
+        setIsCheckingSession(false);
+        router.replace(WELCOME_ENTRY_PATH);
+        return;
+      }
+
+      if (
+        nextSessionState === "authenticated" &&
+        accessDecision.hasCompletedWelcomeOnboarding &&
+        isWelcomePath(pathname)
+      ) {
+        setIsCheckingSession(false);
+        router.replace("/ateneo");
+        return;
+      }
+
       setIsCheckingSession(false);
     };
 
@@ -64,7 +101,7 @@ export function SessionGate({ children }: SessionGateProps) {
     return () => {
       isMounted = false;
     };
-  }, [loginPath, router]);
+  }, [loginPath, pathname, router]);
 
   if (isCheckingSession || sessionState === "checking") {
     return (
