@@ -18,6 +18,7 @@ import {
   patchWorkExperiences,
   PatchEducationHistoryInput,
   PatchWorkExperiencesInput,
+  ProfileHttpError,
   ProfileOutput,
   saveMyProfile,
   SaveProfileInput,
@@ -190,6 +191,7 @@ export const useProfessionalProfile = () => {
   const [isSavingEducations, setIsSavingEducations] = useState(false);
   const [educationSaveError, setEducationSaveError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isProfileUnavailable, setIsProfileUnavailable] = useState(false);
   const profile = state.profile;
 
   const loadProfile = useCallback(
@@ -218,9 +220,45 @@ export const useProfessionalProfile = () => {
       }
 
       setNeedsProfileInitialization(false);
+      setIsProfileUnavailable(false);
     },
     [selectedUserId]
   );
+
+  const handleLoadProfileError = useCallback(
+    (error: unknown) => {
+      if (!selectedUserId && isProfileSourceEmptyError(error)) {
+        setNeedsProfileInitialization(true);
+      }
+
+      if (
+        selectedUserId &&
+        error instanceof ProfileHttpError &&
+        (error.status === 403 || error.status === 404)
+      ) {
+        setIsProfileUnavailable(true);
+      } else {
+        setIsProfileUnavailable(false);
+      }
+
+      setState((current) => ({
+        ...current,
+        profile: emptyProfile,
+        experiences: [],
+        educations: [],
+        badges: [],
+      }));
+    },
+    [selectedUserId]
+  );
+
+  const refetchProfile = useCallback(async () => {
+    try {
+      await loadProfile(undefined, false);
+    } catch (error) {
+      handleLoadProfileError(error);
+    }
+  }, [handleLoadProfileError, loadProfile]);
 
   useEffect(() => {
     let isMounted = true;
@@ -233,17 +271,7 @@ export const useProfessionalProfile = () => {
           return;
         }
 
-        if (!selectedUserId && isProfileSourceEmptyError(error)) {
-          setNeedsProfileInitialization(true);
-        }
-
-        setState((current) => ({
-          ...current,
-          profile: emptyProfile,
-          experiences: [],
-          educations: [],
-          badges: [],
-        }));
+        handleLoadProfileError(error);
       })
       .finally(() => {
         if (!isMounted) {
@@ -257,7 +285,7 @@ export const useProfessionalProfile = () => {
       isMounted = false;
       controller.abort();
     };
-  }, [loadProfile, selectedUserId]);
+  }, [handleLoadProfileError, loadProfile, selectedUserId]);
 
   const sortedExperiences = useMemo(() => {
     return [...state.experiences].sort((a, b) => {
@@ -426,6 +454,7 @@ export const useProfessionalProfile = () => {
     isSavingProfile,
     profileSaveError,
     needsProfileInitialization,
+    isProfileUnavailable,
     isSavingExperiences,
     experienceSaveError,
     isSavingEducations,
@@ -438,5 +467,6 @@ export const useProfessionalProfile = () => {
     clearProfileSaveError: () => setProfileSaveError(null),
     clearExperienceSaveError: () => setExperienceSaveError(null),
     clearEducationSaveError: () => setEducationSaveError(null),
+    refetchProfile,
   };
 };

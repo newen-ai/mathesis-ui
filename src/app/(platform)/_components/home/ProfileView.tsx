@@ -2,11 +2,13 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   navItems,
 } from "../../_lib/constants";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
 import type { Profile } from "../../_lib/types";
+import { blockUser } from "@/lib/api/block";
 import { formatBadgeSlug } from "@/lib/utils/badge";
 import { TopBar } from "../TopBar";
 import { EducationCard } from "./EducationCard";
@@ -169,6 +171,7 @@ export function ProfileView() {
   const router = useRouter();
   const bannerInputRef = useRef<HTMLInputElement | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const headerActionsContainerRef = useRef<HTMLDivElement | null>(null);
   const bannerDisplayRef = useRef<HTMLDivElement | null>(null);
   const bannerPreviewRef = useRef<HTMLDivElement | null>(null);
   const [activeEditSection, setActiveEditSection] = useState<"profile" | "experience" | "education" | "interests" | null>(null);
@@ -178,6 +181,10 @@ export function ProfileView() {
   const [headerImageError, setHeaderImageError] = useState<string | null>(null);
   const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
   const [isDraggingBanner, setIsDraggingBanner] = useState(false);
+  const [isHeaderActionsOpen, setIsHeaderActionsOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [blockReasonNote, setBlockReasonNote] = useState("");
+  const [isBlockingUser, setIsBlockingUser] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const bannerDragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const avatarTouchRef = useRef<TouchGestureState | null>(null);
@@ -187,6 +194,7 @@ export function ProfileView() {
     profile,
     sortedExperiences,
     sortedEducations,
+    activeProfileId,
     currentUserId,
     canEditProfile,
     profileCompletion,
@@ -194,6 +202,7 @@ export function ProfileView() {
     isSavingProfile,
     profileSaveError,
     needsProfileInitialization,
+    isProfileUnavailable,
     isSavingExperiences,
     experienceSaveError,
     isSavingEducations,
@@ -207,6 +216,7 @@ export function ProfileView() {
     clearProfileSaveError,
     clearExperienceSaveError,
     clearEducationSaveError,
+    refetchProfile,
   } = useProfessionalProfile();
 
   const headline = buildHeadline(
@@ -222,6 +232,78 @@ export function ProfileView() {
 
   const onCloseSectionEdit = () => {
     setActiveEditSection(null);
+  };
+
+  useEffect(() => {
+    if (!isHeaderActionsOpen) {
+      return;
+    }
+
+    const onPointerDown = (event: MouseEvent) => {
+      const targetNode = event.target as Node;
+
+      if (!headerActionsContainerRef.current?.contains(targetNode)) {
+        setIsHeaderActionsOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsHeaderActionsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isHeaderActionsOpen]);
+
+  useEffect(() => {
+    if (!isBlockModalOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isBlockingUser) {
+        setIsBlockModalOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isBlockModalOpen, isBlockingUser]);
+
+  const onBlockProfileUser = async () => {
+    setIsHeaderActionsOpen(false);
+    setIsBlockModalOpen(true);
+  };
+
+  const onConfirmBlockProfileUser = async () => {
+    if (!activeProfileId || isBlockingUser) {
+      return;
+    }
+
+    setIsBlockingUser(true);
+
+    try {
+      const normalizedReason = blockReasonNote.trim();
+      await blockUser(activeProfileId, normalizedReason.length > 0 ? normalizedReason : undefined);
+      toast.success("Usuario bloqueado");
+      setIsBlockModalOpen(false);
+      setBlockReasonNote("");
+      await refetchProfile();
+    } catch {
+      toast.error("No pudimos bloquear a este usuario.");
+    } finally {
+      setIsBlockingUser(false);
+    }
   };
 
   const saveHeaderImageProfile = async (nextProfile: Profile) => {
@@ -577,12 +659,30 @@ export function ProfileView() {
     );
   }
 
+  if (isProfileUnavailable) {
+    return (
+      <div className="mathesis-shell min-h-screen">
+        <TopBar navItems={navItems} />
+        <main className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
+          <section className="mathesis-card px-6 py-10 text-center sm:px-8">
+            <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+              Perfil no disponible
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-scale-3 text-[var(--text-secondary)]">
+              Este perfil no se puede visualizar desde tu cuenta en este momento.
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="mathesis-shell min-h-screen">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto w-full max-w-7xl space-y-3 px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
-        <section className="mathesis-card overflow-hidden">
+        <section className="mathesis-card">
           <div className="group relative">
             <div
               ref={bannerDisplayRef}
@@ -717,6 +817,60 @@ export function ProfileView() {
                   >
                     ···
                   </button>
+                </div>
+              ) : activeProfileId ? (
+                <div ref={headerActionsContainerRef} className="relative z-40">
+                  <button
+                    type="button"
+                    onClick={() => setIsHeaderActionsOpen((current) => !current)}
+                    aria-label="Más opciones"
+                    aria-haspopup="menu"
+                    aria-expanded={isHeaderActionsOpen}
+                    className="inline-flex h-[2rem] w-[2rem] items-center justify-center rounded-[0.5rem] border border-[var(--line)] text-[1rem] text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] sm:h-[2.4rem] sm:w-[2.4rem] sm:rounded-[0.55rem] sm:text-[1.1rem]"
+                  >
+                    ...
+                  </button>
+
+                  {isHeaderActionsOpen ? (
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-[calc(100%+0.55rem)] z-50 min-w-52 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-2xl"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void onBlockProfileUser();
+                        }}
+                        disabled={isBlockingUser}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[0.96rem] font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <span className="text-[var(--text-secondary)]" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+                            <circle cx="12" cy="12" r="8" />
+                            <path d="m7 7 10 10" />
+                          </svg>
+                        </span>
+                        <span>{isBlockingUser ? "Bloqueando..." : "Bloquear"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsHeaderActionsOpen(false);
+                          toast.info("Coming soon");
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[0.96rem] font-semibold text-[var(--danger-500)] transition hover:bg-[var(--surface-2)]"
+                      >
+                        <span aria-hidden="true">
+                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+                            <path d="M6 4.5v15" />
+                            <path d="M6 5.5h9l-1.2 3 1.2 3H6" />
+                          </svg>
+                        </span>
+                        <span>Denunciar</span>
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -969,6 +1123,63 @@ export function ProfileView() {
                 className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isBlockModalOpen ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-3"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isBlockingUser) {
+              setIsBlockModalOpen(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-2xl sm:p-6">
+            <h3 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+              Bloquear usuario
+            </h3>
+            <p className="mt-2 text-scale-3 leading-relaxed text-[var(--text-secondary)]">
+              Podés agregar una nota privada para recordar por qué estás bloqueando este perfil. Esta nota solo la vas a ver vos en tu lista de bloqueados.
+            </p>
+
+            <label className="mt-4 block text-scale-2 font-semibold text-[var(--text-primary)]" htmlFor="block-reason-note">
+              Nota (opcional)
+            </label>
+            <textarea
+              id="block-reason-note"
+              value={blockReasonNote}
+              onChange={(event) => setBlockReasonNote(event.target.value)}
+              maxLength={400}
+              rows={4}
+              placeholder="Ej.: Comentarios despectivos repetidos en el feed."
+              className="mt-2 w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-scale-3 text-[var(--text-primary)] outline-none ring-0 placeholder:text-[var(--text-secondary)]"
+            />
+            <p className="mt-1 text-right text-scale-1 text-[var(--text-secondary)]">
+              {blockReasonNote.length}/400
+            </p>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsBlockModalOpen(false)}
+                disabled={isBlockingUser}
+                className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-scale-2 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void onConfirmBlockProfileUser();
+                }}
+                disabled={isBlockingUser}
+                className="inline-flex items-center rounded-xl bg-[var(--danger-500)] px-4 py-2 text-scale-2 font-semibold text-[var(--surface)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isBlockingUser ? "Bloqueando..." : "Bloquear"}
               </button>
             </div>
           </div>

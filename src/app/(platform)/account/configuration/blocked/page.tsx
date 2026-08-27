@@ -1,30 +1,93 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { listMyBlockedUsers, type BlockedUserSummary, unblockUser } from "@/lib/api/block";
 import { getTwoInitials } from "@/lib/utils/name";
 import { TopBar } from "../../../_components/TopBar";
 import { navItems } from "../../../_lib/constants";
 
 type BlockedUser = {
-  id: string;
-  fullName: string;
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
   blockedAt: string;
-  reasonNote: string;
+  reasonNote: string | null;
 };
 
-const EXAMPLE_BLOCKED_USERS: BlockedUser[] = [
-  {
-    id: "blocked-1",
-    fullName: "Diego Fernández",
-    blockedAt: "22/06/2026",
-    reasonNote: "Comentarios despectivos repetidos en el Feed.",
-  },
-];
+function formatBlockedAt(isoValue: string): string {
+  const date = new Date(isoValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Fecha desconocida";
+  }
+
+  return date.toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+}
+
+function mapBlockedUser(source: BlockedUserSummary): BlockedUser {
+  return {
+    userId: source.userId,
+    firstName: source.firstName,
+    lastName: source.lastName,
+    profileImageUrl: source.profileImageUrl,
+    blockedAt: source.blockedAt,
+    reasonNote: source.reasonNote
+  };
+}
 
 export default function BlockedUsersPage() {
   const router = useRouter();
-  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>(EXAMPLE_BLOCKED_USERS);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeUnblockUserId, setActiveUnblockUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const loadBlockedUsers = async () => {
+      try {
+        const response = await listMyBlockedUsers(controller.signal);
+        if (cancelled) {
+          return;
+        }
+
+        setBlockedUsers(response.data.blockedUsers.map(mapBlockedUser));
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        toast.error("No pudimos cargar tu lista de bloqueados.");
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadBlockedUsers();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
+  const blockedUsersCountLabel = useMemo(() => {
+    if (blockedUsers.length === 0) {
+      return "0 usuarios";
+    }
+
+    return `${blockedUsers.length} ${blockedUsers.length === 1 ? "usuario" : "usuarios"}`;
+  }, [blockedUsers.length]);
 
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -35,8 +98,18 @@ export default function BlockedUsersPage() {
     router.push("/account/configuration");
   };
 
-  const handleUnblock = (userId: string) => {
-    setBlockedUsers((current) => current.filter((user) => user.id !== userId));
+  const handleUnblock = async (userId: string) => {
+    setActiveUnblockUserId(userId);
+
+    try {
+      await unblockUser(userId);
+      setBlockedUsers((current) => current.filter((user) => user.userId !== userId));
+      toast.success("Usuario desbloqueado");
+    } catch {
+      toast.error("No pudimos desbloquear al usuario.");
+    } finally {
+      setActiveUnblockUserId(null);
+    }
   };
 
   return (
@@ -66,35 +139,47 @@ export default function BlockedUsersPage() {
           </div>
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
-            {blockedUsers.length > 0 ? (
+            {isLoading ? (
+              <div className="px-5 py-10 text-center">
+                <p className="text-[1.02rem] text-[var(--text-secondary)]">Cargando bloqueados...</p>
+              </div>
+            ) : null}
+
+            {!isLoading && blockedUsers.length > 0 ? (
               blockedUsers.map((user) => (
-                <article key={user.id} className="flex flex-wrap items-start gap-4 px-5 py-5 sm:flex-nowrap">
-                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#6e3d8e] text-lg font-semibold text-white">
-                    {getTwoInitials({ fullName: user.fullName, fallback: "M" })}
+                <article key={user.userId} className="flex flex-wrap items-start gap-4 px-5 py-5 sm:flex-nowrap">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-lg font-semibold text-[var(--surface)]">
+                    {getTwoInitials({
+                      fullName: [user.firstName, user.lastName].filter(Boolean).join(" "),
+                      fallback: "M"
+                    })}
                   </span>
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[1rem] font-semibold leading-none text-[var(--text-primary)]">
-                      {user.fullName}
+                      {[user.firstName, user.lastName].filter(Boolean).join(" ") || "Usuario"}
                     </p>
                     <p className="mt-1 text-[1.04rem] text-[var(--text-secondary)]">
-                      Bloqueado el {user.blockedAt}
+                      Bloqueado el {formatBlockedAt(user.blockedAt)}
                     </p>
-                    <p className="mt-2 max-w-[520px] border-b border-dashed border-[var(--line)] pb-1 text-[1.02rem] italic text-[var(--text-secondary)]">
-                      {user.reasonNote}
-                    </p>
+                    {user.reasonNote ? (
+                      <p className="mt-2 max-w-[520px] border-b border-dashed border-[var(--line)] pb-1 text-[1.02rem] italic text-[var(--text-secondary)]">
+                        {user.reasonNote}
+                      </p>
+                    ) : null}
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => handleUnblock(user.id)}
+                    disabled={activeUnblockUserId === user.userId}
+                    onClick={() => handleUnblock(user.userId)}
                     className="shrink-0 rounded-xl border border-[var(--line)] px-4 py-2 text-[0.95rem] font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-2)]"
                   >
-                    Desbloquear
+                    {activeUnblockUserId === user.userId ? "Desbloqueando..." : "Desbloquear"}
                   </button>
                 </article>
               ))
-            ) : (
+            ) : !isLoading ? (
               <div className="px-5 py-10 text-center">
                 <p className="text-[1.1rem] font-semibold text-[var(--text-primary)]">
                   No tenés usuarios bloqueados.
@@ -103,7 +188,7 @@ export default function BlockedUsersPage() {
                   Cuando bloquees a alguien, va a aparecer acá junto con tu nota de referencia.
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         </section>
 
@@ -117,7 +202,7 @@ export default function BlockedUsersPage() {
             </p>
             <div className="my-4 border-t border-[var(--line)]" />
             <p className="text-[1rem] leading-relaxed text-[var(--text-secondary)]">
-              El bloqueo es mutuo: mientras dure, tampoco vos podés hacer estas cosas con esa persona.
+              El bloqueo es mutuo mientras esté activo. Actualmente tenés {blockedUsersCountLabel} bloqueados.
             </p>
           </div>
         </aside>
