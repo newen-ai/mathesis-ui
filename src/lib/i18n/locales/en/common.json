@@ -1,3 +1,13 @@
 {
-  "appName": "Mathesis"
+  "appName": "Mathesis",
+  "bugReport": {
+    "errors": {
+      "validationFailed": "The bug report has invalid data. Check the title, description, and screenshots.",
+      "connectionFailed": "We could not send the bug report right now.",
+      "missingApiBaseUrl": "Bug report integration is not configured in this environment.",
+      "imageTooLarge": "One of the screenshots is too large to send.",
+      "imagesOnly": "Only image files are allowed as bug report screenshots.",
+      "default": "We could not send the bug report right now."
+    }
+  }
 }
