@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/api/auth";
+import { formatApiErrorDetails } from "@/lib/api/client";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
@@ -134,9 +135,7 @@ export default function RegistroPage() {
       setPopupInfo({
         title: "Error de servicio",
         message: result.message,
-        details:
-          result.details ??
-          (result.status ? `HTTP ${result.status}` : "Sin detalles adicionales."),
+        details: formatApiErrorDetails(result.details, result.status),
       });
       setIsSubmitting(false);
       return;

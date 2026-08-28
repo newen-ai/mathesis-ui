@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { login } from "@/lib/api/auth";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
-import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
 import { normalizeEmailInput } from "@/lib/utils/email";
 
 type ValidationErrors = {
@@ -23,6 +23,24 @@ function isValidEmail(email: string) {
 function isSafeInternalPath(path: string | null): path is string {
   if (!path) return false;
   return path.startsWith("/") && !path.startsWith("//");
+}
+
+function resolveLoginErrorMessage(message?: string, details?: unknown): string {
+  if (details) {
+    const translated = getAuthErrorTranslation(details, message || "No pudimos iniciar sesión.");
+    if (translated) {
+      return translated;
+    }
+  }
+
+  if (message) {
+    const translated = getAuthErrorTranslation(message, message);
+    if (translated && translated !== message) {
+      return translated;
+    }
+  }
+
+  return message?.trim() || "No pudimos iniciar sesión.";
 }
 
 function LoginPageContent() {
@@ -43,11 +61,6 @@ function LoginPageContent() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
-  const [popupInfo, setPopupInfo] = useState<{
-    title: string;
-    message: string;
-    details?: string;
-  } | null>(null);
 
   useRedirectIfAuthenticated(nextPath);
 
@@ -80,14 +93,7 @@ function LoginPageContent() {
 
     if (!result.success) {
       setErrors({
-        credentials: result.message,
-      });
-      setPopupInfo({
-        title: "Error de servicio",
-        message: result.message,
-        details:
-          result.details ??
-          (result.status ? `HTTP ${result.status}` : "Sin detalles adicionales."),
+        credentials: resolveLoginErrorMessage(result.message, result.details),
       });
       setIsSubmitting(false);
       return;
@@ -99,14 +105,6 @@ function LoginPageContent() {
 
   return (
     <>
-      <ServiceErrorPopup
-        isOpen={popupInfo !== null}
-        title={popupInfo?.title ?? ""}
-        message={popupInfo?.message ?? ""}
-        details={popupInfo?.details}
-        onClose={() => setPopupInfo(null)}
-      />
-
       <main className="flex min-h-screen flex-col bg-white font-[family-name:Arial] lg:flex-row">
         <section className="flex flex-1 flex-col lg:flex-row">
           {/* Panel de marca (navy): arriba en mobile, columna izquierda a pantalla completa en desktop */}

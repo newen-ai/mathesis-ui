@@ -2,14 +2,14 @@ export type ApiServiceResponse = {
 	success: boolean;
 	message: string;
 	status?: number;
-	details?: string;
+	details?: unknown;
 };
 
 export type ApiDataResponse<T> = {
 	success: boolean;
 	message: string;
 	data: T;
-	details?: string;
+	details?: unknown;
 };
 
 type ApiRequestOptions = {
@@ -97,8 +97,7 @@ export async function parseServiceResponse(
 			success: payload.success,
 			message: payload.message,
 			status: response.status,
-			details:
-				typeof payload.details === "string" ? payload.details : undefined,
+			details: payload.details ?? undefined,
 		};
 	}
 
@@ -125,4 +124,24 @@ export async function parseDataResponse<T>(
 	}
 
 	return payload as ApiDataResponse<T>;
+}
+
+export function formatApiErrorDetails(details: unknown, status?: number): string {
+	if (typeof details === "string") {
+		return details;
+	}
+
+	if (details !== undefined && details !== null) {
+		try {
+			return JSON.stringify(details, null, 2);
+		} catch {
+			return String(details);
+		}
+	}
+
+	if (typeof status === "number") {
+		return `HTTP ${status}`;
+	}
+
+	return "Sin detalles adicionales.";
 }

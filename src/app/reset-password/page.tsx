@@ -7,6 +7,7 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { resetPassword } from "@/lib/api/auth";
+import { formatApiErrorDetails } from "@/lib/api/client";
 import { evaluatePasswordStrength } from "@/lib/utils/password";
 
 type ValidationErrors = {
@@ -100,9 +101,7 @@ function ResetPasswordContent() {
       setPopupInfo({
         title: "Error de servicio",
         message: result.message,
-        details:
-          result.details ??
-          (result.status ? `HTTP ${result.status}` : "Sin detalles adicionales."),
+        details: formatApiErrorDetails(result.details, result.status),
       });
       setIsSubmitting(false);
       return;
