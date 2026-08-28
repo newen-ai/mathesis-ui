@@ -1,3 +1,13 @@
 {
-  "appName": "Mathesis"
+  "appName": "Mathesis",
+  "bugReport": {
+    "errors": {
+      "validationFailed": "El reporte tiene datos inválidos. Revisá el título, la descripción y las capturas.",
+      "connectionFailed": "No pudimos enviar el reporte en este momento.",
+      "missingApiBaseUrl": "La integración de reportes no está configurada en este entorno.",
+      "imageTooLarge": "Una de las capturas supera el tamaño permitido para enviarla.",
+      "imagesOnly": "Solo se permiten imágenes como capturas del reporte.",
+      "default": "No pudimos enviar el reporte en este momento."
+    }
+  }
 }

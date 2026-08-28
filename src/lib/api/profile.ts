@@ -73,6 +73,29 @@ export type ContactMessageCategory =
   | "BUG_REPORT"
   | "OTHER";
 
+export type BugReportSubmitInput = {
+  title: string;
+  description: string;
+  pageUrl: string;
+  screenshots: File[];
+};
+
+export type BugReportAttachmentSummary = {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+};
+
+export type BugReportSummary = {
+  id: string;
+  title: string;
+  description: string;
+  pageUrl: string;
+  createdAt: string;
+  attachments: BugReportAttachmentSummary[];
+};
+
 export class ProfileHttpError extends Error {
   status: number;
   details?: {
@@ -515,6 +538,85 @@ export async function sendContactMessage(
           : "Could not connect to support service",
     };
   }
+}
+
+export async function submitBugReport(
+  input: BugReportSubmitInput
+): Promise<ProfileMutationResponse> {
+  try {
+    const formData = new FormData();
+    formData.set("title", input.title);
+    formData.set("description", input.description);
+    formData.set("pageUrl", input.pageUrl);
+
+    for (const screenshot of input.screenshots) {
+      formData.append("screenshots", screenshot);
+    }
+
+    const response = await apiRequest("/support/bug-reports", {
+      method: "POST",
+      body: formData,
+    });
+
+    return parseServiceResponse(
+      response,
+      `Invalid bug report response (${response.status})`
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error &&
+        error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+          ? "NEXT_PUBLIC_API_BASE_URL is not configured"
+          : "Could not connect to bug report service",
+    };
+  }
+}
+
+export async function listMyBugReports(signal?: AbortSignal): Promise<BugReportSummary[]> {
+  const response = await apiRequest("/support/bug-reports/mine", {
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Could not list bug reports: ${response.status}`);
+  }
+
+  const payload = await parseDataResponse<{ bugReports: BugReportSummary[] }>(
+    response,
+    "Invalid bug reports response"
+  );
+
+  return payload.data.bugReports;
+}
+
+export async function downloadBugReportAttachment(
+  bugReportId: string,
+  attachmentId: string,
+  signal?: AbortSignal
+): Promise<{ blob: Blob; fileName: string | null; mimeType: string }> {
+  const response = await apiRequest(
+    `/support/bug-reports/${encodeURIComponent(bugReportId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    {
+      signal,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Could not download bug report attachment: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+  const rawFileName = fileNameMatch?.[1] ?? fileNameMatch?.[2] ?? null;
+
+  return {
+    blob,
+    fileName: rawFileName ? decodeURIComponent(rawFileName) : null,
+    mimeType: response.headers.get("content-type") ?? blob.type,
+  };
 }
 
 export async function getMyPreferences(): Promise<{ themePreference: string } | null> {

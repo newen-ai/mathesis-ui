@@ -188,3 +188,15 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Show a QR-style square on the front panel as a visual placeholder until the backend defines the exact verification payload format.
 - Hide the online verification copy from the back card and replace it with the user’s current badge grid.
 - Keep the UI visualized as front/back flip card for the mockup stage; backend adaptation for QR payload generation and credential verification remains a follow-up task.
+
+## Current Active UI Directions (2026-08-27 Bug Reports)
+- The bug report entry point must be a floating round button anchored at the bottom-right of authenticated platform pages.
+- Opening and closing the bug report panel must preserve the current draft; only successful submit or an explicit `Limpiar` action may clear it.
+- Persist the bug report draft in localStorage so users can reload the page and continue writing.
+- Include title, description, automatic current-URL capture, screenshot attachments, and short reporting guidance focused on reproduction steps and expected vs actual behavior.
+- Gate the widget behind an environment-level public flag so it can be enabled only in selected environments.
+- When open, the bug report UI should behave as a centered modal with a dimmed backdrop that blocks interaction with the underlying page and closes on outside click.
+- The detected URL should remain internal to the draft and submit payload; do not render it as a visible user-facing field.
+- Users should be able to attach screenshots by pasting from the clipboard with `Ctrl+V` or `Cmd+V`, not only by file selection.
+- The floating bug report button should be draggable, but only snap to the four allowed corners: top-left, top-right, bottom-left, and bottom-right.
+- When frontend code needs to translate backend or service error messages, do not hardcode ad-hoc message maps inside components; route them through `src/lib/i18n/*` helpers and locale JSON so future agents extend the same translation path.
