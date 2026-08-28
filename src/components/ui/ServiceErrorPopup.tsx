@@ -2,9 +2,25 @@ type ServiceErrorPopupProps = {
   isOpen: boolean;
   title: string;
   message: string;
-  details?: string;
+  details?: string | Record<string, unknown> | unknown;
   onClose: () => void;
 };
+
+function formatPopupDetails(details?: string | Record<string, unknown> | unknown): string | null {
+  if (details === undefined || details === null) {
+    return null;
+  }
+
+  if (typeof details === "string") {
+    return details;
+  }
+
+  try {
+    return JSON.stringify(details, null, 2);
+  } catch {
+    return String(details);
+  }
+}
 
 export function ServiceErrorPopup({
   isOpen,
@@ -14,6 +30,8 @@ export function ServiceErrorPopup({
   onClose,
 }: ServiceErrorPopupProps) {
   if (!isOpen) return null;
+
+  const formattedDetails = formatPopupDetails(details);
 
   return (
     <div
@@ -32,13 +50,13 @@ export function ServiceErrorPopup({
 
         <p className="mt-3 text-sm text-slate-700">{message}</p>
 
-        {details ? (
+        {formattedDetails ? (
           <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">
               Detalles
             </p>
             <p className="mt-2 whitespace-pre-wrap break-words text-xs text-slate-700">
-              {details}
+              {formattedDetails}
             </p>
           </div>
         ) : null}

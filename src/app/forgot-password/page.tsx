@@ -7,6 +7,7 @@ import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { normalizeEmailInput } from "@/lib/utils/email";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { requestPasswordReset } from "@/lib/api/auth";
+import { formatApiErrorDetails } from "@/lib/api/client";
 
 type ValidationErrors = {
   email?: string;
@@ -51,9 +52,7 @@ export default function ForgotPasswordPage() {
       setPopupInfo({
         title: "Error de servicio",
         message: result.message,
-        details:
-          result.details ??
-          (result.status ? `HTTP ${result.status}` : "Sin detalles adicionales."),
+        details: formatApiErrorDetails(result.details, result.status),
       });
       setIsSubmitting(false);
       return;
