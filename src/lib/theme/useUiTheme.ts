@@ -2,30 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { getMyPreferences, updateMyPreferences } from "@/lib/api/profile";
+import {
+  ThemeMode,
+  applyThemeToDocument,
+  normalizeTheme,
+  persistTheme,
+  readStoredTheme,
+  readThemeFromDocument,
+} from "@/lib/theme/theme-preference";
 
-export type ThemeMode = "light" | "dark";
+export type { ThemeMode } from "@/lib/theme/theme-preference";
+
+function getInitialTheme(): ThemeMode {
+  return readThemeFromDocument() ?? readStoredTheme() ?? "light";
+}
 
 export function useUiTheme() {
-  const [theme, setTheme] = useState<ThemeMode>("light");
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme);
 
   useEffect(() => {
     const applyTheme = async () => {
       const prefs = await getMyPreferences();
-      const backendTheme = prefs?.themePreference;
+      const backendTheme = normalizeTheme(prefs?.themePreference);
 
-      if (backendTheme !== "light" && backendTheme !== "dark") {
+      if (!backendTheme) {
         return;
       }
 
       setTheme(backendTheme);
-      document.documentElement.setAttribute("data-theme", backendTheme);
+      applyThemeToDocument(backendTheme);
+      persistTheme(backendTheme);
     };
 
     void applyTheme();
   }, []);
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
+    applyThemeToDocument(theme);
+    persistTheme(theme);
   }, [theme]);
 
   const toggleTheme = async () => {
