@@ -150,6 +150,20 @@ export default function MensajesPage() {
     [messagesByChatId, selectedThread]
   );
 
+  const selectedThreadMemberNamesByUserId = useMemo(() => {
+    if (!selectedThread) {
+      return new Map<string, string>();
+    }
+
+    const map = new Map<string, string>();
+
+    for (const member of selectedThread.detail.members) {
+      map.set(member.user.userId, formatFullName(member.user));
+    }
+
+    return map;
+  }, [selectedThread]);
+
   const selectedThreadBlockedReason = useMemo(() => {
     if (!selectedThread || selectedThread.detail.type !== "DIRECT") {
       return null;
@@ -670,6 +684,7 @@ export default function MensajesPage() {
     <ModulePage
       title="Mensajes"
       subtitle="Conversaciones privadas para colaboraciones de alto impacto."
+      subtitleClassName="mt-1 text-sm text-white"
     >
       <AppCard className="overflow-hidden p-0">
         <div className="grid min-h-[650px] border-[var(--line)] lg:grid-cols-[330px_minmax(0,1fr)]">
@@ -911,6 +926,10 @@ export default function MensajesPage() {
                   <div className="space-y-3">
                     {selectedMessages.map((message) => {
                       const isMine = message.senderUserId === currentUserId;
+                      const showSenderName = selectedThread.detail.type === "GROUP";
+                      const senderName = isMine
+                        ? "Tú"
+                        : (selectedThreadMemberNamesByUserId.get(message.senderUserId) ?? "Usuario");
                       const messageTime = new Intl.DateTimeFormat("es-AR", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -929,6 +948,15 @@ export default function MensajesPage() {
                                 : "rounded-bl-md bg-[var(--surface-2)] text-[var(--text-primary)]"
                             }`}
                           >
+                            {showSenderName ? (
+                              <p
+                                className={`mb-1 text-[0.68rem] font-semibold leading-4 ${
+                                  isMine ? "text-white/85" : "text-[var(--text-secondary)]"
+                                }`}
+                              >
+                                {senderName}
+                              </p>
+                            ) : null}
                             <p>{message.isDeleted ? "Mensaje eliminado" : message.content}</p>
                             <p
                               className={`mt-1 text-[0.65rem] font-medium ${
