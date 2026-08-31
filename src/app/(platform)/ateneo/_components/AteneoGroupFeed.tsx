@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { getAteneoGroup, joinAteneoGroup, listAteneoTopics, type AteneoGroup, type AteneoTopic } from "@/lib/api/ateneo";
 import { AteneoGroupHeaderActions } from "./AteneoGroupHeaderActions";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
+import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 
 export type AteneoGroupTopic = {
   id: string;
@@ -232,12 +234,10 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
 
         <div className="mt-3 space-y-3">
           {topics.map((topic) => (
-            <Link
+            <article
               key={topic.id}
-              href={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
-              className="block rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)]"
+              className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)]"
             >
-              <article>
                 <div className="flex items-start gap-3">
                   <UserAvatar
                     imageUrl={topic.authorImageUrl}
@@ -249,23 +249,44 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
 
                   <div className="min-w-0 flex-1">
                     <p className="text-scale-2 text-[var(--text-secondary)]">
-                      {topic.groupLabel} <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> {topic.timeLabel}
+                      <Link
+                        href={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
+                        className="mathesis-link-accent font-medium hover:underline"
+                      >
+                        {topic.groupLabel}
+                      </Link>{" "}
+                      <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> {topic.timeLabel}
                     </p>
                     <h3 className="mt-1 text-[1.32rem] font-semibold leading-tight text-[var(--heading-primary)]">
-                      {topic.title}
+                      <Link
+                        href={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
+                        className="hover:underline"
+                      >
+                        {topic.title}
+                      </Link>
                     </h3>
-                    <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">{topic.description}</p>
+                    <LinkifiedText
+                      text={topic.description}
+                      className="mt-1 whitespace-pre-wrap text-scale-3 text-[var(--text-secondary)]"
+                      linkClassName="mathesis-link-accent underline underline-offset-2"
+                    />
+                    <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
 
                     <div className="mt-3 flex items-center gap-3 text-scale-2 text-[var(--text-secondary)]">
                       <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2.5 py-0.5 font-semibold text-[var(--brand-800)]">
                         {topic.tone}
                       </span>
                       <span>💬 {topic.comments}</span>
+                      <Link
+                        href={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
+                        className="mathesis-link-accent font-semibold hover:underline"
+                      >
+                        Ver tema
+                      </Link>
                     </div>
                   </div>
                 </div>
-              </article>
-            </Link>
+            </article>
           ))}
         </div>
       </section>

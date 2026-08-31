@@ -4,6 +4,9 @@ import { createAteneoTopic, getAteneoGroup, listAteneoGroups } from "@/lib/api/a
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
+import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { extractUniqueUrlsFromText } from "@/lib/utils/link-preview";
 
 const toneOptions = ["SERIO", "RECOMENDADO", "LIBRE"] as const;
 const TOPIC_TITLE_LIMIT = 100;
@@ -37,6 +40,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     title.trim().length > 0 &&
     description.trim().length > 0 &&
     !isOverAnyLimit;
+  const detectedUrls = extractUniqueUrlsFromText(description, 3);
 
   useEffect(() => {
     let cancelled = false;
@@ -230,6 +234,18 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
             >
               {description.length}/{TOPIC_DESCRIPTION_LIMIT}
             </div>
+
+            {detectedUrls.length > 0 ? (
+              <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
+                <p className="text-scale-2 font-semibold text-[var(--heading-primary)]">Links detectados</p>
+                <LinkifiedText
+                  text={description}
+                  className="mt-2 whitespace-pre-wrap text-scale-2 text-[var(--text-secondary)]"
+                  linkClassName="mathesis-link-accent underline underline-offset-2"
+                />
+                <LinkPreviewList text={description} className="mt-3 grid gap-2" />
+              </div>
+            ) : null}
           </label>
 
           <div className="space-y-3">

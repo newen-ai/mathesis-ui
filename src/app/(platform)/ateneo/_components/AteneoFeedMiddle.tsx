@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listAteneoFeed, listAteneoGroups, type AteneoTopic } from "@/lib/api/ateneo";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
+import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 
 type AteneoFeedTopic = {
   id: string;
@@ -44,12 +46,10 @@ function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
 }
 
 function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
+  const topicHref = `/ateneo/groups/${encodeURIComponent(topic.groupId)}/topics/${encodeURIComponent(topic.id)}`;
+
   return (
-    <Link
-      href={`/ateneo/groups/${encodeURIComponent(topic.groupId)}/topics/${encodeURIComponent(topic.id)}`}
-      className="block rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)]"
-    >
-      <article>
+    <article className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)]">
         <div className="flex items-start gap-3">
           <UserAvatar
             imageUrl={topic.authorImageUrl}
@@ -61,15 +61,28 @@ function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-scale-1 text-[var(--text-secondary)]">
-              <span>{topic.groupLabel}</span>
+              <span>
+                <Link href={topicHref} className="mathesis-link-accent font-medium hover:underline">
+                  {topic.groupLabel}
+                </Link>
+              </span>
               <span>·</span>
               <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span>
               <span>·</span>
               <span>{topic.timeLabel}</span>
             </div>
 
-            <h3 className="mt-1 text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">{topic.title}</h3>
-            <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">{topic.description}</p>
+            <h3 className="mt-1 text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">
+              <Link href={topicHref} className="hover:underline">
+                {topic.title}
+              </Link>
+            </h3>
+            <LinkifiedText
+              text={topic.description}
+              className="mt-1 whitespace-pre-wrap text-scale-2 text-[var(--text-secondary)]"
+              linkClassName="mathesis-link-accent underline underline-offset-2"
+            />
+            <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
 
             {topic.attachmentLabel ? (
               <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_55%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_55%,var(--surface))] px-3 py-1 text-scale-1 font-medium text-[var(--brand-900)]">
@@ -99,11 +112,13 @@ function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
                 </span>
               ) : null}
               <span>💬 {topic.comments}</span>
+              <Link href={topicHref} className="mathesis-link-accent font-semibold hover:underline">
+                Ver tema
+              </Link>
             </div>
           </div>
         </div>
-      </article>
-    </Link>
+    </article>
   );
 }
 
