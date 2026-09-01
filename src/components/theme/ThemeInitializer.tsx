@@ -1,10 +1,16 @@
 "use client";
 
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import { getMyPreferences } from "@/lib/api/profile";
+import {
+  applyThemeToDocument,
+  normalizeTheme,
+  persistTheme,
+  readThemeFromDocument,
+} from "@/lib/theme/theme-preference";
 
 export function ThemeInitializer() {
-  useLayoutEffect(() => {
+  useEffect(() => {
     let isActive = true;
 
     const applyTheme = async () => {
@@ -14,12 +20,17 @@ export function ThemeInitializer() {
         return;
       }
 
-      const nextTheme = preferences.themePreference;
-      if (nextTheme !== "light" && nextTheme !== "dark") {
+      const nextTheme = normalizeTheme(preferences.themePreference);
+      if (!nextTheme) {
         return;
       }
 
-      document.documentElement.setAttribute("data-theme", nextTheme);
+      const currentTheme = readThemeFromDocument();
+      if (currentTheme !== nextTheme) {
+        applyThemeToDocument(nextTheme);
+      }
+
+      persistTheme(nextTheme);
     };
 
     void applyTheme();

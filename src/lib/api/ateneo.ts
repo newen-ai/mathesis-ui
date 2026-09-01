@@ -1,4 +1,4 @@
-import { apiRequest, parseDataResponse } from "@/lib/api/client";
+import { apiRequest, getApiBaseUrl, parseDataResponse } from "@/lib/api/client";
 
 export type AteneoTabKey = "mine" | "discover" | "admin";
 export type AteneoTone = "LIBRE" | "SERIO" | "RECOMENDADO";
@@ -59,6 +59,15 @@ export type AteneoTopic = {
   createdAt: string;
   updatedAt: string;
   currentUserReactionValue: AteneoReactionValue | null;
+  attachments: AteneoTopicAttachment[];
+};
+
+export type AteneoTopicAttachment = {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  downloadUrl: string;
 };
 
 export type AteneoComment = {
@@ -103,6 +112,25 @@ export type ListAteneoTopicsData = {
 export type GetAteneoTopicData = {
   topic: AteneoTopic;
 };
+
+export type AteneoTopicAttachmentDownloadData = {
+  blob: Blob;
+  fileName: string | null;
+};
+
+export function resolveAteneoAttachmentUrl(path: string): string {
+  const apiBaseUrl = getApiBaseUrl();
+
+  if (!apiBaseUrl) {
+    return path;
+  }
+
+  return new URL(path, apiBaseUrl).toString();
+}
+
+export function isImageMimeType(mimeType: string): boolean {
+  return mimeType.startsWith("image/");
+}
 
 export type CreateAteneoTopicData = {
   topic: AteneoTopic;
@@ -202,16 +230,66 @@ export async function getAteneoTopic(groupId: string, topicId: string, signal?: 
 
 export async function createAteneoTopic(
   groupId: string,
-  payload: { title: string; description: string; tone: AteneoTone },
+  payload: { title: string; description: string; tone: AteneoTone; attachments?: File[] },
   signal?: AbortSignal
 ) {
+  const formData = new FormData();
+
+  formData.set("title", payload.title);
+  formData.set("description", payload.description);
+  formData.set("tone", payload.tone);
+
+  payload.attachments?.forEach((file) => {
+    formData.append("attachments", file, file.name);
+  });
+
   const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/topics`, {
     method: "POST",
-    body: payload,
+    body: formData,
     signal
   });
 
   return parseDataResponse<CreateAteneoTopicData>(response, "Invalid Ateneo topic create response");
+}
+
+function parseFileNameFromContentDisposition(value: string | null) {
+  if (!value) return null;
+
+  const filenameStarMatch = value.match(/filename\*\s*=\s*([^;]+)/i);
+  if (filenameStarMatch?.[1]) {
+    const rawValue = filenameStarMatch[1].trim().replace(/^"|"$/g, "");
+    const encodedPart = rawValue.includes("''") ? rawValue.split("''").slice(1).join("''") : rawValue;
+
+    try {
+      return decodeURIComponent(encodedPart);
+    } catch {
+      return encodedPart;
+    }
+  }
+
+  const filenameMatch = value.match(/filename\s*=\s*([^;]+)/i);
+  if (!filenameMatch?.[1]) {
+    return null;
+  }
+
+  return filenameMatch[1].trim().replace(/^"|"$/g, "");
+}
+
+export async function downloadAteneoTopicAttachment(
+  groupId: string,
+  topicId: string,
+  attachmentId: string,
+  signal?: AbortSignal
+): Promise<AteneoTopicAttachmentDownloadData> {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/attachments/${encodeURIComponent(attachmentId)}`,
+    { signal }
+  );
+
+  const blob = await response.blob();
+  const fileName = parseFileNameFromContentDisposition(response.headers.get("content-disposition"));
+
+  return { blob, fileName };
 }
 
 export async function listAteneoTopicComments(groupId: string, topicId: string, signal?: AbortSignal) {

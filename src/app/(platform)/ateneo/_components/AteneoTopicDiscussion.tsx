@@ -3,11 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
+import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import {
   createAteneoTopicComment,
   getAteneoGroup,
   getAteneoTopic,
+  isImageMimeType,
   listAteneoTopicComments,
+  resolveAteneoAttachmentUrl,
   toggleAteneoCommentReaction,
   toggleAteneoTopicReaction,
   type AteneoComment,
@@ -321,7 +325,31 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           {topic.title}
         </h3>
 
-        <p className="mt-4 text-scale-3 leading-8 text-[var(--text-primary)]">{topic.description}</p>
+        <LinkifiedText
+          text={topic.description}
+          className="mt-4 whitespace-pre-wrap text-scale-3 leading-8 text-[var(--text-primary)]"
+          linkClassName="mathesis-link-accent underline underline-offset-2"
+        />
+        <LinkPreviewList text={topic.description} className="mt-4 grid gap-2 sm:grid-cols-2" />
+
+        {topic.attachments.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            {topic.attachments.map((attachment) => (
+              <a
+                key={attachment.id}
+                href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <span aria-hidden="true">{isImageMimeType(attachment.mimeType) ? "🖼" : "📄"}</span>
+                  <span className="truncate">{attachment.fileName}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--brand-700)]">
@@ -421,9 +449,12 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                         </p>
                         <span className="text-scale-1 text-[var(--text-secondary)]">{comment.timeLabel}</span>
                       </div>
-                      <p className={`mt-1 text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}>
-                        {comment.content}
-                      </p>
+                      <LinkifiedText
+                        text={comment.content}
+                        className={`mt-1 whitespace-pre-wrap text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}
+                        linkClassName="mathesis-link-accent underline underline-offset-2"
+                      />
+                      {!comment.isDeletedPlaceholder ? <LinkPreviewList text={comment.content} className="mt-3 grid gap-2" /> : null}
                     </div>
                   </div>
                 </div>

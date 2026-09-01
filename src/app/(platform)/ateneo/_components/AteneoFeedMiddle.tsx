@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { listAteneoFeed, listAteneoGroups, type AteneoTopic } from "@/lib/api/ateneo";
+import {
+  isImageMimeType,
+  listAteneoFeed,
+  listAteneoGroups,
+  resolveAteneoAttachmentUrl,
+  type AteneoTopic,
+  type AteneoTopicAttachment
+} from "@/lib/api/ateneo";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
+import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 
 type AteneoFeedTopic = {
   id: string;
@@ -19,8 +28,7 @@ type AteneoFeedTopic = {
   reactions: number;
   comments: number;
   isRecommended?: boolean;
-  attachmentLabel?: string;
-  hasImage?: boolean;
+  attachments: AteneoTopicAttachment[];
 };
 
 function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
@@ -39,17 +47,16 @@ function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
     tone: topic.tone,
     reactions: topic.reactions,
     comments: topic.comments,
-    isRecommended: topic.isRecommended
+    isRecommended: topic.isRecommended,
+    attachments: topic.attachments
   };
 }
 
 function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
+  const topicHref = `/ateneo/groups/${encodeURIComponent(topic.groupId)}/topics/${encodeURIComponent(topic.id)}`;
+
   return (
-    <Link
-      href={`/ateneo/groups/${encodeURIComponent(topic.groupId)}/topics/${encodeURIComponent(topic.id)}`}
-      className="block rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)]"
-    >
-      <article>
+    <article className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)]">
         <div className="flex items-start gap-3">
           <UserAvatar
             imageUrl={topic.authorImageUrl}
@@ -61,31 +68,61 @@ function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-scale-1 text-[var(--text-secondary)]">
-              <span>{topic.groupLabel}</span>
+              <span>
+                <Link href={topicHref} className="mathesis-link-accent font-medium hover:underline">
+                  {topic.groupLabel}
+                </Link>
+              </span>
               <span>·</span>
               <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span>
               <span>·</span>
               <span>{topic.timeLabel}</span>
             </div>
 
-            <h3 className="mt-1 text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">{topic.title}</h3>
-            <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">{topic.description}</p>
+            <h3 className="mt-1 text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">
+              <Link href={topicHref} className="hover:underline">
+                {topic.title}
+              </Link>
+            </h3>
+            <LinkifiedText
+              text={topic.description}
+              className="mt-1 whitespace-pre-wrap text-scale-2 text-[var(--text-secondary)]"
+              linkClassName="mathesis-link-accent underline underline-offset-2"
+            />
+            <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
 
-            {topic.attachmentLabel ? (
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_55%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_55%,var(--surface))] px-3 py-1 text-scale-1 font-medium text-[var(--brand-900)]">
-                <span aria-hidden="true">📄</span>
-                <span>{topic.attachmentLabel}</span>
-              </div>
-            ) : null}
-
-            {topic.hasImage ? (
-              <div className="mt-3 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--navy-900)]">
-                <div className="flex min-h-[145px] items-center justify-center bg-[linear-gradient(180deg,rgba(18,47,78,1)_0%,rgba(17,41,69,1)_100%)] text-[2.2rem] text-[var(--brand-500)]">
-                  ∫
-                </div>
-                <div className="border-t border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-scale-1 text-[var(--text-secondary)]">
-                  Foto: tapa de la edición en español
-                </div>
+            {topic.attachments.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {topic.attachments.map((attachment) => (
+                  <div key={attachment.id} className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface-2)]">
+                    {isImageMimeType(attachment.mimeType) ? (
+                      <a
+                        href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span aria-hidden="true">🖼</span>
+                          <span className="truncate">{attachment.fileName}</span>
+                        </span>
+                      </a>
+                    ) : (
+                      <a
+                        href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between gap-3 px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+                      >
+                        <span className="inline-flex items-center gap-2 min-w-0">
+                          <span aria-hidden="true">📄</span>
+                          <span className="truncate">{attachment.fileName}</span>
+                        </span>
+                        <span className="shrink-0 text-scale-1 text-[var(--text-secondary)]">PDF</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
               </div>
             ) : null}
 
@@ -99,11 +136,13 @@ function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
                 </span>
               ) : null}
               <span>💬 {topic.comments}</span>
+              <Link href={topicHref} className="mathesis-link-accent font-semibold hover:underline">
+                Ver tema
+              </Link>
             </div>
           </div>
         </div>
-      </article>
-    </Link>
+    </article>
   );
 }
 
