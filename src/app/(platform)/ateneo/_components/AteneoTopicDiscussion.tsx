@@ -9,7 +9,9 @@ import {
   createAteneoTopicComment,
   getAteneoGroup,
   getAteneoTopic,
+  isImageMimeType,
   listAteneoTopicComments,
+  resolveAteneoAttachmentUrl,
   toggleAteneoCommentReaction,
   toggleAteneoTopicReaction,
   type AteneoComment,
@@ -329,6 +331,25 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           linkClassName="mathesis-link-accent underline underline-offset-2"
         />
         <LinkPreviewList text={topic.description} className="mt-4 grid gap-2 sm:grid-cols-2" />
+
+        {topic.attachments.length > 0 ? (
+          <div className="mt-4 space-y-2">
+            {topic.attachments.map((attachment) => (
+              <a
+                key={attachment.id}
+                href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                target="_blank"
+                rel="noreferrer"
+                className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <span aria-hidden="true">{isImageMimeType(attachment.mimeType) ? "🖼" : "📄"}</span>
+                  <span className="truncate">{attachment.fileName}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--brand-700)]">

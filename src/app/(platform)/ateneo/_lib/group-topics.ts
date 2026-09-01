@@ -13,6 +13,7 @@ export const popularTopics: AteneoGroupTopic[] = [
     tone: "LIBRE",
     reactions: 6,
     comments: 34,
+    attachments: [],
   },
   {
     id: "topic-base-premium-grupos",
@@ -26,6 +27,7 @@ export const popularTopics: AteneoGroupTopic[] = [
     tone: "SERIO",
     reactions: 15,
     comments: 15,
+    attachments: [],
   },
   {
     id: "topic-partida-online",
@@ -39,5 +41,6 @@ export const popularTopics: AteneoGroupTopic[] = [
     tone: "LIBRE",
     reactions: 9,
     comments: 8,
+    attachments: [],
   },
 ];

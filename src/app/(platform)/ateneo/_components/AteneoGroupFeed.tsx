@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getAteneoGroup, joinAteneoGroup, listAteneoTopics, type AteneoGroup, type AteneoTopic } from "@/lib/api/ateneo";
+import {
+  getAteneoGroup,
+  isImageMimeType,
+  joinAteneoGroup,
+  listAteneoTopics,
+  resolveAteneoAttachmentUrl,
+  type AteneoGroup,
+  type AteneoTopic,
+  type AteneoTopicAttachment
+} from "@/lib/api/ateneo";
 import { AteneoGroupHeaderActions } from "./AteneoGroupHeaderActions";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
@@ -20,6 +29,7 @@ export type AteneoGroupTopic = {
   tone: string;
   reactions: number;
   comments: number;
+  attachments: AteneoTopicAttachment[];
 };
 
 type AteneoGroupFeedProps = {
@@ -53,7 +63,8 @@ function mapTopic(topic: AteneoTopic): AteneoGroupTopic {
     description: topic.description,
     tone: topic.tone,
     reactions: topic.reactions,
-    comments: topic.comments
+    comments: topic.comments,
+    attachments: topic.attachments
   };
 }
 
@@ -271,6 +282,25 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
                       linkClassName="mathesis-link-accent underline underline-offset-2"
                     />
                     <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
+
+                    {topic.attachments.length > 0 ? (
+                      <div className="mt-3 space-y-2">
+                        {topic.attachments.map((attachment) => (
+                          <a
+                            key={attachment.id}
+                            href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+                          >
+                            <span className="inline-flex items-center gap-2">
+                              <span aria-hidden="true">{isImageMimeType(attachment.mimeType) ? "🖼" : "📄"}</span>
+                              <span className="truncate">{attachment.fileName}</span>
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
 
                     <div className="mt-3 flex items-center gap-3 text-scale-2 text-[var(--text-secondary)]">
                       <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2.5 py-0.5 font-semibold text-[var(--brand-800)]">

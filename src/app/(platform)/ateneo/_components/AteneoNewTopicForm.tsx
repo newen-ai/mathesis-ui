@@ -2,7 +2,7 @@
 
 import { createAteneoTopic, getAteneoGroup, listAteneoGroups } from "@/lib/api/ateneo";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
@@ -22,6 +22,14 @@ type TopicGroupOption = {
   canCreateTopics: boolean;
 };
 
+type TopicAttachmentDraft = {
+  file: File;
+  kind: "image" | "pdf";
+};
+
+const IMAGE_ATTACHMENT_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/heic", "image/heif"]);
+const PDF_ATTACHMENT_MIME_TYPE = "application/pdf";
+
 export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const router = useRouter();
   const [groupOptions, setGroupOptions] = useState<TopicGroupOption[]>([]);
@@ -30,7 +38,10 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedTone, setSelectedTone] = useState<(typeof toneOptions)[number]>("LIBRE");
+  const [attachments, setAttachments] = useState<TopicAttachmentDraft[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const isTitleTooLong = title.length > TOPIC_TITLE_LIMIT;
   const isDescriptionTooLong = description.length > TOPIC_DESCRIPTION_LIMIT;
   const isOverAnyLimit = isTitleTooLong || isDescriptionTooLong;
@@ -41,6 +52,27 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     description.trim().length > 0 &&
     !isOverAnyLimit;
   const detectedUrls = extractUniqueUrlsFromText(description, 3);
+
+  const registerAttachments = (files: FileList | File[] | null, kind: TopicAttachmentDraft["kind"]) => {
+    if (!files) return;
+
+    const nextAttachments = Array.from(files)
+      .filter((file) => {
+        if (kind === "image") {
+          return IMAGE_ATTACHMENT_MIME_TYPES.has(file.type);
+        }
+
+        return file.type === PDF_ATTACHMENT_MIME_TYPE;
+      })
+      .map((file) => ({ file, kind }));
+
+    if (nextAttachments.length === 0) {
+      toast.info(kind === "image" ? "Elegí una imagen JPG, PNG o HEIC." : "Elegí un archivo PDF.");
+      return;
+    }
+
+    setAttachments((current) => [...current, ...nextAttachments].slice(0, 5));
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -120,10 +152,12 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       const response = await createAteneoTopic(targetGroupId, {
         title: safeTitle,
         description: safeDescription,
-        tone: selectedTone
+        tone: selectedTone,
+        attachments: attachments.map((attachment) => attachment.file)
       });
 
       toast.success("Tema publicado");
+      setAttachments([]);
       router.push(`/ateneo/groups/${encodeURIComponent(targetGroupId)}/topics/${encodeURIComponent(response.data.topic.id)}`);
     } catch {
       toast.error("No pudimos publicar el tema.");
@@ -134,6 +168,14 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
   return (
     <div className="space-y-4">
+      <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/heic,image/heif" multiple className="hidden" onChange={(event) => {
+        registerAttachments(event.target.files, "image");
+        event.currentTarget.value = "";
+      }} />
+      <input ref={fileInputRef} type="file" accept="application/pdf" multiple className="hidden" onChange={(event) => {
+        registerAttachments(event.target.files, "pdf");
+        event.currentTarget.value = "";
+      }} />
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
@@ -257,6 +299,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
+                  onClick={() => imageInputRef.current?.click()}
                   className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
                 >
                   <span aria-hidden="true">◫</span>
@@ -265,12 +308,24 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
                 <button
                   type="button"
+                  onClick={() => fileInputRef.current?.click()}
                   className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
                 >
                   <span aria-hidden="true">▣</span>
                   Archivo
                 </button>
               </div>
+
+              {attachments.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {attachments.map((attachment, index) => (
+                    <div key={`${attachment.file.name}-${index}`} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 text-[var(--text-primary)]">
+                      <span aria-hidden="true">{attachment.kind === "image" ? "🖼" : "📄"}</span>
+                      <span className="max-w-[180px] truncate">{attachment.file.name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-2 text-[var(--text-secondary)]">
                 Foto: JPG, PNG o HEIC · Archivo: solo PDF

@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { listAteneoFeed, listAteneoGroups, type AteneoTopic } from "@/lib/api/ateneo";
+import {
+  isImageMimeType,
+  listAteneoFeed,
+  listAteneoGroups,
+  resolveAteneoAttachmentUrl,
+  type AteneoTopic,
+  type AteneoTopicAttachment
+} from "@/lib/api/ateneo";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
@@ -21,8 +28,7 @@ type AteneoFeedTopic = {
   reactions: number;
   comments: number;
   isRecommended?: boolean;
-  attachmentLabel?: string;
-  hasImage?: boolean;
+  attachments: AteneoTopicAttachment[];
 };
 
 function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
@@ -41,7 +47,8 @@ function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
     tone: topic.tone,
     reactions: topic.reactions,
     comments: topic.comments,
-    isRecommended: topic.isRecommended
+    isRecommended: topic.isRecommended,
+    attachments: topic.attachments
   };
 }
 
@@ -84,21 +91,38 @@ function FeedTopicCard({ topic }: { topic: AteneoFeedTopic }) {
             />
             <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
 
-            {topic.attachmentLabel ? (
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_55%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_55%,var(--surface))] px-3 py-1 text-scale-1 font-medium text-[var(--brand-900)]">
-                <span aria-hidden="true">📄</span>
-                <span>{topic.attachmentLabel}</span>
-              </div>
-            ) : null}
-
-            {topic.hasImage ? (
-              <div className="mt-3 overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--navy-900)]">
-                <div className="flex min-h-[145px] items-center justify-center bg-[linear-gradient(180deg,rgba(18,47,78,1)_0%,rgba(17,41,69,1)_100%)] text-[2.2rem] text-[var(--brand-500)]">
-                  ∫
-                </div>
-                <div className="border-t border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-scale-1 text-[var(--text-secondary)]">
-                  Foto: tapa de la edición en español
-                </div>
+            {topic.attachments.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {topic.attachments.map((attachment) => (
+                  <div key={attachment.id} className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface-2)]">
+                    {isImageMimeType(attachment.mimeType) ? (
+                      <a
+                        href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span aria-hidden="true">🖼</span>
+                          <span className="truncate">{attachment.fileName}</span>
+                        </span>
+                      </a>
+                    ) : (
+                      <a
+                        href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between gap-3 px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+                      >
+                        <span className="inline-flex items-center gap-2 min-w-0">
+                          <span aria-hidden="true">📄</span>
+                          <span className="truncate">{attachment.fileName}</span>
+                        </span>
+                        <span className="shrink-0 text-scale-1 text-[var(--text-secondary)]">PDF</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
               </div>
             ) : null}
 
