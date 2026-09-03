@@ -113,17 +113,38 @@ export async function parseDataResponse<T>(
 	response: Response,
 	invalidPayloadMessage: string
 ): Promise<ApiDataResponse<T>> {
-	const payload = (await response.json()) as Partial<ApiDataResponse<T>>;
+	let payload: Partial<ApiDataResponse<T>> | Record<string, unknown> | null = null;
 
-	if (
-		typeof payload?.success !== "boolean" ||
-		typeof payload?.message !== "string" ||
-		payload.data === undefined
-	) {
+	try {
+		payload = (await response.json()) as Partial<ApiDataResponse<T>>;
+	} catch {
+		payload = null;
+	}
+
+	if (response.ok) {
+		if (
+			typeof payload?.success === "boolean" &&
+			typeof payload?.message === "string" &&
+			payload.data !== undefined
+		) {
+			return payload as ApiDataResponse<T>;
+		}
+
 		throw new Error(invalidPayloadMessage);
 	}
 
-	return payload as ApiDataResponse<T>;
+	const message =
+		typeof payload?.message === "string" && payload.message.trim().length > 0
+			? payload.message
+			: invalidPayloadMessage;
+	const error = new Error(message) as Error & {
+		status?: number;
+		details?: unknown;
+	};
+
+	error.status = response.status;
+	error.details = payload?.details ?? undefined;
+	throw error;
 }
 
 export function formatApiErrorDetails(details: unknown, status?: number): string {
