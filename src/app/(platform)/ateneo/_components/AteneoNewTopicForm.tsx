@@ -1,8 +1,8 @@
 "use client";
 
 import { createAteneoTopic, getAteneoGroup, listAteneoGroups } from "@/lib/api/ateneo";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
@@ -13,7 +13,7 @@ const TOPIC_TITLE_LIMIT = 100;
 const TOPIC_DESCRIPTION_LIMIT = 1000;
 
 type AteneoNewTopicFormProps = {
-  groupId: string;
+  groupId?: string;
 };
 
 type TopicGroupOption = {
@@ -31,9 +31,14 @@ const IMAGE_ATTACHMENT_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/h
 const PDF_ATTACHMENT_MIME_TYPE = "application/pdf";
 
 export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
+  const preferredGroupId = groupId?.trim() ?? "";
+  const hasFixedGroupContext = preferredGroupId.length > 0;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const cameFromFooter = searchParams.get("source") === "footer";
   const [groupOptions, setGroupOptions] = useState<TopicGroupOption[]>([]);
-  const [selectedGroupId, setSelectedGroupId] = useState(groupId);
+  const [selectedGroupId, setSelectedGroupId] = useState(preferredGroupId);
+  const [isGroupPickerOpen, setIsGroupPickerOpen] = useState(false);
   const [canCreateTopics, setCanCreateTopics] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -48,10 +53,21 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const canPublish =
     canCreateTopics &&
     !isSubmitting &&
+    selectedGroupId.trim().length > 0 &&
     title.trim().length > 0 &&
     description.trim().length > 0 &&
     !isOverAnyLimit;
   const detectedUrls = extractUniqueUrlsFromText(description, 3);
+  const selectedGroupLabel = useMemo(() => {
+    if (!selectedGroupId) {
+      return "Seleccioná un grupo";
+    }
+
+    return (
+      groupOptions.find((group) => group.id === selectedGroupId)?.name ||
+      "Seleccioná un grupo"
+    );
+  }, [groupOptions, selectedGroupId]);
 
   const registerAttachments = (files: FileList | File[] | null, kind: TopicAttachmentDraft["kind"]) => {
     if (!files) return;
@@ -77,54 +93,87 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   useEffect(() => {
     let cancelled = false;
 
-    void Promise.all([getAteneoGroup(groupId), listAteneoGroups("mine", 50)])
-      .then(([groupResponse, mineGroupsResponse]) => {
+    const loadOptions = async () => {
+      try {
+        let nextOptions: TopicGroupOption[] = [];
+
+        if (hasFixedGroupContext) {
+          const groupResponse = await getAteneoGroup(preferredGroupId);
+          const currentGroup = groupResponse.data.group;
+          nextOptions = [
+            {
+              id: currentGroup.id,
+              name: currentGroup.name,
+              canCreateTopics: currentGroup.createTopicsMode !== "admins" || currentGroup.isAdmin,
+            },
+          ];
+        } else {
+          const mineGroupsResponse = await listAteneoGroups("mine", 50);
+          nextOptions = mineGroupsResponse.data.groups.map((group) => ({
+            id: group.id,
+            name: group.name,
+            canCreateTopics: group.createTopicsMode !== "admins" || group.isAdmin,
+          }));
+        }
+
         if (cancelled) {
           return;
         }
 
-        const mineGroupOptions = mineGroupsResponse.data.groups.map((group) => ({
-          id: group.id,
-          name: group.name,
-          canCreateTopics: group.createTopicsMode !== "admins" || group.isAdmin,
-        }));
-
-        const currentGroup = groupResponse.data.group;
-        const hasCurrentGroupInMine = mineGroupOptions.some((option) => option.id === currentGroup.id);
-        const nextOptions = hasCurrentGroupInMine
-          ? mineGroupOptions
-          : [
-              {
-                id: currentGroup.id,
-                name: currentGroup.name,
-                canCreateTopics: currentGroup.createTopicsMode !== "admins" || currentGroup.isAdmin,
-              },
-              ...mineGroupOptions,
-            ];
-
         setGroupOptions(nextOptions);
 
-        const defaultGroupId = nextOptions.some((option) => option.id === groupId) ? groupId : (nextOptions[0]?.id ?? groupId);
+        const defaultGroupId = hasFixedGroupContext
+          ? preferredGroupId
+          : cameFromFooter
+            ? ""
+            : (nextOptions[0]?.id ?? "");
         setSelectedGroupId(defaultGroupId);
         const selectedGroup = nextOptions.find((option) => option.id === defaultGroupId);
-        setCanCreateTopics(Boolean(selectedGroup?.canCreateTopics));
-      })
-      .catch(() => {
+        setCanCreateTopics(
+          defaultGroupId.length > 0 ? Boolean(selectedGroup?.canCreateTopics) : true
+        );
+      } catch {
         if (!cancelled) {
           setGroupOptions([]);
+          setSelectedGroupId("");
           setCanCreateTopics(false);
         }
-      });
+      }
+    };
+
+    void loadOptions();
 
     return () => {
       cancelled = true;
     };
-  }, [groupId]);
+  }, [cameFromFooter, hasFixedGroupContext, preferredGroupId]);
+
+  useEffect(() => {
+    if (!isGroupPickerOpen) {
+      document.body.style.removeProperty("overflow");
+      return;
+    }
+
+    document.body.style.setProperty("overflow", "hidden");
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsGroupPickerOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.removeProperty("overflow");
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isGroupPickerOpen]);
 
   const handleGroupChange = (nextGroupId: string) => {
     setSelectedGroupId(nextGroupId);
     const nextGroup = groupOptions.find((group) => group.id === nextGroupId);
-    setCanCreateTopics(Boolean(nextGroup?.canCreateTopics));
+    setCanCreateTopics(nextGroupId.length > 0 ? Boolean(nextGroup?.canCreateTopics) : true);
+    setIsGroupPickerOpen(false);
   };
 
   const handleSubmit = async () => {
@@ -202,33 +251,69 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         ) : null}
       </div>
 
-      {!canCreateTopics ? (
+      {!hasFixedGroupContext && groupOptions.length === 0 ? (
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
+          Todavía no tenés grupos disponibles para publicar temas. Sumate a un grupo o creá uno nuevo desde Ateneo.
+        </div>
+      ) : null}
+
+      {groupOptions.length > 0 && selectedGroupId.trim().length > 0 && !canCreateTopics ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
           Solo los administradores pueden crear temas en este grupo.
         </div>
       ) : null}
 
-      <div className={`rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5 ${!canCreateTopics ? "pointer-events-none opacity-60" : ""}`}>
+      <div
+        className={[
+          "rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5",
+          !canCreateTopics || (!hasFixedGroupContext && groupOptions.length === 0)
+            ? "pointer-events-none opacity-60"
+            : "",
+        ].join(" ")}
+      >
         <div className="flex items-center gap-3">
           <label className="min-w-0 flex-1">
             <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Grupo</span>
-            <div className="relative">
-              <select
-                value={selectedGroupId}
-                onChange={(event) => handleGroupChange(event.target.value)}
-                className="w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
-              >
-                {groupOptions.length === 0 ? <option value="">No hay grupos disponibles</option> : null}
-                {groupOptions.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
-              <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-secondary)]">
-                ⌄
-              </span>
-            </div>
+            {hasFixedGroupContext ? (
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-3 font-medium text-[var(--text-primary)]">
+                {groupOptions.find((group) => group.id === selectedGroupId)?.name || "Grupo seleccionado"}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setIsGroupPickerOpen(true)}
+                  className="flex w-full items-center justify-between rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-left text-scale-3 outline-none transition hover:bg-[var(--surface-2)] focus:border-[var(--brand-700)] md:hidden"
+                >
+                  <span className={selectedGroupId ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}>
+                    {selectedGroupLabel}
+                  </span>
+                  <span aria-hidden="true" className="text-[var(--text-secondary)]">⌄</span>
+                </button>
+
+                <div className="relative hidden md:block">
+                  <select
+                    value={selectedGroupId}
+                    onChange={(event) => handleGroupChange(event.target.value)}
+                    className="w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
+                  >
+                    {groupOptions.length > 0 ? (
+                      <option value="">Seleccioná un grupo</option>
+                    ) : (
+                      <option value="">No hay grupos disponibles</option>
+                    )}
+                    {groupOptions.map((group) => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-secondary)]">
+                    ⌄
+                  </span>
+                </div>
+              </div>
+            )}
           </label>
         </div>
 
@@ -362,6 +447,74 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           </div>
         </div>
       </div>
+
+      {!hasFixedGroupContext && isGroupPickerOpen ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center px-4 md:hidden">
+          <button
+            type="button"
+            aria-label="Cerrar selector de grupos"
+            className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--navy-900)_48%,transparent)]"
+            onClick={() => setIsGroupPickerOpen(false)}
+          />
+          <section className="relative z-[141] w-full max-w-[28rem] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_20px_50px_color-mix(in_srgb,var(--navy-900)_26%,transparent)]">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+                Elegir grupo
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsGroupPickerOpen(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
+                aria-label="Cerrar selector"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-3 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+              <button
+                type="button"
+                onClick={() => handleGroupChange("")}
+                className={[
+                  "flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-scale-3",
+                  selectedGroupId.length === 0
+                    ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                    : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]",
+                ].join(" ")}
+              >
+                <span>Seleccioná un grupo</span>
+              </button>
+
+              {groupOptions.length === 0 ? (
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 text-[var(--text-secondary)]">
+                  No hay grupos disponibles
+                </div>
+              ) : null}
+
+              {groupOptions.map((group) => {
+                const isSelected = selectedGroupId === group.id;
+
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => handleGroupChange(group.id)}
+                    className={[
+                      "flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-scale-3",
+                      isSelected
+                        ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)]",
+                    ].join(" ")}
+                  >
+                    <span className="truncate">{group.name}</span>
+                    {isSelected ? <span aria-hidden="true">✓</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

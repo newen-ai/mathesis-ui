@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useMemo, useState } from "react";
 import { logout } from "@/lib/api/auth";
@@ -341,69 +340,6 @@ function MobileSectionTitle({ label }: { label: string }) {
   );
 }
 
-function MobileBottomNav() {
-  return (
-    <nav className="mt-auto border-t border-[var(--line)] bg-[var(--surface)] px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-4 lg:hidden">
-      <ul className="grid grid-cols-5 items-end gap-2 text-center text-[0.78rem] font-medium text-[var(--text-secondary)]">
-        <li>
-          <Link href="/" className="block">
-            <span className="mx-auto mb-1.5 flex h-6 w-6 items-center justify-center text-[var(--text-secondary)]">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <rect x="5" y="4.5" width="14" height="15" rx="2" />
-                <path d="M12 4.5v15M5 9.5h14" />
-              </svg>
-            </span>
-            Nexum
-          </Link>
-        </li>
-        <li>
-          <Link href="/red" className="block">
-            <span className="mx-auto mb-1.5 flex h-6 w-6 items-center justify-center text-[var(--text-secondary)]">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <circle cx="8" cy="9" r="2.5" />
-                <circle cx="16" cy="9" r="2.5" />
-                <path d="M4.5 18a4.5 4.5 0 0 1 7 0M12.5 18a4.5 4.5 0 0 1 7 0" />
-              </svg>
-            </span>
-            Agora
-          </Link>
-        </li>
-        <li>
-          <button type="button" className="mx-auto block text-[var(--text-secondary)]">
-            <span className="mx-auto mb-1 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand-500)] text-[var(--navy-900)] shadow-[0_10px_20px_rgba(0,0,0,0.12)]">
-              <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </span>
-            Crear
-          </button>
-        </li>
-        <li>
-          <Link href="/mensajes" className="block">
-            <span className="mx-auto mb-1.5 flex h-6 w-6 items-center justify-center text-[var(--text-secondary)]">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <path d="M4.5 6.8A1.8 1.8 0 0 1 6.3 5h11.4a1.8 1.8 0 0 1 1.8 1.8v7.1a1.8 1.8 0 0 1-1.8 1.8H8.5L5 19v-3.3h-1a1.8 1.8 0 0 1-1.8-1.8V6.8a1.8 1.8 0 0 1 1.8-1.8" />
-              </svg>
-            </span>
-            Mensajes
-          </Link>
-        </li>
-        <li className="text-[var(--brand-500)]">
-          <Link href="/perfil" className="block">
-            <span className="mx-auto mb-1.5 flex h-6 w-6 items-center justify-center text-[var(--brand-500)]">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                <circle cx="12" cy="8" r="3.1" />
-                <path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
-              </svg>
-            </span>
-            Perfil
-          </Link>
-        </li>
-      </ul>
-    </nav>
-  );
-}
-
 
 function ConfigurationSectionRows({
   rows,
@@ -627,8 +563,6 @@ export default function ConfigurationPage() {
             </section>
           </div>
         </div>
-
-        <MobileBottomNav />
       </main>
     </div>
   );

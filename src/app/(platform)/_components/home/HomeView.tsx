@@ -24,48 +24,6 @@ function resolveMembershipCtaMode(state: CompaniesMembershipState): MembershipCt
 	return "request";
 }
 
-function MobileBottomNav() {
-	return (
-		<nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--line)] bg-[var(--navy-900)] px-2 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-2 text-white lg:hidden">
-			<ul className="grid grid-cols-5 gap-1 text-center text-[0.8rem] font-medium">
-				<li className="text-[var(--brand-500)]">
-					<button type="button" className="w-full">
-						<span className="mx-auto mb-1 block h-5 w-5 rounded-[4px] border border-current" />
-						Feed
-					</button>
-				</li>
-				<li className="text-[var(--text-secondary)]">
-					<button type="button" className="w-full">
-						<span className="mx-auto mb-1 block h-5 w-5 rounded-full border border-current" />
-						Notificaciones
-					</button>
-				</li>
-				<li>
-					<button
-						type="button"
-						className="mx-auto -mt-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand-500)] text-3xl text-[var(--navy-900)]"
-					>
-						+
-					</button>
-					<span className="mt-1 block text-[var(--text-secondary)]">Publicar</span>
-				</li>
-				<li className="text-[var(--text-secondary)]">
-					<button type="button" className="w-full">
-						<span className="mx-auto mb-1 block h-5 w-5 rounded-[3px] border border-current" />
-						Mensajes
-					</button>
-				</li>
-				<li className="text-[var(--text-secondary)]">
-					<button type="button" className="w-full">
-						<span className="mx-auto mb-1 block h-5 w-5 rounded-full border border-current" />
-						Perfil
-					</button>
-				</li>
-			</ul>
-		</nav>
-	);
-}
-
 function FeedSkeleton() {
 	return (
 		<div className="space-y-4">
@@ -279,8 +237,6 @@ export function HomeView() {
 					onMembershipCtaClick={onMembershipCtaClick}
 				/>
 			</main>
-
-			<MobileBottomNav />
 
 			{toastMessage ? (
 				<div className="mathesis-toast fixed bottom-24 left-1/2 z-[90] -translate-x-1/2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--text-primary)] shadow-lg lg:bottom-6 lg:left-auto lg:right-6 lg:translate-x-0">

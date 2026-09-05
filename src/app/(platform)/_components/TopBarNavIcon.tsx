@@ -1,9 +1,9 @@
 type TopBarNavIconProps = {
   icon: string;
+  className?: string;
 };
 
-export function TopBarNavIcon({ icon }: TopBarNavIconProps) {
-  const className = "h-5 w-5";
+export function TopBarNavIcon({ icon, className = "h-5 w-5" }: TopBarNavIconProps) {
 
   if (icon === "grid") {
     return (
@@ -122,6 +122,26 @@ export function TopBarNavIcon({ icon }: TopBarNavIconProps) {
         <path d="M6 6h10v3.6A5.4 5.4 0 0 1 10.6 15H9.4A5.4 5.4 0 0 1 4 9.6V6h2" />
         <path d="M16 7h1.4a2.6 2.6 0 1 1 0 5.2H16" />
         <path d="M7 19h8" />
+      </svg>
+    );
+  }
+
+  if (icon === "nexum") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M8 4.8h8" />
+        <path d="m9.2 4.8 1 4.2v4.1A3.7 3.7 0 0 1 6.5 16.8h0" />
+        <path d="m14.8 4.8-1 4.2v4.1a3.7 3.7 0 0 0 3.7 3.7h0" />
+        <path d="M6.5 16.8h11" />
+      </svg>
+    );
+  }
+
+  if (icon === "agora") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <ellipse cx="9" cy="12" rx="4.2" ry="4.7" />
+        <ellipse cx="15" cy="12" rx="4.2" ry="4.7" />
       </svg>
     );
   }
