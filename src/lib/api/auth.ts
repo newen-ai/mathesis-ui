@@ -23,6 +23,10 @@ type RequestPasswordResetInput = {
 	email: string;
 };
 
+type RequestVerificationEmailInput = {
+	email: string;
+};
+
 type ResetPasswordInput = {
 	token: string;
 	newPassword: string;
@@ -167,6 +171,34 @@ export async function requestPasswordReset(
 				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
 					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
 					: "No pudimos conectar con el servicio de recuperación.",
+			details: "Error de red o CORS.",
+		};
+	}
+}
+
+export async function requestVerificationEmail(
+	input: RequestVerificationEmailInput
+): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest("/auth/request-verification", {
+			method: "POST",
+			body: {
+				email: input.email,
+			},
+		});
+
+		return parseServiceResponse(
+			response,
+			"Respuesta invalida del servicio de verificacion de correo."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
+					: "No pudimos conectar con el servicio de verificacion de correo.",
 			details: "Error de red o CORS.",
 		};
 	}

@@ -7,7 +7,7 @@ import { login } from "@/lib/api/auth";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
-import { getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
+import { extractAuthErrorCode, getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
 import { normalizeEmailInput } from "@/lib/utils/email";
 
 type ValidationErrors = {
@@ -92,6 +92,13 @@ function LoginPageContent() {
     });
 
     if (!result.success) {
+      const authErrorCode = extractAuthErrorCode(result.details);
+      if (authErrorCode === "EMAIL_NOT_VERIFIED") {
+        setIsSubmitting(false);
+        router.replace(`/unverified?email=${encodeURIComponent(trimmedEmail)}`);
+        return;
+      }
+
       setErrors({
         credentials: resolveLoginErrorMessage(result.message, result.details),
       });

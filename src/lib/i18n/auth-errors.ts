@@ -10,6 +10,7 @@ export type AuthErrorDetails = {
 
 export const authErrorCodeToKey: Record<string, string> = {
   EMAIL_NOT_VERIFIED: "auth:emailNotVerified",
+  VERIFICATION_EMAIL_RATE_LIMITED: "auth:verificationEmailRateLimited",
   USER_NOT_WHITELISTED: "auth:userNotWhitelisted",
   INVALID_EMAIL_OR_PASSWORD: "auth:invalidCredentials",
 };
@@ -78,6 +79,7 @@ export function getAuthErrorTranslation(
       ? {
           EMAIL_ADDRESS_IS_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
           EMAIL_IS_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
+          PLEASE_WAIT_BEFORE_REQUESTING_ANOTHER_VERIFICATION_EMAIL: "VERIFICATION_EMAIL_RATE_LIMITED",
           ACCOUNT_PENDING_WHITELIST_APPROVAL: "USER_NOT_WHITELISTED",
           INVALID_EMAIL_OR_PASSWORD: "INVALID_EMAIL_OR_PASSWORD",
         }[aliasKey]
