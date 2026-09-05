@@ -200,3 +200,17 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Users should be able to attach screenshots by pasting from the clipboard with `Ctrl+V` or `Cmd+V`, not only by file selection.
 - The floating bug report button should be draggable, but only snap to the four allowed corners: top-left, top-right, bottom-left, and bottom-right.
 - When frontend code needs to translate backend or service error messages, do not hardcode ad-hoc message maps inside components; route them through `src/lib/i18n/*` helpers and locale JSON so future agents extend the same translation path.
+
+## Current Active UI Directions (2026-09-05 Mobile Signed-In Footer)
+- Redesign and standardize the mobile footer for all signed-in routes under `(platform)` with one shared implementation.
+- Footer taps for `Nexum` and `Agora` must open modal-style overlays with a dim backdrop, matching the provided references.
+- Footer center CTA `Crear` must open the topic-creation flow without preselecting a group.
+- `Acertijos` in the Agora overlay remains disabled and visibly labeled `PRÓXIMAMENTE`.
+- Keep `Mensajes` and `Perfil` as direct route navigation items.
+- Preserve light/dark parity and prefer semantic theme tokens from `globals.css` for all new footer and overlay styles.
+
+## Current Active UI Directions (2026-09-05 Ateneo New Topic Group Picker)
+- In `/ateneo/new-topic` mobile flow, the group chooser should use a centered overlay picker with a dim backdrop instead of relying only on the native compact select dropdown.
+- The mobile picker must support a larger visual format with scrollable options and explicit close affordances.
+- When the entry source is the footer and there is no fixed group context, keep `Seleccioná un grupo` selected by default until the user chooses an option.
+- For group-scoped routes (`/ateneo/groups/[groupId]/new-topic`), keep the group field fixed/read-only and skip the picker.

@@ -209,6 +209,18 @@ export function TopBar({ navItems }: TopBarProps) {
   }, [desktopDropdownOpen, mobileDrawerOpen]);
 
   useEffect(() => {
+    const onCloseDrawerRequest = () => {
+      setMobileDrawerOpen(false);
+      setMobileExpandedPanel(null);
+    };
+
+    window.addEventListener("mathesis:close-mobile-drawer-request", onCloseDrawerRequest);
+    return () => {
+      window.removeEventListener("mathesis:close-mobile-drawer-request", onCloseDrawerRequest);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!desktopDropdownOpen) return;
 
     const onMouseDown = (event: MouseEvent) => {
@@ -564,6 +576,7 @@ export function TopBar({ navItems }: TopBarProps) {
           <button
             type="button"
             onClick={() => {
+              window.dispatchEvent(new Event("mathesis:close-mobile-footer-overlay-request"));
               setDesktopDropdownOpen(null);
               setMobileDrawerOpen((current) => {
                 if (current) {
