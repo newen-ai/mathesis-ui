@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NavItem } from "../_lib/constants";
-import { checkCompaniesAdminAccess } from "@/lib/api/admin";
+import {
+  checkCompaniesAdminAccess,
+  createCompaniesMembershipRequest,
+  getCompaniesMembershipState,
+} from "@/lib/api/admin";
 import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
 import { BRAND_LOGO_FULL_SRC, BRAND_LOGO_SRC } from "@/lib/assets";
-import {
-  DesktopTopbarIcon,
-  type DesktopTopbarIconName,
-} from "./DesktopTopbarIcons";
+import { listMyChats } from "@/lib/api/chat";
+import { listNotifications } from "@/lib/api/notifications";
 import {
   ProfileHttpError,
+  type BadgeOutput,
   getMyProfile,
   searchProfiles,
   type SearchProfileOutput,
@@ -20,6 +23,21 @@ import {
 import { useUiTheme } from "@/lib/theme/useUiTheme";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { getTwoInitials } from "@/lib/utils/name";
+import { formatBadgeSlug } from "@/lib/utils/badge";
+import { toast } from "sonner";
+import { TopBarDesktop } from "./TopBarDesktop";
+import { TopBarMobile } from "./TopBarMobile";
+import { TopBarNavIcon } from "./TopBarNavIcon";
+import {
+  desktopAdminTopbarItem,
+  desktopBaseTopbarItems,
+  desktopCompaniesAdminTopbarItem,
+  desktopDropdownTopbarItems,
+  resolveMembershipCtaMode,
+  type DesktopDropdownKey,
+  type MembershipCtaMode,
+  type MobileAccordionKey,
+} from "./topbar.shared";
 
 type TopBarProps = {
   navItems: NavItem[];
@@ -29,268 +47,21 @@ type SessionAccess = {
   role: SessionRole | null;
 };
 
-type TopBarMenuItem = {
-  label: string;
-  href?: string;
-  icon: string;
-  disabledText?: string;
-  activeAuxText?: string;
-};
-
-type TopBarMenuSection = {
-  title: string;
-  items: TopBarMenuItem[];
-};
-
-type DesktopTopbarItem = {
-  href: string;
-  label: string;
-  icon: DesktopTopbarIconName;
-};
-
-const desktopBaseTopbarItems: DesktopTopbarItem[] = [
-  { href: "/", label: "Feed", icon: "feed" },
-  { href: "/ateneo", label: "Ateneo", icon: "ateneo" },
-  { href: "/directorio", label: "Directorio", icon: "directory" },
-  { href: "/mensajes", label: "Mensajes", icon: "message" },
-  { href: "/notificaciones", label: "Notificaciones", icon: "bell" },
-];
-
-const desktopAdminTopbarItem: DesktopTopbarItem = {
-  href: "/admin",
-  label: "Admin",
-  icon: "admin",
-};
-
-const desktopCompaniesAdminTopbarItem: DesktopTopbarItem = {
-  href: "/admin/companies-admin",
-  label: "ME Admin",
-  icon: "admin",
-};
-
-const menuSections: TopBarMenuSection[] = [
-  {
-    title: "PERSONAL",
-    items: [
-      { label: "Feed", href: "/", icon: "grid" },
-      { label: "Ateneo", href: "/ateneo", icon: "groups" },
-      { label: "Mensajes", href: "/mensajes", icon: "chat" },
-      { label: "Notificaciones", href: "/notificaciones", icon: "bell" },
-      { label: "Mi Perfil", href: "/perfil", icon: "user" },
-      { label: "Buscar", href: "#", icon: "search" },
-      { label: "Eventos", href: "#", icon: "calendar", disabledText: "proximamente" },
-    ],
-  },
-  {
-    title: "EMPRESARIAL",
-    items: [
-      { label: "Mis Empresas", href: "/my-enterprises", icon: "building" },
-      { label: "Mathesis", href: "/red", icon: "mark" },
-      { label: "Feed Empresarial", href: "#", icon: "doc", activeAuxText: "solo ME" },
-    ],
-  },
-  {
-    title: "MATHESIS",
-    items: [{ label: "ABM de Mathesis", href: "#", icon: "sun" }],
-  },
-];
-
-const desktopTopMenuItems: TopBarMenuItem[] = [
-  { label: "Mi Perfil", href: "/perfil", icon: "user" },
-  { label: "Configuración", href: "/account/configuration", icon: "settings" },
-];
-
-const accountMenuSection: TopBarMenuSection = {
-  title: "CUENTA",
-  items: [
-    { label: "Configuración", href: "/account/configuration", icon: "settings" },
-    { label: "Credencial digital", href: "/perfil/credencial", icon: "badge" },
-  ],
-};
-
-const desktopMenuSections: TopBarMenuSection[] = [
-  {
-    title: "EMPRESARIAL",
-    items: [
-      { label: "Directorio", href: "/directorio", icon: "building" },
-      { label: "Mis Empresas", href: "/my-enterprises", icon: "building" },
-      { label: "Feed Empresarial", href: "/", icon: "doc", activeAuxText: "solo ME" },
-    ],
-  },
-  {
-    title: "CUENTA",
-    items: [
-      { label: "Bloqueados", icon: "ban" },
-      { label: "Credencial digital", href: "/perfil/credencial", icon: "badge" },
-      { label: "Contactar a Mathesis", icon: "message" },
-    ],
-  },
-];
-
-function NavIcon({ icon }: { icon: string }) {
-  const className = "h-5 w-5";
-
-  if (icon === "grid") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="4" y="4" width="16" height="6" rx="1.5" />
-        <rect x="4" y="14" width="16" height="6" rx="1.5" />
-      </svg>
-    );
-  }
-
-  if (icon === "chat") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16h-8L5 20v-4H6.5A2.5 2.5 0 0 1 4 13.5v-7Z" />
-      </svg>
-    );
-  }
-
-  if (icon === "groups") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="8.5" cy="9" r="2.2" />
-        <circle cx="15.5" cy="10.5" r="2.2" />
-        <path d="M4.5 18.5a4 4 0 0 1 8 0" />
-        <path d="M11.5 18.5a4 4 0 0 1 8 0" />
-      </svg>
-    );
-  }
-
-  if (icon === "bell") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M8 17h8m-5.5 3h3" />
-        <path d="M6.5 16h11l-1.2-1.9a4 4 0 0 1-.55-2.08v-1.3A4.3 4.3 0 0 0 12 6.5a4.3 4.3 0 0 0-3.75 4.23v1.3c0 .75-.2 1.5-.58 2.15L6.5 16Z" />
-      </svg>
-    );
-  }
-
-  if (icon === "user") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="8" r="3.2" />
-        <path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
-      </svg>
-    );
-  }
-
-  if (icon === "search") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="11" cy="11" r="6.3" />
-        <path d="m16 16 4 4" />
-      </svg>
-    );
-  }
-
-  if (icon === "calendar") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="4" y="5.5" width="16" height="14.5" rx="2" />
-        <path d="M8 3.5v4m8-4v4M4 10.5h16" />
-      </svg>
-    );
-  }
-
-  if (icon === "settings") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="12" r="3.2" />
-        <path d="M12 3.8v2.1M12 18.1v2.1M20.2 12h-2.1M5.9 12H3.8M18 6l-1.5 1.5M7.5 16.5 6 18M18 18l-1.5-1.5M7.5 7.5 6 6" />
-      </svg>
-    );
-  }
-
-  if (icon === "building") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M4 20V7a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v13M14 20h6V11.5a1 1 0 0 0-1-1h-5" />
-        <path d="M8 10h2m-2 3h2m-2 3h2m6-2h2m-2 3h2" />
-      </svg>
-    );
-  }
-
-  if (icon === "mark") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2">
-        <path d="M13.8 4.5c-3.8 0-6.2 2.5-6.2 5.7 0 2.9 1.9 4.9 4.7 4.9h.9c1.7 0 2.8 1 2.8 2.4 0 1.4-.9 2-2.2 2-1.4 0-2.5-.7-3.2-2" />
-      </svg>
-    );
-  }
-
-  if (icon === "doc") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M7 3.8h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.8a1 1 0 0 1 1-1Z" />
-        <path d="M14 3.8v4h4" />
-      </svg>
-    );
-  }
-
-  if (icon === "wave") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M7 18c1.2 0 2-1.3 2-3.1 0-2.8 1.1-6.8 3.4-9.4" />
-      </svg>
-    );
-  }
-
-  if (icon === "ban") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <circle cx="12" cy="12" r="8" />
-        <path d="m7 7 10 10" />
-      </svg>
-    );
-  }
-
-  if (icon === "message") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M4.5 6.8A1.8 1.8 0 0 1 6.3 5h11.4a1.8 1.8 0 0 1 1.8 1.8v7.1a1.8 1.8 0 0 1-1.8 1.8H8.5L5 19v-3.3h-1a1.8 1.8 0 0 1-1.8-1.8V6.8a1.8 1.8 0 0 1 1.8-1.8" />
-      </svg>
-    );
-  }
-
-  if (icon === "badge") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="5" y="5" width="14" height="14" rx="2.5" />
-        <path d="M9 10h6M9 14h6M12 9v6" />
-      </svg>
-    );
-  }
-
-  if (icon === "logout") {
-    return (
-      <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.9">
-        <path d="M10 6H5.8A1.8 1.8 0 0 0 4 7.8v8.4A1.8 1.8 0 0 0 5.8 18H10" />
-        <path d="M14 8.5 18 12l-4 3.5" />
-        <path d="M9 12h9" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="7" />
-      <path d="M12 8v4m0 3h.01" />
-    </svg>
-  );
-}
-
 export function TopBar({ navItems }: TopBarProps) {
   void navItems;
 
   const pathname = usePathname();
   const router = useRouter();
   useUiTheme();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [desktopDropdownOpen, setDesktopDropdownOpen] =
+    useState<DesktopDropdownKey | null>(null);
+  const [mobileExpandedPanel, setMobileExpandedPanel] =
+    useState<MobileAccordionKey | null>(null);
   const [userName, setUserName] = useState("");
   const [userProfileImageUrl, setUserProfileImageUrl] = useState<string | null>(null);
   const [userIdentityLine, setUserIdentityLine] = useState("");
+  const [userBadges, setUserBadges] = useState<BadgeOutput[]>([]);
   const [isLoadingUserName, setIsLoadingUserName] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState<SearchProfileOutput[]>([]);
@@ -298,6 +69,13 @@ export function TopBar({ navItems }: TopBarProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [sessionAccess, setSessionAccess] = useState<SessionAccess>({ role: null });
   const [hasCompaniesAdminAccess, setHasCompaniesAdminAccess] = useState(false);
+  const [membershipCtaMode, setMembershipCtaMode] =
+    useState<MembershipCtaMode>("loading");
+  const [isMembershipActionPending, setIsMembershipActionPending] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const desktopNavRef = useRef<HTMLElement | null>(null);
+  const mobileDrawerRef = useRef<HTMLElement | null>(null);
 
   const normalizedSearchText = useMemo(() => searchText.trim(), [searchText]);
   const userInitials = useMemo(
@@ -305,17 +83,23 @@ export function TopBar({ navItems }: TopBarProps) {
     [userName]
   );
   const isAdmin = sessionAccess.role === "admin";
+  const activeBadges = useMemo(
+    () => userBadges.map((badge) => `∫ ${formatBadgeSlug(badge.slug)}`),
+    [userBadges]
+  );
 
   const desktopTopbarItems = useMemo(() => {
     const items = [...desktopBaseTopbarItems];
+
+    if (isAdmin) {
+      items.push(desktopAdminTopbarItem);
+    }
 
     if (hasCompaniesAdminAccess) {
       items.push(desktopCompaniesAdminTopbarItem);
     }
 
-    if (isAdmin) {
-      items.push(desktopAdminTopbarItem);
-    }
+    items.push(...desktopDropdownTopbarItems);
 
     return items;
   }, [hasCompaniesAdminAccess, isAdmin]);
@@ -337,6 +121,11 @@ export function TopBar({ navItems }: TopBarProps) {
     await logout();
     forceLogout();
   };
+
+  const reloadMembershipState = useCallback(async (signal?: AbortSignal) => {
+    const membershipState = await getCompaniesMembershipState(signal);
+    setMembershipCtaMode(resolveMembershipCtaMode(membershipState));
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -387,7 +176,7 @@ export function TopBar({ navItems }: TopBarProps) {
   }, []);
 
   useEffect(() => {
-    if (!drawerOpen) {
+    if (!mobileDrawerOpen) {
       document.body.style.removeProperty("overflow");
       return;
     }
@@ -401,14 +190,15 @@ export function TopBar({ navItems }: TopBarProps) {
     return () => {
       document.body.style.removeProperty("overflow");
     };
-  }, [drawerOpen]);
+  }, [mobileDrawerOpen]);
 
   useEffect(() => {
-    if (!drawerOpen) return;
+    if (!mobileDrawerOpen && !desktopDropdownOpen) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setDrawerOpen(false);
+        setMobileDrawerOpen(false);
+        setDesktopDropdownOpen(null);
       }
     };
 
@@ -416,7 +206,94 @@ export function TopBar({ navItems }: TopBarProps) {
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [drawerOpen]);
+  }, [desktopDropdownOpen, mobileDrawerOpen]);
+
+  useEffect(() => {
+    if (!desktopDropdownOpen) return;
+
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      const inDesktopTopbar = desktopNavRef.current?.contains(target);
+      if (!inDesktopTopbar) {
+        setDesktopDropdownOpen(null);
+      }
+    };
+
+    window.addEventListener("mousedown", onMouseDown);
+    return () => {
+      window.removeEventListener("mousedown", onMouseDown);
+    };
+  }, [desktopDropdownOpen]);
+
+  useEffect(() => {
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (desktopDropdownOpen) {
+        const isInsideDesktopNav = desktopNavRef.current?.contains(target) ?? false;
+        if (!isInsideDesktopNav) {
+          setDesktopDropdownOpen(null);
+        }
+      }
+
+      if (mobileDrawerOpen) {
+        const isInsideMobileDrawer = mobileDrawerRef.current?.contains(target) ?? false;
+        if (!isInsideMobileDrawer) {
+          setMobileDrawerOpen(false);
+          setMobileExpandedPanel(null);
+        }
+      }
+    };
+
+    window.addEventListener("focusin", onFocusIn);
+    return () => {
+      window.removeEventListener("focusin", onFocusIn);
+    };
+  }, [desktopDropdownOpen, mobileDrawerOpen]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTopbarCounters = async () => {
+      const [chatsResult, notificationsResult] = await Promise.allSettled([
+        listMyChats(30),
+        listNotifications(50),
+      ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (chatsResult.status === "fulfilled") {
+        const totalUnread = chatsResult.value.data.chats.reduce(
+          (sum, chat) => sum + chat.unreadMessagesCount,
+          0
+        );
+        setUnreadMessagesCount(totalUnread);
+      }
+
+      if (notificationsResult.status === "fulfilled") {
+        setUnreadNotificationsCount(notificationsResult.value.data.unreadCount);
+      }
+    };
+
+    void loadTopbarCounters();
+    const intervalId = window.setInterval(() => {
+      void loadTopbarCounters();
+    }, 30_000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -434,6 +311,7 @@ export function TopBar({ navItems }: TopBarProps) {
         setUserName(fullName);
         setUserProfileImageUrl(profile.profileImageUrl ?? null);
         setUserIdentityLine(subtitle);
+        setUserBadges(profile.badges ?? []);
         setIsLoadingUserName(false);
       } catch (error) {
         if (!isMounted || controller.signal.aborted) {
@@ -460,6 +338,7 @@ export function TopBar({ navItems }: TopBarProps) {
         setUserName("");
         setUserProfileImageUrl(null);
         setUserIdentityLine("");
+        setUserBadges([]);
         setIsLoadingUserName(false);
       }
     };
@@ -472,12 +351,63 @@ export function TopBar({ navItems }: TopBarProps) {
     };
   }, [forceLogout, router]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadMembershipState = async () => {
+      try {
+        await reloadMembershipState(controller.signal);
+      } catch {
+        setMembershipCtaMode("request");
+      }
+    };
+
+    void loadMembershipState();
+
+    return () => {
+      controller.abort();
+    };
+  }, [reloadMembershipState]);
+
   const onSearchTextChange = (value: string) => {
     setSearchText(value);
     if (value.trim()) return;
     setSearchResults([]);
     setSearchMessage("");
     setIsSearching(false);
+  };
+
+  const toggleMobilePanel = (panel: MobileAccordionKey) => {
+    setMobileExpandedPanel((current) => (current === panel ? null : panel));
+  };
+
+  const onRequestMembership = async () => {
+    if (membershipCtaMode !== "request" || isMembershipActionPending) {
+      return;
+    }
+
+    setIsMembershipActionPending(true);
+
+    try {
+      const result = await createCompaniesMembershipRequest();
+
+      if (!result.success) {
+        toast.error(result.message || "No se pudo enviar la solicitud.");
+        return;
+      }
+
+      toast.success("Solicitud enviada.");
+      await reloadMembershipState();
+    } catch {
+      toast.error("No pudimos actualizar tu membresía en este momento.");
+    } finally {
+      setIsMembershipActionPending(false);
+    }
+  };
+
+  const closeMobileDrawer = () => {
+    setMobileDrawerOpen(false);
+    setMobileExpandedPanel(null);
   };
 
   useEffect(() => {
@@ -523,8 +453,9 @@ export function TopBar({ navItems }: TopBarProps) {
     normalizedSearchText.length > 0 && (isSearching || searchResults.length > 0 || !!searchMessage);
 
   return (
-    <header className="mathesis-topbar sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-[1350px] items-center gap-3 px-4 md:h-[5.5rem] md:px-6 lg:px-8">
+    <>
+      <header className="mathesis-topbar sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
+      <div className="flex h-16 w-full items-center gap-3 px-4 md:h-[5.5rem] md:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-md px-1 py-1 transition hover:bg-[var(--surface-2)]/70">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -554,7 +485,7 @@ export function TopBar({ navItems }: TopBarProps) {
           </label>
           <div className="flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface-2)] px-4 py-2.5 md:py-3">
             <span className="text-[var(--text-soft)]" aria-hidden="true">
-              <NavIcon icon="search" />
+              <TopBarNavIcon icon="search" />
             </span>
             <input
               id="topbar-search"
@@ -587,7 +518,8 @@ export function TopBar({ navItems }: TopBarProps) {
                         setSearchText(selectedName);
                         setSearchResults([]);
                         setSearchMessage("");
-                        setDrawerOpen(false);
+                        setMobileDrawerOpen(false);
+                        setDesktopDropdownOpen(null);
                         router.push(`/perfil?userId=${encodeURIComponent(profile.userId)}`);
                       }}
                       className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition hover:bg-[var(--surface-2)]"
@@ -612,44 +544,36 @@ export function TopBar({ navItems }: TopBarProps) {
           ) : null}
         </div>
 
-        <nav className="ml-auto hidden items-center gap-2 md:flex">
-          {desktopTopbarItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`mathesis-nav-item ${
-                isNavItemActive(item.href) ? "is-active" : ""
-              }`}
-            >
-              <span className="mathesis-nav-icon" aria-hidden="true">
-                <DesktopTopbarIcon name={item.icon} />
-              </span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-
-          <button
-            type="button"
-            onClick={() => setDrawerOpen((current) => !current)}
-            className="ml-1 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)]"
-            aria-label="Abrir menu"
-          >
-            <UserAvatar
-              imageUrl={userProfileImageUrl}
-              initials={userInitials}
-              label="Foto de perfil"
-              className="flex h-full w-full items-center justify-center"
-              initialsClassName="text-lg font-bold text-[var(--brand-500)]"
-            />
-          </button>
-        </nav>
+        <TopBarDesktop
+          desktopNavRef={desktopNavRef}
+          desktopTopbarItems={desktopTopbarItems}
+          desktopDropdownOpen={desktopDropdownOpen}
+          setDesktopDropdownOpen={setDesktopDropdownOpen}
+          isNavItemActive={isNavItemActive}
+          unreadMessagesCount={unreadMessagesCount}
+          unreadNotificationsCount={unreadNotificationsCount}
+          userProfileImageUrl={userProfileImageUrl}
+          userInitials={userInitials}
+          userName={userName}
+          userIdentityLine={userIdentityLine}
+          isLoadingUserName={isLoadingUserName}
+          onLogout={onLogout}
+        />
 
         <div className="flex items-center gap-2 md:hidden">
           <button
             type="button"
-            onClick={() => setDrawerOpen((current) => !current)}
+            onClick={() => {
+              setDesktopDropdownOpen(null);
+              setMobileDrawerOpen((current) => {
+                if (current) {
+                  setMobileExpandedPanel(null);
+                }
+                return !current;
+              });
+            }}
             className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface-2)]"
-            aria-label="Abrir menu"
+            aria-label="Abrir menú"
           >
             <svg viewBox="0 0 24 24" className="h-7 w-7 text-[var(--brand-500)]" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
               <path d="M4 6h16M4 12h16M4 18h16" />
@@ -658,261 +582,27 @@ export function TopBar({ navItems }: TopBarProps) {
         </div>
       </div>
 
-      {drawerOpen ? (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-[60] hidden bg-transparent md:block"
-            onClick={() => setDrawerOpen(false)}
-            aria-label="Cerrar menu de escritorio"
-          />
+      </header>
 
-          <aside className="fixed right-4 top-[6.2rem] z-[70] hidden h-fit max-h-[calc(100dvh-6.85rem)] w-[min(90vw,23.4rem)] overflow-y-auto rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_22px_50px_rgba(0,0,0,0.18)] md:block">
-            <div className="border-b border-[var(--line)] px-5 py-4.5">
-              <p className="font-[family-name:var(--font-spectral)] text-[var(--menu-profile-name-size)] font-semibold leading-[1.05] text-[var(--navy-900)]">
-                {isLoadingUserName ? "Cargando..." : userName || "Mi perfil"}
-              </p>
-              <p className="mt-1 text-[var(--menu-profile-meta-size)] font-semibold leading-[1.15] text-[var(--text-secondary)]">
-                {userIdentityLine || "Miembro de Mathesis"}
-              </p>
-            </div>
-
-            <div className="border-b border-[var(--line)] py-1.5">
-              {desktopTopMenuItems.map((item) => {
-                const isActive = item.href ? isNavItemActive(item.href) : false;
-                    const itemClass = `flex w-full items-center justify-between px-5 py-2.5 text-left transition hover:bg-[var(--surface-2)] active:bg-[var(--surface-muted)] ${
-                  isActive ? "bg-[var(--surface-muted)]" : ""
-                }`;
-
-                const content = (
-                  <>
-                        <span className="flex items-center gap-2.5 text-[var(--menu-item-size)] font-semibold leading-none text-[var(--text-primary)]">
-                      <span className="text-[var(--text-secondary)]">
-                        <NavIcon icon={item.icon} />
-                      </span>
-                      {item.label}
-                    </span>
-                  </>
-                );
-
-                if (item.href) {
-                  return (
-                    <Link
-                      key={`desktop-top-${item.label}`}
-                      href={item.href}
-                      className={itemClass}
-                      onClick={() => setDrawerOpen(false)}
-                    >
-                      {content}
-                    </Link>
-                  );
-                }
-
-                return (
-                  <button key={`desktop-top-${item.label}`} type="button" className={itemClass}>
-                    {content}
-                  </button>
-                );
-              })}
-            </div>
-
-            {desktopMenuSections.map((section) => (
-              <section key={`desktop-${section.title}`} className="border-b border-[var(--line)] py-1.5">
-                <h4 className="px-5 pb-1.5 pt-2.5 text-[var(--menu-section-size)] font-bold tracking-[0.16em] text-[var(--text-soft)]">{section.title}</h4>
-                {section.items.map((item) => {
-                  const isActive = item.href ? isNavItemActive(item.href) : false;
-                  const itemClass = `flex w-full items-center justify-between px-5 py-2.5 text-left transition hover:bg-[var(--surface-2)] active:bg-[var(--surface-muted)] ${
-                    isActive ? "bg-[var(--surface-muted)]" : ""
-                  }`;
-                  const content = (
-                    <>
-                      <span className="flex items-center gap-2.5 text-[var(--menu-item-size)] font-semibold leading-none text-[var(--text-primary)]">
-                        <span className="text-[var(--text-secondary)]">
-                          <NavIcon icon={item.icon} />
-                        </span>
-                        {item.label}
-                      </span>
-                      {item.activeAuxText ? (
-                        <span className="text-[0.64rem] font-semibold text-[color:color-mix(in_srgb,var(--brand-500)_72%,#5f4e2a)]">{item.activeAuxText}</span>
-                      ) : null}
-                    </>
-                  );
-
-                  if (item.href) {
-                    return (
-                      <Link
-                        key={`desktop-${section.title}-${item.label}`}
-                        href={item.href}
-                        className={itemClass}
-                        onClick={() => setDrawerOpen(false)}
-                      >
-                        {content}
-                      </Link>
-                    );
-                  }
-
-                  return (
-                    <button key={`desktop-${section.title}-${item.label}`} type="button" className={itemClass}>
-                      {content}
-                    </button>
-                  );
-                })}
-              </section>
-            ))}
-
-            <div className="px-5 py-4">
-              <button
-                type="button"
-                onClick={onLogout}
-                className="flex w-full items-center gap-2.5 rounded-xl py-1.5 text-left text-[var(--menu-logout-size)] font-semibold text-[var(--danger-500)] transition hover:bg-[color:color-mix(in_srgb,var(--danger-500)_8%,transparent)]"
-              >
-                <span aria-hidden="true">
-                  <NavIcon icon="logout" />
-                </span>
-                Cerrar sesión
-              </button>
-            </div>
-          </aside>
-
-          <button
-            type="button"
-            className="fixed inset-0 z-[60] bg-[var(--accent-overlay)] md:hidden"
-            onClick={() => setDrawerOpen(false)}
-            aria-label="Cerrar menu"
-          />
-          <aside className="fixed right-0 top-[6.2rem] z-[70] h-[calc(100dvh-6.2rem)] w-[78vw] max-w-[420px] overflow-y-auto border-l border-[var(--line)] bg-[var(--surface)] md:hidden">
-            <div className="border-b border-[var(--line)] bg-[var(--navy-900)] p-6 text-white">
-              <div className="flex items-start gap-4">
-                <UserAvatar
-                  imageUrl={userProfileImageUrl}
-                  initials={userInitials}
-                  label="Foto de perfil"
-                  className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)]"
-                  initialsClassName="text-3xl font-semibold text-[var(--brand-500)]"
-                />
-                <div>
-                  <p className="font-[family-name:var(--font-spectral)] text-3xl font-semibold leading-none">
-                    {isLoadingUserName ? "Cargando..." : userName || "Mi perfil"}
-                  </p>
-                  <p className="mt-2 text-sm font-medium text-[var(--text-secondary)]">
-                    {userIdentityLine || "Miembro de Mathesis"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                <span className="rounded-full border border-[var(--line-strong)] px-4 py-1 text-xs font-semibold text-[var(--brand-500)]">∫ Mathesis</span>
-                <span className="rounded-full border border-[var(--line-strong)] px-4 py-1 text-xs font-semibold text-[var(--text-secondary)]">MTH-0001</span>
-              </div>
-            </div>
-
-            {menuSections.map((section) => (
-              <section key={section.title} className="border-b border-[var(--line)]">
-                <h4 className="px-6 py-3 text-xs font-bold tracking-[0.16em] text-[var(--brand-500)]">{section.title}</h4>
-                {section.items.map((item) => {
-                  const routeHref = item.href ?? "#";
-                  const hasRoute = routeHref !== "#";
-                  const active = hasRoute ? isNavItemActive(routeHref) : false;
-                  const commonClass = `flex w-full items-center justify-between border-t border-[color:color-mix(in_srgb,var(--line)_65%,transparent)] px-6 py-4 text-left ${
-                    active ? "bg-[var(--surface-muted)]" : "bg-[var(--surface)]"
-                  } ${item.disabledText ? "opacity-60" : ""}`;
-
-                  const content = (
-                    <>
-                      <span className="flex items-center gap-4 text-xl font-medium text-[var(--text-primary)]">
-                        <span className="text-[var(--text-secondary)]">
-                          <NavIcon icon={item.icon} />
-                        </span>
-                        {item.label}
-                      </span>
-                      {item.disabledText ? (
-                        <span className="text-xs font-semibold text-[var(--text-secondary)]">{item.disabledText}</span>
-                      ) : null}
-                      {item.activeAuxText ? (
-                        <span className="text-xs font-semibold text-[var(--brand-500)]">{item.activeAuxText}</span>
-                      ) : null}
-                    </>
-                  );
-
-                  if (!hasRoute) {
-                    return (
-                      <button key={`${section.title}-${item.label}`} type="button" className={commonClass}>
-                        {content}
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <Link
-                      key={`${section.title}-${item.label}`}
-                      href={routeHref}
-                      className={commonClass}
-                      onClick={() => setDrawerOpen(false)}
-                    >
-                      {content}
-                    </Link>
-                  );
-                })}
-              </section>
-            ))}
-
-            {isAdmin ? (
-              <section className="border-b border-[var(--line)]">
-                <h4 className="px-6 py-3 text-xs font-bold tracking-[0.16em] text-[var(--brand-500)]">ADMIN</h4>
-                <Link
-                  href="/admin"
-                  className={`flex w-full items-center justify-between border-t border-[color:color-mix(in_srgb,var(--line)_65%,transparent)] px-6 py-4 text-left ${
-                    isNavItemActive("/admin") ? "bg-[var(--surface-muted)]" : "bg-[var(--surface)]"
-                  }`}
-                  onClick={() => setDrawerOpen(false)}
-                >
-                  <span className="flex items-center gap-4 text-xl font-medium text-[var(--text-primary)]">
-                    <span className="text-[var(--text-secondary)]">
-                      <NavIcon icon="mark" />
-                    </span>
-                    Admin dashboard
-                  </span>
-                </Link>
-              </section>
-            ) : null}
-
-            <section className="border-b border-[var(--line)]">
-              <h4 className="px-6 py-3 text-xs font-bold tracking-[0.16em] text-[var(--brand-500)]">
-                {accountMenuSection.title}
-              </h4>
-              {accountMenuSection.items.map((item) => (
-                <Link
-                  key={`mobile-${item.label}`}
-                  href={item.href ?? "#"}
-                  className={`flex w-full items-center justify-between border-t border-[color:color-mix(in_srgb,var(--line)_65%,transparent)] px-6 py-4 text-left ${
-                    item.href && isNavItemActive(item.href)
-                      ? "bg-[var(--surface-muted)]"
-                      : "bg-[var(--surface)]"
-                  }`}
-                  onClick={() => setDrawerOpen(false)}
-                >
-                  <span className="flex items-center gap-4 text-xl font-medium text-[var(--text-primary)]">
-                    <span className="text-[var(--text-secondary)]">
-                      <NavIcon icon={item.icon} />
-                    </span>
-                    {item.label}
-                  </span>
-                </Link>
-              ))}
-            </section>
-
-            <div className="space-y-3 border-t border-[var(--line)] p-5">
-              <button
-                type="button"
-                onClick={onLogout}
-                className="w-full rounded-xl border border-[color:color-mix(in_srgb,var(--danger-500)_35%,transparent)] px-4 py-3 text-sm font-semibold text-[var(--danger-500)]"
-              >
-                Cerrar sesión
-              </button>
-            </div>
-          </aside>
-        </>
-      ) : null}
-    </header>
+      <TopBarMobile
+        mobileDrawerOpen={mobileDrawerOpen}
+        mobileDrawerRef={mobileDrawerRef}
+        closeMobileDrawer={closeMobileDrawer}
+        mobileExpandedPanel={mobileExpandedPanel}
+        toggleMobilePanel={toggleMobilePanel}
+        userProfileImageUrl={userProfileImageUrl}
+        userInitials={userInitials}
+        isLoadingUserName={isLoadingUserName}
+        userName={userName}
+        userIdentityLine={userIdentityLine}
+        activeBadges={activeBadges}
+        membershipCtaMode={membershipCtaMode}
+        isMembershipActionPending={isMembershipActionPending}
+        onRequestMembership={onRequestMembership}
+        hasCompaniesAdminAccess={hasCompaniesAdminAccess}
+        isAdmin={isAdmin}
+        onLogout={onLogout}
+      />
+    </>
   );
 }
