@@ -4,7 +4,15 @@ type DesktopTopbarIconProps = {
   className?: string;
 };
 
-type DesktopTopbarIconName = "feed" | "ateneo" | "directory" | "message" | "bell" | "admin";
+type DesktopTopbarIconName =
+  | "feed"
+  | "ateneo"
+  | "directory"
+  | "message"
+  | "bell"
+  | "admin"
+  | "nexum"
+  | "agora";
 
 function IconFrame({ className, children }: DesktopTopbarIconProps & { children: ReactNode }) {
   return (
@@ -73,8 +81,28 @@ function DirectoryIcon({ className }: DesktopTopbarIconProps) {
 function AdminIcon({ className }: DesktopTopbarIconProps) {
   return (
     <IconFrame className={className}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6" />
+      <path d="M14.8 10.2a2.6 2.6 0 1 0-3.7-3.7l-5.6 5.6v4h4l5.3-5.3" />
+      <path d="m12 8 3.7 3.7" />
+    </IconFrame>
+  );
+}
+
+function NexumIcon({ className }: DesktopTopbarIconProps) {
+  return (
+    <IconFrame className={className}>
+      <path d="M8 4.8h8" />
+      <path d="m9.2 4.8 1 4.2v4.1A3.7 3.7 0 0 1 6.5 16.8h0" />
+      <path d="m14.8 4.8-1 4.2v4.1a3.7 3.7 0 0 0 3.7 3.7h0" />
+      <path d="M6.5 16.8h11" />
+    </IconFrame>
+  );
+}
+
+function AgoraIcon({ className }: DesktopTopbarIconProps) {
+  return (
+    <IconFrame className={className}>
+      <ellipse cx="9" cy="12" rx="4.2" ry="4.7" />
+      <ellipse cx="15" cy="12" rx="4.2" ry="4.7" />
     </IconFrame>
   );
 }
@@ -101,6 +129,14 @@ export function DesktopTopbarIcon({
 
   if (name === "directory") {
     return <DirectoryIcon className={className} />;
+  }
+
+  if (name === "nexum") {
+    return <NexumIcon className={className} />;
+  }
+
+  if (name === "agora") {
+    return <AgoraIcon className={className} />;
   }
 
   return <AdminIcon className={className} />;
