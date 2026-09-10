@@ -4,31 +4,17 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   getAteneoGroup,
-  isImageMimeType,
   joinAteneoGroup,
   listAteneoTopics,
-  resolveAteneoAttachmentUrl,
   type AteneoGroup,
   type AteneoTopic,
   type AteneoTopicAttachment
 } from "@/lib/api/ateneo";
 import { AteneoGroupHeaderActions } from "./AteneoGroupHeaderActions";
-import { UserAvatar } from "@/components/ui/UserAvatar";
-import { LinkifiedText } from "@/components/ui/LinkifiedText";
-import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { AteneoTopicCard, type AteneoTopicCardTopic } from "./AteneoTopicCard";
 
-export type AteneoGroupTopic = {
-  id: string;
-  authorInitial: string;
-  groupLabel: string;
-  authorName: string;
-  authorImageUrl: string | null;
-  timeLabel: string;
-  title: string;
-  description: string;
-  tone: string;
+export type AteneoGroupTopic = AteneoTopicCardTopic & {
   reactions: number;
-  comments: number;
   attachments: AteneoTopicAttachment[];
 };
 
@@ -245,78 +231,12 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
 
         <div className="mt-3 space-y-3">
           {topics.map((topic) => (
-            <article
+            <AteneoTopicCard
               key={topic.id}
-              className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)]"
-            >
-                <div className="flex items-start gap-3">
-                  <UserAvatar
-                    imageUrl={topic.authorImageUrl}
-                    initials={topic.authorInitial}
-                    label={`Foto de perfil de ${topic.authorName}`}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
-                    initialsClassName="text-sm font-semibold text-[var(--surface)]"
-                  />
-
-                  <div className="min-w-0 flex-1">
-                    <p className="text-scale-2 text-[var(--text-secondary)]">
-                      <Link
-                        href={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
-                        className="mathesis-link-accent font-medium hover:underline"
-                      >
-                        {topic.groupLabel}
-                      </Link>{" "}
-                      <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> {topic.timeLabel}
-                    </p>
-                    <h3 className="mt-1 text-[1.32rem] font-semibold leading-tight text-[var(--heading-primary)]">
-                      <Link
-                        href={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
-                        className="hover:underline"
-                      >
-                        {topic.title}
-                      </Link>
-                    </h3>
-                    <LinkifiedText
-                      text={topic.description}
-                      className="mt-1 whitespace-pre-wrap text-scale-3 text-[var(--text-secondary)]"
-                      linkClassName="mathesis-link-accent underline underline-offset-2"
-                    />
-                    <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
-
-                    {topic.attachments.length > 0 ? (
-                      <div className="mt-3 space-y-2">
-                        {topic.attachments.map((attachment) => (
-                          <a
-                            key={attachment.id}
-                            href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
-                          >
-                            <span className="inline-flex items-center gap-2">
-                              <span aria-hidden="true">{isImageMimeType(attachment.mimeType) ? "🖼" : "📄"}</span>
-                              <span className="truncate">{attachment.fileName}</span>
-                            </span>
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-3 flex items-center gap-3 text-scale-2 text-[var(--text-secondary)]">
-                      <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2.5 py-0.5 font-semibold text-[var(--brand-800)]">
-                        {topic.tone}
-                      </span>
-                      <span>💬 {topic.comments}</span>
-                      <Link
-                        href={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
-                        className="mathesis-link-accent font-semibold hover:underline"
-                      >
-                        Ver tema
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-            </article>
+              topic={topic}
+              topicHref={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
+              variant="group"
+            />
           ))}
         </div>
       </section>
