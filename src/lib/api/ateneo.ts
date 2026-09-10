@@ -113,6 +113,10 @@ export type GetAteneoTopicData = {
   topic: AteneoTopic;
 };
 
+export type DeleteAteneoTopicData = {
+  topicId: string;
+};
+
 export type AteneoTopicAttachmentDownloadData = {
   blob: Blob;
   fileName: string | null;
@@ -226,6 +230,18 @@ export async function getAteneoTopic(groupId: string, topicId: string, signal?: 
     { signal }
   );
   return parseDataResponse<GetAteneoTopicData>(response, "Invalid Ateneo topic response");
+}
+
+export async function deleteAteneoTopic(groupId: string, topicId: string, signal?: AbortSignal) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}`,
+    {
+      method: "DELETE",
+      signal
+    }
+  );
+
+  return parseDataResponse<DeleteAteneoTopicData>(response, "Invalid Ateneo topic delete response");
 }
 
 export async function createAteneoTopic(

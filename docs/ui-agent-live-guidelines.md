@@ -214,3 +214,8 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - The mobile picker must support a larger visual format with scrollable options and explicit close affordances.
 - When the entry source is the footer and there is no fixed group context, keep `Seleccioná un grupo` selected by default until the user chooses an option.
 - For group-scoped routes (`/ateneo/groups/[groupId]/new-topic`), keep the group field fixed/read-only and skip the picker.
+
+## Current Active UI Directions (2026-09-10 Ateneo Overflow Menu)
+- In Ateneo topic overflow menus, `Denunciar publicación` must always use danger red styling for both icon and text.
+- Overflow menus should close when clicking outside the menu/trigger area.
+- Overflow menus should close when pressing `Esc`.

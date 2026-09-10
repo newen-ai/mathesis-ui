@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { getSessionUserId } from "@/lib/api/auth";
 import {
+  deleteAteneoTopic,
   createAteneoTopicComment,
   getAteneoGroup,
   getAteneoTopic,
@@ -47,13 +50,63 @@ function mentionFromContent(content: string): string | null {
 }
 
 export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussionProps) {
+  const router = useRouter();
   const [group, setGroup] = useState<AteneoGroup | null>(null);
   const [topic, setTopic] = useState<AteneoTopic | null>(null);
   const [topicComments, setTopicComments] = useState<AteneoComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [isDeletingTopic, setIsDeletingTopic] = useState(false);
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
   const [reportOpenFor, setReportOpenFor] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!reportOpenFor) {
+      return;
+    }
+
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (target instanceof Element && target.closest("[data-ateneo-overflow-root='true']")) {
+        return;
+      }
+
+      setReportOpenFor(null);
+    };
+
+    const handleDocumentKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setReportOpenFor(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleDocumentMouseDown);
+    document.addEventListener("keydown", handleDocumentKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentMouseDown);
+      document.removeEventListener("keydown", handleDocumentKeyDown);
+    };
+  }, [reportOpenFor]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getSessionUserId().then((userId) => {
+      if (!cancelled) {
+        setSessionUserId(userId);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +146,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   }, [groupId, topicId]);
 
   const isPostValued = topic?.currentUserReactionValue === "value";
+  const canDeleteTopic = Boolean(topic && sessionUserId && topic.author.userId === sessionUserId);
   const topicAuthorName = [topic?.author.firstName, topic?.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
   const canComment = group?.commentsMode !== "admins" || Boolean(group?.isAdmin);
   const valuedComments = useMemo(
@@ -227,6 +281,30 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     }
   };
 
+  const handleTopicDelete = async () => {
+    if (!topic || isDeletingTopic) {
+      return;
+    }
+
+    const confirmed = window.confirm("¿Querés eliminar esta publicación? Esta acción no se puede deshacer.");
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingTopic(true);
+
+    try {
+      await deleteAteneoTopic(groupId, topic.id);
+      toast.success("Publicación eliminada");
+      setReportOpenFor(null);
+      router.push(`/ateneo/groups/${encodeURIComponent(groupId)}`);
+    } catch {
+      toast.error("No pudimos eliminar la publicación.");
+    } finally {
+      setIsDeletingTopic(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
@@ -272,7 +350,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
               </svg>
             </button>
 
-            <div className="relative">
+            <div className="relative" data-ateneo-overflow-root="true">
               <button
                 type="button"
                 aria-label="Más opciones del tema"
@@ -283,19 +361,31 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
               </button>
 
               {reportOpenFor === "post" && (
-                <div className="absolute right-0 top-12 z-10 min-w-[140px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
+                <div className="absolute right-0 top-12 z-10 min-w-[210px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
+                  {canDeleteTopic ? (
+                    <button
+                      type="button"
+                      onClick={handleTopicDelete}
+                      disabled={isDeletingTopic}
+                      className="mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] transition hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <span aria-hidden="true">🗑</span>
+                      <span>{isDeletingTopic ? "Eliminando..." : "Eliminar publicación"}</span>
+                    </button>
+                  ) : null}
+
                   <button
                     type="button"
                     onClick={() => {
                       toast.info("Tema reportado");
                       setReportOpenFor(null);
                     }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-600)] hover:bg-[var(--danger-50)]"
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
                   >
-                    <span className="text-[var(--danger-600)]">
+                    <span className="text-[var(--danger-500)]">
                       <FlagIcon />
                     </span>
-                    <span>Denunciar</span>
+                    <span className="text-[var(--danger-500)]">Denunciar publicación</span>
                   </button>
                 </div>
               )}
@@ -460,7 +550,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                 </div>
 
                 {!comment.isDeletedPlaceholder ? (
-                  <div className="relative shrink-0">
+                  <div className="relative shrink-0" data-ateneo-overflow-root="true">
                     <button
                       type="button"
                       aria-label="Más opciones para comentario"
@@ -478,12 +568,12 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                             toast.info("Comentario reportado");
                             setReportOpenFor(null);
                           }}
-                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-600)] hover:bg-[var(--danger-50)]"
+                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
                         >
-                          <span className="text-[var(--danger-600)]">
+                          <span className="text-[var(--danger-500)]">
                             <FlagIcon />
                           </span>
-                          <span>Denunciar</span>
+                          <span className="text-[var(--danger-500)]">Denunciar</span>
                         </button>
                       </div>
                     )}

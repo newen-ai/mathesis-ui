@@ -65,24 +65,14 @@ type SessionPayload = {
 
 type SessionUserPayload = {
 	data?: {
-		id?: string;
-		userId?: string;
 		user?: {
 			id?: string;
-			userId?: string;
 		};
-	};
-	userId?: string;
-	id?: string;
-	user?: {
-		id?: string;
-		userId?: string;
 	};
 };
 
 function extractSessionUserId(payload: SessionUserPayload | null | undefined) {
-	const candidateId =
-		payload?.data?.id;
+	const candidateId = payload?.data?.user?.id;
 
 	return typeof candidateId === "string" && candidateId.trim() ? candidateId : null;
 }
