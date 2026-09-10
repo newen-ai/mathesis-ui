@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
+import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { getSessionUserId } from "@/lib/api/auth";
 import {
+  downloadAteneoTopicAttachment,
   deleteAteneoTopic,
   createAteneoTopicComment,
   getAteneoGroup,
@@ -21,6 +24,7 @@ import {
   type AteneoGroup,
   type AteneoTopic
 } from "@/lib/api/ateneo";
+import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
 
 type AteneoTopicDiscussionProps = {
   groupId: string;
@@ -57,6 +61,9 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const [isLoading, setIsLoading] = useState(true);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [isDeletingTopic, setIsDeletingTopic] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+  const [imagePreviewUrlById, setImagePreviewUrlById] = useState<Record<string, string>>({});
+  const previewUrlsRef = useRef<string[]>([]);
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
   const [reportOpenFor, setReportOpenFor] = useState<string | null>(null);
@@ -192,6 +199,91 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
     return result;
   }, [commentsById, topicComments]);
+
+  const topicImageAttachments = useMemo(
+    () =>
+      (topic?.attachments ?? [])
+        .filter((attachment) => isImageMimeType(attachment.mimeType))
+        .map((attachment) => ({
+          id: attachment.id,
+          fileName: attachment.fileName,
+        })),
+    [topic?.attachments]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      if (!topic || topicImageAttachments.length === 0) {
+        revokeObjectUrls(previewUrlsRef.current);
+        previewUrlsRef.current = [];
+        setImagePreviewUrlById({});
+        return;
+      }
+
+      const loaded = await Promise.all(
+        topicImageAttachments.map(async (attachment) => {
+          try {
+            const payload = await downloadAteneoTopicAttachment(groupId, topic.id, attachment.id);
+            const previewUrl = await createRenderableImageUrlFromBlob(payload.blob);
+            return [attachment.id, previewUrl] as const;
+          } catch {
+            return [attachment.id, ""] as const;
+          }
+        })
+      );
+
+      if (cancelled) {
+        revokeObjectUrls(loaded.map(([, url]) => url).filter(Boolean));
+        return;
+      }
+
+      revokeObjectUrls(previewUrlsRef.current);
+      previewUrlsRef.current = loaded.map(([, url]) => url).filter(Boolean);
+
+      const nextRecord: Record<string, string> = {};
+      loaded.forEach(([attachmentId, url]) => {
+        if (url) {
+          nextRecord[attachmentId] = url;
+        }
+      });
+
+      setImagePreviewUrlById(nextRecord);
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId, topic, topicImageAttachments]);
+
+  useEffect(() => {
+    return () => {
+      revokeObjectUrls(previewUrlsRef.current);
+    };
+  }, []);
+
+  const carouselImages = useMemo(
+    () =>
+      topicImageAttachments
+        .map((attachment) => {
+          const src = imagePreviewUrlById[attachment.id];
+          if (!src) {
+            return null;
+          }
+
+          return {
+            id: attachment.id,
+            src,
+            alt: `Vista previa de ${attachment.fileName}`,
+            caption: attachment.fileName,
+          };
+        })
+        .filter((item): item is { id: string; src: string; alt: string; caption: string } => Boolean(item)),
+    [imagePreviewUrlById, topicImageAttachments]
+  );
 
   const resolveReplyParentId = (commentId: string): string | undefined => {
     if (commentId === "new-comment") {
@@ -424,20 +516,33 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
         {topic.attachments.length > 0 ? (
           <div className="mt-4 space-y-2">
-            {topic.attachments.map((attachment) => (
-              <a
-                key={attachment.id}
-                href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
-                target="_blank"
-                rel="noreferrer"
-                className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <span aria-hidden="true">{isImageMimeType(attachment.mimeType) ? "🖼" : "📄"}</span>
-                  <span className="truncate">{attachment.fileName}</span>
-                </span>
-              </a>
-            ))}
+            {carouselImages.length > 0 ? (
+              <AteneoImageMosaic
+                images={carouselImages.map((image) => ({
+                  id: image.id,
+                  src: image.src,
+                  alt: image.alt,
+                }))}
+                onOpenImage={(index) => setActiveImageIndex(index)}
+              />
+            ) : null}
+
+            {topic.attachments
+              .filter((attachment) => !isImageMimeType(attachment.mimeType))
+              .map((attachment) => (
+                <a
+                  key={attachment.id}
+                  href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <span aria-hidden="true">📄</span>
+                    <span className="truncate">{attachment.fileName}</span>
+                  </span>
+                </a>
+              ))}
           </div>
         ) : null}
 
@@ -637,6 +742,13 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           ))}
         </div>
       </section>
+
+      <AteneoImageCarouselModal
+        images={carouselImages}
+        activeIndex={activeImageIndex}
+        onClose={() => setActiveImageIndex(null)}
+        onChangeIndex={setActiveImageIndex}
+      />
     </div>
   );
 }

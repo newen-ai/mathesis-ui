@@ -40,13 +40,13 @@ function LinkPreviewCard({ preview }: { preview: LinkPreviewData }) {
     >
       <div className="overflow-hidden border-b border-[var(--line)] bg-[var(--surface-2)]">
         {preview.imageUrl ? (
-          <div className="relative h-[138px] w-full">
+          <div className="relative h-[190px] w-full bg-[color:color-mix(in_srgb,var(--navy-900)_72%,var(--surface-2))] sm:h-[220px]">
             <Image
               src={preview.imageUrl}
               alt={`Vista previa de ${preview.title}`}
               fill
               sizes="(max-width: 640px) 100vw, 460px"
-              className="object-cover"
+              className="object-contain object-center"
               unoptimized
             />
           </div>

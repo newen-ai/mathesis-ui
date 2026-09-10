@@ -219,3 +219,25 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - In Ateneo topic overflow menus, `Denunciar publicación` must always use danger red styling for both icon and text.
 - Overflow menus should close when clicking outside the menu/trigger area.
 - Overflow menus should close when pressing `Esc`.
+
+## Current Active UI Directions (2026-09-10 Ateneo New Topic Image Preview)
+- In the Ateneo new-topic composer, image attachments must render as inline previews before publish.
+- Clicking any previewed image must open a centered modal carousel over a dim backdrop.
+- The image preview modal must close when users click outside the image container.
+- The modal should support iterating across all attached images in the current draft.
+- Attachment previews in the composer must include remove controls for both images and PDFs.
+- On mobile, the image preview modal should support swipe-left and swipe-right navigation when multiple images are present.
+- The opened image preview modal should expose a trash-icon action that removes the currently displayed image from the draft.
+
+## Current Active UI Directions (2026-09-10 Link Preview Images)
+- Link preview images should display fully (no cropping) using centered contain-fit behavior.
+- Link preview image areas should use a neutral dark/gray backdrop to fill side gaps created by aspect-ratio differences.
+
+## Current Active UI Directions (2026-09-10 Published Topic Attachment Images)
+- In already published Ateneo topics, image attachments should render as visual previews (not filename-only rows).
+- Published-topic image attachments should use centered contain-fit rendering with neutral dark/gray side fill when aspect ratios do not match the preview canvas.
+- Clicking a published-topic image attachment preview should open an in-app carousel modal (overlay + outside click close) instead of triggering direct file download/navigation.
+- Published-topic image previews should be loaded through authenticated API fetch (blob URL) so private attachment endpoints still render correctly in UI previews.
+- In published topics, image attachments should render as a combined mosaic block (Facebook-style feel), hiding filename rows for images.
+- Mosaic behavior should support 1-4 image layouts with varied tile proportions and a `+N` overlay on the last tile when more than four images exist.
+- Keep published image mosaics compact by default (avoid square blocks that feel too tall); use responsive fixed-height blocks that preserve readability.

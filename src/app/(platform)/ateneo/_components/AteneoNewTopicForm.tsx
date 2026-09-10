@@ -1,12 +1,14 @@
 "use client";
 
 import { createAteneoTopic, getAteneoGroup, listAteneoGroups } from "@/lib/api/ateneo";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
 import { toast } from "sonner";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import { extractUniqueUrlsFromText } from "@/lib/utils/link-preview";
+import { createRenderableImageUrlFromBlob } from "@/lib/utils/image-preview";
 
 const toneOptions = ["SERIO", "RECOMENDADO", "LIBRE"] as const;
 const TOPIC_TITLE_LIMIT = 100;
@@ -25,6 +27,13 @@ type TopicGroupOption = {
 type TopicAttachmentDraft = {
   file: File;
   kind: "image" | "pdf";
+  previewUrl?: string;
+};
+
+type TopicImagePreviewItem = {
+  attachmentIndex: number;
+  file: File;
+  previewUrl: string;
 };
 
 const IMAGE_ATTACHMENT_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/heic", "image/heif"]);
@@ -44,9 +53,13 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const [description, setDescription] = useState("");
   const [selectedTone, setSelectedTone] = useState<(typeof toneOptions)[number]>("LIBRE");
   const [attachments, setAttachments] = useState<TopicAttachmentDraft[]>([]);
+  const [activePreviewImageIndex, setActivePreviewImageIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const attachmentsRef = useRef<TopicAttachmentDraft[]>([]);
+  const previewTouchStartXRef = useRef<number | null>(null);
+  const previewTouchStartYRef = useRef<number | null>(null);
   const isTitleTooLong = title.length > TOPIC_TITLE_LIMIT;
   const isDescriptionTooLong = description.length > TOPIC_DESCRIPTION_LIMIT;
   const isOverAnyLimit = isTitleTooLong || isDescriptionTooLong;
@@ -58,6 +71,34 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     description.trim().length > 0 &&
     !isOverAnyLimit;
   const detectedUrls = extractUniqueUrlsFromText(description, 3);
+  const imagePreviewItems = useMemo<TopicImagePreviewItem[]>(() => {
+    const nextItems: TopicImagePreviewItem[] = [];
+
+    attachments.forEach((attachment, attachmentIndex) => {
+      if (attachment.kind !== "image" || !attachment.previewUrl) {
+        return;
+      }
+
+      nextItems.push({
+        attachmentIndex,
+        file: attachment.file,
+        previewUrl: attachment.previewUrl,
+      });
+    });
+
+    return nextItems;
+  }, [attachments]);
+  const normalizedActivePreviewImageIndex =
+    activePreviewImageIndex === null || imagePreviewItems.length === 0
+      ? null
+      : Math.min(activePreviewImageIndex, imagePreviewItems.length - 1);
+  const isImagePreviewOpen = normalizedActivePreviewImageIndex !== null;
+  const activePreviewImage =
+    normalizedActivePreviewImageIndex !== null
+      ? (imagePreviewItems[normalizedActivePreviewImageIndex] ?? null)
+      : null;
+  const isImageCarouselEnabled = imagePreviewItems.length > 1;
+  const shouldLockBodyScroll = isGroupPickerOpen || isImagePreviewOpen;
   const selectedGroupLabel = useMemo(() => {
     if (!selectedGroupId) {
       return "Seleccioná un grupo";
@@ -69,25 +110,78 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     );
   }, [groupOptions, selectedGroupId]);
 
-  const registerAttachments = (files: FileList | File[] | null, kind: TopicAttachmentDraft["kind"]) => {
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(() => {
+    return () => {
+      attachmentsRef.current.forEach((attachment) => {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      });
+    };
+  }, []);
+
+  const buildImagePreviewUrl = async (file: File): Promise<string> => {
+    return createRenderableImageUrlFromBlob(file);
+  };
+
+  const registerAttachments = async (files: FileList | File[] | null, kind: TopicAttachmentDraft["kind"]) => {
     if (!files) return;
 
-    const nextAttachments = Array.from(files)
+    const allowedFiles = Array.from(files)
       .filter((file) => {
         if (kind === "image") {
           return IMAGE_ATTACHMENT_MIME_TYPES.has(file.type);
         }
 
         return file.type === PDF_ATTACHMENT_MIME_TYPE;
-      })
-      .map((file) => ({ file, kind }));
+      });
 
-    if (nextAttachments.length === 0) {
+    if (allowedFiles.length === 0) {
       toast.info(kind === "image" ? "Elegí una imagen JPG, PNG o HEIC." : "Elegí un archivo PDF.");
       return;
     }
 
-    setAttachments((current) => [...current, ...nextAttachments].slice(0, 5));
+    const nextAttachments = await Promise.all(
+      allowedFiles.map(async (file) => {
+        if (kind === "image") {
+          const previewUrl = await buildImagePreviewUrl(file);
+          return { file, kind, previewUrl };
+        }
+
+        return { file, kind };
+      })
+    );
+
+    const droppedCount = Math.max(0, attachments.length + nextAttachments.length - 5);
+    if (droppedCount > 0) {
+      toast.info("Máximo 5 adjuntos por tema.");
+    }
+
+    setAttachments((current) => {
+      const merged = [...current, ...nextAttachments];
+      const kept = merged.slice(0, 5);
+      const dropped = merged.slice(5);
+      dropped.forEach((attachment) => {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      });
+      return kept;
+    });
+  };
+
+  const removeAttachmentAt = (indexToRemove: number) => {
+    setAttachments((current) => {
+      const target = current[indexToRemove];
+      if (target?.previewUrl) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return current.filter((_, index) => index !== indexToRemove);
+    });
   };
 
   useEffect(() => {
@@ -149,7 +243,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   }, [cameFromFooter, hasFixedGroupContext, preferredGroupId]);
 
   useEffect(() => {
-    if (!isGroupPickerOpen) {
+    if (!shouldLockBodyScroll) {
       document.body.style.removeProperty("overflow");
       return;
     }
@@ -158,7 +252,33 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (isImagePreviewOpen) {
+          setActivePreviewImageIndex(null);
+          return;
+        }
+
         setIsGroupPickerOpen(false);
+        return;
+      }
+
+      if (!isImagePreviewOpen || imagePreviewItems.length === 0) {
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setActivePreviewImageIndex((current) => {
+          const currentIndex = current ?? 0;
+          return (currentIndex + 1) % imagePreviewItems.length;
+        });
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setActivePreviewImageIndex((current) => {
+          const currentIndex = current ?? 0;
+          return (currentIndex - 1 + imagePreviewItems.length) % imagePreviewItems.length;
+        });
       }
     };
 
@@ -167,7 +287,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       document.body.style.removeProperty("overflow");
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [isGroupPickerOpen]);
+  }, [imagePreviewItems, isImagePreviewOpen, shouldLockBodyScroll]);
 
   const handleGroupChange = (nextGroupId: string) => {
     setSelectedGroupId(nextGroupId);
@@ -206,7 +326,13 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       });
 
       toast.success("Tema publicado");
+      attachments.forEach((attachment) => {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      });
       setAttachments([]);
+      setActivePreviewImageIndex(null);
       router.push(`/ateneo/groups/${encodeURIComponent(targetGroupId)}/topics/${encodeURIComponent(response.data.topic.id)}`);
     } catch {
       toast.error("No pudimos publicar el tema.");
@@ -215,14 +341,102 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     }
   };
 
+  const openImagePreviewAt = (targetIndex: number) => {
+    if (!imagePreviewItems[targetIndex]) {
+      return;
+    }
+
+    setActivePreviewImageIndex(targetIndex);
+  };
+
+  const closeImagePreview = () => {
+    setActivePreviewImageIndex(null);
+  };
+
+  const showNextPreviewImage = () => {
+    if (imagePreviewItems.length === 0) {
+      return;
+    }
+
+    setActivePreviewImageIndex((current) => {
+      const currentIndex = current ?? 0;
+      return (currentIndex + 1) % imagePreviewItems.length;
+    });
+  };
+
+  const showPreviousPreviewImage = () => {
+    if (imagePreviewItems.length === 0) {
+      return;
+    }
+
+    setActivePreviewImageIndex((current) => {
+      const currentIndex = current ?? 0;
+      return (currentIndex - 1 + imagePreviewItems.length) % imagePreviewItems.length;
+    });
+  };
+
+  const handlePreviewTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (!isImageCarouselEnabled) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    previewTouchStartXRef.current = touch.clientX;
+    previewTouchStartYRef.current = touch.clientY;
+  };
+
+  const handlePreviewTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (!isImageCarouselEnabled) {
+      return;
+    }
+
+    const startX = previewTouchStartXRef.current;
+    const startY = previewTouchStartYRef.current;
+    if (startX === null || startY === null) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    previewTouchStartXRef.current = null;
+    previewTouchStartYRef.current = null;
+
+    if (Math.abs(deltaX) < 45 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      showNextPreviewImage();
+      return;
+    }
+
+    showPreviousPreviewImage();
+  };
+
+  const removeActivePreviewImage = () => {
+    if (!activePreviewImage || normalizedActivePreviewImageIndex === null) {
+      return;
+    }
+
+    const nextPreviewIndex =
+      imagePreviewItems.length <= 1
+        ? null
+        : Math.min(normalizedActivePreviewImageIndex, imagePreviewItems.length - 2);
+
+    removeAttachmentAt(activePreviewImage.attachmentIndex);
+    setActivePreviewImageIndex(nextPreviewIndex);
+  };
+
   return (
     <div className="space-y-4">
       <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/heic,image/heif" multiple className="hidden" onChange={(event) => {
-        registerAttachments(event.target.files, "image");
+        void registerAttachments(event.target.files, "image");
         event.currentTarget.value = "";
       }} />
       <input ref={fileInputRef} type="file" accept="application/pdf" multiple className="hidden" onChange={(event) => {
-        registerAttachments(event.target.files, "pdf");
+        void registerAttachments(event.target.files, "pdf");
         event.currentTarget.value = "";
       }} />
       <div className="flex items-center justify-between gap-3">
@@ -403,12 +617,71 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
               {attachments.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {attachments.map((attachment, index) => (
-                    <div key={`${attachment.file.name}-${index}`} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 text-[var(--text-primary)]">
-                      <span aria-hidden="true">{attachment.kind === "image" ? "🖼" : "📄"}</span>
-                      <span className="max-w-[180px] truncate">{attachment.file.name}</span>
-                    </div>
-                  ))}
+                  {attachments.map((attachment, index) => {
+                    if (attachment.kind === "image") {
+                      const previewItem = imagePreviewItems.find((item) => item.attachmentIndex === index);
+                      if (!previewItem) {
+                        return null;
+                      }
+
+                      return (
+                        <div
+                          key={`${attachment.file.name}-${index}`}
+                          className="group relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] text-left transition hover:border-[var(--brand-700)]"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const previewIndex = imagePreviewItems.findIndex((item) => item.attachmentIndex === index);
+                              if (previewIndex >= 0) {
+                                openImagePreviewAt(previewIndex);
+                              }
+                            }}
+                            className="block"
+                            aria-label={`Abrir vista previa de ${attachment.file.name}`}
+                          >
+                            <Image
+                              src={previewItem.previewUrl}
+                              alt={`Vista previa de ${attachment.file.name}`}
+                              width={80}
+                              height={80}
+                              unoptimized
+                              className="h-20 w-20 object-cover"
+                            />
+                          </button>
+                          <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-[color:color-mix(in_srgb,var(--navy-900)_58%,transparent)] px-2 py-1 text-scale-1 text-white">
+                            {attachment.file.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              removeAttachmentAt(index);
+                            }}
+                            className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_84%,transparent)] text-sm text-[var(--text-primary)] backdrop-blur transition hover:bg-[var(--surface)]"
+                            aria-label={`Quitar ${attachment.file.name}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={`${attachment.file.name}-${index}`} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 text-[var(--text-primary)]">
+                        <span aria-hidden="true">📄</span>
+                        <span className="max-w-[180px] truncate">{attachment.file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachmentAt(index)}
+                          className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
+                          aria-label={`Quitar ${attachment.file.name}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : null}
 
@@ -511,6 +784,84 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                   </button>
                 );
               })}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isImagePreviewOpen && activePreviewImage ? (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center px-3 sm:px-6">
+          <button
+            type="button"
+            aria-label="Cerrar vista previa"
+            className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--navy-900)_72%,transparent)]"
+            onClick={closeImagePreview}
+          />
+
+          <section className="relative z-[151] w-full max-w-5xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[0_24px_60px_color-mix(in_srgb,var(--navy-900)_40%,transparent)] sm:p-4">
+            <div className="flex items-center justify-between gap-3 pb-3">
+              <p className="min-w-0 truncate text-scale-2 font-semibold text-[var(--heading-primary)]">
+                {activePreviewImage.file.name}
+              </p>
+              <div className="flex items-center gap-2">
+                {isImageCarouselEnabled ? (
+                  <p className="text-scale-1 text-[var(--text-secondary)]">
+                    {normalizedActivePreviewImageIndex !== null ? normalizedActivePreviewImageIndex + 1 : 1}/{imagePreviewItems.length}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={removeActivePreviewImage}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--danger-500)] bg-[var(--surface)] text-[var(--danger-500)] transition hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,var(--surface))]"
+                  aria-label="Quitar imagen actual"
+                >
+                  🗑
+                </button>
+                <button
+                  type="button"
+                  onClick={closeImagePreview}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
+                  aria-label="Cerrar vista previa"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div
+              className="relative flex min-h-[220px] items-center justify-center rounded-xl bg-[var(--surface-2)] p-2 sm:min-h-[320px] sm:p-3"
+              onTouchStart={handlePreviewTouchStart}
+              onTouchEnd={handlePreviewTouchEnd}
+            >
+              <Image
+                src={activePreviewImage.previewUrl}
+                alt={`Vista previa de ${activePreviewImage.file.name}`}
+                width={1600}
+                height={1200}
+                unoptimized
+                className="max-h-[72vh] w-auto max-w-full rounded-lg object-contain"
+              />
+
+              {isImageCarouselEnabled ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={showPreviousPreviewImage}
+                    className="absolute left-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-xl text-[var(--text-primary)] backdrop-blur sm:left-3"
+                    aria-label="Imagen anterior"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextPreviewImage}
+                    className="absolute right-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-xl text-[var(--text-primary)] backdrop-blur sm:right-3"
+                    aria-label="Imagen siguiente"
+                  >
+                    ›
+                  </button>
+                </>
+              ) : null}
             </div>
           </section>
         </div>
