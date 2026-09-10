@@ -5,6 +5,7 @@ import {
   ChangeEvent,
   FormEvent,
   ClipboardEvent,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -64,7 +65,7 @@ function getCornerOffsets() {
       left: 16,
       right: 16,
       top: 80,
-      bottom: 64,
+      bottom: 124,
     };
   }
 
@@ -73,7 +74,8 @@ function getCornerOffsets() {
     left: isDesktop ? 24 : 16,
     right: isDesktop ? 24 : 16,
     top: isDesktop ? 96 : 80,
-    bottom: isDesktop ? 72 : 64,
+    // Keep mobile floating button above the signed-in bottom footer.
+    bottom: isDesktop ? 72 : 124,
   };
 }
 
@@ -126,6 +128,7 @@ export function BugReportWidget() {
   const dragStateRef = useRef<DragState | null>(null);
   const snapTimeoutRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
+  const bodyOverflowBeforeOpenRef = useRef<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [buttonCorner, setButtonCorner] = useState<BugReportButtonCorner>(() => {
@@ -189,6 +192,31 @@ export function BugReportWidget() {
   const canSubmit = useMemo(() => {
     return Boolean(titleCount > 0 && descriptionCount > 0 && effectiveDraft.pageUrl);
   }, [descriptionCount, effectiveDraft.pageUrl, titleCount]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      const previousOverflow = bodyOverflowBeforeOpenRef.current;
+      if (previousOverflow && previousOverflow.trim().length > 0) {
+        document.body.style.setProperty("overflow", previousOverflow);
+      } else {
+        document.body.style.removeProperty("overflow");
+      }
+      bodyOverflowBeforeOpenRef.current = null;
+      return;
+    }
+
+    bodyOverflowBeforeOpenRef.current = document.body.style.overflow;
+    document.body.style.setProperty("overflow", "hidden");
+    return () => {
+      const previousOverflow = bodyOverflowBeforeOpenRef.current;
+      if (previousOverflow && previousOverflow.trim().length > 0) {
+        document.body.style.setProperty("overflow", previousOverflow);
+      } else {
+        document.body.style.removeProperty("overflow");
+      }
+      bodyOverflowBeforeOpenRef.current = null;
+    };
+  }, [isOpen]);
 
   if (!featureEnabled) {
     return null;
@@ -475,7 +503,7 @@ export function BugReportWidget() {
     <>
       {isOpen ? (
         <div
-          className="fixed inset-0 z-[88] flex items-center justify-center bg-[color-mix(in_srgb,var(--navy-900)_48%,transparent)] px-4 py-6"
+          className="fixed inset-0 z-[220] flex items-center justify-center bg-[color-mix(in_srgb,var(--navy-900)_48%,transparent)] px-4 py-6"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               handleClose();
@@ -483,7 +511,7 @@ export function BugReportWidget() {
           }}
         >
           <section
-            className="relative z-[89] w-full max-w-3xl rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_24px_70px_color-mix(in_srgb,var(--navy-900)_28%,transparent)] md:p-6"
+            className="relative z-[221] max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto rounded-[1.75rem] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_24px_70px_color-mix(in_srgb,var(--navy-900)_28%,transparent)] md:max-h-[calc(100dvh-3rem)] md:p-6"
             role="dialog"
             aria-modal="true"
             aria-labelledby="bug-report-title"
@@ -663,8 +691,8 @@ export function BugReportWidget() {
       <div
         className={
           dragPosition
-            ? `fixed z-[90] ${isSnapAnimating ? "transition-[left,top] duration-300 ease-out" : ""}`
-            : "fixed z-[90]"
+            ? `fixed z-[140] ${isSnapAnimating ? "transition-[left,top] duration-300 ease-out" : ""}`
+            : "fixed z-[140]"
         }
         style={floatingButtonStyle}
       >
@@ -676,7 +704,7 @@ export function BugReportWidget() {
           onPointerMove={handleButtonPointerMove}
           onPointerUp={handleButtonPointerUp}
           onPointerCancel={handleButtonPointerCancel}
-          className="relative z-[92] inline-flex h-14 w-14 cursor-grab items-center justify-center rounded-full border border-[var(--brand-300)] bg-[var(--brand-500)] shadow-[0_14px_30px_color-mix(in_srgb,var(--brand-700)_30%,transparent)] transition hover:translate-y-[-1px] hover:brightness-95 active:cursor-grabbing"
+          className="relative z-[142] inline-flex h-14 w-14 cursor-grab items-center justify-center rounded-full border border-[var(--brand-300)] bg-[var(--brand-500)] shadow-[0_14px_30px_color-mix(in_srgb,var(--brand-700)_30%,transparent)] transition hover:translate-y-[-1px] hover:brightness-95 active:cursor-grabbing"
           aria-label={isOpen ? "Cerrar reportar bug" : "Abrir reportar bug"}
           title="Reportar bug"
         >
