@@ -8,9 +8,11 @@ type LinkifiedTextProps = {
 
 export function LinkifiedText({ text, className, linkClassName }: LinkifiedTextProps) {
   const segments = buildLinkifiedSegments(text);
+  const paragraphClassName = ["break-words [overflow-wrap:anywhere]", className].filter(Boolean).join(" ");
+  const anchorClassName = ["break-all [overflow-wrap:anywhere]", linkClassName ?? "mathesis-link-accent underline underline-offset-2"].join(" ");
 
   return (
-    <p className={className}>
+    <p className={paragraphClassName}>
       {segments.map((segment, index) => {
         if (segment.type === "link") {
           return (
@@ -19,7 +21,7 @@ export function LinkifiedText({ text, className, linkClassName }: LinkifiedTextP
               href={segment.href}
               target="_blank"
               rel="noreferrer"
-              className={linkClassName ?? "mathesis-link-accent underline underline-offset-2"}
+              className={anchorClassName}
               onClick={(event) => event.stopPropagation()}
             >
               {segment.value}
