@@ -1,5 +1,5 @@
-import { HomeView } from "./_components/home/HomeView";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return <HomeView />;
+  redirect("/ateneo");
 }
