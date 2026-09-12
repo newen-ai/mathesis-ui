@@ -241,3 +241,9 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - In published topics, image attachments should render as a combined mosaic block (Facebook-style feel), hiding filename rows for images.
 - Mosaic behavior should support 1-4 image layouts with varied tile proportions and a `+N` overlay on the last tile when more than four images exist.
 - Keep published image mosaics compact by default (avoid square blocks that feel too tall); use responsive fixed-height blocks that preserve readability.
+
+## Current Active UI Directions (2026-09-12 Mensajes Group Header)
+- In group chats under `/mensajes`, header secondary text should prioritize participant names over count-only copy.
+- Because names can be long, show a single-line truncated preview with ellipsis in the header summary.
+- Clicking/tapping the group-chat header should open an overlay modal listing full members with profile images.
+- Keep this modal theme-aware and readable in both light and dark themes.

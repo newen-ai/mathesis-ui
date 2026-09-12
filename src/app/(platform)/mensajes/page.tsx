@@ -38,6 +38,8 @@ type ContactOption = {
 const CHAT_LIST_LIMIT = 30;
 const MESSAGE_PAGE_SIZE = 30;
 const POLLING_INTERVAL_MS = 10000;
+const GROUP_MEMBER_PREVIEW_MAX_CHARS = 56;
+const GROUP_HEADER_PREVIEW_MAX_CHARS = 84;
 
 function humanizeTime(isoDate: string | null) {
   if (!isoDate) return "";
@@ -69,17 +71,58 @@ function formatRoleLine(user: ChatUserSummary) {
   return values.length > 0 ? values.join(" · ") : "Sin datos profesionales";
 }
 
+function truncateWithEllipsis(text: string, maxChars: number) {
+  if (text.length <= maxChars) {
+    return text;
+  }
+
+  const slice = text.slice(0, Math.max(0, maxChars - 3));
+  const boundary = slice.lastIndexOf(" ");
+  const compact = (boundary >= Math.floor(maxChars * 0.6) ? slice.slice(0, boundary) : slice).trim();
+
+  return `${compact}...`;
+}
+
+function buildGroupMembersSummary(
+  members: ChatDetail["members"],
+  currentUserId: string | null,
+  maxChars: number
+) {
+  if (members.length === 0) {
+    return {
+      fullText: "Sin miembros",
+      previewText: "Sin miembros",
+    };
+  }
+
+  const names = members.map((member) =>
+    member.user.userId === currentUserId ? "Tú" : formatFullName(member.user)
+  );
+  const fullText = names.join(", ");
+
+  return {
+    fullText,
+    previewText: truncateWithEllipsis(fullText, maxChars),
+  };
+}
+
 function deriveThreadPresentation(
   summary: ChatSummary,
   detail: ChatDetail,
   currentUserId: string | null
 ): Thread {
   if (detail.type === "GROUP") {
+    const groupMembersSummary = buildGroupMembersSummary(
+      detail.members,
+      currentUserId,
+      GROUP_MEMBER_PREVIEW_MAX_CHARS
+    );
+
     return {
       summary,
       detail,
       displayName: detail.title?.trim() || "Grupo sin titulo",
-      roleLine: `${detail.members.length} miembros`,
+      roleLine: groupMembersSummary.previewText,
       profileImageUrl: null,
     };
   }
@@ -136,6 +179,7 @@ export default function MensajesPage() {
   const [groupTitle, setGroupTitle] = useState("");
   const [groupTitleError, setGroupTitleError] = useState<string | null>(null);
   const [pendingGroupMessage, setPendingGroupMessage] = useState("");
+  const [isGroupMembersModalOpen, setIsGroupMembersModalOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
   const messageViewportRef = useRef<HTMLDivElement | null>(null);
@@ -181,6 +225,18 @@ export default function MensajesPage() {
   }, [selectedThread]);
 
   const isSelectedThreadComposerBlocked = !isComposerOpen && Boolean(selectedThreadBlockedReason);
+
+  const selectedThreadGroupMembersSummary = useMemo(() => {
+    if (!selectedThread || selectedThread.detail.type !== "GROUP") {
+      return null;
+    }
+
+    return buildGroupMembersSummary(
+      selectedThread.detail.members,
+      currentUserId,
+      GROUP_HEADER_PREVIEW_MAX_CHARS
+    );
+  }, [currentUserId, selectedThread]);
 
   const contactsFromExistingChats = useMemo(() => {
     const map = new Map<string, ContactOption>();
@@ -680,6 +736,24 @@ export default function MensajesPage() {
     });
   }, [isComposerOpen, selectedThreadId]);
 
+  useEffect(() => {
+    if (!isGroupMembersModalOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsGroupMembersModalOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isGroupMembersModalOpen]);
+
   return (
     <ModulePage
       title="Mensajes"
@@ -903,8 +977,27 @@ export default function MensajesPage() {
             ) : selectedThread ? (
               <>
                 <header className="border-b border-[var(--line)] px-5 py-4">
-                  <p className="text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
-                  <p className="text-sm text-[var(--text-secondary)]">{selectedThread.roleLine}</p>
+                  {selectedThread.detail.type === "GROUP" ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsGroupMembersModalOpen(true)}
+                      className="w-full rounded-xl p-1 text-left outline-none transition hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-300)_45%,transparent)]"
+                      aria-label="Ver miembros del grupo"
+                    >
+                      <p className="text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
+                      <p
+                        className="truncate text-sm text-[var(--text-secondary)]"
+                        title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
+                      >
+                        {selectedThreadGroupMembersSummary?.previewText ?? "Sin miembros"}
+                      </p>
+                    </button>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{selectedThread.roleLine}</p>
+                    </>
+                  )}
                 </header>
 
                 <div
@@ -1079,6 +1172,68 @@ export default function MensajesPage() {
                 >
                   {isSending ? "Creando..." : "Crear y enviar"}
                 </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {isGroupMembersModalOpen && selectedThread?.detail.type === "GROUP" ? (
+          <div
+            className="fixed inset-0 z-40 flex items-center justify-center bg-[color-mix(in_srgb,var(--navy-900)_55%,transparent)] px-4"
+            onClick={() => setIsGroupMembersModalOpen(false)}
+            role="presentation"
+          >
+            <div
+              className="w-full max-w-lg rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-xl"
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Miembros del grupo"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="truncate text-lg font-semibold text-[var(--text-primary)]">
+                    {selectedThread.displayName}
+                  </h3>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                    {selectedThread.detail.members.length} miembros
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsGroupMembersModalOpen(false)}
+                  className="rounded-full border border-[var(--line)] px-3 py-1 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)]"
+                >
+                  Cerrar
+                </button>
+              </div>
+
+              <div className="mt-4 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+                {selectedThread.detail.members.map((member) => {
+                  const memberName =
+                    member.user.userId === currentUserId ? "Tú" : formatFullName(member.user);
+                  const initials = getTwoInitials({ fullName: memberName });
+                  const memberRole = member.role === "ADMIN" ? "Administrador" : "Miembro";
+
+                  return (
+                    <div
+                      key={member.user.userId}
+                      className="flex items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2"
+                    >
+                      <UserAvatar
+                        imageUrl={member.user.profileImageUrl ?? null}
+                        initials={initials}
+                        label={`Foto de perfil de ${memberName}`}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+                        initialsClassName="text-xs font-bold text-[var(--brand-300)]"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{memberName}</p>
+                        <p className="truncate text-xs text-[var(--text-secondary)]">{memberRole}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
