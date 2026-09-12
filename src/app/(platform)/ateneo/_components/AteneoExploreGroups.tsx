@@ -272,8 +272,11 @@ export function AteneoExploreGroups({ currentGroupId, feedActive = false }: Aten
           </Link>
         </div>
 
-        <div className="mt-4 rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-scale-3 text-[var(--text-secondary)]">
-          <span className="block truncate">Buscar en Ateneo...</span>
+        <div
+          aria-disabled="true"
+          className="mt-4 rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-4 py-2.5 text-scale-3 text-[var(--text-secondary)] opacity-80"
+        >
+          <span className="block truncate">Próximamente</span>
         </div>
 
         <div className="mt-4 space-y-2">
