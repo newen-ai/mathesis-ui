@@ -10,13 +10,18 @@ import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
 import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { getSessionUserId } from "@/lib/api/auth";
 import {
+  AteneoGroupMember,
   downloadAteneoTopicAttachment,
   deleteAteneoTopic,
   createAteneoTopicComment,
   getAteneoGroup,
   getAteneoTopic,
   isImageMimeType,
+  kickAteneoGroupMember,
+  listAteneoGroupMembers,
   listAteneoTopicComments,
+  moderateRemoveAteneoComment,
+  moderateRemoveAteneoTopic,
   resolveAteneoAttachmentUrl,
   toggleAteneoCommentReaction,
   toggleAteneoTopicReaction,
@@ -25,6 +30,8 @@ import {
   type AteneoTopic
 } from "@/lib/api/ateneo";
 import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
+import { AteneoKickMemberModal } from "./AteneoKickMemberModal";
+import { AteneoContentModerationModal } from "./AteneoContentModerationModal";
 
 type AteneoTopicDiscussionProps = {
   groupId: string;
@@ -67,6 +74,11 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
   const [reportOpenFor, setReportOpenFor] = useState<string | null>(null);
+  const [groupMembersByUserId, setGroupMembersByUserId] = useState<Record<string, AteneoGroupMember>>({});
+  const [kickTarget, setKickTarget] = useState<{ userId: string; name: string; sourceContext: "TOPIC" | "COMMENT"; sourceCommentId?: string } | null>(null);
+  const [isKicking, setIsKicking] = useState(false);
+  const [moderationTarget, setModerationTarget] = useState<{ kind: "topic" | "comment"; commentId?: string; authorName: string } | null>(null);
+  const [isModeratingContent, setIsModeratingContent] = useState(false);
 
   useEffect(() => {
     if (!reportOpenFor) {
@@ -133,11 +145,25 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
         setGroup(groupRes.data.group);
         setTopic(topicRes.data.topic);
         setTopicComments(commentsRes.data.comments);
+
+        if (groupRes.data.group.isAdmin) {
+          const membersRes = await listAteneoGroupMembers(groupId);
+          if (!cancelled) {
+            const byId: Record<string, AteneoGroupMember> = {};
+            membersRes.data.members.forEach((member) => {
+              byId[member.userId] = member;
+            });
+            setGroupMembersByUserId(byId);
+          }
+        } else {
+          setGroupMembersByUserId({});
+        }
       } catch {
         if (cancelled) return;
         setGroup(null);
         setTopic(null);
         setTopicComments([]);
+        setGroupMembersByUserId({});
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -154,8 +180,10 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
   const isPostValued = topic?.currentUserReactionValue === "value";
   const canDeleteTopic = Boolean(topic && sessionUserId && topic.author.userId === sessionUserId);
+  const canModerateTopic = Boolean(topic && group?.isAdmin && sessionUserId && topic.author.userId !== sessionUserId);
   const topicAuthorName = [topic?.author.firstName, topic?.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
   const canComment = group?.commentsMode !== "admins" || Boolean(group?.isAdmin);
+  const isModerator = Boolean(group?.isAdmin);
   const valuedComments = useMemo(
     () =>
       topicComments.reduce<Record<string, boolean>>((acc, comment) => {
@@ -397,6 +425,105 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     }
   };
 
+  const handleModerationConfirm = async (reason: string | undefined) => {
+    if (!topic || !moderationTarget || isModeratingContent) {
+      return;
+    }
+
+    setIsModeratingContent(true);
+    try {
+      if (moderationTarget.kind === "topic") {
+        await moderateRemoveAteneoTopic(groupId, topic.id, {
+          ...(reason ? { reason } : {})
+        });
+
+        toast.success("Publicación retirada por moderación");
+        setReportOpenFor(null);
+        setModerationTarget(null);
+        router.push(`/ateneo/groups/${encodeURIComponent(groupId)}`);
+        return;
+      }
+
+      if (!moderationTarget.commentId) {
+        return;
+      }
+
+      await moderateRemoveAteneoComment(groupId, topic.id, moderationTarget.commentId, {
+        ...(reason ? { reason } : {})
+      });
+
+      const commentsResponse = await listAteneoTopicComments(groupId, topic.id);
+      setTopicComments(commentsResponse.data.comments);
+      setTopic((current) => (current ? { ...current, comments: Math.max(0, current.comments - 1) } : current));
+
+      toast.success("Comentario retirado por moderación");
+      setReportOpenFor(null);
+      setModerationTarget(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No pudimos eliminar el contenido.");
+    } finally {
+      setIsModeratingContent(false);
+    }
+  };
+
+  const canKickTarget = (targetUserId: string) => {
+    if (!isModerator || !sessionUserId || targetUserId === sessionUserId) {
+      return false;
+    }
+
+    const targetMember = groupMembersByUserId[targetUserId];
+    if (!targetMember) {
+      return false;
+    }
+
+    if (targetMember.isOwner) {
+      return false;
+    }
+
+    if (targetMember.isAdmin && !group?.isOwner) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleKickConfirm = async (reason: string | undefined) => {
+    if (!topic || !kickTarget) {
+      return;
+    }
+
+    setIsKicking(true);
+
+    try {
+      await kickAteneoGroupMember(groupId, kickTarget.userId, {
+        sourceContext: kickTarget.sourceContext,
+        sourceTopicId: topic.id,
+        ...(kickTarget.sourceCommentId ? { sourceCommentId: kickTarget.sourceCommentId } : {}),
+        ...(reason ? { reason } : {})
+      });
+
+      if (kickTarget.sourceContext === "TOPIC") {
+        toast.success("Usuario expulsado. Esta publicación se mantiene sin cambios.");
+      } else {
+        toast.success("Usuario expulsado. Este comentario se mantiene sin cambios.");
+      }
+
+      setKickTarget(null);
+      setReportOpenFor(null);
+
+      const membersRes = await listAteneoGroupMembers(groupId);
+      const byId: Record<string, AteneoGroupMember> = {};
+      membersRes.data.members.forEach((member) => {
+        byId[member.userId] = member;
+      });
+      setGroupMembersByUserId(byId);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No pudimos expulsar al usuario.");
+    } finally {
+      setIsKicking(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
@@ -466,6 +593,19 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                     </button>
                   ) : null}
 
+                  {canModerateTopic ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModerationTarget({ kind: "topic", authorName: topicAuthorName });
+                      }}
+                      className="mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] transition hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                    >
+                      <span aria-hidden="true">🗑</span>
+                      <span>Retirar publicación</span>
+                    </button>
+                  ) : null}
+
                   <button
                     type="button"
                     onClick={() => {
@@ -479,6 +619,22 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                     </span>
                     <span className="text-[var(--danger-500)]">Denunciar publicación</span>
                   </button>
+
+                  {canKickTarget(topic.author.userId) ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setKickTarget({
+                          userId: topic.author.userId,
+                          name: topicAuthorName,
+                          sourceContext: "TOPIC"
+                        });
+                      }}
+                      className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                    >
+                      <span>Expulsar usuario</span>
+                    </button>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -680,6 +836,39 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                           </span>
                           <span className="text-[var(--danger-500)]">Denunciar</span>
                         </button>
+
+                        {canKickTarget(comment.author.userId) ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setKickTarget({
+                                userId: comment.author.userId,
+                                name: fullName(comment),
+                                sourceContext: "COMMENT",
+                                sourceCommentId: comment.id
+                              });
+                            }}
+                            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                          >
+                            <span>Expulsar usuario</span>
+                          </button>
+                        ) : null}
+
+                        {group?.isAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setModerationTarget({
+                                kind: "comment",
+                                commentId: comment.id,
+                                authorName: fullName(comment)
+                              });
+                            }}
+                            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                          >
+                            <span>Retirar comentario</span>
+                          </button>
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -749,6 +938,40 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
         onClose={() => setActiveImageIndex(null)}
         onChangeIndex={setActiveImageIndex}
       />
+
+      {kickTarget ? (
+        <AteneoKickMemberModal
+          isOpen
+          userName={kickTarget.name}
+          isSubmitting={isKicking}
+          onClose={() => {
+            if (!isKicking) {
+              setKickTarget(null);
+            }
+          }}
+          onConfirm={handleKickConfirm}
+        />
+      ) : null}
+
+      {moderationTarget ? (
+        <AteneoContentModerationModal
+          isOpen
+          title={moderationTarget.kind === "topic" ? "Retirar publicación" : "Retirar comentario"}
+          description={
+            moderationTarget.kind === "topic"
+              ? `Vas a eliminar una publicación de ${moderationTarget.authorName}. Esta acción no modifica el estado del usuario en el grupo.`
+              : `Vas a eliminar un comentario de ${moderationTarget.authorName}. Esta acción no modifica el estado del usuario en el grupo.`
+          }
+          confirmLabel={moderationTarget.kind === "topic" ? "Retirar publicación" : "Retirar comentario"}
+          isSubmitting={isModeratingContent}
+          onClose={() => {
+            if (!isModeratingContent) {
+              setModerationTarget(null);
+            }
+          }}
+          onConfirm={handleModerationConfirm}
+        />
+      ) : null}
     </div>
   );
 }

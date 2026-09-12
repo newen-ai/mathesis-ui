@@ -110,8 +110,6 @@ export function DigitalCredentialCard() {
     }, 180);
   };
 
-  const handlingBackView = cardView === "back" || cardView === "qr";
-
   const verificationUrl = useMemo(() => {
     if (!verificationToken) {
       return "";
@@ -128,7 +126,7 @@ export function DigitalCredentialCard() {
     const verificationPath = new URL("/verificar", resolvedBaseUrl).toString();
 
     return `${verificationPath}?token=${encodeURIComponent(verificationToken)}`;
-  }, [fullName, verificationToken]);
+  }, [verificationToken]);
 
   return (
     <div className="w-full">

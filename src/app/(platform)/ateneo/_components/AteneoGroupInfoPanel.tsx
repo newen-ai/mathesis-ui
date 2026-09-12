@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { getAteneoGroup, joinAteneoGroup, type AteneoGroup } from "@/lib/api/ateneo";
 
 type AteneoGroupInfoPanelProps = {
@@ -63,6 +64,8 @@ export function AteneoGroupInfoPanel({ groupId }: AteneoGroupInfoPanelProps) {
       const response = await getAteneoGroup(groupId);
       setGroup(response.data.group);
       setRules(response.data.rules);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No pudimos unirte al grupo.");
     } finally {
       setIsJoining(false);
     }
@@ -116,16 +119,31 @@ export function AteneoGroupInfoPanel({ groupId }: AteneoGroupInfoPanelProps) {
 
       {!group.isMember ? (
         <div className="mt-5 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              void onJoin();
-            }}
-            disabled={isJoining}
-            className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+          <span
+            className="inline-flex"
+            title={
+              group.isJoinBlockedByExpulsion
+                ? "No podés unirte porque fuiste expulsado de este grupo."
+                : undefined
+            }
           >
-            {isJoining ? "Uniéndote..." : "Unirse al grupo"}
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                void onJoin();
+              }}
+              disabled={isJoining || group.isJoinBlockedByExpulsion}
+              className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isJoining ? "Uniéndote..." : "Unirse al grupo"}
+            </button>
+          </span>
+
+          {group.isJoinBlockedByExpulsion ? (
+            <p className="text-scale-2 text-[var(--text-secondary)]">
+              Esta cuenta fue expulsada del grupo y no puede volver a unirse.
+            </p>
+          ) : null}
         </div>
       ) : null}
     </section>
