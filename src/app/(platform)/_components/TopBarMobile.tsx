@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { RefObject } from "react";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import type { AteneoGroup } from "@/lib/api/ateneo";
 import { TopBarNavIcon } from "./TopBarNavIcon";
 import type { MembershipCtaMode, MobileAccordionKey } from "./topbar.shared";
 
@@ -21,8 +22,38 @@ type TopBarMobileProps = {
   onRequestMembership: () => Promise<void>;
   hasCompaniesAdminAccess: boolean;
   isAdmin: boolean;
+  ateneoAdminGroups: AteneoGroup[];
+  ateneoMineGroups: AteneoGroup[];
   onLogout: () => Promise<void>;
 };
+
+function AteneoGroupMenuLink({
+  group,
+  closeMobileDrawer,
+}: {
+  group: AteneoGroup;
+  closeMobileDrawer: () => void;
+}) {
+  return (
+    <Link
+      href={`/ateneo/groups/${encodeURIComponent(group.id)}`}
+      onClick={closeMobileDrawer}
+      className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-[var(--surface-2)]"
+    >
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
+        <TopBarNavIcon icon={group.isOfficial ? "cup" : "groups"} />
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-scale-3 text-[var(--text-primary)]">{group.name}</span>
+        {group.isOfficial ? (
+          <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--brand-100)_75%,var(--surface))] px-2 py-0.5 text-[0.62rem] font-semibold text-[var(--brand-900)]">
+            Oficial
+          </span>
+        ) : null}
+      </span>
+    </Link>
+  );
+}
 
 function DisabledMenuRow({ label, icon }: { label: string; icon: string }) {
   return (
@@ -67,6 +98,8 @@ export function TopBarMobile({
   onRequestMembership,
   hasCompaniesAdminAccess,
   isAdmin,
+  ateneoAdminGroups,
+  ateneoMineGroups,
   onLogout,
 }: TopBarMobileProps) {
   if (!mobileDrawerOpen) {
@@ -289,28 +322,48 @@ export function TopBarMobile({
                 {mobileExpandedPanel === "ateneo" ? (
                   <div className="border-t border-[var(--line)] px-3 py-2">
                     <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">GRUPOS QUE ADMINISTRÁS</p>
-                    <Link href="/ateneo/groups?tab=admin" onClick={closeMobileDrawer} className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-[var(--surface-2)]">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="cup" /></span>
-                      <span>
-                        <span className="block text-scale-3 text-[var(--text-primary)]">Café Mathesis</span>
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--brand-100)_75%,var(--surface))] px-2 py-0.5 text-[0.62rem] font-semibold text-[var(--brand-900)]">Oficial</span>
-                        <span className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.62rem] font-semibold text-[var(--brand-800)]">∫ Mensa AR</span>
-                      </span>
-                    </Link>
+                    {ateneoAdminGroups.length > 0 ? (
+                      ateneoAdminGroups.slice(0, 2).map((group) => (
+                        <AteneoGroupMenuLink
+                          key={`mobile-ateneo-admin-${group.id}`}
+                          group={group}
+                          closeMobileDrawer={closeMobileDrawer}
+                        />
+                      ))
+                    ) : (
+                      <Link
+                        href="/ateneo/groups?tab=admin"
+                        onClick={closeMobileDrawer}
+                        className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
+                      >
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
+                          <TopBarNavIcon icon="cup" />
+                        </span>
+                        Ver grupos que administrás
+                      </Link>
+                    )}
 
                     <p className="mt-2 px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">TUS GRUPOS</p>
-                    <Link href="/ateneo/groups?tab=mine" onClick={closeMobileDrawer} className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-[var(--surface-2)]">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="groups" /></span>
-                      <span>
-                        <span className="block text-scale-3 text-[var(--text-primary)]">Comunicación Mensa Argentina</span>
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[color:color-mix(in_srgb,var(--brand-100)_75%,var(--surface))] px-2 py-0.5 text-[0.62rem] font-semibold text-[var(--brand-900)]">Oficial</span>
-                        <span className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.62rem] font-semibold text-[var(--brand-800)]">∫ Mensa AR</span>
-                      </span>
-                    </Link>
-                    <Link href="/ateneo/groups?tab=mine" onClick={closeMobileDrawer} className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-[var(--surface-2)]">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="groups" /></span>
-                      <span className="block text-scale-3 text-[var(--text-primary)]">Ajedrez y Estrategia</span>
-                    </Link>
+                    {ateneoMineGroups.length > 0 ? (
+                      ateneoMineGroups.slice(0, 3).map((group) => (
+                        <AteneoGroupMenuLink
+                          key={`mobile-ateneo-mine-${group.id}`}
+                          group={group}
+                          closeMobileDrawer={closeMobileDrawer}
+                        />
+                      ))
+                    ) : (
+                      <Link
+                        href="/ateneo/groups?tab=mine"
+                        onClick={closeMobileDrawer}
+                        className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
+                      >
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
+                          <TopBarNavIcon icon="groups" />
+                        </span>
+                        Ver mis grupos
+                      </Link>
+                    )}
 
                     <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">DESCUBRIR</p>
                     <Link href="/ateneo/groups?tab=discover" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">

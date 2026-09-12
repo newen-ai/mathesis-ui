@@ -16,6 +16,7 @@ import {
   listNotifications,
   onNotificationsUnreadCountUpdated,
 } from "@/lib/api/notifications";
+import { listAteneoGroups, type AteneoGroup } from "@/lib/api/ateneo";
 import {
   ProfileHttpError,
   type BadgeOutput,
@@ -78,6 +79,8 @@ export function TopBar({ navItems }: TopBarProps) {
   const [isMembershipActionPending, setIsMembershipActionPending] = useState(false);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [ateneoAdminGroups, setAteneoAdminGroups] = useState<AteneoGroup[]>([]);
+  const [ateneoMineGroups, setAteneoMineGroups] = useState<AteneoGroup[]>([]);
   const desktopNavRef = useRef<HTMLElement | null>(null);
   const mobileDrawerRef = useRef<HTMLElement | null>(null);
 
@@ -315,6 +318,40 @@ export function TopBar({ navItems }: TopBarProps) {
     return onNotificationsUnreadCountUpdated((nextUnreadCount) => {
       setUnreadNotificationsCount(nextUnreadCount);
     });
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadMobileAteneoGroups = async () => {
+      const [adminResult, mineResult] = await Promise.allSettled([
+        listAteneoGroups("admin", 6, controller.signal),
+        listAteneoGroups("mine", 8, controller.signal),
+      ]);
+
+      if (!isMounted || controller.signal.aborted) {
+        return;
+      }
+
+      const adminGroups =
+        adminResult.status === "fulfilled" ? adminResult.value.data.groups : [];
+      const mineGroups =
+        mineResult.status === "fulfilled" ? mineResult.value.data.groups : [];
+
+      const adminGroupIdSet = new Set(adminGroups.map((group) => group.id));
+      const mineOnlyGroups = mineGroups.filter((group) => !adminGroupIdSet.has(group.id));
+
+      setAteneoAdminGroups(adminGroups);
+      setAteneoMineGroups(mineOnlyGroups);
+    };
+
+    void loadMobileAteneoGroups();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -645,6 +682,8 @@ export function TopBar({ navItems }: TopBarProps) {
         onRequestMembership={onRequestMembership}
         hasCompaniesAdminAccess={hasCompaniesAdminAccess}
         isAdmin={isAdmin}
+        ateneoAdminGroups={ateneoAdminGroups}
+        ateneoMineGroups={ateneoMineGroups}
         onLogout={onLogout}
       />
     </>
