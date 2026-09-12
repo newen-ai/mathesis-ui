@@ -49,6 +49,7 @@ function mapTopic(topic: AteneoTopic): AteneoGroupTopic {
     title: topic.title,
     description: topic.description,
     tone: topic.tone,
+    hotScore: topic.hotScore,
     reactions: topic.reactions,
     comments: topic.comments,
     attachments: topic.attachments

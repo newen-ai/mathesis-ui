@@ -30,6 +30,7 @@ function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
     title: topic.title,
     description: topic.description,
     tone: topic.tone,
+    hotScore: topic.hotScore,
     reactions: topic.reactions,
     comments: topic.comments,
     isRecommended: topic.isRecommended,

@@ -74,6 +74,7 @@ export type AteneoTopic = {
   reactions: number;
   comments: number;
   isRecommended: boolean;
+  hotScore?: number;
   createdAt: string;
   updatedAt: string;
   currentUserReactionValue: AteneoReactionValue | null;

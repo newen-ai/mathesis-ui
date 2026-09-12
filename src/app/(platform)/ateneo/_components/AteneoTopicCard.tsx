@@ -26,6 +26,7 @@ export type AteneoTopicCardTopic = {
   title: string;
   description: string;
   tone: string;
+  hotScore?: number;
   comments: number;
   attachments: AteneoTopicAttachment[];
   isRecommended?: boolean;
@@ -187,6 +188,8 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
     [carouselImages]
   );
 
+  const hotScoreLabel = typeof topic.hotScore === "number" ? topic.hotScore.toFixed(4) : null;
+
   return (
     <>
       <article
@@ -232,6 +235,11 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
             <Link href={topicHref} className="hover:underline">
               {topic.title}
             </Link>
+            {hotScoreLabel ? (
+              <span className="ml-2 align-middle text-scale-1 font-medium text-[var(--text-secondary)]">
+                [score: {hotScoreLabel}]
+              </span>
+            ) : null}
           </h3>
 
           <LinkifiedText
