@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
-import { catchyLines, navItems } from "../../_lib/constants";
+import { navItems } from "../../_lib/constants";
 import type { Profile } from "../../_lib/types";
 import { TopBar } from "../TopBar";
-import { CatchyPhrasesBanner } from "./CatchyPhrasesBanner";
 
 type ProfileInitializationViewProps = {
   isSaving: boolean;
@@ -55,7 +54,6 @@ export function ProfileInitializationView({
   return (
     <div className="mathesis-shell min-h-screen">
       <TopBar navItems={navItems} />
-      <CatchyPhrasesBanner lines={catchyLines} />
 
       <main className="mx-auto flex w-full max-w-4xl items-start px-4 py-6 sm:px-6 lg:px-8">
         <AppCard className="w-full p-5 sm:p-7">

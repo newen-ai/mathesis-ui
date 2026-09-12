@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
 import { AppCard } from "@/components/ui/AppCard";
-import { catchyLines, navItems } from "../_lib/constants";
+import { navItems } from "../_lib/constants";
 import { TopBar } from "./TopBar";
-import { CatchyPhrasesBanner } from "./home/CatchyPhrasesBanner";
 
 type ModulePageProps = {
   title: string;
@@ -15,7 +14,6 @@ export function ModulePage({ title, subtitle, subtitleClassName, children }: Mod
   return (
     <div className="mathesis-shell min-h-screen">
       <TopBar navItems={navItems} />
-      <CatchyPhrasesBanner lines={catchyLines} />
       <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         <AppCard className="p-5 sm:p-6">
           <h1 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-slate-900 sm:text-3xl">
