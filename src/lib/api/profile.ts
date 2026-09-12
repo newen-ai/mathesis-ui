@@ -154,6 +154,29 @@ export async function getMyProfileIdentity(signal?: AbortSignal): Promise<string
   }
 }
 
+export async function getMyProfileEmail(signal?: AbortSignal): Promise<string | null> {
+  try {
+    const response = await apiRequest("/profile/me", {
+      signal,
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = await parseDataResponse<ProfileMeResponse["data"]>(
+      response,
+      "Invalid profile response"
+    );
+
+    const email = payload.data.email;
+
+    return typeof email === "string" && email.trim() ? email : null;
+  } catch {
+    return null;
+  }
+}
+
 function extractProfileFromEnvelope(data: unknown): ProfileOutput {
   if (!data || typeof data !== "object") {
     throw new ProfileSourceEmptyError();

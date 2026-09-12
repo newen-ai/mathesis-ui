@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { logout } from "@/lib/api/auth";
+import { getMyProfileEmail } from "@/lib/api/profile";
 import { type ThemeMode, useUiTheme } from "@/lib/theme/useUiTheme";
 import { navItems } from "../../_lib/constants";
 import { TopBar } from "../../_components/TopBar";
@@ -28,6 +29,11 @@ type SettingsIconName =
   | "delete";
 
 type SettingsRow =
+  | {
+      key: string;
+      type: "email";
+      label: string;
+    }
   | {
       key: string;
       type: "theme";
@@ -68,6 +74,11 @@ const SETTINGS_CATEGORIES: SettingsCategory[] = [
     label: "Cuenta",
     icon: "settings",
     rows: [
+      {
+        key: "email",
+        type: "email",
+        label: "Correo electrónico",
+      },
       {
         key: "theme",
         type: "theme",
@@ -344,6 +355,7 @@ function MobileSectionTitle({ label }: { label: string }) {
 function ConfigurationSectionRows({
   rows,
   theme,
+  accountEmail,
   onToggleTheme,
   onLogout,
   onOpenBlockedUsers,
@@ -352,6 +364,7 @@ function ConfigurationSectionRows({
 }: {
   rows: SettingsRow[];
   theme: ThemeMode;
+  accountEmail: string | null;
   onToggleTheme: () => void;
   onLogout: () => void;
   onOpenBlockedUsers: () => void;
@@ -363,6 +376,23 @@ function ConfigurationSectionRows({
     const rowBorderClass = withDivider
       ? "border-b border-[color:color-mix(in_srgb,var(--line)_82%,transparent)]"
       : "";
+
+    if (row.type === "email") {
+      return (
+        <div key={row.key} className={rowBorderClass}>
+          <SettingsRowButton>
+            <div>
+              <div className="text-[1.02rem] font-semibold leading-tight text-[var(--text-primary)] md:text-[1rem]">
+                {row.label}
+              </div>
+            </div>
+            <span className="text-[0.98rem] font-medium text-[var(--text-secondary)] md:text-[0.95rem]">
+              {accountEmail ?? "No disponible"}
+            </span>
+          </SettingsRowButton>
+        </div>
+      );
+    }
 
     if (row.type === "theme") {
       return (
@@ -465,6 +495,25 @@ export default function ConfigurationPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useUiTheme();
   const [activeCategory, setActiveCategory] = useState<SettingsCategoryKey>("cuenta");
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    const loadAccountEmail = async () => {
+      const email = await getMyProfileEmail(abortController.signal);
+
+      if (!abortController.signal.aborted) {
+        setAccountEmail(email);
+      }
+    };
+
+    void loadAccountEmail();
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
 
   const activePanel = useMemo(
     () =>
@@ -497,6 +546,7 @@ export default function ConfigurationPage() {
                 <ConfigurationSectionRows
                   rows={category.rows}
                   theme={theme}
+                  accountEmail={accountEmail}
                   onToggleTheme={toggleTheme}
                   onLogout={handleLogout}
                   onOpenBlockedUsers={() => router.push("/account/configuration/blocked")}
@@ -553,6 +603,7 @@ export default function ConfigurationPage() {
                 <ConfigurationSectionRows
                   rows={activePanel.rows}
                   theme={theme}
+                  accountEmail={accountEmail}
                   onToggleTheme={toggleTheme}
                   onLogout={handleLogout}
                   onOpenBlockedUsers={() => router.push("/account/configuration/blocked")}
