@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   getAteneoGroup,
   joinAteneoGroup,
@@ -115,8 +116,8 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
       setGroup(groupRes.data.group);
       setRules(groupRes.data.rules);
       setTopics(topicsRes.data.topics.map((topic) => mapTopic(topic)));
-    } catch {
-      // Keep current preview state if join fails.
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No pudimos unirte al grupo.");
     } finally {
       setIsJoining(false);
     }
@@ -139,6 +140,11 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
   }
 
   if (!group.isMember) {
+    const joinBlockedByExpulsion = group.isJoinBlockedByExpulsion;
+    const joinDisabledTooltip = joinBlockedByExpulsion
+      ? "No podés unirte porque fuiste expulsado de este grupo."
+      : undefined;
+
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
         <div className="flex min-w-0 items-start gap-3">
@@ -167,17 +173,25 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
         </div>
 
         <div className="mt-5">
-          <button
-            type="button"
-            onClick={() => {
-              void onJoin();
-            }}
-            disabled={isJoining}
-            className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isJoining ? "Uniéndote..." : "Unirse al grupo"}
-          </button>
+          <span className="inline-flex" title={joinDisabledTooltip}>
+            <button
+              type="button"
+              onClick={() => {
+                void onJoin();
+              }}
+              disabled={isJoining || joinBlockedByExpulsion}
+              className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isJoining ? "Uniéndote..." : "Unirse al grupo"}
+            </button>
+          </span>
         </div>
+
+        {joinBlockedByExpulsion ? (
+          <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">
+            Esta cuenta fue expulsada del grupo y no puede volver a unirse.
+          </p>
+        ) : null}
       </section>
     );
   }

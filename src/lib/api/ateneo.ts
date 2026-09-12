@@ -24,7 +24,9 @@ export type AteneoGroup = {
   icon: string;
   isOfficial: boolean;
   isMember: boolean;
+  isJoinBlockedByExpulsion: boolean;
   isAdmin: boolean;
+  isOwner: boolean;
   isPinned: boolean;
 };
 
@@ -40,8 +42,24 @@ export type AteneoGroupMember = {
   profileImageUrl: string | null;
   initials: string;
   isAdmin: boolean;
+  isOwner: boolean;
   isPinned: boolean;
   joinedAt: string;
+};
+
+export type AteneoGroupExpulsion = {
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
+  initials: string;
+  reason: string | null;
+  kickedAt: string;
+  kickedBy: AteneoUserSummary;
+  sourceContext: "MEMBERS_LIST" | "TOPIC" | "COMMENT" | "ADMIN_PANEL";
+  sourceTopicId: string | null;
+  sourceCommentId: string | null;
+  targetWasAdmin: boolean;
 };
 
 export type AteneoTopic = {
@@ -101,6 +119,30 @@ export type ListAteneoGroupMembersData = {
   members: AteneoGroupMember[];
 };
 
+export type ListAteneoGroupExpulsionsData = {
+  expulsions: AteneoGroupExpulsion[];
+};
+
+export type AteneoRemovedTopic = {
+  topicId: string;
+  title: string;
+  author: AteneoUserSummary;
+  deletedAt: string;
+};
+
+export type AteneoRemovedComment = {
+  commentId: string;
+  topicId: string;
+  contentPreview: string;
+  author: AteneoUserSummary;
+  deletedAt: string;
+};
+
+export type ListAteneoRemovedContentData = {
+  topics: AteneoRemovedTopic[];
+  comments: AteneoRemovedComment[];
+};
+
 export type ListAteneoFeedData = {
   topics: AteneoTopic[];
 };
@@ -113,13 +155,42 @@ export type GetAteneoTopicData = {
   topic: AteneoTopic;
 };
 
+export type GetRemovedAteneoTopicPreviewData = {
+  topic: AteneoTopic;
+  deletedAt: string;
+};
+
 export type DeleteAteneoTopicData = {
   topicId: string;
+};
+
+export type ModerateRemoveAteneoTopicData = {
+  topicId: string;
+};
+
+export type ModerateRestoreAteneoTopicData = {
+  topicId: string;
+};
+
+export type KickAteneoGroupMemberData = {
+  removedUserId: string;
+};
+
+export type RestoreAteneoGroupMemberData = {
+  restoredUserId: string;
 };
 
 export type AteneoTopicAttachmentDownloadData = {
   blob: Blob;
   fileName: string | null;
+};
+
+export type ModerateRemoveAteneoCommentData = {
+  commentId: string;
+};
+
+export type ModerateRestoreAteneoCommentData = {
+  commentId: string;
 };
 
 export function resolveAteneoAttachmentUrl(path: string): string {
@@ -181,6 +252,51 @@ export async function listAteneoGroupMembers(groupId: string, signal?: AbortSign
   return parseDataResponse<ListAteneoGroupMembersData>(response, "Invalid Ateneo group members response");
 }
 
+export async function listAteneoGroupExpulsions(groupId: string, signal?: AbortSignal) {
+  const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/expulsions`, { signal });
+  return parseDataResponse<ListAteneoGroupExpulsionsData>(response, "Invalid Ateneo group expulsions response");
+}
+
+export async function listAteneoRemovedContent(groupId: string, signal?: AbortSignal) {
+  const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/moderation/removed-content`, { signal });
+  return parseDataResponse<ListAteneoRemovedContentData>(response, "Invalid Ateneo removed-content response");
+}
+
+export async function kickAteneoGroupMember(
+  groupId: string,
+  targetUserId: string,
+  payload: {
+    reason?: string;
+    sourceContext: "MEMBERS_LIST" | "TOPIC" | "COMMENT";
+    sourceTopicId?: string;
+    sourceCommentId?: string;
+  },
+  signal?: AbortSignal
+) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(targetUserId)}/kick`,
+    {
+      method: "POST",
+      body: payload,
+      signal
+    }
+  );
+
+  return parseDataResponse<KickAteneoGroupMemberData>(response, "Invalid Ateneo kick-member response");
+}
+
+export async function restoreAteneoGroupMember(groupId: string, targetUserId: string, signal?: AbortSignal) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(targetUserId)}/restore`,
+    {
+      method: "POST",
+      signal
+    }
+  );
+
+  return parseDataResponse<RestoreAteneoGroupMemberData>(response, "Invalid Ateneo restore-member response");
+}
+
 export async function updateAteneoGroup(
   groupId: string,
   payload: {
@@ -232,6 +348,15 @@ export async function getAteneoTopic(groupId: string, topicId: string, signal?: 
   return parseDataResponse<GetAteneoTopicData>(response, "Invalid Ateneo topic response");
 }
 
+export async function getAteneoRemovedTopicPreview(groupId: string, topicId: string, signal?: AbortSignal) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/moderation/preview`,
+    { signal }
+  );
+
+  return parseDataResponse<GetRemovedAteneoTopicPreviewData>(response, "Invalid removed Ateneo topic preview response");
+}
+
 export async function deleteAteneoTopic(groupId: string, topicId: string, signal?: AbortSignal) {
   const response = await apiRequest(
     `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}`,
@@ -242,6 +367,42 @@ export async function deleteAteneoTopic(groupId: string, topicId: string, signal
   );
 
   return parseDataResponse<DeleteAteneoTopicData>(response, "Invalid Ateneo topic delete response");
+}
+
+export async function moderateRemoveAteneoTopic(
+  groupId: string,
+  topicId: string,
+  payload: { reason?: string },
+  signal?: AbortSignal
+) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/moderation/remove`,
+    {
+      method: "POST",
+      body: payload,
+      signal
+    }
+  );
+
+  return parseDataResponse<ModerateRemoveAteneoTopicData>(response, "Invalid Ateneo moderated topic remove response");
+}
+
+export async function moderateRestoreAteneoTopic(
+  groupId: string,
+  topicId: string,
+  payload: { reason?: string },
+  signal?: AbortSignal
+) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/moderation/restore`,
+    {
+      method: "POST",
+      body: payload,
+      signal
+    }
+  );
+
+  return parseDataResponse<ModerateRestoreAteneoTopicData>(response, "Invalid Ateneo moderated topic restore response");
 }
 
 export async function createAteneoTopic(
@@ -332,6 +493,44 @@ export async function createAteneoTopicComment(
   );
 
   return parseDataResponse<{ comment: AteneoComment }>(response, "Invalid Ateneo comment create response");
+}
+
+export async function moderateRemoveAteneoComment(
+  groupId: string,
+  topicId: string,
+  commentId: string,
+  payload: { reason?: string },
+  signal?: AbortSignal
+) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}/moderation/remove`,
+    {
+      method: "POST",
+      body: payload,
+      signal
+    }
+  );
+
+  return parseDataResponse<ModerateRemoveAteneoCommentData>(response, "Invalid Ateneo moderated comment remove response");
+}
+
+export async function moderateRestoreAteneoComment(
+  groupId: string,
+  topicId: string,
+  commentId: string,
+  payload: { reason?: string },
+  signal?: AbortSignal
+) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}/moderation/restore`,
+    {
+      method: "POST",
+      body: payload,
+      signal
+    }
+  );
+
+  return parseDataResponse<ModerateRestoreAteneoCommentData>(response, "Invalid Ateneo moderated comment restore response");
 }
 
 export async function toggleAteneoTopicReaction(groupId: string, topicId: string, signal?: AbortSignal) {
