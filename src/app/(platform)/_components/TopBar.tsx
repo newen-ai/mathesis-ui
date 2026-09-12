@@ -12,7 +12,10 @@ import {
 import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
 import { BRAND_LOGO_FULL_SRC, BRAND_LOGO_SRC } from "@/lib/assets";
 import { listMyChats } from "@/lib/api/chat";
-import { listNotifications } from "@/lib/api/notifications";
+import {
+  listNotifications,
+  onNotificationsUnreadCountUpdated,
+} from "@/lib/api/notifications";
 import {
   ProfileHttpError,
   type BadgeOutput,
@@ -33,6 +36,7 @@ import {
   desktopBaseTopbarItems,
   desktopCompaniesAdminTopbarItem,
   desktopDropdownTopbarItems,
+  formatBadgeCount,
   resolveMembershipCtaMode,
   type DesktopDropdownKey,
   type MembershipCtaMode,
@@ -308,6 +312,12 @@ export function TopBar({ navItems }: TopBarProps) {
   }, []);
 
   useEffect(() => {
+    return onNotificationsUnreadCountUpdated((nextUnreadCount) => {
+      setUnreadNotificationsCount(nextUnreadCount);
+    });
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
 
@@ -573,6 +583,25 @@ export function TopBar({ navItems }: TopBarProps) {
         />
 
         <div className="flex items-center gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(new Event("mathesis:close-mobile-footer-overlay-request"));
+              setMobileDrawerOpen(false);
+              setMobileExpandedPanel(null);
+              setDesktopDropdownOpen(null);
+              router.push("/notificaciones");
+            }}
+            className="relative flex h-10 w-10 items-center justify-center text-[var(--brand-500)]"
+            aria-label="Ir a notificaciones"
+          >
+            <TopBarNavIcon icon="bell" className="h-6 w-6" />
+            {unreadNotificationsCount > 0 ? (
+              <span className="absolute -right-1 -top-0.5 min-w-[1.1rem] rounded-full bg-[var(--danger-500)] px-1.5 py-[0.12rem] text-center text-[0.62rem] font-bold leading-none text-white">
+                {formatBadgeCount(unreadNotificationsCount)}
+              </span>
+            ) : null}
+          </button>
           <button
             type="button"
             onClick={() => {

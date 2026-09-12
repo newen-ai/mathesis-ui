@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
 import {
+  emitNotificationsUnreadCountUpdated,
   listNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
@@ -199,6 +200,7 @@ export default function NotificacionesPage() {
 
         if (!isActive) return;
         setNotifications(response.data.notifications);
+        emitNotificationsUnreadCountUpdated(response.data.unreadCount);
       } catch (caughtError) {
         if (controller.signal.aborted || (caughtError instanceof Error && caughtError.name === "AbortError")) {
           return;
@@ -251,11 +253,17 @@ export default function NotificacionesPage() {
           : notification
       )
     );
+    emitNotificationsUnreadCountUpdated(
+      previousNotifications.filter((notification) => !notification.read).length - 1
+    );
 
     try {
       await markNotificationAsRead(notificationId);
     } catch (caughtError) {
       setNotifications(previousNotifications);
+      emitNotificationsUnreadCountUpdated(
+        previousNotifications.filter((notification) => !notification.read).length
+      );
       setError(caughtError instanceof Error ? caughtError.message : "No pudimos marcar la notificación como leída.");
     }
   };
@@ -274,11 +282,15 @@ export default function NotificacionesPage() {
           : { ...notification, read: true, readAt: new Date().toISOString() }
       )
     );
+    emitNotificationsUnreadCountUpdated(0);
 
     try {
       await markAllNotificationsAsRead();
     } catch (caughtError) {
       setNotifications(previousNotifications);
+      emitNotificationsUnreadCountUpdated(
+        previousNotifications.filter((notification) => !notification.read).length
+      );
       setError(caughtError instanceof Error ? caughtError.message : "No pudimos marcar todas como leídas.");
     }
   };
