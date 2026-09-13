@@ -9,6 +9,7 @@ import {
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
 import type { Profile } from "../../_lib/types";
 import { blockUser } from "@/lib/api/block";
+import { MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
 import { formatBadgeSlug } from "@/lib/utils/badge";
 import { TopBar } from "../TopBar";
 import { EducationCard } from "./EducationCard";
@@ -49,6 +50,11 @@ type TouchGestureState =
       startDistance: number;
       startScale: number;
     };
+
+function isMensaArgentinaBadge(slug: string): boolean {
+  const normalized = slug.trim().toLowerCase();
+  return normalized === "mensa_argentina" || normalized === "mensa_ar";
+}
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -771,9 +777,20 @@ export function ProfileView() {
                     {badges.map((slug, index) => (
                       <div
                         key={`${slug}-${index}`}
-                        className="inline-flex rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-[0.55rem] py-[0.22rem] text-[0.56rem] font-semibold text-[var(--brand-700)]"
+                        className="inline-flex items-center gap-1 rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-[0.55rem] py-[0.22rem] text-[0.56rem] font-semibold text-[var(--brand-700)]"
                       >
-                        {`∫ ${formatBadgeSlug(slug)}`}
+                        {isMensaArgentinaBadge(slug) ? (
+                          <span
+                            aria-hidden="true"
+                            className="h-[0.62rem] w-[0.62rem] shrink-0 -translate-y-[1px] bg-contain bg-center bg-no-repeat"
+                            style={{ backgroundImage: `url(${MENSA_ARGENTINA_LOGO_SRC})` }}
+                          />
+                        ) : (
+                          <span aria-hidden="true" className="leading-none">
+                            ∫
+                          </span>
+                        )}
+                        <span>{formatBadgeSlug(slug)}</span>
                       </div>
                     ))}
                   </div>

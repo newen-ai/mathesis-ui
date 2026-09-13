@@ -94,7 +94,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-08-12)
 - In perfil header, render zero or more badge chips below the display name from backend-provided active badges.
 - Badge chip label must be generated from slug: split by underscore, replace underscores with spaces, and capitalize first letter of each word.
-- Badge chips must include the integral sign prefix `∫` before the formatted badge label.
+- Badge chips must include the integral sign prefix `∫` before the formatted badge label, except `Mensa Argentina`, which uses the shared logo asset with the same visual size as the previous prefix glyph.
 
 ## Current Active UI Directions (2026-08-12 Typography)
 - Use the shared global type-scale utility classes for product UI text to prevent ad-hoc size inflation: `.text-scale-1`, `.text-scale-2`, `.text-scale-3`, `.text-scale-4`, `.text-scale-5`.

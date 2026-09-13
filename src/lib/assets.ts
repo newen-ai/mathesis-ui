@@ -6,3 +6,4 @@ export function withBasePath(path: string): string {
 
 export const BRAND_LOGO_SRC = withBasePath("/mathesis-logo.png");
 export const BRAND_LOGO_FULL_SRC = withBasePath("/mathesis-logo-full.png");
+export const MENSA_ARGENTINA_LOGO_SRC = withBasePath("/logo-mensa-argentina.png");
