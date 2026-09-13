@@ -200,6 +200,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Users should be able to attach screenshots by pasting from the clipboard with `Ctrl+V` or `Cmd+V`, not only by file selection.
 - The floating bug report button should be draggable, but only snap to the four allowed corners: top-left, top-right, bottom-left, and bottom-right.
 - When frontend code needs to translate backend or service error messages, do not hardcode ad-hoc message maps inside components; route them through `src/lib/i18n/*` helpers and locale JSON so future agents extend the same translation path.
+- Follow-up direction (2026-09-13): when `NEXT_PUBLIC_ENABLE_BUG_REPORTS=true`, show the bug report trigger across app screens; keep bottom-right as the default placement on all routes, and use top-right only on mobile `/mensajes`.
 
 ## Current Active UI Directions (2026-09-05 Mobile Signed-In Footer)
 - Redesign and standardize the mobile footer for all signed-in routes under `(platform)` with one shared implementation.
@@ -218,6 +219,14 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-09-10 Ateneo Overflow Menu)
 - In Ateneo topic overflow menus, `Denunciar publicación` must always use danger red styling for both icon and text.
 - Overflow menus should close when clicking outside the menu/trigger area.
+
+## Current Active UI Directions (2026-09-13 Mensajes Mobile Header Typography)
+- In `/mensajes` mobile conversation detail mode, reduce the fixed header text scale.
+- Conversation title should use a smaller heading size than current `text-2xl`.
+- Members/role secondary line should use compact helper sizing (`text-xs`) for tighter vertical density.
+- Follow-up refinement: shrink one more step (`text-lg` title scale and sub-`text-xs` secondary line density) while preserving readability.
+- Follow-up refinement 2: shrink again from current values to approximately `15px` for title and `10px` for members/role line.
+- Follow-up refinement 3: reduce mobile conversation header container padding (`px`/`py`) for tighter title block spacing.
 - Overflow menus should close when pressing `Esc`.
 
 ## Current Active UI Directions (2026-09-10 Ateneo New Topic Image Preview)
@@ -247,3 +256,21 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Because names can be long, show a single-line truncated preview with ellipsis in the header summary.
 - Clicking/tapping the group-chat header should open an overlay modal listing full members with profile images.
 - Keep this modal theme-aware and readable in both light and dark themes.
+
+## Current Active UI Directions (2026-09-12 Mensajes Navigation)
+- In `/mensajes` on mobile, use a master-detail flow where the conversation list and active detail are separate panes with horizontal slide transition (list -> detail).
+- Entering a conversation should happen by tapping/clicking the conversation row itself, and the detail pane must provide a consistent back action to return to the list.
+- Apply the same contact-row interaction in the new-conversation composer on desktop and mobile: selecting recipients is triggered by clicking the contact row, without dedicated plus-icon controls.
+- Replace visible `Nuevo mensaje` entry/heading copy with `Nueva conversación`.
+
+## Current Active UI Directions (2026-09-12 Mensajes Detail Layout)
+- In `/mensajes` conversation-detail mode, hide the module hero/title block (`Mensajes` + subtitle) so chat content starts higher on screen.
+- Keep the composer bar pinned at the bottom of the viewport area and, on mobile, offset it to remain visible above the fixed mobile navbar.
+- For app-like messaging behavior (WhatsApp/Telegram style), the composer must sit flush at the bottom of the chat area without extra artificial gap below it.
+- Prefer a fixed mobile composer bar positioned directly above the platform mobile navbar, with conversation area spacing so content is not covered.
+- In mobile detail mode, keep the gap between the latest message and the composer equal to the standard message-to-message vertical spacing.
+- In mobile detail mode, keep the conversation header fixed under the global topbar while scrolling so back navigation and members access stay always visible.
+- In mobile detail mode, fixed conversation header and composer bars should span full width and entering a conversation should land on the latest messages (bottom) immediately.
+- In mobile `/mensajes`, the conversation shell should be full-bleed (no extra outer side margins/gutters around the main conversation container).
+- On `/mensajes`, place the floating `Reportar bug` trigger near the top-right conversation area so it does not cover the latest messages near the composer.
+- In `/mensajes` detail viewport, keep conversation `padding-top` and `margin-bottom` compact at `10px`.

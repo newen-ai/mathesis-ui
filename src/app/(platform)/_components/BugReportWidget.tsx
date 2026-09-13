@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -25,7 +26,6 @@ import {
   createEmptyBugReportDraft,
   dataUrlToFile,
   isBugReportFeatureEnabled,
-  readBugReportButtonCorner,
   readBugReportDraft,
   saveBugReportButtonCorner,
   saveBugReportDraft,
@@ -122,6 +122,7 @@ const BUG_REPORT_BUTTON_SIZE = 56;
 
 export function BugReportWidget() {
   const pathname = usePathname();
+  const isMessagesRoute = pathname.startsWith("/mensajes");
   const searchParams = useSearchParams();
   const searchParamsKey = searchParams.toString();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -131,12 +132,32 @@ export function BugReportWidget() {
   const bodyOverflowBeforeOpenRef = useRef<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [buttonCorner, setButtonCorner] = useState<BugReportButtonCorner>(() => {
-    if (typeof window === "undefined") {
-      return "bottom-right";
-    }
+  const isClientMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const isMobileViewport = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof window === "undefined") {
+        return () => {};
+      }
 
-    return readBugReportButtonCorner();
+      const mediaQuery = window.matchMedia("(max-width: 767px)");
+      mediaQuery.addEventListener("change", onStoreChange);
+
+      return () => {
+        mediaQuery.removeEventListener("change", onStoreChange);
+      };
+    },
+    () =>
+      typeof window !== "undefined"
+        ? window.matchMedia("(max-width: 767px)").matches
+        : false,
+    () => false
+  );
+  const [buttonCorner, setButtonCorner] = useState<BugReportButtonCorner>(() => {
+    return "bottom-right";
   });
   const [dragPosition, setDragPosition] = useState<DragPosition | null>(null);
   const [isSnapAnimating, setIsSnapAnimating] = useState(false);
@@ -177,15 +198,43 @@ export function BugReportWidget() {
       BUG_REPORT_BUTTON_SIZE
     );
   }, [buttonCorner]);
-  const floatingButtonStyle = dragPosition
-    ? {
-        left: `${dragPosition.left}px`,
-        top: `${dragPosition.top}px`,
-      }
-    : {
-        left: `${anchoredButtonPosition.left}px`,
-        top: `${anchoredButtonPosition.top}px`,
+  const isMessagesMobileTopRight = isMessagesRoute && isMobileViewport;
+  const messagesDesktopButtonPosition = useMemo(() => {
+    if (typeof window === "undefined") {
+      return {
+        left: 16,
+        top: 80,
       };
+    }
+
+    return getCornerPosition(
+      "bottom-right",
+      BUG_REPORT_BUTTON_SIZE,
+      BUG_REPORT_BUTTON_SIZE
+    );
+  }, []);
+  const floatingButtonStyle = isMessagesMobileTopRight
+    ? {
+        left: `${Math.max(
+          0,
+          (typeof window === "undefined" ? 390 : window.innerWidth) - BUG_REPORT_BUTTON_SIZE - 16
+        )}px`,
+        top: "152px",
+      }
+    : isMessagesRoute
+      ? {
+          left: `${messagesDesktopButtonPosition.left}px`,
+          top: `${messagesDesktopButtonPosition.top}px`,
+        }
+    : dragPosition
+      ? {
+          left: `${dragPosition.left}px`,
+          top: `${dragPosition.top}px`,
+        }
+      : {
+          left: `${anchoredButtonPosition.left}px`,
+          top: `${anchoredButtonPosition.top}px`,
+        };
 
   const titleCount = effectiveDraft.title.trim().length;
   const descriptionCount = effectiveDraft.description.trim().length;
@@ -219,6 +268,10 @@ export function BugReportWidget() {
   }, [isOpen]);
 
   if (!featureEnabled) {
+    return null;
+  }
+
+  if (!isClientMounted) {
     return null;
   }
 
@@ -341,6 +394,10 @@ export function BugReportWidget() {
   };
 
   const handleButtonPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (isMessagesRoute) {
+      return;
+    }
+
     clearSnapTimeout();
     setIsSnapAnimating(false);
     const rect = event.currentTarget.getBoundingClientRect();
@@ -704,7 +761,9 @@ export function BugReportWidget() {
           onPointerMove={handleButtonPointerMove}
           onPointerUp={handleButtonPointerUp}
           onPointerCancel={handleButtonPointerCancel}
-          className="relative z-[142] inline-flex h-14 w-14 cursor-grab items-center justify-center rounded-full border border-[var(--brand-300)] bg-[var(--brand-500)] shadow-[0_14px_30px_color-mix(in_srgb,var(--brand-700)_30%,transparent)] transition hover:translate-y-[-1px] hover:brightness-95 active:cursor-grabbing"
+          className={`relative z-[142] inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--brand-300)] bg-[var(--brand-500)] shadow-[0_14px_30px_color-mix(in_srgb,var(--brand-700)_30%,transparent)] transition hover:translate-y-[-1px] hover:brightness-95 ${
+            isMessagesRoute ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"
+          }`}
           aria-label={isOpen ? "Cerrar reportar bug" : "Abrir reportar bug"}
           title="Reportar bug"
         >

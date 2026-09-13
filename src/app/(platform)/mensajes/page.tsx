@@ -40,6 +40,7 @@ const MESSAGE_PAGE_SIZE = 30;
 const POLLING_INTERVAL_MS = 10000;
 const GROUP_MEMBER_PREVIEW_MAX_CHARS = 56;
 const GROUP_HEADER_PREVIEW_MAX_CHARS = 84;
+const COMPOSER_MAX_LINES = 10;
 
 function humanizeTime(isoDate: string | null) {
   if (!isoDate) return "";
@@ -180,14 +181,67 @@ export default function MensajesPage() {
   const [groupTitleError, setGroupTitleError] = useState<string | null>(null);
   const [pendingGroupMessage, setPendingGroupMessage] = useState("");
   const [isGroupMembersModalOpen, setIsGroupMembersModalOpen] = useState(false);
+  const [mobileActivePanel, setMobileActivePanel] = useState<"list" | "detail">("list");
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [mobileDetailHeaderHeight, setMobileDetailHeaderHeight] = useState(88);
+  const [mobileComposerHeight, setMobileComposerHeight] = useState(104);
   const [isSending, setIsSending] = useState(false);
 
   const messageViewportRef = useRef<HTMLDivElement | null>(null);
+  const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const composerFooterRef = useRef<HTMLElement | null>(null);
+  const mobileDetailHeaderRef = useRef<HTMLElement | null>(null);
+  const pendingInitialBottomChatIdRef = useRef<string | null>(null);
+  const isNearBottomRef = useRef(true);
+  const isInitializingConversationLoadRef = useRef(false);
+
+  const scrollToBottom = useCallback(() => {
+    const viewport = messageViewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollTop = viewport.scrollHeight;
+    isNearBottomRef.current = true;
+  }, []);
+
+  const adjustComposerTextareaHeight = useCallback((element: HTMLTextAreaElement | null) => {
+    if (!element) {
+      return;
+    }
+
+    const computed = window.getComputedStyle(element);
+    const lineHeight = Number.parseFloat(computed.lineHeight) || 20;
+    const paddingTop = Number.parseFloat(computed.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(computed.paddingBottom) || 0;
+    const borderTop = Number.parseFloat(computed.borderTopWidth) || 0;
+    const borderBottom = Number.parseFloat(computed.borderBottomWidth) || 0;
+    const maxHeight =
+      lineHeight * COMPOSER_MAX_LINES + paddingTop + paddingBottom + borderTop + borderBottom;
+
+    element.style.height = "auto";
+    const nextHeight = Math.min(element.scrollHeight, maxHeight);
+    element.style.height = `${nextHeight}px`;
+    element.style.overflowY = element.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, []);
 
   const selectedThread = useMemo(
     () => threads.find((thread) => thread.summary.id === selectedThreadId) ?? null,
     [threads, selectedThreadId]
   );
+
+  const isConversationDetailMode = !isComposerOpen && mobileActivePanel === "detail" && Boolean(selectedThread);
+  const conversationSectionTopOffset = useMemo(
+    () => (isMobileViewport && isConversationDetailMode ? mobileDetailHeaderHeight : 0),
+    [isConversationDetailMode, isMobileViewport, mobileDetailHeaderHeight]
+  );
+  const conversationBottomInset = useMemo(() => {
+    if (isMobileViewport && mobileActivePanel === "detail") {
+      return 0;
+    }
+
+    return Math.max(16, mobileComposerHeight + 10);
+  }, [isMobileViewport, mobileActivePanel, mobileComposerHeight]);
 
   const selectedMessages = useMemo(
     () => (selectedThread ? messagesByChatId[selectedThread.summary.id] ?? [] : []),
@@ -309,6 +363,9 @@ export default function MensajesPage() {
         nextSelected = nextThreads[0]?.summary.id ?? "";
       }
 
+      if (nextSelected) {
+        pendingInitialBottomChatIdRef.current = nextSelected;
+      }
       setSelectedThreadId(nextSelected);
 
       return nextSelected;
@@ -339,6 +396,12 @@ export default function MensajesPage() {
         [chatId]: messagesResponse.data.nextCursor,
       }));
 
+      if (markAsRead || isNearBottomRef.current) {
+        requestAnimationFrame(() => {
+          scrollToBottom();
+        });
+      }
+
       if (markAsRead) {
         await markChatAsRead(chatId);
         setThreads((current) =>
@@ -354,12 +417,6 @@ export default function MensajesPage() {
               : thread
           )
         );
-
-        requestAnimationFrame(() => {
-          const viewport = messageViewportRef.current;
-          if (!viewport) return;
-          viewport.scrollTop = viewport.scrollHeight;
-        });
       }
     } finally {
       setLoadingMessagesByChatId((current) => ({
@@ -367,7 +424,7 @@ export default function MensajesPage() {
         [chatId]: false,
       }));
     }
-  }, []);
+  }, [scrollToBottom]);
 
   const loadOlderMessages = useCallback(async (chatId: string) => {
     const nextCursor = nextCursorByChatId[chatId];
@@ -380,10 +437,6 @@ export default function MensajesPage() {
       ...current,
       [chatId]: true,
     }));
-
-    const viewport = messageViewportRef.current;
-    const previousScrollHeight = viewport?.scrollHeight ?? 0;
-    const previousScrollTop = viewport?.scrollTop ?? 0;
 
     try {
       const response = await readChatMessages(chatId, {
@@ -402,12 +455,6 @@ export default function MensajesPage() {
         ...current,
         [chatId]: response.data.nextCursor,
       }));
-
-      requestAnimationFrame(() => {
-        if (!viewport) return;
-        const nextScrollHeight = viewport.scrollHeight;
-        viewport.scrollTop = nextScrollHeight - previousScrollHeight + previousScrollTop;
-      });
     } finally {
       setLoadingOlderByChatId((current) => ({
         ...current,
@@ -436,7 +483,9 @@ export default function MensajesPage() {
         await refreshThreads(chatId);
         await loadLatestMessages(chatId, true);
 
+        pendingInitialBottomChatIdRef.current = chatId;
         setSelectedThreadId(chatId);
+        setMobileActivePanel("detail");
         setIsComposerOpen(false);
         setRecipientContacts([]);
         setContactSearchText("");
@@ -473,7 +522,9 @@ export default function MensajesPage() {
         await refreshThreads(chatId);
         await loadLatestMessages(chatId, true);
 
+        pendingInitialBottomChatIdRef.current = chatId;
         setSelectedThreadId(chatId);
+        setMobileActivePanel("detail");
         setIsComposerOpen(false);
         setRecipientContacts([]);
         setContactSearchText("");
@@ -513,7 +564,9 @@ export default function MensajesPage() {
         await refreshThreads(chatId);
         await loadLatestMessages(chatId, true);
 
+        pendingInitialBottomChatIdRef.current = chatId;
         setSelectedThreadId(chatId);
+        setMobileActivePanel("detail");
         setIsComposerOpen(false);
         setRecipientContacts([]);
         setContactSearchText("");
@@ -557,7 +610,9 @@ export default function MensajesPage() {
           await refreshThreads(chatId);
           await loadLatestMessages(chatId, true);
 
+          pendingInitialBottomChatIdRef.current = chatId;
           setSelectedThreadId(chatId);
+          setMobileActivePanel("detail");
           setDraftMessage("");
           setIsComposerOpen(false);
           setRecipientContacts([]);
@@ -614,6 +669,7 @@ export default function MensajesPage() {
       );
 
       setDraftMessage("");
+      scrollToBottom();
       await refreshThreads(selectedThreadId);
     } catch {
       setComposerError("No se pudo enviar el mensaje.");
@@ -627,6 +683,7 @@ export default function MensajesPage() {
     loadLatestMessages,
     recipientUserIds,
     refreshThreads,
+    scrollToBottom,
     selectedThreadBlockedReason,
     selectedThreadId,
   ]);
@@ -727,14 +784,181 @@ export default function MensajesPage() {
   }, [contactSearchText, currentUserId, isComposerOpen]);
 
   useEffect(() => {
-    if (isComposerOpen) return;
+    if (!selectedThreadId || isComposerOpen) {
+      return;
+    }
 
-    requestAnimationFrame(() => {
-      const viewport = messageViewportRef.current;
-      if (!viewport) return;
-      viewport.scrollTop = viewport.scrollHeight;
+    if (isMobileViewport && mobileActivePanel !== "detail") {
+      return;
+    }
+
+    if (pendingInitialBottomChatIdRef.current !== selectedThreadId) {
+      return;
+    }
+
+    if (loadingMessagesByChatId[selectedThreadId]) {
+      return;
+    }
+
+    const viewport = messageViewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    isInitializingConversationLoadRef.current = true;
+
+    const releaseId = window.setTimeout(() => {
+      isInitializingConversationLoadRef.current = false;
+      pendingInitialBottomChatIdRef.current = null;
+    }, 700);
+
+    const observer = new ResizeObserver(() => {
+      scrollToBottom();
     });
-  }, [isComposerOpen, selectedThreadId]);
+
+    observer.observe(viewport);
+    requestAnimationFrame(() => {
+      scrollToBottom();
+    });
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(releaseId);
+      isInitializingConversationLoadRef.current = false;
+    };
+  }, [
+    isComposerOpen,
+    isMobileViewport,
+    loadingMessagesByChatId,
+    mobileActivePanel,
+    selectedMessages.length,
+    selectedThreadId,
+    scrollToBottom,
+  ]);
+
+  useEffect(() => {
+    if (!(isMobileViewport && isConversationDetailMode && !isComposerOpen)) {
+      return;
+    }
+
+    if (isNearBottomRef.current) {
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
+    }
+  }, [
+    isComposerOpen,
+    isConversationDetailMode,
+    isMobileViewport,
+    mobileComposerHeight,
+    mobileDetailHeaderHeight,
+    scrollToBottom,
+  ]);
+
+  useEffect(() => {
+    const viewport = messageViewportRef.current;
+
+    if (!viewport || !selectedThread || isComposerOpen) {
+      return;
+    }
+
+    if (isMobileViewport && mobileActivePanel !== "detail") {
+      return;
+    }
+
+    const updateNearBottom = () => {
+      const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      isNearBottomRef.current = distanceFromBottom < 100;
+    };
+
+    const onScroll = () => {
+      updateNearBottom();
+
+      if (isInitializingConversationLoadRef.current) {
+        return;
+      }
+
+      if (viewport.scrollTop <= 80) {
+        loadOlderMessages(selectedThread.summary.id).catch(() => {
+          setComposerError("No se pudo cargar el historial anterior.");
+        });
+      }
+    };
+
+    updateNearBottom();
+    viewport.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      viewport.removeEventListener("scroll", onScroll);
+    };
+  }, [isComposerOpen, isMobileViewport, loadOlderMessages, mobileActivePanel, selectedThread]);
+
+  useEffect(() => {
+    adjustComposerTextareaHeight(composerTextareaRef.current);
+  }, [adjustComposerTextareaHeight, draftMessage]);
+
+  useEffect(() => {
+    const footer = composerFooterRef.current;
+
+    if (!footer) {
+      return;
+    }
+
+    const updateHeight = () => {
+      setMobileComposerHeight(footer.offsetHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(footer);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [mobileActivePanel, isComposerOpen]);
+
+  useEffect(() => {
+    const header = mobileDetailHeaderRef.current;
+
+    if (!header) {
+      return;
+    }
+
+    const updateHeight = () => {
+      setMobileDetailHeaderHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(header);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isConversationDetailMode, selectedThread?.summary.id]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+
+    const updateViewportSize = () => {
+      setIsMobileViewport(mediaQuery.matches);
+    };
+
+    updateViewportSize();
+    mediaQuery.addEventListener("change", updateViewportSize);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateViewportSize);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isGroupMembersModalOpen) {
@@ -759,25 +983,33 @@ export default function MensajesPage() {
       title="Mensajes"
       subtitle="Conversaciones privadas para colaboraciones de alto impacto."
       subtitleClassName="mt-1 text-sm text-white"
+      hideHeader={isConversationDetailMode}
+      lockDesktopScroll
     >
-      <AppCard className="overflow-hidden p-0">
-        <div className="grid min-h-[650px] border-[var(--line)] lg:grid-cols-[330px_minmax(0,1fr)]">
-          <aside className="border-r border-[var(--line)] bg-[var(--surface)]">
+      <AppCard className="-mx-4 overflow-hidden rounded-none border-x-0 p-0 sm:-mx-6 md:mx-0 md:h-full md:min-h-0 md:rounded-2xl md:border-x">
+        <div className="relative min-h-[650px] border-[var(--line)] md:h-full md:min-h-0 md:max-h-none md:overflow-hidden">
+          <div
+            className={`flex min-h-[650px] w-[200%] transition-transform duration-300 ease-out md:h-full md:min-h-0 md:overflow-hidden lg:min-h-0 lg:grid lg:w-full lg:translate-x-0 lg:grid-cols-[330px_minmax(0,1fr)] ${
+              mobileActivePanel === "detail" ? "-translate-x-1/2" : "translate-x-0"
+            }`}
+          >
+          <aside className="w-1/2 border-r border-[var(--line)] bg-[var(--surface)] md:flex md:min-h-0 md:flex-col md:overflow-hidden lg:w-auto">
             <div className="border-b border-[var(--line)] p-4">
               <button
                 type="button"
                 onClick={() => {
                   setIsComposerOpen(true);
+                  setMobileActivePanel("detail");
                   setComposerError(null);
                   setDraftMessage("");
                 }}
                 className="inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-4 py-2.5 text-sm font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)]"
               >
-                Nuevo mensaje
+                Nueva conversación
               </button>
             </div>
 
-            <div className="max-h-[560px] overflow-y-auto">
+            <div className="max-h-[560px] overflow-y-auto md:max-h-none md:min-h-0 md:flex-1">
               {isLoadingThreads ? (
                 <div className="p-4 text-sm text-[var(--text-secondary)]">Cargando conversaciones...</div>
               ) : null}
@@ -793,6 +1025,8 @@ export default function MensajesPage() {
                     type="button"
                     onClick={() => {
                       setIsComposerOpen(false);
+                      setMobileActivePanel("detail");
+                      pendingInitialBottomChatIdRef.current = thread.summary.id;
                       setSelectedThreadId(thread.summary.id);
                       setComposerError(null);
 
@@ -846,12 +1080,32 @@ export default function MensajesPage() {
             </div>
           </aside>
 
-          <section className="flex min-h-[650px] flex-col bg-[var(--surface)]">
+          <section
+            className="flex min-h-[650px] w-1/2 flex-col bg-[var(--surface)] pb-24 md:min-h-0 md:overflow-hidden md:pb-0 lg:w-auto"
+            style={{
+              paddingTop: `${conversationSectionTopOffset}px`,
+            }}
+          >
             {isComposerOpen ? (
               <>
-                <header className="border-b border-[var(--line)] px-5 py-4">
+                <header className="sticky top-0 z-10 hidden border-b border-[var(--line)] bg-[var(--surface)] px-5 py-4 md:block">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-xl font-semibold text-[var(--text-primary)]">Nuevo mensaje</h2>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsComposerOpen(false);
+                          setMobileActivePanel("list");
+                          setComposerError(null);
+                          setDraftMessage("");
+                        }}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
+                        aria-label="Volver a conversaciones"
+                      >
+                        ←
+                      </button>
+                      <h2 className="text-xl font-semibold text-[var(--text-primary)]">Nueva conversación</h2>
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
@@ -862,7 +1116,7 @@ export default function MensajesPage() {
                       disabled={isSending}
                       className="rounded-full bg-[var(--brand-500)] px-3.5 py-2 text-xs font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {isSending ? "Confirmando..." : "Confirmar chat/grupo"}
+                      {isSending ? "Confirmando..." : "Confirmar"}
                     </button>
                   </div>
                 </header>
@@ -921,9 +1175,23 @@ export default function MensajesPage() {
                       const initials = getTwoInitials({ fullName: contact.fullName });
 
                       return (
-                        <div
+                        <button
                           key={contact.userId}
-                          className="flex items-center justify-between gap-3 border-b border-[var(--line)] pb-2"
+                          type="button"
+                          onClick={() => {
+                            setRecipientContacts((current) => {
+                              if (current.some((item) => item.userId === contact.userId)) {
+                                return current.filter((item) => item.userId !== contact.userId);
+                              }
+
+                              return [...current, contact];
+                            });
+                          }}
+                          className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                            selected
+                              ? "border-[var(--brand-700)] bg-[var(--brand-100)]"
+                              : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--brand-300)] hover:bg-[var(--surface-2)]"
+                          }`}
                         >
                           <div className="flex min-w-0 items-center gap-3">
                             <UserAvatar
@@ -940,27 +1208,7 @@ export default function MensajesPage() {
                               <p className="truncate text-sm text-[var(--text-secondary)]">{contact.roleLine}</p>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRecipientContacts((current) => {
-                                if (current.some((item) => item.userId === contact.userId)) {
-                                  return current.filter((item) => item.userId !== contact.userId);
-                                }
-
-                                return [...current, contact];
-                              });
-                            }}
-                            className={`h-8 w-8 rounded-full border text-lg font-medium transition ${
-                              selected
-                                ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
-                                : "border-[var(--line)] text-[var(--text-secondary)] hover:border-[var(--brand-300)]"
-                            }`}
-                            aria-label={selected ? "Quitar contacto" : "Agregar contacto"}
-                          >
-                            {selected ? "-" : "+"}
-                          </button>
-                        </div>
+                        </button>
                       );
                     })}
 
@@ -976,47 +1224,64 @@ export default function MensajesPage() {
               </>
             ) : selectedThread ? (
               <>
-                <header className="border-b border-[var(--line)] px-5 py-4">
+                <header className="sticky top-0 z-10 hidden border-b border-[var(--line)] bg-[var(--surface)] px-5 py-4 md:block">
                   {selectedThread.detail.type === "GROUP" ? (
-                    <button
-                      type="button"
-                      onClick={() => setIsGroupMembersModalOpen(true)}
-                      className="w-full rounded-xl p-1 text-left outline-none transition hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-300)_45%,transparent)]"
-                      aria-label="Ver miembros del grupo"
-                    >
-                      <p className="text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
-                      <p
-                        className="truncate text-sm text-[var(--text-secondary)]"
-                        title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setMobileActivePanel("list")}
+                        className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
+                        aria-label="Volver a conversaciones"
                       >
-                        {selectedThreadGroupMembersSummary?.previewText ?? "Sin miembros"}
-                      </p>
-                    </button>
+                        ←
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsGroupMembersModalOpen(true)}
+                        className="w-full rounded-xl p-1 text-left outline-none transition hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-300)_45%,transparent)]"
+                        aria-label="Ver miembros del grupo"
+                      >
+                        <p className="text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
+                        <p
+                          className="truncate text-sm text-[var(--text-secondary)]"
+                          title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
+                        >
+                          {selectedThreadGroupMembersSummary?.previewText ?? "Sin miembros"}
+                        </p>
+                      </button>
+                    </div>
                   ) : (
-                    <>
-                      <p className="text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
-                      <p className="text-sm text-[var(--text-secondary)]">{selectedThread.roleLine}</p>
-                    </>
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setMobileActivePanel("list")}
+                        className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
+                        aria-label="Volver a conversaciones"
+                      >
+                        ←
+                      </button>
+                      <div className="min-w-0">
+                        <p className="truncate text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
+                        <p className="truncate text-sm text-[var(--text-secondary)]">{selectedThread.roleLine}</p>
+                      </div>
+                    </div>
                   )}
                 </header>
 
                 <div
                   ref={messageViewportRef}
-                  onScroll={(event) => {
-                    const viewport = event.currentTarget;
-                    if (viewport.scrollTop <= 80) {
-                      loadOlderMessages(selectedThread.summary.id).catch(() => {
-                        setComposerError("No se pudo cargar el historial anterior.");
-                      });
-                    }
+                  className="flex-1 overflow-y-auto px-5 md:min-h-0"
+                  style={{
+                    paddingTop: "10px",
+                    paddingBottom: `${conversationBottomInset}px`,
+                    marginBottom: isMobileViewport ? "10px" : "0px",
                   }}
-                  className="flex-1 overflow-y-auto px-5 py-4"
                 >
                   {loadingOlderByChatId[selectedThread.summary.id] ? (
                     <div className="mb-3 text-center text-xs text-[var(--text-soft)]">Cargando mensajes anteriores...</div>
                   ) : null}
 
-                  <div className="space-y-3">
+                  <div className="flex min-h-full flex-col justify-end gap-3">
                     {selectedMessages.map((message) => {
                       const isMine = message.senderUserId === currentUserId;
                       const showSenderName = selectedThread.detail.type === "GROUP";
@@ -1071,50 +1336,120 @@ export default function MensajesPage() {
                 </div>
               </>
             ) : (
-              <div className="flex flex-1 items-center justify-center px-5 text-sm text-[var(--text-secondary)]">
-                Selecciona una conversacion para empezar.
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 px-5 text-center text-sm text-[var(--text-secondary)]">
+                <p>Selecciona una conversacion para empezar.</p>
+                <button
+                  type="button"
+                  onClick={() => setMobileActivePanel("list")}
+                  className="rounded-full border border-[var(--line)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
+                >
+                  Volver a la lista
+                </button>
               </div>
             )}
 
-            <footer className="border-t border-[var(--line)] p-3 sm:p-4">
-              {composerError ? (
-                <p className="mb-2 text-xs font-medium text-[var(--danger-500)]">{composerError}</p>
-              ) : null}
-
-              <div
-                className="flex gap-2"
-                title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
-              >
-                <input
-                  disabled={isSelectedThreadComposerBlocked}
-                  value={draftMessage}
-                  onChange={(event) => setDraftMessage(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      onSend();
-                    }
-                  }}
-                  title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
-                  placeholder={selectedThreadBlockedReason ?? "Escribir un mensaje..."}
-                  className="w-full rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-300)_35%,transparent)]"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSend().catch(() => {
-                      setComposerError("No se pudo completar el envio.");
-                    });
-                  }}
-                  disabled={isSending || isSelectedThreadComposerBlocked}
-                  title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
-                  className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-sm font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {isSending ? "Enviando..." : "Enviar"}
-                </button>
-              </div>
-            </footer>
           </section>
+          </div>
+
+          {isConversationDetailMode ? (
+            <header
+              ref={mobileDetailHeaderRef}
+              className="fixed inset-x-0 top-16 z-40 border-y border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 md:hidden"
+            >
+              {selectedThread?.detail.type === "GROUP" ? (
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMobileActivePanel("list")}
+                    className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)]"
+                    aria-label="Volver a conversaciones"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsGroupMembersModalOpen(true)}
+                    className="w-full rounded-xl px-1 py-0.5 text-left outline-none transition hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-300)_45%,transparent)]"
+                    aria-label="Ver miembros del grupo"
+                  >
+                    <p className="text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? "Chat"}</p>
+                    <p
+                      className="truncate text-[10px] text-[var(--text-secondary)]"
+                      title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
+                    >
+                      {selectedThreadGroupMembersSummary?.previewText ?? "Sin miembros"}
+                    </p>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMobileActivePanel("list")}
+                    className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)]"
+                    aria-label="Volver a conversaciones"
+                  >
+                    ←
+                  </button>
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? "Chat"}</p>
+                    <p className="truncate text-[10px] text-[var(--text-secondary)]">{selectedThread?.roleLine ?? ""}</p>
+                  </div>
+                </div>
+              )}
+            </header>
+          ) : null}
+
+          <footer
+            ref={composerFooterRef}
+            className={`z-20 border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[0_6px_18px_rgba(0,0,0,0.14)] sm:p-4 md:absolute md:bottom-0 md:left-[330px] md:right-0 md:z-10 md:border-x-0 md:border-b-0 md:shadow-none ${
+              mobileActivePanel === "detail"
+                ? "fixed inset-x-0 bottom-[calc(6.2rem+env(safe-area-inset-bottom))] border-x-0"
+                : "hidden md:block"
+            }`}
+          >
+            {composerError ? (
+              <p className="mb-2 text-xs font-medium text-[var(--danger-500)]">{composerError}</p>
+            ) : null}
+
+            <div
+              className="flex items-end gap-2"
+              title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
+            >
+              <textarea
+                ref={composerTextareaRef}
+                disabled={isSelectedThreadComposerBlocked}
+                value={draftMessage}
+                onChange={(event) => {
+                  setDraftMessage(event.target.value);
+                  adjustComposerTextareaHeight(event.currentTarget);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    onSend();
+                  }
+                }}
+                title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
+                placeholder={selectedThreadBlockedReason ?? "Escribir un mensaje..."}
+                rows={1}
+                className="w-full resize-none rounded-3xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-300)_35%,transparent)]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  onSend().catch(() => {
+                    setComposerError("No se pudo completar el envio.");
+                  });
+                }}
+                disabled={isSending || isSelectedThreadComposerBlocked}
+                title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
+                className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-sm font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isSending ? "Enviando..." : "Enviar"}
+              </button>
+            </div>
+          </footer>
         </div>
 
         {isTitleModalOpen ? (
