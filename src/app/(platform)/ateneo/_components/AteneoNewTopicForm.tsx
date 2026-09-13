@@ -110,6 +110,10 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     );
   }, [groupOptions, selectedGroupId]);
 
+  const getGroupOptionLabel = (group: TopicGroupOption) => {
+    return group.canCreateTopics ? group.name : `${group.name} ⚠`;
+  };
+
   useEffect(() => {
     attachmentsRef.current = attachments;
   }, [attachments]);
@@ -480,7 +484,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       <div
         className={[
           "rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5",
-          !canCreateTopics || (!hasFixedGroupContext && groupOptions.length === 0)
+          !hasFixedGroupContext && groupOptions.length === 0
             ? "pointer-events-none opacity-60"
             : "",
         ].join(" ")}
@@ -518,7 +522,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     )}
                     {groupOptions.map((group) => (
                       <option key={group.id} value={group.id}>
-                        {group.name}
+                        {getGroupOptionLabel(group)}
                       </option>
                     ))}
                   </select>
@@ -526,6 +530,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     ⌄
                   </span>
                 </div>
+                <p className="text-scale-1 text-[var(--text-secondary)]">⚠ Solo admins pueden publicar en esos grupos.</p>
               </div>
             )}
           </label>
@@ -779,7 +784,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                         : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)]",
                     ].join(" ")}
                   >
-                    <span className="truncate">{group.name}</span>
+                    <span className="truncate">{getGroupOptionLabel(group)}</span>
                     {isSelected ? <span aria-hidden="true">✓</span> : null}
                   </button>
                 );
