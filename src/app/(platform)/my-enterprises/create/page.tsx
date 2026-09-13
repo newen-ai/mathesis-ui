@@ -99,10 +99,10 @@ export default function CreateEnterprisePage() {
       <main className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-7 lg:px-10 lg:py-8">
         <section className="min-w-0 border-r-0 lg:border-r lg:border-[var(--line)] lg:pr-7">
           <h1 className="text-scale-5 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-            Solicitar Mensa Empresarios
+            Solicitar Mathesis Empresarios
           </h1>
           <p className="text-scale-3 mt-2 text-[var(--text-secondary)]">
-            Contanos sobre tu empresa. Tu solicitud la revisa el equipo de Mensa Empresarios — te avisamos por notificación.
+            Contanos sobre tu empresa. Tu solicitud la revisa el equipo de Mathesis Empresarios — te avisamos por notificación.
           </p>
 
           <form className="mt-5 space-y-4" onSubmit={onSubmit} noValidate>
@@ -189,7 +189,7 @@ export default function CreateEnterprisePage() {
         <aside className="mt-6 space-y-4 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
             <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-              ¿Qué es Mensa Empresarios?
+              ¿Qué es Mathesis Empresarios?
             </h2>
             <p className="text-scale-3 mt-4 leading-relaxed text-[var(--text-primary)]">
               Membresía adicional para Miembros con empresa propia o startup. Suma acceso a un directorio de empresas verificadas y a un Feed exclusivo de networking entre empresarios Mensa.
@@ -201,7 +201,7 @@ export default function CreateEnterprisePage() {
               Cómo funciona
             </h2>
             <p className="text-scale-3 mt-4 leading-relaxed text-[var(--text-primary)]">
-              Tu solicitud la revisa el equipo de Mensa Empresarios y te avisamos por notificación cuando quede aprobada.
+              Tu solicitud la revisa el equipo de Mathesis Empresarios y te avisamos por notificación cuando quede aprobada.
             </p>
           </div>
         </aside>

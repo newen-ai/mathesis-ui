@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { NavItem } from "../_lib/constants";
 import {
   checkCompaniesAdminAccess,
+  cancelCompaniesMembershipRequest,
   createCompaniesMembershipRequest,
   getCompaniesMembershipState,
 } from "@/lib/api/admin";
@@ -464,6 +465,30 @@ export function TopBar({ navItems }: TopBarProps) {
     }
   };
 
+  const onCancelMembership = async () => {
+    if (membershipCtaMode !== "requested" || isMembershipActionPending) {
+      return;
+    }
+
+    setIsMembershipActionPending(true);
+
+    try {
+      const result = await cancelCompaniesMembershipRequest();
+
+      if (!result.success) {
+        toast.error(result.message || "No se pudo cancelar la solicitud.");
+        return;
+      }
+
+      toast.success("Solicitud cancelada.");
+      await reloadMembershipState();
+    } catch {
+      toast.error("No pudimos actualizar tu membresía en este momento.");
+    } finally {
+      setIsMembershipActionPending(false);
+    }
+  };
+
   const closeMobileDrawer = () => {
     setMobileDrawerOpen(false);
     setMobileExpandedPanel(null);
@@ -680,6 +705,7 @@ export function TopBar({ navItems }: TopBarProps) {
         membershipCtaMode={membershipCtaMode}
         isMembershipActionPending={isMembershipActionPending}
         onRequestMembership={onRequestMembership}
+        onCancelMembership={onCancelMembership}
         hasCompaniesAdminAccess={hasCompaniesAdminAccess}
         isAdmin={isAdmin}
         ateneoAdminGroups={ateneoAdminGroups}

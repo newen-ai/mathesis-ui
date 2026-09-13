@@ -25,7 +25,7 @@ export function DiscoverMathesis() {
             <path d="M14.5 20h5V11.5a1 1 0 0 0-1-1h-4" />
           </svg>
         </div>
-        <h3 className="mt-3 text-[1.45rem] font-semibold leading-tight text-[var(--heading-primary)]">Mensa Empresarios</h3>
+        <h3 className="mt-3 text-[1.45rem] font-semibold leading-tight text-[var(--heading-primary)]">Mathesis Empresarios</h3>
         <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
           Directorio de empresas de socios Mensa. Encontrá proveedores o sumá la tuya.
         </p>

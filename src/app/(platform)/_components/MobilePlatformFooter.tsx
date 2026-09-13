@@ -30,13 +30,13 @@ const nexumOverlayItems: OverlayItem[] = [
   },
   {
     label: "Bolsa de Trabajo",
-    description: "Búsquedas publicadas por Mensa Empresarios",
+    description: "Búsquedas publicadas por Mathesis Empresarios",
     icon: "briefcase",
     disabled: true,
   },
   {
     label: "Empresas",
-    description: "Directorio de Mensa Empresarios",
+    description: "Directorio de Mathesis Empresarios",
     icon: "building",
     href: "/directorio",
   },

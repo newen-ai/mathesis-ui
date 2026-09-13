@@ -1,8 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  cancelCompaniesMembershipRequest,
+  createCompaniesMembershipRequest,
+  getCompaniesMembershipState,
+} from "@/lib/api/admin";
 import { listVerifiedDirectory, type DirectoryEnterprise } from "@/lib/api/enterprise";
+import { toast } from "sonner";
 import { TopBar } from "../_components/TopBar";
+import {
+  resolveMembershipCtaMode,
+  type MembershipCtaMode,
+} from "../_components/topbar.shared";
 import { navItems } from "../_lib/constants";
 
 function initialsFromName(name: string): string {
@@ -113,6 +123,13 @@ export default function DirectorioPage() {
   const [enterprises, setEnterprises] = useState<DirectoryEnterprise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [membershipCtaMode, setMembershipCtaMode] = useState<MembershipCtaMode>("loading");
+  const [isMembershipActionPending, setIsMembershipActionPending] = useState(false);
+
+  const reloadMembershipState = async (signal?: AbortSignal) => {
+    const membershipState = await getCompaniesMembershipState(signal);
+    setMembershipCtaMode(resolveMembershipCtaMode(membershipState));
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -155,6 +172,60 @@ export default function DirectorioPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadMembershipState = async () => {
+      try {
+        await reloadMembershipState(controller.signal);
+      } catch {
+        setMembershipCtaMode("request");
+      }
+    };
+
+    void loadMembershipState();
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  const onMembershipAction = async () => {
+    if (membershipCtaMode === "go" || membershipCtaMode === "loading" || isMembershipActionPending) {
+      return;
+    }
+
+    setIsMembershipActionPending(true);
+
+    try {
+      const result =
+        membershipCtaMode === "requested"
+          ? await cancelCompaniesMembershipRequest()
+          : await createCompaniesMembershipRequest();
+
+      if (!result.success) {
+        toast.error(
+          result.message ||
+            (membershipCtaMode === "requested"
+              ? "No se pudo cancelar la solicitud."
+              : "No se pudo enviar la solicitud.")
+        );
+        return;
+      }
+
+      toast.success(
+        membershipCtaMode === "requested"
+          ? "Solicitud cancelada."
+          : "Solicitud enviada."
+      );
+      await reloadMembershipState();
+    } catch {
+      toast.error("No pudimos actualizar tu membresía en este momento.");
+    } finally {
+      setIsMembershipActionPending(false);
+    }
+  };
+
   const emptyState = useMemo(
     () => !isLoading && enterprises.length === 0 && !error,
     [enterprises.length, error, isLoading]
@@ -168,7 +239,7 @@ export default function DirectorioPage() {
         <header className="mb-6">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface)] px-3 py-1.5 text-scale-1 font-semibold uppercase tracking-[0.12em] text-[var(--navy-900)] shadow-sm">
             <span className="inline-flex h-2.5 w-2.5 rounded-sm bg-[var(--brand-500)]" aria-hidden="true" />
-            Mensa Empresarios
+            Mathesis Empresarios
           </div>
 
           <h1 className="mathesis-heading-primary text-scale-5 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
@@ -186,20 +257,40 @@ export default function DirectorioPage() {
                 ¿Sos empresario/a Mensa?
               </h2>
               <p className="mt-2 text-scale-3 text-[var(--text-primary)]">
-                Mensa Empresarios es nuevo — te contamos de qué se trata. Podés también solicitarlo desde tu perfil.
+                Mathesis Empresarios es nuevo — te contamos de qué se trata. Podés también solicitarlo desde tu perfil.
               </p>
             </div>
 
-            <button
-              type="button"
-              title="Próximamente"
-              disabled
-              aria-label="Solicitar membresía Mensa Empresarios. Próximamente."
-              className="inline-flex items-center justify-between gap-3 rounded-xl border border-[var(--line-strong)] bg-[var(--brand-500)] px-5 py-3 text-scale-2 font-semibold text-[var(--navy-900)] opacity-80 shadow-sm transition disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              <span>Solicitar membresía Empresarios</span>
-              <span aria-hidden="true" className="text-lg">×</span>
-            </button>
+            {membershipCtaMode !== "go" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void onMembershipAction();
+                }}
+                disabled={membershipCtaMode === "loading" || isMembershipActionPending}
+                aria-label={membershipCtaMode === "requested" ? "Cancelar solicitud de membresía Mathesis Empresarios" : "Solicitar membresía Mathesis Empresarios"}
+                className={`inline-flex items-center justify-between gap-3 rounded-xl border px-5 py-3 text-scale-2 font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                  membershipCtaMode === "requested"
+                    ? "border-[color:color-mix(in_srgb,var(--danger-500)_45%,var(--line-strong))] bg-[color:color-mix(in_srgb,var(--danger-500)_14%,var(--surface))] text-[var(--danger-500)]"
+                    : "border-[var(--line-strong)] bg-[var(--brand-500)] text-[var(--navy-900)]"
+                }`}
+              >
+                <span>
+                  {membershipCtaMode === "loading"
+                    ? "Cargando membresía..."
+                    : isMembershipActionPending && membershipCtaMode === "requested"
+                      ? "Cancelando solicitud..."
+                      : isMembershipActionPending
+                        ? "Enviando solicitud..."
+                        : membershipCtaMode === "requested"
+                          ? "Cancelar solicitud"
+                          : "Solicitar membresía Empresarios"}
+                </span>
+                <span aria-hidden="true" className="text-lg">
+                  {membershipCtaMode === "requested" ? "−" : "+"}
+                </span>
+              </button>
+            ) : null}
           </div>
         </section>
 

@@ -20,6 +20,7 @@ type TopBarMobileProps = {
   membershipCtaMode: MembershipCtaMode;
   isMembershipActionPending: boolean;
   onRequestMembership: () => Promise<void>;
+  onCancelMembership: () => Promise<void>;
   hasCompaniesAdminAccess: boolean;
   isAdmin: boolean;
   ateneoAdminGroups: AteneoGroup[];
@@ -71,6 +72,65 @@ function DisabledMenuRow({ label, icon }: { label: string; icon: string }) {
   );
 }
 
+function MembershipRequestActionRow({
+  membershipCtaMode,
+  isMembershipActionPending,
+  onRequestMembership,
+  onCancelMembership,
+}: {
+  membershipCtaMode: MembershipCtaMode;
+  isMembershipActionPending: boolean;
+  onRequestMembership: () => Promise<void>;
+  onCancelMembership: () => Promise<void>;
+}) {
+  if (membershipCtaMode === "go") {
+    return null;
+  }
+
+  const isRequestMode = membershipCtaMode === "request";
+  const isRequestedMode = membershipCtaMode === "requested";
+
+  const onClick = () => {
+    if (isRequestMode) {
+      void onRequestMembership();
+      return;
+    }
+
+    if (isRequestedMode) {
+      void onCancelMembership();
+    }
+  };
+
+  const label =
+    membershipCtaMode === "loading"
+      ? "Cargando membresía..."
+      : isMembershipActionPending && isRequestMode
+        ? "Enviando solicitud..."
+        : isMembershipActionPending && isRequestedMode
+          ? "Quitando solicitud..."
+          : isRequestedMode
+            ? "Solicitud pendiente · Cancelar solicitud"
+            : "Solicitar Membresía";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={membershipCtaMode === "loading" || isMembershipActionPending}
+      className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-scale-3 transition disabled:cursor-not-allowed disabled:opacity-70 ${
+        isRequestedMode
+          ? "text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_10%,transparent)]"
+          : "text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
+      }`}
+    >
+      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
+        <TopBarNavIcon icon="badge" />
+      </span>
+      {label}
+    </button>
+  );
+}
+
 function Chevron({ open }: { open: boolean }) {
   return (
     <span className="text-[var(--text-secondary)]">
@@ -96,6 +156,7 @@ export function TopBarMobile({
   membershipCtaMode,
   isMembershipActionPending,
   onRequestMembership,
+  onCancelMembership,
   hasCompaniesAdminAccess,
   isAdmin,
   ateneoAdminGroups,
@@ -204,29 +265,12 @@ export function TopBarMobile({
                       Editar Perfil Profesional
                     </Link>
 
-                    {membershipCtaMode !== "go" ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void onRequestMembership();
-                        }}
-                        disabled={membershipCtaMode !== "request" || isMembershipActionPending}
-                        className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-scale-3 ${
-                          membershipCtaMode === "request"
-                            ? "text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
-                            : "cursor-default text-[var(--text-secondary)]"
-                        }`}
-                      >
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
-                          <TopBarNavIcon icon="badge" />
-                        </span>
-                        {isMembershipActionPending
-                          ? "Enviando solicitud..."
-                          : membershipCtaMode === "requested"
-                            ? "Solicitud de membresía enviada"
-                            : "Solicitar Membresía"}
-                      </button>
-                    ) : null}
+                    <MembershipRequestActionRow
+                      membershipCtaMode={membershipCtaMode}
+                      isMembershipActionPending={isMembershipActionPending}
+                      onRequestMembership={onRequestMembership}
+                      onCancelMembership={onCancelMembership}
+                    />
                   </div>
                 ) : null}
               </article>
@@ -243,7 +287,7 @@ export function TopBarMobile({
                     </span>
                     <span>
                       <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">Empresas</span>
-                      <span className="block text-scale-2 text-[var(--text-secondary)]">Directorio de Mensa Empresarios</span>
+                      <span className="block text-scale-2 text-[var(--text-secondary)]">Directorio de Mathesis Empresarios</span>
                     </span>
                   </span>
                   <Chevron open={mobileExpandedPanel === "companies"} />
@@ -259,7 +303,7 @@ export function TopBarMobile({
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                         <TopBarNavIcon icon="doc" />
                       </span>
-                      Explorar Mensa Empresarios
+                      Explorar Mathesis Empresarios
                     </Link>
                     <Link
                       href="/my-enterprises"
@@ -271,7 +315,12 @@ export function TopBarMobile({
                       </span>
                       Gestionar mis empresas
                     </Link>
-                    <DisabledMenuRow label="Solicitar Mensa Empresarios" icon="badge" />
+                    <MembershipRequestActionRow
+                      membershipCtaMode={membershipCtaMode}
+                      isMembershipActionPending={isMembershipActionPending}
+                      onRequestMembership={onRequestMembership}
+                      onCancelMembership={onCancelMembership}
+                    />
                     <div className="mt-2 border-t border-dashed border-[var(--line)] pt-2">
                       <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--text-soft)]">ADMINISTRACIÓN</p>
                       {hasCompaniesAdminAccess ? (
@@ -283,10 +332,10 @@ export function TopBarMobile({
                           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                             <TopBarNavIcon icon="settings" />
                           </span>
-                          Admin. Mensa Empresarios
+                          Admin. Mathesis Empresarios
                         </Link>
                       ) : (
-                        <DisabledMenuRow label="Admin. Mensa Empresarios" icon="settings" />
+                        <DisabledMenuRow label="Admin. Mathesis Empresarios" icon="settings" />
                       )}
                     </div>
                   </div>
@@ -471,7 +520,7 @@ export function TopBarMobile({
                   {hasCompaniesAdminAccess ? (
                     <Link href="/admin/companies-admin" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="building" /></span>
-                      ABM Mensa Empresarios
+                      ABM Mathesis Empresarios
                     </Link>
                   ) : null}
 

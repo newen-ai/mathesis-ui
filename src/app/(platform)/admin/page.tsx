@@ -35,7 +35,7 @@ const dashboardTabs: Array<{ value: ViewMode; label: string; description: string
   },
   {
     value: "mensa",
-    label: "Mensa Empresarios",
+    label: "Mathesis Empresarios",
     description: "Administradores y solicitudes",
   },
 ];
@@ -302,7 +302,7 @@ export default function AdminPage() {
   return (
     <ModulePage
       title="Panel de administracion"
-      subtitle={`Acceso de administrador${role ? ` · ${role}` : ""}. Gestiona la whitelist y el equipo de Mensa Empresarios.`}
+      subtitle={`Acceso de administrador${role ? ` · ${role}` : ""}. Gestiona la whitelist y el equipo de Mathesis Empresarios.`}
       subtitleClassName="mt-1 text-sm text-[var(--text-primary)]"
     >
       <AppCard className="p-5">
@@ -465,7 +465,7 @@ export default function AdminPage() {
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
-                Administradores de Mensa Empresarios
+                Administradores de Mathesis Empresarios
               </h2>
               <p className="mt-1 text-sm text-[var(--text-primary)]">
                 El administrador principal de Mathesis puede habilitar o quitar permisos aquí.
@@ -497,7 +497,7 @@ export default function AdminPage() {
               <p className="text-sm text-[var(--text-secondary)]">Cargando administradores...</p>
             ) : meAdmins.length === 0 ? (
               <p className="rounded-2xl border border-[var(--navy-700)] bg-[var(--navy-900)] p-4 text-sm text-white">
-                No hay administradores de Mensa Empresarios todavía.
+                No hay administradores de Mathesis Empresarios todavía.
               </p>
             ) : (
               meAdmins.map((admin) => (
@@ -527,7 +527,7 @@ export default function AdminPage() {
           <div className="w-full max-w-2xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
-                Agregar administrador de Mensa Empresarios
+                Agregar administrador de Mathesis Empresarios
               </h3>
               <button
                 type="button"

@@ -142,7 +142,7 @@ export default function CompaniesAdminPage() {
               Acceso denegado
             </p>
             <p className="mt-2 max-w-sm text-sm text-[var(--text-secondary)]">
-              Esta sección está reservada para administradores de Mensa Empresarios. Si creés que debería tener acceso, comunicate con el administrador de Mathesis.
+              Esta sección está reservada para administradores de Mathesis Empresarios. Si creés que debería tener acceso, comunicate con el administrador de Mathesis.
             </p>
             <button
               type="button"
@@ -159,8 +159,8 @@ export default function CompaniesAdminPage() {
 
   return (
     <ModulePage
-      title="Mensa Empresarios"
-      subtitle="Dashboard del administrador de Mensa Empresarios. Revisa solicitudes y confirma acceso a la badge."
+      title="Mathesis Empresarios"
+      subtitle="Dashboard del administrador de Mathesis Empresarios. Revisa solicitudes y confirma acceso a la badge."
       subtitleClassName="mt-1 text-sm text-[var(--text-primary)]"
     >
       <AppCard className="p-5">
@@ -270,7 +270,7 @@ export default function CompaniesAdminPage() {
               <p className="text-sm text-[var(--text-secondary)]">Cargando...</p>
             ) : approvedMembers.length === 0 ? (
               <p className="rounded-2xl border border-[var(--navy-700)] bg-[var(--navy-900)] p-4 text-sm text-white">
-                Todavía no hay usuarios con badge de Mensa Empresarios.
+                Todavía no hay usuarios con badge de Mathesis Empresarios.
               </p>
             ) : (
               approvedMembers.map((member) => (
@@ -286,13 +286,13 @@ export default function CompaniesAdminPage() {
 
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-[var(--brand-500)]/90 px-2.5 py-1 text-xs font-semibold text-[var(--navy-900)]">
-                      Mensa Empresarios
+                      Mathesis Empresarios
                     </span>
                     <button
                       type="button"
                       onClick={() => void onRemoveMember(member.userId)}
                       className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-600 text-white transition hover:bg-rose-500"
-                      aria-label="Quitar acceso de Mensa Empresarios"
+                      aria-label="Quitar acceso de Mathesis Empresarios"
                       title="Quitar acceso"
                     >
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">

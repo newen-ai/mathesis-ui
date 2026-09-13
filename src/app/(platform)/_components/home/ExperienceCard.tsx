@@ -352,7 +352,7 @@ export function ExperienceCard({
                   name="lugarTrabajo"
                   value={draft.lugarTrabajo}
                   onChange={onDraftChange}
-                  placeholder="Mensa Empresarios"
+                  placeholder="Mathesis Empresarios"
                 />
               </label>
 

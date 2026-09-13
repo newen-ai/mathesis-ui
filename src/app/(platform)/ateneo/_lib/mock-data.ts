@@ -47,7 +47,7 @@ export const ateneoIconOptions: AteneoIconOption[] = [
 
 export const ateneoBadgeOptions: AteneoBadgeOption[] = [
   { id: "mensa-ar", label: "∫ Mensa AR" },
-  { id: "mensa-empresarios", label: "∫ Mensa Empresarios" },
+  { id: "mensa-empresarios", label: "∫ Mathesis Empresarios" },
 ];
 
 export const ateneoLanguageOptions = ["Español"] as const;
@@ -202,14 +202,14 @@ export const ateneoGroupsByTab: Record<AteneoTabKey, AteneoGroup[]> = {
   discover: [
     {
       id: "group-mensa-empresarios",
-      name: "Comunicación Mensa Empresarios",
+      name: "Comunicación Mathesis Empresarios",
       subtitle: "Solo visible con insignia Empresarios",
       activity: "No la tenés aún",
       rules: ["Grupo privado con validación de insignia."],
       icon: "gift",
       badges: [
         { id: "official", label: "Oficial" },
-        { id: "mensa-emp", label: "∫ Mensa Empresarios" },
+        { id: "mensa-emp", label: "∫ Mathesis Empresarios" },
       ],
       action: "menu",
       isMember: false,

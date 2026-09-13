@@ -190,7 +190,7 @@ export default function MyEnterprisesPage() {
         <aside className="mt-6 space-y-4 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
             <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-              Directorio de Mensa Empresarios
+              Directorio de Mathesis Empresarios
             </h2>
             <p className="text-scale-3 mt-4 text-[var(--text-primary)]">
               Tus empresas aprobadas ya son visibles ahí para el resto de la comunidad.
