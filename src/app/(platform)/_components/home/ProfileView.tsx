@@ -181,7 +181,6 @@ export function ProfileView() {
   const bannerDisplayRef = useRef<HTMLDivElement | null>(null);
   const bannerPreviewRef = useRef<HTMLDivElement | null>(null);
   const [activeEditSection, setActiveEditSection] = useState<"profile" | "experience" | "education" | "interests" | null>(null);
-  const [editSessionId, setEditSessionId] = useState(0);
   const [avatarEditor, setAvatarEditor] = useState<AvatarEditorState | null>(null);
   const [bannerEditor, setBannerEditor] = useState<BannerEditorState | null>(null);
   const [headerImageError, setHeaderImageError] = useState<string | null>(null);
@@ -232,7 +231,6 @@ export function ProfileView() {
   );
 
   const onStartSectionEdit = (section: "profile" | "experience" | "education" | "interests") => {
-    setEditSessionId((current) => current + 1);
     setActiveEditSection(section);
   };
 
@@ -902,7 +900,6 @@ export function ProfileView() {
 
         <section className="mathesis-fade-up-delay mathesis-profile-stack space-y-2">
           <ProfileFormCard
-            key={`profile-form-${editSessionId}`}
             profile={profile}
             canEdit={canEditProfile}
             isEditingMode={activeEditSection === "profile"}
@@ -916,7 +913,6 @@ export function ProfileView() {
             onCloseEditing={onCloseSectionEdit}
           />
           <ExperienceCard
-            key={`experience-${editSessionId}`}
             experiences={sortedExperiences}
             canEdit={canEditProfile}
             isEditingMode={activeEditSection === "experience"}
@@ -929,7 +925,6 @@ export function ProfileView() {
             onCloseEditing={onCloseSectionEdit}
           />
           <EducationCard
-            key={`education-${editSessionId}`}
             educations={sortedEducations}
             canEdit={canEditProfile}
             isEditingMode={activeEditSection === "education"}
@@ -941,7 +936,6 @@ export function ProfileView() {
             onCloseEditing={onCloseSectionEdit}
           />
           <InteresesCard
-            key={`interests-${editSessionId}`}
             profile={profile}
             canEdit={canEditProfile}
             isEditingMode={activeEditSection === "interests"}

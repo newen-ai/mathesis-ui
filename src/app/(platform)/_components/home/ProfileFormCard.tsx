@@ -41,6 +41,7 @@ export function ProfileFormCard({
     const result = await onSave(formState);
     if (result.ok) {
       setFormState(profile);
+      onCloseEditing();
     }
   };
 
@@ -140,22 +141,6 @@ export function ProfileFormCard({
                 }
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
-              URL imagen de perfil
-              <input
-                value={formState.imagenPerfilUrl}
-                onChange={(event) => onFormChange("imagenPerfilUrl", event.target.value)}
-                placeholder="https://..."
-              />
-            </label>
-            <label className="mathesis-field sm:col-span-2">
-              URL imagen de banner
-              <input
-                value={formState.imagenBannerUrl}
-                onChange={(event) => onFormChange("imagenBannerUrl", event.target.value)}
-                placeholder="https://..."
-              />
-            </label>
             <label className="mathesis-field">
               Pais
               <input
@@ -216,7 +201,7 @@ export function ProfileFormCard({
         ) : (
           <>
             <div className="sm:col-span-2 pt-1">
-              <p className="text-[0.7rem] leading-[1.55] text-[var(--text-primary)]">
+              <p className="whitespace-pre-wrap break-words text-[0.7rem] leading-[1.55] text-[var(--text-primary)]">
                 {profile.about?.trim() || "Aun no agregaste una descripcion profesional."}
               </p>
             </div>

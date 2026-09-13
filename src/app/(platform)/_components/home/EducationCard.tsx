@@ -3,26 +3,11 @@ import { AppCard } from "@/components/ui/AppCard";
 import { toDateLabel } from "../../_lib/utils/date";
 import type { Education, EducationDraft } from "../../_lib/types";
 import type { EducationOperation } from "@/lib/api/profile";
-
-const monthOptions = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
-  { value: "10", label: "Octubre" },
-  { value: "11", label: "Noviembre" },
-  { value: "12", label: "Diciembre" },
-];
-
-const today = new Date();
-const currentYear = today.getFullYear();
-const currentMonth = today.getMonth() + 1;
-const yearOptions = Array.from({ length: 70 }, (_, index) => String(currentYear - index));
+import { EditingSectionHeader, ReadOnlySectionHeader } from "./ProfileSectionHeaders";
+import { ProfileCollapsibleDescription } from "./ProfileCollapsibleDescription";
+import { ProfileSectionAddButton, ProfileSectionFinalizeRow } from "./ProfileSectionEditActions";
+import { isFutureMonthForYear } from "./ProfileSectionDateUtils";
+import { ProfileYearMonthRangeFields } from "./ProfileYearMonthRangeFields";
 
 const splitYearMonth = (value: string) => {
   if (!value || value.length < 7) {
@@ -70,22 +55,15 @@ export function EducationCard({
 }: EducationCardProps) {
   const [draft, setDraft] = useState<EducationDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [workingEducations, setWorkingEducations] = useState<Education[]>(educations);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [startMonth, setStartMonth] = useState("");
   const [startYear, setStartYear] = useState("");
   const [endMonth, setEndMonth] = useState("");
   const [endYear, setEndYear] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
 
   const isEducationManagerMode = canEdit && isEditingMode;
-
-  const isFutureMonthForYear = (monthValue: string, yearValue: string) => {
-    if (!monthValue || !yearValue) return false;
-    if (Number(yearValue) < currentYear) return false;
-    if (Number(yearValue) > currentYear) return true;
-    return Number(monthValue) > currentMonth;
-  };
 
   const pushDatePart = (
     fieldName: "fechaComienzo" | "fechaFinalizacion",
@@ -157,25 +135,23 @@ export function EducationCard({
     const { name, type, value } = event.target;
     const checked = "checked" in event.target ? event.target.checked : false;
 
-    if (name === "estudiandoActualmente") {
-      setDraft((current) => ({
-        ...current,
-        estudiandoActualmente: checked,
-        fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
-      }));
-
-      if (checked) {
-        setEndMonth("");
-        setEndYear("");
-      }
-
-      return;
-    }
-
     setDraft((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const onCurrentStudyingChange = (checked: boolean) => {
+    setDraft((current) => ({
+      ...current,
+      estudiandoActualmente: checked,
+      fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
+    }));
+
+    if (checked) {
+      setEndMonth("");
+      setEndYear("");
+    }
   };
 
   const resetDraft = () => {
@@ -191,76 +167,17 @@ export function EducationCard({
   const onCancelEditing = () => {
     onClearSaveError();
     setDraftError(null);
-    setWorkingEducations(educations);
     resetDraft();
     setIsFormOpen(false);
     onCloseEditing();
   };
 
-  const areSameEducation = (a: Education, b: Education) =>
-    a.institucion === b.institucion &&
-    a.titulo === b.titulo &&
-    a.campoEstudio === b.campoEstudio &&
-    a.fechaComienzo === b.fechaComienzo &&
-    a.fechaFinalizacion === b.fechaFinalizacion &&
-    a.estudiandoActualmente === b.estudiandoActualmente &&
-    a.descripcion === b.descripcion;
-
-  const buildOperations = (): EducationOperation[] => {
-    const originalById = new Map(educations.map((item) => [item.id, item]));
-    const stagedById = new Map(workingEducations.map((item) => [item.id, item]));
-
-    const operations: EducationOperation[] = [];
-
-    educations.forEach((item) => {
-      if (!stagedById.has(item.id)) {
-        operations.push({ action: "REMOVE", id: item.id });
-      }
-    });
-
-    workingEducations.forEach((item) => {
-      const original = originalById.get(item.id);
-
-      if (!original) {
-        operations.push({
-          action: "ADD",
-          institution: item.institucion,
-          degree: item.titulo,
-          ...(item.campoEstudio.trim() ? { fieldOfStudy: item.campoEstudio.trim() } : {}),
-          startYearMonth: item.fechaComienzo,
-          ...(item.estudiandoActualmente || !item.fechaFinalizacion
-            ? {}
-            : { endYearMonth: item.fechaFinalizacion }),
-          ...(item.descripcion.trim() ? { description: item.descripcion.trim() } : {}),
-        });
-        return;
-      }
-
-      if (!areSameEducation(original, item)) {
-        operations.push({
-          action: "EDIT",
-          id: item.id,
-          institution: item.institucion,
-          degree: item.titulo,
-          ...(item.campoEstudio.trim() ? { fieldOfStudy: item.campoEstudio.trim() } : {}),
-          startYearMonth: item.fechaComienzo,
-          ...(item.estudiandoActualmente || !item.fechaFinalizacion
-            ? {}
-            : { endYearMonth: item.fechaFinalizacion }),
-          description: item.descripcion,
-        });
-      }
-    });
-
-    return operations;
-  };
-
-  const onSubmitEducation = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmitEducation = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (
-      !draft.institucion ||
-      !draft.titulo ||
+      !draft.institucion.trim() ||
+      !draft.titulo.trim() ||
       !draft.fechaComienzo ||
       (!draft.estudiandoActualmente && !draft.fechaFinalizacion)
     ) {
@@ -268,24 +185,38 @@ export function EducationCard({
       return;
     }
 
-    setDraftError(null);
+    const payload = {
+      institution: draft.institucion.trim(),
+      degree: draft.titulo.trim(),
+      ...(draft.campoEstudio.trim() ? { fieldOfStudy: draft.campoEstudio.trim() } : {}),
+      startYearMonth: draft.fechaComienzo,
+      ...(draft.estudiandoActualmente || !draft.fechaFinalizacion
+        ? {}
+        : { endYearMonth: draft.fechaFinalizacion }),
+      ...(draft.descripcion.trim() ? { description: draft.descripcion.trim() } : {}),
+    };
 
-    if (editingId) {
-      setWorkingEducations((current) =>
-        current.map((item) => (item.id === editingId ? { ...item, ...draft } : item))
-      );
-      resetDraft();
-      setIsFormOpen(false);
+    const originalItem = editingId
+      ? educations.find((item) => item.id === editingId)
+      : null;
+
+    const operations: EducationOperation[] = editingId
+      ? originalItem?.fechaFinalizacion && draft.estudiandoActualmente
+        ? [
+            { action: "REMOVE", id: editingId },
+            { action: "ADD", ...payload },
+          ]
+        : [{ action: "EDIT", id: editingId, ...payload }]
+      : [{ action: "ADD", ...payload }];
+
+    onClearSaveError();
+    setDraftError(null);
+    const result = await onSaveOperations(operations);
+    if (!result.ok) {
+      setDraftError(result.message ?? "No pudimos guardar la formacion.");
       return;
     }
 
-    setWorkingEducations((current) => [
-      ...current,
-      {
-        id: `tmp-${crypto.randomUUID()}`,
-        ...draft,
-      },
-    ]);
     resetDraft();
     setIsFormOpen(false);
   };
@@ -293,6 +224,7 @@ export function EducationCard({
   const onStartAdding = () => {
     resetDraft();
     setDraftError(null);
+    onClearSaveError();
     setIsFormOpen(true);
   };
 
@@ -311,11 +243,27 @@ export function EducationCard({
 
     applyDateParts(item.fechaComienzo, "start");
     applyDateParts(item.fechaFinalizacion, "end");
+    onClearSaveError();
     setIsFormOpen(true);
   };
 
-  const onDeleteEducation = (id: string) => {
-    setWorkingEducations((current) => current.filter((item) => item.id !== id));
+  const onDeleteEducation = async (id: string) => {
+    if (isSaving) {
+      return;
+    }
+
+    const shouldDelete = window.confirm("¿Eliminar esta formación? Este cambio se guardará de inmediato.");
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDraftError(null);
+    onClearSaveError();
+    const result = await onSaveOperations([{ action: "REMOVE", id }]);
+    if (!result.ok) {
+      setDraftError(result.message ?? "No pudimos eliminar la formación.");
+      return;
+    }
 
     if (editingId === id) {
       resetDraft();
@@ -323,67 +271,24 @@ export function EducationCard({
     }
   };
 
-  const onSaveAll = async () => {
-    if (
-      draft.institucion.trim() ||
-      draft.titulo.trim() ||
-      draft.campoEstudio.trim() ||
-      draft.fechaComienzo ||
-      draft.fechaFinalizacion ||
-      draft.descripcion.trim()
-    ) {
-      setDraftError("Tienes una formacion en edicion. Haz click en 'Agregar formacion' o 'Actualizar formacion' antes de guardar.");
-      return;
-    }
-
-    const operations = buildOperations();
-
-    if (operations.length === 0) {
-      setDraftError("No hay cambios para guardar.");
-      return;
-    }
-
-    setDraftError(null);
-    const result = await onSaveOperations(operations);
-
-    if (result.ok) {
-      onClearSaveError();
-      resetDraft();
-      setIsFormOpen(false);
-    }
+  const toggleDescription = (id: string) => {
+    setExpandedDescriptions((current) => ({
+      ...current,
+      [id]: !current[id],
+    }));
   };
 
-  const listItems = isEducationManagerMode ? workingEducations : educations;
+  const listItems = educations;
 
   if (isEducationManagerMode) {
     return (
       <AppCard className="px-3 py-3 sm:px-4 sm:py-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onCancelEditing}
-            disabled={isSaving}
-            className="text-[1.25rem] leading-none text-[var(--navy-900)] disabled:opacity-60"
-            aria-label="Volver"
-          >
-            ‹
-          </button>
-          <h3 className="font-[family-name:var(--font-spectral)] text-[2rem] font-semibold text-[var(--navy-900)]">
-            Formacion academica
-          </h3>
-        </div>
+        <EditingSectionHeader title="Formacion academica" onBack={onCancelEditing} isSaving={isSaving} />
 
-        <button
-          type="button"
-          onClick={onStartAdding}
-          disabled={isSaving}
-          className="mt-5 inline-flex items-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-[0.95rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)] disabled:opacity-60"
-        >
-          + Agregar formacion
-        </button>
+        <ProfileSectionAddButton label="+ Agregar formacion" onClick={onStartAdding} isSaving={isSaving} />
 
         {listItems.length > 0 ? (
-          <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-white">
+          <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
             {listItems.map((item, index) => (
               <div
                 key={item.id}
@@ -427,7 +332,7 @@ export function EducationCard({
         )}
 
         {isFormOpen ? (
-          <form onSubmit={onSubmitEducation} className="mt-5 rounded-xl border border-[var(--line)] bg-white p-4">
+          <form onSubmit={onSubmitEducation} className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
             <div className="mb-3 flex items-center justify-between">
               <h4 className="text-[0.8rem] font-semibold text-[var(--navy-900)]">
                 {editingId ? "Editar formacion" : "Nueva formacion"}
@@ -476,88 +381,21 @@ export function EducationCard({
                 />
               </label>
 
-              <label className="mathesis-field sm:col-span-1">
-                Fecha de comienzo
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={startMonth}
-                    onChange={(event) => onStartMonthChange(event.target.value)}
-                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
-                  >
-                    <option value="">Mes</option>
-                    {monthOptions.map((month) => (
-                      <option
-                        key={month.value}
-                        value={month.value}
-                        disabled={isFutureMonthForYear(month.value, startYear)}
-                      >
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={startYear}
-                    onChange={(event) => onStartYearChange(event.target.value)}
-                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
-                  >
-                    <option value="">Año</option>
-                    {yearOptions.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </label>
-
-              <label className="mathesis-field sm:col-span-1">
-                Fecha de finalizacion
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={endMonth}
-                    onChange={(event) => onEndMonthChange(event.target.value)}
-                    disabled={draft.estudiandoActualmente}
-                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:bg-[var(--surface-2)] disabled:text-[var(--text-soft)]"
-                  >
-                    <option value="">Mes</option>
-                    {monthOptions.map((month) => (
-                      <option
-                        key={month.value}
-                        value={month.value}
-                        disabled={isFutureMonthForYear(month.value, endYear)}
-                      >
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <select
-                    value={endYear}
-                    onChange={(event) => onEndYearChange(event.target.value)}
-                    disabled={draft.estudiandoActualmente}
-                    className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] disabled:bg-[var(--surface-2)] disabled:text-[var(--text-soft)]"
-                  >
-                    <option value="">Año</option>
-                    {yearOptions.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </label>
-
-              <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-                <input
-                  name="estudiandoActualmente"
-                  type="checkbox"
-                  checked={draft.estudiandoActualmente}
-                  onChange={onDraftChange}
-                  className="h-4 w-4 rounded border-[var(--line)] text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
-                />
-                Actualmente estudio aqui
-              </label>
+              <ProfileYearMonthRangeFields
+                startLabel="Fecha de comienzo"
+                endLabel="Fecha de finalizacion"
+                currentLabel="Actualmente estudio aqui"
+                currentChecked={draft.estudiandoActualmente}
+                startMonth={startMonth}
+                startYear={startYear}
+                endMonth={endMonth}
+                endYear={endYear}
+                onStartMonthChange={onStartMonthChange}
+                onStartYearChange={onStartYearChange}
+                onEndMonthChange={onEndMonthChange}
+                onEndYearChange={onEndYearChange}
+                onCurrentChange={onCurrentStudyingChange}
+              />
 
               <label className="mathesis-field sm:col-span-2">
                 Descripcion (max. 300)
@@ -599,45 +437,14 @@ export function EducationCard({
           </p>
         ) : null}
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onSaveAll}
-            disabled={isSaving}
-            className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isSaving ? "Guardando..." : "Guardar"}
-          </button>
-          <button
-            type="button"
-            onClick={onCancelEditing}
-            disabled={isSaving}
-            className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            Descartar cambios
-          </button>
-        </div>
+        <ProfileSectionFinalizeRow onFinalize={onCancelEditing} isSaving={isSaving} />
       </AppCard>
     );
   }
 
   return (
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
-      <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-        <h3 className="font-[family-name:var(--font-spectral)] text-[0.85rem] font-bold text-[var(--navy-900)]">
-          Formacion academica
-        </h3>
-        {canEdit ? (
-          <button
-            type="button"
-            onClick={onStartEditing}
-            className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] px-3 py-1 text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)]"
-          >
-            <span aria-hidden="true">✎</span>
-            Editar
-          </button>
-        ) : null}
-      </div>
+      <ReadOnlySectionHeader title="Formacion academica" canEdit={canEdit} onEdit={onStartEditing} />
 
       <div className="mt-2 border-t border-[var(--line)] pt-2">
         {listItems.length === 0 ? (
@@ -657,9 +464,11 @@ export function EducationCard({
                   {item.campoEstudio ? (
                     <p className="mt-1 text-[0.64rem] text-[var(--text-secondary)]">{item.campoEstudio}</p>
                   ) : null}
-                  {item.descripcion ? (
-                    <p className="mt-2 text-[0.64rem] leading-[1.5] text-[var(--text-secondary)]">{item.descripcion}</p>
-                  ) : null}
+                  <ProfileCollapsibleDescription
+                    text={item.descripcion}
+                    isExpanded={Boolean(expandedDescriptions[item.id])}
+                    onToggle={() => toggleDescription(item.id)}
+                  />
                 </div>
               </li>
             ))}
