@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { toast } from "sonner";
-import { ateneoBadgeOptions, ateneoIconOptions, ateneoLanguageOptions, ateneoPermissionOptions, type AteneoPermissionMode } from "../_lib/mock-data";
+import { MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
+import { ateneoBadgeOptions, ateneoIconOptions, ateneoLanguageOptions, ateneoPermissionOptions, type AteneoPermissionMode } from "../_lib/ateneo-form-constants";
 
 type GroupFormValues = {
   iconId: string;
@@ -181,6 +183,41 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
         badges: hasBadge ? current.badges.filter((value) => value !== badgeId) : [...current.badges, badgeId]
       };
     });
+  };
+
+  const renderBadgeOptionLabel = (badge: (typeof ateneoBadgeOptions)[number]) => {
+    if (badge.id === "mensa_argentina") {
+      return (
+        <span className="inline-flex items-center gap-2">
+          <span
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[var(--surface)]"
+            aria-hidden="true"
+          >
+            <Image
+              src={MENSA_ARGENTINA_LOGO_SRC}
+              alt=""
+              width={14}
+              height={14}
+              className="h-[14px] w-[14px] object-contain"
+            />
+          </span>
+          <span>{badge.label}</span>
+        </span>
+      );
+    }
+
+    if (badge.id === "mensa_empresarios") {
+      return (
+        <span className="inline-flex items-center gap-2">
+          <span className="font-[family-name:var(--font-spectral)] text-[1rem] leading-none text-[var(--brand-500)]" aria-hidden="true">
+            ∫
+          </span>
+          <span>{badge.label}</span>
+        </span>
+      );
+    }
+
+    return <span>{badge.label}</span>;
   };
 
   const submitForm = async (event: FormEvent<HTMLFormElement>) => {
@@ -417,7 +454,7 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
                           onChange={() => toggleBadge(badge.id)}
                           className="h-4 w-4 rounded border-[var(--line-strong)] accent-[var(--brand-500)]"
                         />
-                        <span>{badge.label}</span>
+                        {renderBadgeOptionLabel(badge)}
                       </label>
                     );
                   })}

@@ -11,11 +11,19 @@ import { AteneoGroupRightColumn } from "../../_components/AteneoGroupRightColumn
 
 type AteneoGroupPageProps = {
   params: Promise<{ groupId: string }>;
+  searchParams?: Promise<{ redirectTopicId?: string | string[] }>;
 };
 
-export default async function AteneoGroupPage({ params }: AteneoGroupPageProps) {
+export default async function AteneoGroupPage({ params, searchParams }: AteneoGroupPageProps) {
   const { groupId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const decodedGroupId = decodeURIComponent(groupId);
+  const redirectTopicIdRaw = resolvedSearchParams?.redirectTopicId;
+  const redirectTopicId = typeof redirectTopicIdRaw === "string"
+    ? redirectTopicIdRaw
+    : Array.isArray(redirectTopicIdRaw)
+      ? redirectTopicIdRaw[0]
+      : undefined;
 
   return (
     <div className="mathesis-shell min-h-screen bg-[var(--background)]">
@@ -37,7 +45,7 @@ export default async function AteneoGroupPage({ params }: AteneoGroupPageProps) 
                 </Link>
               }
             >
-              <AteneoGroupFeed groupId={decodedGroupId} />
+              <AteneoGroupFeed groupId={decodedGroupId} redirectTopicId={redirectTopicId} />
             </AteneoGroupMiddleColumn>
           }
           right={

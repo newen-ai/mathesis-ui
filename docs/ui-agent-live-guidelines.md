@@ -233,6 +233,15 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Follow-up refinement 3: reduce mobile conversation header container padding (`px`/`py`) for tighter title block spacing.
 - Overflow menus should close when pressing `Esc`.
 
+## Current Active UI Directions (2026-09-14 Ateneo Badge Picker Marker)
+- In Ateneo group badge-selection checkboxes, `Mensa AR` must use the Mensa Argentina logo marker (from shared assets) instead of the integral-sign glyph.
+- In the same checkbox rows, `Mathesis Empresarios` keeps the Mathesis integral marker (`∫`) before the label.
+- Keep other badge labels text-based unless explicitly specified otherwise.
+
+## Current Active UI Directions (2026-09-14 Ateneo Discovery Join Return)
+- If a non-member opens a direct topic URL in a group they are not part of, redirect to that group page with a topic return pointer (`redirectTopicId`).
+- After joining from that redirected group page, return users automatically to the originally requested topic route.
+
 ## Current Active UI Directions (2026-09-10 Ateneo New Topic Image Preview)
 - In the Ateneo new-topic composer, image attachments must render as inline previews before publish.
 - Clicking any previewed image must open a centered modal carousel over a dim backdrop.

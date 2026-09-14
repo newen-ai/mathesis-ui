@@ -134,8 +134,18 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
       setIsLoading(true);
 
       try {
-        const [groupRes, topicRes, commentsRes] = await Promise.all([
-          getAteneoGroup(groupId),
+        const groupRes = await getAteneoGroup(groupId);
+
+        if (cancelled) return;
+
+        if (!groupRes.data.group.isMember) {
+          router.replace(
+            `/ateneo/groups/${encodeURIComponent(groupId)}?redirectTopicId=${encodeURIComponent(topicId)}`
+          );
+          return;
+        }
+
+        const [topicRes, commentsRes] = await Promise.all([
           getAteneoTopic(groupId, topicId),
           listAteneoTopicComments(groupId, topicId)
         ]);
@@ -176,7 +186,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     return () => {
       cancelled = true;
     };
-  }, [groupId, topicId]);
+  }, [groupId, router, topicId]);
 
   const isPostValued = topic?.currentUserReactionValue === "value";
   const canDeleteTopic = Boolean(topic && sessionUserId && topic.author.userId === sessionUserId);

@@ -78,6 +78,7 @@ export function AteneoGroupEditPanel({ groupId }: AteneoGroupEditPanelProps) {
         name: group.name,
         description: group.description ?? "",
         rules: rules.join("\n"),
+        badges: group.requiredBadgeSlugs ?? [],
         createTopicsMode: group.createTopicsMode,
         commentsMode: group.commentsMode,
         isOfficialGroup: group.isOfficial
@@ -94,6 +95,7 @@ export function AteneoGroupEditPanel({ groupId }: AteneoGroupEditPanelProps) {
           icon: values.iconId,
           isOfficial: values.isOfficialGroup,
           rules: rulesList,
+          requiredBadgeSlugs: values.badges,
           createTopicsMode: values.createTopicsMode,
           commentsMode: values.commentsMode
         });

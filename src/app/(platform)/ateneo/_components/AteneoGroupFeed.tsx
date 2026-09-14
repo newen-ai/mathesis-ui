@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   getAteneoGroup,
@@ -21,6 +22,7 @@ export type AteneoGroupTopic = AteneoTopicCardTopic & {
 
 type AteneoGroupFeedProps = {
   groupId: string;
+  redirectTopicId?: string;
 };
 
 function GroupHeaderIcon() {
@@ -56,7 +58,8 @@ function mapTopic(topic: AteneoTopic): AteneoGroupTopic {
   };
 }
 
-export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
+export function AteneoGroupFeed({ groupId, redirectTopicId }: AteneoGroupFeedProps) {
+  const router = useRouter();
   const [group, setGroup] = useState<AteneoGroup | null>(null);
   const [rules, setRules] = useState<string[]>([]);
   const [topics, setTopics] = useState<AteneoGroupTopic[]>([]);
@@ -109,6 +112,14 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
     setIsJoining(true);
     try {
       await joinAteneoGroup(groupId);
+
+      if (redirectTopicId) {
+        router.push(
+          `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(redirectTopicId)}`
+        );
+        return;
+      }
+
       const [groupRes, topicsRes] = await Promise.all([
         getAteneoGroup(groupId),
         listAteneoTopics(groupId)

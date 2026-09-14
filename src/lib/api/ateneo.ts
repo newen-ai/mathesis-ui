@@ -17,6 +17,7 @@ export type AteneoGroup = {
   slug: string;
   name: string;
   description: string | null;
+  requiredBadgeSlugs: string[];
   createTopicsMode: "free" | "admins";
   commentsMode: "free" | "admins";
   subtitle: string;
@@ -229,6 +230,7 @@ export async function createAteneoGroup(
     icon: string;
     isOfficial?: boolean;
     rules?: string[];
+    requiredBadgeSlugs?: string[];
     createTopicsMode?: "free" | "admins";
     commentsMode?: "free" | "admins";
   },
@@ -306,6 +308,7 @@ export async function updateAteneoGroup(
     icon: string;
     isOfficial?: boolean;
     rules?: string[];
+    requiredBadgeSlugs?: string[];
     createTopicsMode?: "free" | "admins";
     commentsMode?: "free" | "admins";
   },
