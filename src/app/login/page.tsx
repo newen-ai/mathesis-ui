@@ -112,7 +112,7 @@ function LoginPageContent() {
 
   return (
     <>
-      <main className="flex min-h-screen flex-col bg-white font-[family-name:Arial] lg:flex-row">
+      <main className="flex min-h-[calc(100dvh-2.5rem)] flex-col bg-white font-[family-name:Arial] md:min-h-[calc(100dvh-2.75rem)] lg:flex-row">
         <section className="flex flex-1 flex-col lg:flex-row">
           {/* Panel de marca (navy): arriba en mobile, columna izquierda a pantalla completa en desktop */}
           <div className="px-6 pb-8 pt-9 text-center lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:justify-between lg:bg-[#0A2540] lg:px-12 lg:py-14 lg:text-left">
@@ -238,7 +238,7 @@ function LoginPageContent() {
               </form>
             </div>
 
-            <div className="mt-auto w-full pt-6 lg:mx-auto lg:mt-8 lg:max-w-[440px] lg:pt-0">
+            <div className="mt-auto w-full pt-4 lg:mx-auto lg:mt-8 lg:max-w-[440px] lg:pt-0">
               <div className="border-t border-[#E8E5E0] pt-4 text-center text-xs leading-relaxed text-[#666666]">
                 ¿Sos Miembro de Mensa y todavía no tenés cuenta en Mathesis?
                 <br />
@@ -270,7 +270,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-white font-[family-name:Arial]">
+        <main className="flex min-h-[calc(100dvh-2.5rem)] items-center justify-center bg-white font-[family-name:Arial] md:min-h-[calc(100dvh-2.75rem)]">
           <p className="text-center text-sm text-[#666666]">Cargando...</p>
         </main>
       }

@@ -89,11 +89,8 @@ const completedSteps = ["Verificación", "Contraseña"];
 
 export default function BienvenidaPage() {
   return (
-  <div
-    data-welcome-scroll-lock
-    className="fixed inset-x-0 top-0 bottom-10 overflow-hidden bg-[var(--surface)] text-[var(--text-primary)] md:bottom-11"
-  >
-      <main className="grid h-full w-full grid-cols-1 overflow-hidden bg-[var(--surface)] lg:grid-cols-[1.03fr_1.55fr]">
+  <div className="bg-[var(--surface)] text-[var(--text-primary)]">
+      <main className="grid min-h-[calc(100dvh-2.5rem)] w-full grid-cols-1 bg-[var(--surface)] md:min-h-[calc(100dvh-2.75rem)] lg:grid-cols-[1.03fr_1.55fr] lg:overflow-hidden">
         <section className="relative flex flex-col justify-between overflow-hidden bg-[var(--navy-900)] px-7 py-7 text-white lg:px-10 lg:py-8">
           <div className="pointer-events-none absolute right-[-4rem] top-[-4rem] h-52 w-52 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full border border-white/10" />

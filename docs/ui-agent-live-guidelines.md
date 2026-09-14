@@ -184,6 +184,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - The first welcome CTA must read `¿Qué viene a futuro?`.
 - The final welcome CTA must route the user to `/ateneo`.
 - Keep both welcome pages theme-aware using semantic tokens from `globals.css`; preserve brand navy hero areas and gold CTA emphasis.
+- On `/bienvenida/futuro`, keep the final `Empezar a explorar` CTA visually compact on mobile (avoid oversized height/text) and keep `PRÓXIMAMENTE` badges in feature cards smaller than primary action buttons.
 ## Current Active UI Directions (2026-08-27 Digital Credential)
 - Add a new entry labeled `Credencial digital` in the profile/account menu and keep the route at `/perfil/credencial`.
 - Render the credential card with a fixed, square-ish proportion by keeping height as the anchor and deriving width from the correct aspect ratio.

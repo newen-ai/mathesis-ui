@@ -268,14 +268,14 @@ html {
 }
 
 .welcome-future-shell {
-  min-height: 100dvh;
+  min-height: calc(100dvh - 2.5rem);
   background: var(--background);
 }
 
 .welcome-future-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: calc(100dvh - 2.5rem);
   background: var(--surface);
 }
 
@@ -314,6 +314,16 @@ html {
 @media (min-width: 768px) and (min-aspect-ratio: 1/1) {
   .welcome-future-shell {
     bottom: 2.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .welcome-future-shell {
+    min-height: calc(100dvh - 2.75rem);
+  }
+
+  .welcome-future-layout {
+    min-height: calc(100dvh - 2.75rem);
   }
 }
 

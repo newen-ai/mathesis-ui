@@ -40,7 +40,7 @@ export function WelcomeFinishButton() {
         type="button"
         onClick={onClick}
         disabled={isSubmitting}
-        className="flex min-h-16 w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 text-center text-[1.35rem] font-semibold text-[var(--on-brand)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
+        className="flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-center text-[1.05rem] font-semibold text-[var(--on-brand)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70 md:min-h-14 md:text-[1.15rem]"
       >
         {isSubmitting ? "Abriendo Ateneo..." : "Empezar a explorar"}
       </button>

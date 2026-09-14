@@ -128,7 +128,7 @@ function FeatureCard({
               {title}
             </h2>
             {badge ? (
-              <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-scale-1 font-bold tracking-[0.08em] text-[var(--brand-700)]">
+              <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-0.5 text-[0.68rem] font-bold tracking-[0.06em] text-[var(--brand-700)]">
                 {badge}
               </span>
             ) : null}
@@ -144,7 +144,7 @@ function FeatureCard({
 
 export default function BienvenidaFuturoPage() {
   return (
-    <div data-welcome-scroll-lock className="welcome-future-shell text-[var(--text-primary)]">
+    <div className="welcome-future-shell text-[var(--text-primary)]">
       <div className="welcome-future-layout">
         <section className="welcome-future-hero flex items-center justify-center bg-[var(--navy-900)] px-6 py-10 text-center text-white lg:px-10 lg:py-12">
           <div className="mx-auto w-full max-w-4xl">
@@ -158,8 +158,8 @@ export default function BienvenidaFuturoPage() {
           </div>
         </section>
 
-        <section className="welcome-future-content flex items-center justify-center">
-          <main className="mx-auto my-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-5 sm:px-6 lg:px-8">
+        <section className="welcome-future-content flex items-start justify-center lg:items-center">
+          <main className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-5 sm:px-6 lg:my-auto lg:px-8">
             {priorityCards.map((card) => (
               <FeatureCard key={card.title} {...card} />
             ))}

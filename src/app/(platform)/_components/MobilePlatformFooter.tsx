@@ -182,6 +182,7 @@ export function MobilePlatformFooter() {
   const pathname = usePathname();
   const router = useRouter();
   const [openOverlay, setOpenOverlay] = useState<FooterOverlayKey | null>(null);
+  const isWelcomeRoute = pathname === "/bienvenida" || pathname.startsWith("/bienvenida/");
 
   const overlayConfig = useMemo(() => {
     if (openOverlay === "nexum") {
@@ -261,6 +262,10 @@ export function MobilePlatformFooter() {
   const isCreateActive =
     pathname === "/ateneo/new-topic" ||
     /^\/ateneo\/groups\/[^/]+\/new-topic$/.test(pathname);
+
+  if (isWelcomeRoute) {
+    return null;
+  }
 
   return (
     <>
