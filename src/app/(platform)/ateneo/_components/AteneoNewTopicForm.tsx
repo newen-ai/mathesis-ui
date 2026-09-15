@@ -9,10 +9,13 @@ import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import { extractUniqueUrlsFromText } from "@/lib/utils/link-preview";
 import { createRenderableImageUrlFromBlob } from "@/lib/utils/image-preview";
+import { getAteneoTopicPublishErrorTranslation } from "@/lib/i18n/ateneo-errors";
 
 const toneOptions = ["SERIO", "RECOMENDADO", "LIBRE"] as const;
 const TOPIC_TITLE_LIMIT = 100;
 const TOPIC_DESCRIPTION_LIMIT = 1000;
+const MAX_ATTACHMENTS_PER_TOPIC = 5;
+const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
 
 type AteneoNewTopicFormProps = {
   groupId?: string;
@@ -38,6 +41,10 @@ type TopicImagePreviewItem = {
 
 const IMAGE_ATTACHMENT_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/heic", "image/heif"]);
 const PDF_ATTACHMENT_MIME_TYPE = "application/pdf";
+
+function formatMaxSizeLabel(bytes: number): string {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
 
 export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const preferredGroupId = groupId?.trim() ?? "";
@@ -135,8 +142,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const registerAttachments = async (files: FileList | File[] | null, kind: TopicAttachmentDraft["kind"]) => {
     if (!files) return;
 
-    const allowedFiles = Array.from(files)
-      .filter((file) => {
+    const allowedFiles = Array.from(files).filter((file) => {
         if (kind === "image") {
           return IMAGE_ATTACHMENT_MIME_TYPES.has(file.type);
         }
@@ -144,13 +150,28 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         return file.type === PDF_ATTACHMENT_MIME_TYPE;
       });
 
-    if (allowedFiles.length === 0) {
+    const rejectedByType = Array.from(files).length - allowedFiles.length;
+    if (rejectedByType > 0) {
+      toast.info(kind === "image" ? "Solo se permiten imágenes JPG, PNG o HEIC/HEIF." : "Solo se permiten archivos PDF.");
+    }
+
+    const oversizedFiles = allowedFiles.filter((file) => file.size > MAX_ATTACHMENT_SIZE_BYTES);
+    if (oversizedFiles.length > 0) {
+      const firstOversizedFile = oversizedFiles[0];
+      toast.info(
+        `El archivo ${firstOversizedFile.name} es demasiado grande. Máximo ${formatMaxSizeLabel(MAX_ATTACHMENT_SIZE_BYTES)} por archivo.`
+      );
+    }
+
+    const acceptedFiles = allowedFiles.filter((file) => file.size <= MAX_ATTACHMENT_SIZE_BYTES);
+
+    if (acceptedFiles.length === 0) {
       toast.info(kind === "image" ? "Elegí una imagen JPG, PNG o HEIC." : "Elegí un archivo PDF.");
       return;
     }
 
     const nextAttachments = await Promise.all(
-      allowedFiles.map(async (file) => {
+      acceptedFiles.map(async (file) => {
         if (kind === "image") {
           const previewUrl = await buildImagePreviewUrl(file);
           return { file, kind, previewUrl };
@@ -160,15 +181,15 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       })
     );
 
-    const droppedCount = Math.max(0, attachments.length + nextAttachments.length - 5);
+    const droppedCount = Math.max(0, attachments.length + nextAttachments.length - MAX_ATTACHMENTS_PER_TOPIC);
     if (droppedCount > 0) {
-      toast.info("Máximo 5 adjuntos por tema.");
+      toast.info("Máximo 5 adjuntos por tema. Quitá alguno para sumar otro.");
     }
 
     setAttachments((current) => {
       const merged = [...current, ...nextAttachments];
-      const kept = merged.slice(0, 5);
-      const dropped = merged.slice(5);
+      const kept = merged.slice(0, MAX_ATTACHMENTS_PER_TOPIC);
+      const dropped = merged.slice(MAX_ATTACHMENTS_PER_TOPIC);
       dropped.forEach((attachment) => {
         if (attachment.previewUrl) {
           URL.revokeObjectURL(attachment.previewUrl);
@@ -338,8 +359,14 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       setAttachments([]);
       setActivePreviewImageIndex(null);
       router.push(`/ateneo/groups/${encodeURIComponent(targetGroupId)}/topics/${encodeURIComponent(response.data.topic.id)}`);
-    } catch {
-      toast.error("No pudimos publicar el tema.");
+    } catch (error) {
+      console.error("ateneo_topic_publish_failed", {
+        groupId: targetGroupId,
+        attachmentsCount: attachments.length,
+        attachmentNames: attachments.map((attachment) => attachment.file.name),
+        error
+      });
+      toast.error(getAteneoTopicPublishErrorTranslation(error));
     } finally {
       setIsSubmitting(false);
     }

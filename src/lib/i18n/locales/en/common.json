@@ -9,5 +9,16 @@
       "imagesOnly": "Only image files are allowed as bug report screenshots.",
       "default": "We could not send the bug report right now."
     }
+  },
+  "ateneo": {
+    "errors": {
+      "missingApiBaseUrl": "Server connection is not configured in this environment.",
+      "attachmentTooLarge": "One of the files is too large. Maximum: {{maxSize}} per file.",
+      "tooManyAttachments": "You can attach up to 5 files per topic. Remove some files and try again.",
+      "unsupportedAttachmentType": "Only JPG/PNG/HEIC/HEIF images and PDF files are allowed.",
+      "authRequired": "Your session expired or you do not have permission. Please sign in again and retry.",
+      "connectionFailed": "We could not connect to the server. Check your connection and try again.",
+      "publishFailed": "We could not publish the topic. Please try again in a few seconds."
+    }
   }
 }
