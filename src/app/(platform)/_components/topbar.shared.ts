@@ -81,6 +81,7 @@ const desktopAgoraMenuItems: TopBarMenuItem[] = [
 
 const desktopTopMenuItems: TopBarMenuItem[] = [
   { label: "Mi Perfil", href: "/perfil", icon: "user" },
+  { label: "Credencial digital", href: "/perfil/credencial", icon: "badge" },
   { label: "Configuración", href: "/account/configuration", icon: "settings" },
 ];
 
