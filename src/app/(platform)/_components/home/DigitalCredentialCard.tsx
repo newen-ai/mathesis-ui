@@ -3,15 +3,59 @@
 import { useEffect, useMemo, useState } from "react";
 import QRCode from "react-qr-code";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
+import { BRAND_LOGO_SRC, MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
 
 const CREDENTIAL_TTL_MS = 5 * 60 * 1000;
 
 type BadgePreview = {
+  id: string;
   label: string;
+  criteria: string;
+  logoSrc?: string;
+  logoAlt?: string;
   active: boolean;
 };
 
 type CardView = "front" | "back" | "qr";
+
+type CredentialBadgeCriterion = {
+  id: string;
+  label: string;
+  criteria: string;
+  aliases: string[];
+  logoSrc?: string;
+  logoAlt?: string;
+};
+
+const CREDENTIAL_BADGE_CRITERIA: CredentialBadgeCriterion[] = [
+  {
+    id: "mensa-argentina",
+    label: "Mensa Argentina",
+    criteria: "Miembro activo de Mensa Argentina",
+    aliases: ["mensa_argentina", "mensa_ar"],
+    logoSrc: MENSA_ARGENTINA_LOGO_SRC,
+    logoAlt: "Logo Mensa Argentina",
+  },
+  {
+    id: "mathesis-empresarios",
+    label: "Mathesis Empresarios",
+    criteria: "Membresía de Empresarios aprobada",
+    aliases: ["mensa_empresarios", "mathesis_empresarios"],
+    logoSrc: BRAND_LOGO_SRC,
+    logoAlt: "Logo Mathesis",
+  },
+];
+
+function normalizeBadgeSlug(slug: string) {
+  return slug.trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function formatBadgeLabel(slug: string) {
+  const normalized = slug.replace(/_/g, " ").trim();
+  return normalized
+    ? normalized.replace(/\b\w/g, (char) => char.toUpperCase())
+    : "Insignia activa";
+}
 
 export function DigitalCredentialCard() {
   const { badges, userDisplayName } = useProfessionalProfile();
@@ -61,26 +105,51 @@ export function DigitalCredentialCard() {
   }, []);
 
   const badgePreviews = useMemo<BadgePreview[]>(() => {
-    const fallbackItems = [
-      "miembro_verificado",
-      "fundadora_2026",
-      "racha_activa",
-    ];
+    const normalizedUserBadges = new Set(
+      badges.map((badgeSlug) => normalizeBadgeSlug(String(badgeSlug)))
+    );
 
-    const items = badges.length > 0 ? badges.slice(0, 3) : fallbackItems;
+    const configuredCriteria = CREDENTIAL_BADGE_CRITERIA.map((criterion) => ({
+      id: criterion.id,
+      label: criterion.label,
+      criteria: criterion.criteria,
+      logoSrc: criterion.logoSrc,
+      logoAlt: criterion.logoAlt,
+      active: criterion.aliases.some((alias) => normalizedUserBadges.has(alias)),
+    }));
 
-    return items.map((badgeSlug) => {
-      const normalized = String(badgeSlug).replace(/_/g, " ").trim();
-      const label = normalized
-        ? normalized.replace(/\b\w/g, (char) => char.toUpperCase())
-        : "Miembro verificado";
+    const configuredAliases = new Set(
+      CREDENTIAL_BADGE_CRITERIA.flatMap((criterion) => criterion.aliases)
+    );
 
-      return {
-        label,
-        active: !String(badgeSlug).toLowerCase().includes("racha") && !String(badgeSlug).toLowerCase().includes("inactive"),
-      };
-    });
+    const extraOwnedBadges = badges
+      .map((badgeSlug) => normalizeBadgeSlug(String(badgeSlug)))
+      .filter((badgeSlug) => !configuredAliases.has(badgeSlug))
+      .map((badgeSlug) => ({
+        id: `extra-${badgeSlug}`,
+        label: formatBadgeLabel(badgeSlug),
+        criteria: "Insignia activa en tu perfil",
+        active: true,
+      }));
+
+    return [...configuredCriteria, ...extraOwnedBadges].slice(0, 4);
   }, [badges]);
+
+  const frontMembershipChip = useMemo(() => {
+    const primaryActiveBadge = badgePreviews.find((badge) => badge.active);
+    if (primaryActiveBadge) {
+      return primaryActiveBadge;
+    }
+
+    return {
+      id: "fallback-membership",
+      label: "Mensa Argentina",
+      criteria: "Miembro de Mensa Argentina",
+      logoSrc: MENSA_ARGENTINA_LOGO_SRC,
+      logoAlt: "Logo Mensa Argentina",
+      active: true,
+    } as BadgePreview;
+  }, [badgePreviews]);
 
   const fullName = userDisplayName || "María López";
 
@@ -155,10 +224,18 @@ export function DigitalCredentialCard() {
                   </h1>
 
                   <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.12)] px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-white">
-                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand-500)] text-[0.5rem] font-black text-[var(--navy-900)]">
-                      M
-                    </span>
-                    Miembro de Mensa Argentina
+                    {frontMembershipChip.logoSrc ? (
+                      <span
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 rounded-full bg-contain bg-center bg-no-repeat"
+                        style={{ backgroundImage: `url(${frontMembershipChip.logoSrc})` }}
+                      />
+                    ) : (
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--brand-500)] text-[0.5rem] font-black text-[var(--navy-900)]">
+                        ∫
+                      </span>
+                    )}
+                    {frontMembershipChip.criteria}
                   </div>
                 </div>
 
@@ -206,23 +283,37 @@ export function DigitalCredentialCard() {
                   <div className="mt-4 flex flex-wrap gap-2">
                     {badgePreviews.map((badge) => (
                       <div
-                        key={badge.label}
+                        key={badge.id}
                         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-left ${
                           badge.active
                             ? "border-[#d4af66] bg-[#12243d] text-white shadow-[inset_0_0_0_1px_rgba(212,175,102,0.18)]"
                             : "border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] opacity-75"
                         }`}
                       >
-                        <span
-                          className={`flex h-4 w-4 items-center justify-center rounded-full text-[0.52rem] font-black ${
-                            badge.active ? "bg-[#d4af66] text-[#102033]" : "bg-[var(--surface-muted)] text-[var(--text-secondary)]"
-                          }`}
-                        >
-                          ∫
-                        </span>
-                        <span className="text-[0.56rem] font-semibold uppercase tracking-[0.08em] leading-none">
-                          {badge.label}
-                        </span>
+                        {badge.logoSrc ? (
+                          <span
+                            aria-hidden="true"
+                            className="h-4 w-4 shrink-0 rounded-full bg-contain bg-center bg-no-repeat"
+                            style={{ backgroundImage: `url(${badge.logoSrc})` }}
+                            title={badge.logoAlt}
+                          />
+                        ) : (
+                          <span
+                            className={`flex h-4 w-4 items-center justify-center rounded-full text-[0.52rem] font-black ${
+                              badge.active ? "bg-[#d4af66] text-[#102033]" : "bg-[var(--surface-muted)] text-[var(--text-secondary)]"
+                            }`}
+                          >
+                            ∫
+                          </span>
+                        )}
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[0.56rem] font-semibold uppercase tracking-[0.08em] leading-none">
+                            {badge.label}
+                          </span>
+                          <span className="text-[0.5rem] font-medium leading-none text-white/80">
+                            {badge.criteria}
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
