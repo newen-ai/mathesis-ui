@@ -13,6 +13,8 @@
   "ateneo": {
     "errors": {
       "missingApiBaseUrl": "La conexión con el servidor no está configurada en este entorno.",
+      "titleTooLong": "El título es demasiado largo. Máximo {{max}} caracteres.",
+      "descriptionTooLong": "La descripción es demasiado larga. Máximo {{max}} caracteres.",
       "attachmentTooLarge": "Uno de los archivos supera el tamaño permitido. Máximo: {{maxSize}} por archivo.",
       "tooManyAttachments": "Podés adjuntar hasta 5 archivos por tema. Quitá algunos e intentá de nuevo.",
       "unsupportedAttachmentType": "Solo se permiten imágenes JPG/PNG/HEIC/HEIF y archivos PDF.",

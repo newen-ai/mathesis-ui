@@ -13,6 +13,8 @@
   "ateneo": {
     "errors": {
       "missingApiBaseUrl": "Server connection is not configured in this environment.",
+      "titleTooLong": "The title is too long. Maximum {{max}} characters.",
+      "descriptionTooLong": "The description is too long. Maximum {{max}} characters.",
       "attachmentTooLarge": "One of the files is too large. Maximum: {{maxSize}} per file.",
       "tooManyAttachments": "You can attach up to 5 files per topic. Remove some files and try again.",
       "unsupportedAttachmentType": "Only JPG/PNG/HEIC/HEIF images and PDF files are allowed.",
