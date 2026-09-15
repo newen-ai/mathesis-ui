@@ -6,6 +6,12 @@ type ApiLikeError = Error & {
   details?: unknown;
 };
 
+type ZodLikeIssue = {
+  code?: string;
+  path?: unknown;
+  maximum?: number;
+};
+
 function toMegabytesLabel(bytes: number): string {
   const mb = bytes / (1024 * 1024);
   const rounded = Number.isInteger(mb) ? String(mb) : mb.toFixed(1);
@@ -33,6 +39,21 @@ function extractDetailsMaxBytes(details: unknown): number | undefined {
 
   const value = (details as { maxBytes?: unknown }).maxBytes;
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function extractValidationIssue(details: unknown, fieldName: string): ZodLikeIssue | undefined {
+  if (!Array.isArray(details)) {
+    return undefined;
+  }
+
+  return details.find((item) => {
+    if (!item || typeof item !== "object") {
+      return false;
+    }
+
+    const path = (item as ZodLikeIssue).path;
+    return Array.isArray(path) && path.length >= 2 && path[0] === "body" && path[1] === fieldName;
+  }) as ZodLikeIssue | undefined;
 }
 
 function resolveUploadErrorCode(error: unknown): string | undefined {
@@ -76,6 +97,24 @@ export function getAteneoTopicPublishErrorTranslation(error: unknown): string {
   const maxBytesFromDetails = extractDetailsMaxBytes(apiError?.details);
   const maxBytes = maxBytesFromDetails ?? 10 * 1024 * 1024;
   const maxSizeLabel = toMegabytesLabel(maxBytes);
+
+  if (code === "VALIDATION_FAILED") {
+    const descriptionIssue = extractValidationIssue(apiError?.details, "description");
+    if (descriptionIssue?.code === "too_big" && typeof descriptionIssue.maximum === "number") {
+      return i18next.t("common:ateneo.errors.descriptionTooLong", {
+        max: descriptionIssue.maximum,
+        defaultValue: `La descripción es demasiado larga. Máximo ${descriptionIssue.maximum} caracteres.`
+      });
+    }
+
+    const titleIssue = extractValidationIssue(apiError?.details, "title");
+    if (titleIssue?.code === "too_big" && typeof titleIssue.maximum === "number") {
+      return i18next.t("common:ateneo.errors.titleTooLong", {
+        max: titleIssue.maximum,
+        defaultValue: `El título es demasiado largo. Máximo ${titleIssue.maximum} caracteres.`
+      });
+    }
+  }
 
   if (code === "ATENEO_ATTACHMENT_TOO_LARGE" || code === "FEED_PDF_TOO_LARGE" || code === "UPLOAD_FILE_TOO_LARGE") {
     return i18next.t("common:ateneo.errors.attachmentTooLarge", {
