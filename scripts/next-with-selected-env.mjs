@@ -8,7 +8,7 @@ import { spawn } from "node:child_process";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
-const allowedAppEnvs = new Set(["local", "dev", "stage", "prod"]);
+const allowedAppEnvs = new Set(["local", "dev", "test", "stage", "prod"]);
 const supportedNextCommands = new Set(["dev", "build", "start"]);
 
 function parseEnvFile(filePath) {
@@ -61,11 +61,11 @@ function fail(message) {
 
 function validateAppEnv(value, sourceLabel) {
   if (!value) {
-    fail(`${sourceLabel} must define one of: local, dev, stage, prod.`);
+    fail(`${sourceLabel} must define one of: local, dev, test, stage, prod.`);
   }
 
   if (!allowedAppEnvs.has(value)) {
-    fail(`Invalid ${sourceLabel}="${value}". Allowed values: local, dev, stage, prod.`);
+    fail(`Invalid ${sourceLabel}="${value}". Allowed values: local, dev, test, stage, prod.`);
   }
 
   return value;

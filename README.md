@@ -24,7 +24,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 This project uses a custom environment loader so that only one environment file is applied at runtime.
 
-1. Set `NODE_ENV` in `.env` with one of: `local`, `dev`, `stage`, `prod`.
+1. Set `NODE_ENV` in `.env` with one of: `local`, `dev`, `test`, `stage`, `prod`.
 1. The app then loads only `.env.${NODE_ENV}`.
 1. No other `.env*` files are loaded by Next.js.
 1. In CI/CD, `APP_ENV` can be used to override `.env` selection.
