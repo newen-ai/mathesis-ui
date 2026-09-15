@@ -1,3 +1,5 @@
+import { BRAND_LOGO_SRC, MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
+
 export type AteneoBadge = {
   id: string;
   label: string;
@@ -28,6 +30,8 @@ export type AteneoPermissionMode = "free" | "admins";
 export type AteneoBadgeOption = {
   id: string;
   label: string;
+  logoSrc: string;
+  logoAlt: string;
 };
 
 export const ateneoIconOptions: AteneoIconOption[] = [
@@ -46,8 +50,18 @@ export const ateneoIconOptions: AteneoIconOption[] = [
 ];
 
 export const ateneoBadgeOptions: AteneoBadgeOption[] = [
-  { id: "mensa-ar", label: "∫ Mensa AR" },
-  { id: "mensa-empresarios", label: "∫ Mathesis Empresarios" },
+  {
+    id: "mensa-ar",
+    label: "Mensa AR",
+    logoSrc: MENSA_ARGENTINA_LOGO_SRC,
+    logoAlt: "Logo Mensa Argentina",
+  },
+  {
+    id: "mensa-empresarios",
+    label: "Mathesis Empresarios",
+    logoSrc: BRAND_LOGO_SRC,
+    logoAlt: "Logo Mathesis",
+  },
 ];
 
 export const ateneoLanguageOptions = ["Español"] as const;
