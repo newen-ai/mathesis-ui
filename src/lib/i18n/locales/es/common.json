@@ -9,5 +9,16 @@
       "imagesOnly": "Solo se permiten imágenes como capturas del reporte.",
       "default": "No pudimos enviar el reporte en este momento."
     }
+  },
+  "ateneo": {
+    "errors": {
+      "missingApiBaseUrl": "La conexión con el servidor no está configurada en este entorno.",
+      "attachmentTooLarge": "Uno de los archivos supera el tamaño permitido. Máximo: {{maxSize}} por archivo.",
+      "tooManyAttachments": "Podés adjuntar hasta 5 archivos por tema. Quitá algunos e intentá de nuevo.",
+      "unsupportedAttachmentType": "Solo se permiten imágenes JPG/PNG/HEIC/HEIF y archivos PDF.",
+      "authRequired": "Tu sesión venció o no tenés permisos. Iniciá sesión nuevamente e intentá otra vez.",
+      "connectionFailed": "No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.",
+      "publishFailed": "No pudimos publicar el tema. Intentá nuevamente en unos segundos."
+    }
   }
 }
