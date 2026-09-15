@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
@@ -159,6 +160,10 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
       .filter((badge) => form.badges.includes(badge.id))
       .map((badge) => badge.label)
       .join(" · ");
+  }, [form.badges]);
+
+  const selectedBadges = useMemo(() => {
+    return ateneoBadgeOptions.filter((badge) => form.badges.includes(badge.id));
   }, [form.badges]);
 
   const onFieldChange = <K extends keyof GroupFormValues>(field: K, value: GroupFormValues[K]) => {
@@ -396,7 +401,27 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
                 aria-expanded={isBadgesPickerOpen}
                 aria-label="Seleccionar insignias"
               >
-                <span className="text-scale-3 text-[var(--text-primary)]">{selectedBadgesLabel}</span>
+                {selectedBadges.length > 0 ? (
+                  <span className="flex min-w-0 flex-wrap items-center gap-2">
+                    {selectedBadges.map((badge) => (
+                      <span
+                        key={badge.id}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2.5 py-1 text-scale-2 text-[var(--text-primary)]"
+                      >
+                        <Image
+                          src={badge.logoSrc}
+                          alt={badge.logoAlt}
+                          width={16}
+                          height={16}
+                          className="h-4 w-4 object-contain"
+                        />
+                        <span>{badge.label}</span>
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-scale-3 text-[var(--text-primary)]">{selectedBadgesLabel}</span>
+                )}
                 <svg viewBox="0 0 24 24" className={`h-5 w-5 text-[var(--text-secondary)] transition ${isBadgesPickerOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
                   <path d="m6 9 6 6 6-6" />
                 </svg>
@@ -417,7 +442,16 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
                           onChange={() => toggleBadge(badge.id)}
                           className="h-4 w-4 rounded border-[var(--line-strong)] accent-[var(--brand-500)]"
                         />
-                        <span>{badge.label}</span>
+                        <span className="inline-flex items-center gap-2">
+                          <Image
+                            src={badge.logoSrc}
+                            alt={badge.logoAlt}
+                            width={18}
+                            height={18}
+                            className="h-[18px] w-[18px] object-contain"
+                          />
+                          <span>{badge.label}</span>
+                        </span>
                       </label>
                     );
                   })}
