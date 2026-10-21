@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { Sora, Spectral } from "next/font/google";
 import Script from "next/script";
 import { AppToaster } from "@/components/ui/AppToaster";
-import { PoweredByFooter } from "@/components/ui/PoweredByFooter";
 import { BugReportWidget } from "./(platform)/_components/BugReportWidget";
 import { ThemeInitializer } from "@/components/theme/ThemeInitializer";
 import { withBasePath } from "@/lib/assets";
@@ -92,9 +91,8 @@ export default async function RootLayout({
           {themeBootstrapScript}
         </Script>
         <ThemeInitializer />
-        <div className="min-h-full overflow-x-hidden pb-10 md:pb-11">{children}</div>
+        <div className="min-h-full overflow-x-hidden">{children}</div>
         <BugReportWidget />
-        <PoweredByFooter />
         <AppToaster />
       </body>
     </html>

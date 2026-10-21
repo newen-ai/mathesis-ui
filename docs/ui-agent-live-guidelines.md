@@ -171,11 +171,9 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Use the existing theme tokens and card styling conventions instead of introducing ad-hoc contrast values.
 - Keep the directory content representative but static for this pass until the backend exposes a dedicated verified-directory endpoint.
 
-## Current Active UI Directions (2026-08-21 Global Footer)
-- The `Powered by Newen.Solutions` footer must be implemented once in the root app shell and inherited by all routes, including auth/public and platform screens.
-- The footer must remain fixed to the viewport bottom so it stays visible while scrolling.
-- Avoid page-level footer duplication; new pages should not require any local footer markup.
-- Keep footer styling theme-aware using semantic tokens from `globals.css` and preserve light/dark readability.
+## Current Active UI Directions (2026-10-20 Global Footer)
+- The legacy `Powered by Newen.Solutions` footer has been removed from product scope.
+- Do not add the powered footer back to root layouts or individual pages unless product direction changes again.
 
 ## Current Active UI Directions (2026-08-27 Welcome Onboarding)
 - Registration remains the only place where new accounts collect required `Nombre` and `Apellido`; `Segundo nombre` is optional.
