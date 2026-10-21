@@ -1,0 +1,240 @@
+{
+  "common": {
+    "edit": "Editar",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "finalize": "Finalizar",
+    "back": "Volver",
+    "month": "Mes",
+    "year": "Año",
+    "current": "Actualidad"
+  },
+  "months": {
+    "01": "Enero",
+    "02": "Febrero",
+    "03": "Marzo",
+    "04": "Abril",
+    "05": "Mayo",
+    "06": "Junio",
+    "07": "Julio",
+    "08": "Agosto",
+    "09": "Septiembre",
+    "10": "Octubre",
+    "11": "Noviembre",
+    "12": "Diciembre"
+  },
+  "credential": {
+    "backToProfileAria": "Volver a mi perfil",
+    "backToProfile": "Volver a mi Perfil",
+    "activeCredential": "Credencial activa",
+    "qrAria": "Código QR de verificación de credencial",
+    "generatingQr": "Generando QR...",
+    "badgesTitle": "Mathesis · Insignias",
+    "activeBadgeCriteria": "Insignia activa en tu perfil",
+    "memberSince": "Socio desde jul 2026",
+    "fallbackName": "María López",
+    "frontMembershipFallbackLabel": "Mensa Argentina",
+    "frontMembershipFallbackCriteria": "Miembro de Mensa Argentina",
+    "logoMensaAlt": "Logo Mensa Argentina",
+    "logoMathesisAlt": "Logo Mathesis",
+    "actions": {
+      "flipToFront": "Volver al frente",
+      "flipToBack": "Ver al dorso",
+      "hideQr": "Ocultar QR",
+      "showQr": "Mostrar QR"
+    },
+    "criteria": {
+      "mensaArgentina": "Miembro activo de Mensa Argentina",
+      "mathesisBusiness": "Membresía de Empresarios aprobada"
+    },
+    "labels": {
+      "mensaArgentina": "Mensa Argentina",
+      "mathesisBusiness": "Mathesis Empresarios"
+    }
+  },
+  "profileView": {
+    "headlineFallback": "Completa tu titular profesional",
+    "errors": {
+      "blockUser": "No pudimos bloquear a este usuario.",
+      "saveImage": "No se pudo guardar la imagen",
+      "invalidBannerImage": "Seleccioná un archivo de imagen válido para el banner.",
+      "processBannerImage": "No se pudo procesar la imagen del banner.",
+      "invalidProfileImage": "Seleccioná un archivo de imagen válido para el perfil.",
+      "processProfileImage": "No se pudo procesar la imagen de perfil.",
+      "prepareProfileImage": "No se pudo preparar la imagen de perfil.",
+      "prepareBannerImage": "No se pudo preparar la imagen del banner."
+    },
+    "toasts": {
+      "userBlocked": "Usuario bloqueado",
+      "comingSoon": "Coming soon"
+    },
+    "unavailable": {
+      "title": "Perfil no disponible",
+      "description": "Este perfil no se puede visualizar desde tu cuenta en este momento."
+    },
+    "aria": {
+      "changeBannerImage": "Cambiar imagen de banner",
+      "profilePhotoOf": "Foto de perfil de {{name}}",
+      "changeProfileImage": "Cambiar imagen de perfil",
+      "moreOptions": "Más opciones",
+      "bannerPreview": "Previsualización de banner",
+      "profilePreview": "Previsualización de perfil"
+    },
+    "actions": {
+      "changeBanner": "Cambiar banner",
+      "viewProfile": "Ver perfil",
+      "blocking": "Bloqueando...",
+      "block": "Bloquear",
+      "report": "Denunciar",
+      "saveBanner": "Guardar banner",
+      "saveImage": "Guardar imagen"
+    },
+    "bannerEditor": {
+      "title": "Ajustar imagen de banner",
+      "description": "Arrastrá para mover y usá la rueda del mouse para acercar o alejar. Esta vista muestra lo que se verá en tu encabezado.",
+      "tip": "Tip: mové el banner hasta alinear la zona importante. El resto quedará fuera del área visible."
+    },
+    "avatarEditor": {
+      "title": "Ajustar foto de perfil",
+      "description": "Mové y ajustá la imagen para previsualizar exactamente lo que se verá en el círculo.",
+      "tip": "Arrastrá la imagen con el mouse para posicionarla. Usá la rueda del mouse para acercar o alejar."
+    },
+    "blockModal": {
+      "title": "Bloquear usuario",
+      "description": "Podés agregar una nota privada para recordar por qué estás bloqueando este perfil. Esta nota solo la vas a ver vos en tu lista de bloqueados.",
+      "noteLabel": "Nota (opcional)",
+      "notePlaceholder": "Ej.: Comentarios despectivos repetidos en el feed."
+    }
+  },
+  "profileForm": {
+    "title": {
+      "editing": "Editar perfil",
+      "about": "Acerca de"
+    },
+    "completion": "Completitud del perfil",
+    "loading": "Cargando perfil...",
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "birthDate": "Fecha de nacimiento",
+      "nationality": "Nacionalidad",
+      "headline": "Titular profesional (máx. 80)",
+      "currentCompany": "Empresa actual",
+      "country": "País",
+      "city": "Ciudad",
+      "postalCode": "Código postal",
+      "about": "Acerca de (máx. 800)"
+    },
+    "emptyAbout": "Aún no agregaste una descripción profesional."
+  },
+  "experience": {
+    "title": "Experiencia",
+    "add": "+ Agregar experiencia",
+    "empty": "Todavía no agregaste experiencias laborales.",
+    "new": "Nueva experiencia",
+    "editTitle": "Editar experiencia",
+    "update": "Actualizar experiencia",
+    "addAction": "Agregar experiencia",
+    "present": "Presente",
+    "labels": {
+      "workplace": "Lugar de trabajo",
+      "jobTitle": "Puesto de trabajo",
+      "startDate": "Fecha de comienzo",
+      "endDate": "Fecha de finalización",
+      "currentlyWorking": "Actualmente trabajo aquí",
+      "description": "Descripción (máx. 300)"
+    },
+    "placeholders": {
+      "workplace": "Mathesis Empresarios",
+      "jobTitle": "Analista de Estrategia"
+    },
+    "confirmDelete": "¿Eliminar esta experiencia? Este cambio se guardará de inmediato.",
+    "errors": {
+      "delete": "No pudimos eliminar la experiencia.",
+      "required": "Completá todos los campos requeridos para agregar o actualizar una experiencia.",
+      "save": "No pudimos guardar la experiencia."
+    },
+    "aria": {
+      "edit": "Editar experiencia",
+      "delete": "Eliminar experiencia"
+    }
+  },
+  "education": {
+    "title": "Formación académica",
+    "add": "+ Agregar formación",
+    "empty": "Todavía no agregaste formación académica.",
+    "new": "Nueva formación",
+    "editTitle": "Editar formación",
+    "update": "Actualizar formación",
+    "addAction": "Agregar formación",
+    "labels": {
+      "institution": "Institución",
+      "degree": "Título",
+      "field": "Campo de estudio",
+      "startDate": "Fecha de comienzo",
+      "endDate": "Fecha de finalización",
+      "currentlyStudying": "Actualmente estudio aquí",
+      "description": "Descripción (máx. 300)"
+    },
+    "placeholders": {
+      "institution": "Universidad de Buenos Aires",
+      "degree": "Licenciatura",
+      "field": "Física teórica"
+    },
+    "confirmDelete": "¿Eliminar esta formación? Este cambio se guardará de inmediato.",
+    "errors": {
+      "required": "Completá todos los campos requeridos para agregar o actualizar una formación.",
+      "save": "No pudimos guardar la formación.",
+      "delete": "No pudimos eliminar la formación."
+    },
+    "aria": {
+      "edit": "Editar formación",
+      "delete": "Eliminar formación"
+    }
+  },
+  "interests": {
+    "title": "Intereses",
+    "add": "Agregar",
+    "save": "Guardar",
+    "discard": "Descartar",
+    "empty": "Aún no agregaste intereses.",
+    "suggestionTag": "sugerencia",
+    "inputPlaceholder": "Agregar interés",
+    "helpTypeToSuggest": "Escribí al menos 3 caracteres para ver sugerencias.",
+    "helpDragToReorder": "Arrastrá y soltá los intereses para reordenarlos.",
+    "loadingSuggestions": "Buscando sugerencias...",
+    "noSuggestions": "No hay sugerencias para este texto.",
+    "errors": {
+      "invalid": "Ingresá un interés válido antes de agregarlo.",
+      "duplicate": "Ese interés ya está agregado."
+    },
+    "aria": {
+      "removeInterest": "Eliminar interés {{interest}}"
+    }
+  },
+  "collapsible": {
+    "more": "más",
+    "less": "menos"
+  },
+  "initialization": {
+    "title": "Inicializá tu perfil",
+    "description": "No encontramos datos de perfil para tu cuenta. Completá los campos y guardaremos la información en el backend para crear o actualizar tu perfil.",
+    "saveProfile": "Guardar perfil",
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "birthDate": "Fecha de nacimiento",
+      "nationality": "Nacionalidad",
+      "headline": "Titular profesional (máx. 80)",
+      "currentCompany": "Empresa actual",
+      "profileImageUrl": "URL imagen de perfil",
+      "bannerImageUrl": "URL imagen de banner",
+      "country": "País",
+      "city": "Ciudad",
+      "postalCode": "Código postal",
+      "about": "Acerca de (máx. 800)"
+    }
+  }
+}

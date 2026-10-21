@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import type { Experience, ExperienceDraft } from "../../_lib/types";
 import type { WorkExperienceOperation } from "@/lib/api/profile";
@@ -44,6 +45,7 @@ export function ExperienceCard({
   onSaveOperations,
   onClearSaveError,
 }: ExperienceCardProps) {
+  const { t } = useTranslation("profile");
   const [draft, setDraft] = useState<ExperienceDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export function ExperienceCard({
   const formatYearRange = (start: string, end: string, isCurrent: boolean) => {
     const startYear = start.slice(0, 4);
     if (isCurrent || !end) {
-      return `${startYear} - Presente`;
+      return `${startYear} - ${t("experience.present")}`;
     }
     return `${startYear} - ${end.slice(0, 4)}`;
   };
@@ -192,7 +194,7 @@ export function ExperienceCard({
       return;
     }
 
-    const shouldDelete = window.confirm("¿Eliminar esta experiencia? Este cambio se guardará de inmediato.");
+    const shouldDelete = window.confirm(t("experience.confirmDelete"));
     if (!shouldDelete) {
       return;
     }
@@ -201,7 +203,7 @@ export function ExperienceCard({
     onClearSaveError();
     const result = await onSaveOperations([{ action: "REMOVE", id }]);
     if (!result.ok) {
-      setDraftError(result.message ?? "No pudimos eliminar la experiencia.");
+      setDraftError(result.message ?? t("experience.errors.delete"));
       return;
     }
 
@@ -219,7 +221,7 @@ export function ExperienceCard({
       !draft.fechaComienzo ||
       (!draft.trabajoActual && !draft.fechaFinalizacion)
     ) {
-      setDraftError("Completa todos los campos requeridos para agregar o actualizar una experiencia.");
+      setDraftError(t("experience.errors.required"));
       return;
     }
 
@@ -250,7 +252,7 @@ export function ExperienceCard({
     setDraftError(null);
     const result = await onSaveOperations(operations);
     if (!result.ok) {
-      setDraftError(result.message ?? "No pudimos guardar la experiencia.");
+      setDraftError(result.message ?? t("experience.errors.save"));
       return;
     }
 
@@ -278,9 +280,9 @@ export function ExperienceCard({
   if (isExperienceManagerMode) {
     return (
       <AppCard className="px-3 py-3 sm:px-4 sm:py-4">
-        <EditingSectionHeader title="Experiencia" onBack={onCloseManager} isSaving={isSaving} />
+        <EditingSectionHeader title={t("experience.title")} onBack={onCloseManager} isSaving={isSaving} />
 
-        <ProfileSectionAddButton label="+ Agregar experiencia" onClick={onStartAdding} isSaving={isSaving} />
+        <ProfileSectionAddButton label={t("experience.add")} onClick={onStartAdding} isSaving={isSaving} />
 
         {listItems.length > 0 ? (
           <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
@@ -305,7 +307,7 @@ export function ExperienceCard({
                     onClick={() => onEditExperience(item)}
                     disabled={isSaving}
                     className="text-[1.1rem] leading-none text-[var(--text-soft)] hover:text-[var(--navy-900)]"
-                    aria-label="Editar experiencia"
+                    aria-label={t("experience.aria.edit")}
                   >
                     ✎
                   </button>
@@ -314,7 +316,7 @@ export function ExperienceCard({
                     onClick={() => onDeleteExperience(item.id)}
                     disabled={isSaving}
                     className="text-[1.1rem] leading-none text-[var(--danger-500)] hover:opacity-85"
-                    aria-label="Eliminar experiencia"
+                    aria-label={t("experience.aria.delete")}
                   >
                     🗑
                   </button>
@@ -323,14 +325,14 @@ export function ExperienceCard({
             ))}
           </div>
         ) : (
-          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste experiencias laborales.</p>
+          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">{t("experience.empty")}</p>
         )}
 
         {isFormOpen ? (
           <form onSubmit={onSubmitExperience} className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
             <div className="mb-3 flex items-center justify-between">
               <h4 className="text-[0.8rem] font-semibold text-[var(--navy-900)]">
-                {editingId ? "Editar experiencia" : "Nueva experiencia"}
+                {editingId ? t("experience.editTitle") : t("experience.new")}
               </h4>
               <button
                 type="button"
@@ -341,35 +343,35 @@ export function ExperienceCard({
                 }}
                 className="text-[0.66rem] font-semibold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
               >
-                Cerrar
+                {t("common.close")}
               </button>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="mathesis-field sm:col-span-1">
-                Lugar de trabajo
+                {t("experience.labels.workplace")}
                 <input
                   name="lugarTrabajo"
                   value={draft.lugarTrabajo}
                   onChange={onDraftChange}
-                  placeholder="Mathesis Empresarios"
+                  placeholder={t("experience.placeholders.workplace")}
                 />
               </label>
 
               <label className="mathesis-field sm:col-span-1">
-                Puesto de trabajo
+                {t("experience.labels.jobTitle")}
                 <input
                   name="puestoTrabajo"
                   value={draft.puestoTrabajo}
                   onChange={onDraftChange}
-                  placeholder="Analista de Estrategia"
+                  placeholder={t("experience.placeholders.jobTitle")}
                 />
               </label>
 
               <ProfileYearMonthRangeFields
-                startLabel="Fecha de comienzo"
-                endLabel="Fecha de finalizacion"
-                currentLabel="Actualmente trabajo aqui"
+                startLabel={t("experience.labels.startDate")}
+                endLabel={t("experience.labels.endDate")}
+                currentLabel={t("experience.labels.currentlyWorking")}
                 currentChecked={draft.trabajoActual}
                 startMonth={startMonth}
                 startYear={startYear}
@@ -383,7 +385,7 @@ export function ExperienceCard({
               />
 
               <label className="mathesis-field sm:col-span-2">
-                Descripcion (max. 300)
+                {t("experience.labels.description")}
                 <textarea
                   name="descripcion"
                   value={draft.descripcion}
@@ -400,7 +402,7 @@ export function ExperienceCard({
               disabled={isSaving}
               className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
             >
-              {editingId ? "Actualizar experiencia" : "Agregar experiencia"}
+              {editingId ? t("experience.update") : t("experience.addAction")}
             </button>
 
             {draftError ? (
@@ -430,11 +432,11 @@ export function ExperienceCard({
 
   return (
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
-      <ReadOnlySectionHeader title="Experiencia" canEdit={canEdit} onEdit={onStartEditing} />
+      <ReadOnlySectionHeader title={t("experience.title")} canEdit={canEdit} onEdit={onStartEditing} />
 
       <div className="mt-2 border-t border-[var(--line)] pt-2">
         {listItems.length === 0 ? (
-          <p className="text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste experiencias laborales.</p>
+          <p className="text-[0.7rem] text-[var(--text-secondary)]">{t("experience.empty")}</p>
         ) : (
           <ul>
             {listItems.map((item) => (

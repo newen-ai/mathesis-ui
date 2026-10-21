@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import {
   emitNotificationsUnreadCountUpdated,
@@ -20,9 +21,9 @@ type NotificationLead = {
 };
 
 const QUICK_LINKS = [
-  { label: "Mensajes", href: "/mensajes" },
-  { label: "Mi Perfil", href: "/perfil" },
-  { label: "Configuración", href: "/account/configuration" },
+  { labelKey: "quickLinks.messages", href: "/mensajes" },
+  { labelKey: "quickLinks.profile", href: "/perfil" },
+  { labelKey: "quickLinks.settings", href: "/account/configuration" },
 ];
 
 const LEAD_TONE_CLASS: Record<NotificationLead["tone"], string> = {
@@ -34,7 +35,70 @@ const LEAD_TONE_CLASS: Record<NotificationLead["tone"], string> = {
   teal: "bg-[color-mix(in_srgb,var(--surface-muted)_65%,var(--surface))] text-[var(--surface)]",
 };
 
-function formatRelativeTime(value: string | null | undefined) {
+function resolveDateLocale(language: string) {
+  return language.trim().toLowerCase().startsWith("en") ? "en-US" : "es-AR";
+}
+
+function localizeNotificationBody(item: NotificationSummary, t: (key: string, options?: Record<string, unknown>) => string) {
+  if (item.messageKey === "postReaction.summary") {
+    const countValue = typeof item.messageParams?.count === "number" ? item.messageParams.count : null;
+    const countLabel = countValue === 1
+      ? t("dynamic.postReaction.countOne")
+      : t("dynamic.postReaction.countMany", { count: countValue ?? 0 });
+    const href = typeof item.messageParams?.href === "string" ? item.messageParams.href : undefined;
+
+    return [
+      { text: t("dynamic.postReaction.prefix") },
+      { text: countLabel, href, isBold: true },
+      { text: t("dynamic.postReaction.suffix") },
+    ];
+  }
+
+  if (item.messageKey === "badgeApproved.summary") {
+    const highlightText =
+      typeof item.messageParams?.highlightText === "string" && item.messageParams.highlightText.trim().length > 0
+        ? item.messageParams.highlightText
+        : t("dynamic.badgeApproved.highlight");
+    const href = typeof item.messageParams?.href === "string" ? item.messageParams.href : undefined;
+
+    return [
+      { text: t("dynamic.badgeApproved.prefix") },
+      { text: highlightText, href, isBold: true },
+      { text: t("dynamic.badgeApproved.suffix") },
+    ];
+  }
+
+  if (item.messageKey === "groupMemberKicked.summary") {
+    const fallbackGroupName = t("dynamic.groupMemberKicked.fallbackGroup");
+    const groupName =
+      typeof item.messageParams?.groupName === "string" && item.messageParams.groupName.trim().length > 0
+        ? item.messageParams.groupName
+        : fallbackGroupName;
+    const groupHref = typeof item.messageParams?.groupHref === "string" ? item.messageParams.groupHref : undefined;
+    const reason =
+      typeof item.messageParams?.reason === "string" && item.messageParams.reason.trim().length > 0
+        ? item.messageParams.reason
+        : "";
+
+    return [
+      { text: t("dynamic.groupMemberKicked.prefix") },
+      { text: groupName, href: groupHref, isBold: true },
+      { text: t("dynamic.groupMemberKicked.suffix") },
+      ...(reason ? [{ text: t("dynamic.groupMemberKicked.reason", { reason }) }] : []),
+    ];
+  }
+
+  return item.body;
+}
+
+function localizeNotification(item: NotificationSummary, t: (key: string, options?: Record<string, unknown>) => string): NotificationSummary {
+  return {
+    ...item,
+    body: localizeNotificationBody(item, t),
+  };
+}
+
+function formatRelativeTime(value: string | null | undefined, language: string, t: (key: string, options?: Record<string, unknown>) => string) {
   if (!value) return "";
 
   const date = new Date(value);
@@ -45,12 +109,12 @@ function formatRelativeTime(value: string | null | undefined) {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMinutes < 1) return "ahora";
-  if (diffMinutes < 60) return `hace ${diffMinutes} min`;
-  if (diffHours < 24) return `hace ${diffHours} h`;
-  if (diffDays < 7) return `hace ${diffDays} d`;
+  if (diffMinutes < 1) return t("relative.now");
+  if (diffMinutes < 60) return t("relative.minutesAgo", { count: diffMinutes });
+  if (diffHours < 24) return t("relative.hoursAgo", { count: diffHours });
+  if (diffDays < 7) return t("relative.daysAgo", { count: diffDays });
 
-  return date.toLocaleDateString("es-AR", {
+  return date.toLocaleDateString(resolveDateLocale(language), {
     day: "2-digit",
     month: "short",
   });
@@ -103,11 +167,13 @@ function NotificationsSection({
   items,
   onMarkAsRead,
   headerAction,
+  formatTime,
 }: {
   title: string;
   items: NotificationSummary[];
   onMarkAsRead: (notificationId: string) => Promise<void> | void;
   headerAction?: React.ReactNode;
+  formatTime: (createdAt: string | null | undefined) => string;
 }) {
   if (items.length === 0) {
     return null;
@@ -154,7 +220,7 @@ function NotificationsSection({
               <div className="min-w-0">
                 <NotificationBody item={item} onMarkAsRead={onMarkAsRead} />
                 <p className="text-scale-2 mt-1 text-[var(--text-secondary)]">
-                  {item.timeLabelOverride ?? formatRelativeTime(item.createdAt)}
+                  {item.timeLabelOverride ?? formatTime(item.createdAt)}
                 </p>
                 {item.action ? (
                   <Link
@@ -184,6 +250,7 @@ function NotificationsSection({
 }
 
 export default function NotificacionesPage() {
+  const { t, i18n } = useTranslation("notifications");
   const [notifications, setNotifications] = useState<NotificationSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -210,7 +277,7 @@ export default function NotificacionesPage() {
           setError(
             caughtError instanceof Error && caughtError.message
               ? caughtError.message
-              : "No pudimos cargar tus notificaciones."
+              : t("errors.load")
           );
         }
       } finally {
@@ -226,16 +293,16 @@ export default function NotificacionesPage() {
       isActive = false;
       controller.abort();
     };
-  }, []);
+  }, [t]);
 
   const unreadNotifications = useMemo(
-    () => notifications.filter((notification) => !notification.read),
-    [notifications]
+    () => notifications.filter((notification) => !notification.read).map((notification) => localizeNotification(notification, t)),
+    [notifications, t]
   );
 
   const readNotifications = useMemo(
-    () => notifications.filter((notification) => notification.read),
-    [notifications]
+    () => notifications.filter((notification) => notification.read).map((notification) => localizeNotification(notification, t)),
+    [notifications, t]
   );
 
   const markAsRead = async (notificationId: string) => {
@@ -264,7 +331,7 @@ export default function NotificacionesPage() {
       emitNotificationsUnreadCountUpdated(
         previousNotifications.filter((notification) => !notification.read).length
       );
-      setError(caughtError instanceof Error ? caughtError.message : "No pudimos marcar la notificación como leída.");
+      setError(caughtError instanceof Error ? caughtError.message : t("errors.markOneRead"));
     }
   };
 
@@ -291,7 +358,7 @@ export default function NotificacionesPage() {
       emitNotificationsUnreadCountUpdated(
         previousNotifications.filter((notification) => !notification.read).length
       );
-      setError(caughtError instanceof Error ? caughtError.message : "No pudimos marcar todas como leídas.");
+      setError(caughtError instanceof Error ? caughtError.message : t("errors.markAllRead"));
     }
   };
 
@@ -301,7 +368,7 @@ export default function NotificacionesPage() {
       <main className="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
         <div className="px-1 pb-4">
           <h1 className="text-scale-5 font-[family-name:var(--font-spectral)] font-semibold text-[var(--heading-primary)]">
-            Notificaciones
+            {t("title")}
           </h1>
         </div>
 
@@ -313,18 +380,18 @@ export default function NotificacionesPage() {
 
         {isLoading && notifications.length === 0 ? (
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-6 text-scale-2 text-[var(--text-secondary)]">
-            Cargando notificaciones…
+            {t("states.loading")}
           </div>
         ) : notifications.length === 0 ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_18.5rem]">
             <div className="flex min-h-0 items-center justify-center rounded-xl border border-transparent bg-transparent px-4 py-3 text-center">
-              <p className="text-scale-2 font-medium text-[var(--text-primary)]">No tenés notificaciones.</p>
+              <p className="text-scale-2 font-medium text-[var(--text-primary)]">{t("states.empty")}</p>
             </div>
 
             <aside className="hidden h-full border-l border-[var(--line)] pl-8 lg:block">
               <AppCard className="p-4">
                 <h2 className="text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--heading-primary)]">
-                  Accesos rápidos
+                  {t("quickLinks.title")}
                 </h2>
                 <div className="mt-3 divide-y divide-[var(--line)]">
                   {QUICK_LINKS.map((item) => (
@@ -333,7 +400,7 @@ export default function NotificacionesPage() {
                       href={item.href}
                       className="text-scale-3 block py-2.5 text-[var(--text-primary)] transition-colors hover:text-[var(--link-accent)]"
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   ))}
                 </div>
@@ -344,9 +411,10 @@ export default function NotificacionesPage() {
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-stretch lg:gap-8 xl:grid-cols-[minmax(0,1fr)_18.5rem]">
             <div className="space-y-4">
               <NotificationsSection
-                title="No leídas"
+                title={t("sections.unread")}
                 items={unreadNotifications}
                 onMarkAsRead={markAsRead}
+                formatTime={(createdAt) => formatRelativeTime(createdAt, i18n.language, t)}
                 headerAction={
                   <button
                     type="button"
@@ -355,18 +423,23 @@ export default function NotificacionesPage() {
                     }}
                     className="text-scale-2 rounded-full px-2 py-1 font-semibold text-[var(--brand-700)] transition-colors hover:text-[var(--brand-900)]"
                   >
-                    Marcar todo leído
+                    {t("actions.markAllRead")}
                   </button>
                 }
               />
 
-              <NotificationsSection title="Leídas" items={readNotifications} onMarkAsRead={markAsRead} />
+              <NotificationsSection
+                title={t("sections.read")}
+                items={readNotifications}
+                onMarkAsRead={markAsRead}
+                formatTime={(createdAt) => formatRelativeTime(createdAt, i18n.language, t)}
+              />
             </div>
 
             <aside className="hidden h-full border-l border-[var(--line)] pl-8 lg:block">
               <AppCard className="p-4">
                 <h2 className="text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--heading-primary)]">
-                  Accesos rápidos
+                  {t("quickLinks.title")}
                 </h2>
                 <div className="mt-3 divide-y divide-[var(--line)]">
                   {QUICK_LINKS.map((item) => (
@@ -375,7 +448,7 @@ export default function NotificacionesPage() {
                       href={item.href}
                       className="text-scale-3 block py-2.5 text-[var(--text-primary)] transition-colors hover:text-[var(--link-accent)]"
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   ))}
                 </div>

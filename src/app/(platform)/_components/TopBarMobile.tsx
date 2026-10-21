@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { RefObject } from "react";
+import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import type { AteneoGroup } from "@/lib/api/ateneo";
 import { TopBarNavIcon } from "./TopBarNavIcon";
@@ -57,6 +58,8 @@ function AteneoGroupMenuLink({
 }
 
 function DisabledMenuRow({ label, icon }: { label: string; icon: string }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-between gap-2 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-soft)] opacity-80">
       <span className="flex items-center gap-3">
@@ -66,7 +69,7 @@ function DisabledMenuRow({ label, icon }: { label: string; icon: string }) {
         {label}
       </span>
       <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.6rem] font-semibold tracking-[0.08em] text-[var(--brand-700)]">
-        PRÓXIMAMENTE
+        {t("topbar:common.comingSoon", { defaultValue: "PRÓXIMAMENTE" })}
       </span>
     </div>
   );
@@ -83,6 +86,8 @@ function MembershipRequestActionRow({
   onRequestMembership: () => Promise<void>;
   onCancelMembership: () => Promise<void>;
 }) {
+  const { t } = useTranslation();
+
   if (membershipCtaMode === "go") {
     return null;
   }
@@ -103,14 +108,14 @@ function MembershipRequestActionRow({
 
   const label =
     membershipCtaMode === "loading"
-      ? "Cargando membresía..."
+      ? t("topbar:mobile.membership.loading", { defaultValue: "Cargando membresía..." })
       : isMembershipActionPending && isRequestMode
-        ? "Enviando solicitud..."
+        ? t("topbar:mobile.membership.sending", { defaultValue: "Enviando solicitud..." })
         : isMembershipActionPending && isRequestedMode
-          ? "Quitando solicitud..."
+          ? t("topbar:mobile.membership.removing", { defaultValue: "Quitando solicitud..." })
           : isRequestedMode
-            ? "Solicitud pendiente · Cancelar solicitud"
-            : "Solicitar Membresía";
+            ? t("topbar:mobile.membership.requested", { defaultValue: "Solicitud pendiente · Cancelar solicitud" })
+            : t("topbar:mobile.membership.request", { defaultValue: "Solicitar Membresía" });
 
   return (
     <button
@@ -163,6 +168,8 @@ export function TopBarMobile({
   ateneoMineGroups,
   onLogout,
 }: TopBarMobileProps) {
+  const { t } = useTranslation();
+
   if (!mobileDrawerOpen) {
     return null;
   }
@@ -178,7 +185,7 @@ export function TopBarMobile({
           event.stopPropagation();
           closeMobileDrawer();
         }}
-        aria-label="Cerrar menú"
+        aria-label={t("topbar:mobile.closeMenu", { defaultValue: "Cerrar menú" })}
       />
       <aside
         ref={mobileDrawerRef}
@@ -190,16 +197,18 @@ export function TopBarMobile({
               <UserAvatar
                 imageUrl={userProfileImageUrl}
                 initials={userInitials}
-                label="Foto de perfil"
+                label={t("topbar:profile.photo", { defaultValue: "Foto de perfil" })}
                 className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
                 initialsClassName="text-2xl font-semibold text-[var(--brand-500)]"
               />
               <div className="min-w-0">
                 <p className="truncate font-[family-name:var(--font-spectral)] text-scale-5 font-semibold leading-tight mathesis-heading-primary">
-                  {isLoadingUserName ? "Cargando..." : userName || "Mi perfil"}
+                  {isLoadingUserName
+                    ? t("topbar:common.loading", { defaultValue: "Cargando..." })
+                    : userName || t("topbar:profile.myProfile", { defaultValue: "Mi perfil" })}
                 </p>
                 <p className="text-scale-2 text-[var(--text-secondary)]">
-                  {userIdentityLine || "CEO · Mathesis & Newen Solutions"}
+                  {userIdentityLine || t("topbar:mobile.defaultIdentity", { defaultValue: "CEO · Mathesis & Newen Solutions" })}
                 </p>
               </div>
             </div>
@@ -207,7 +216,7 @@ export function TopBarMobile({
               type="button"
               onClick={closeMobileDrawer}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--text-secondary)]"
-              aria-label="Cerrar menú"
+              aria-label={t("topbar:mobile.closeMenu", { defaultValue: "Cerrar menú" })}
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 6l12 12M18 6 6 18" />
@@ -230,7 +239,7 @@ export function TopBarMobile({
         <div className="space-y-3 px-3 py-3 pb-8">
           <section>
             <h3 className="px-1 font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
-              Nexum · tu red profesional
+              {t("topbar:mobile.nexum.title", { defaultValue: "Nexum · tu red profesional" })}
             </h3>
 
             <div className="mt-2 space-y-2">
@@ -245,8 +254,8 @@ export function TopBarMobile({
                       <TopBarNavIcon icon="user" />
                     </span>
                     <span>
-                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">Tu Perfil Profesional</span>
-                      <span className="block text-scale-2 text-[var(--text-secondary)]">CV, experiencia y verificación Mensa</span>
+                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.nexum.profile.title", { defaultValue: "Tu Perfil Profesional" })}</span>
+                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.nexum.profile.subtitle", { defaultValue: "CV, experiencia y verificación Mensa" })}</span>
                     </span>
                   </span>
                   <Chevron open={mobileExpandedPanel === "profile"} />
@@ -262,7 +271,7 @@ export function TopBarMobile({
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                         <TopBarNavIcon icon="doc" />
                       </span>
-                      Editar Perfil Profesional
+                      {t("topbar:mobile.nexum.editProfessionalProfile", { defaultValue: "Editar Perfil Profesional" })}
                     </Link>
 
                     <MembershipRequestActionRow
@@ -286,8 +295,8 @@ export function TopBarMobile({
                       <TopBarNavIcon icon="building" />
                     </span>
                     <span>
-                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">Empresas</span>
-                      <span className="block text-scale-2 text-[var(--text-secondary)]">Directorio de Mathesis Empresarios</span>
+                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.nexum.companies.title", { defaultValue: "Empresas" })}</span>
+                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.nexum.companies.subtitle", { defaultValue: "Directorio de Mathesis Empresarios" })}</span>
                     </span>
                   </span>
                   <Chevron open={mobileExpandedPanel === "companies"} />
@@ -303,7 +312,7 @@ export function TopBarMobile({
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                         <TopBarNavIcon icon="doc" />
                       </span>
-                      Explorar Mathesis Empresarios
+                      {t("topbar:mobile.nexum.companies.explore", { defaultValue: "Explorar Mathesis Empresarios" })}
                     </Link>
                     <Link
                       href="/my-enterprises"
@@ -313,7 +322,7 @@ export function TopBarMobile({
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                         <TopBarNavIcon icon="building" />
                       </span>
-                      Gestionar mis empresas
+                      {t("topbar:mobile.nexum.companies.manageMine", { defaultValue: "Gestionar mis empresas" })}
                     </Link>
                     <MembershipRequestActionRow
                       membershipCtaMode={membershipCtaMode}
@@ -322,7 +331,7 @@ export function TopBarMobile({
                       onCancelMembership={onCancelMembership}
                     />
                     <div className="mt-2 border-t border-dashed border-[var(--line)] pt-2">
-                      <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--text-soft)]">ADMINISTRACIÓN</p>
+                      <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--text-soft)]">{t("topbar:mobile.sections.administration", { defaultValue: "ADMINISTRACIÓN" })}</p>
                       {hasCompaniesAdminAccess ? (
                         <Link
                           href="/admin/companies-admin"
@@ -332,10 +341,10 @@ export function TopBarMobile({
                           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                             <TopBarNavIcon icon="settings" />
                           </span>
-                          Admin. Mathesis Empresarios
+                          {t("topbar:mobile.nexum.companies.admin", { defaultValue: "Admin. Mathesis Empresarios" })}
                         </Link>
                       ) : (
-                        <DisabledMenuRow label="Admin. Mathesis Empresarios" icon="settings" />
+                        <DisabledMenuRow label={t("topbar:mobile.nexum.companies.admin", { defaultValue: "Admin. Mathesis Empresarios" })} icon="settings" />
                       )}
                     </div>
                   </div>
@@ -346,7 +355,7 @@ export function TopBarMobile({
 
           <section>
             <h3 className="px-1 font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
-              Agora · tu espacio social
+              {t("topbar:mobile.agora.title", { defaultValue: "Agora · tu espacio social" })}
             </h3>
 
             <div className="mt-2 space-y-2">
@@ -361,8 +370,8 @@ export function TopBarMobile({
                       <TopBarNavIcon icon="groups" />
                     </span>
                     <span>
-                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">Ateneo</span>
-                      <span className="block text-scale-2 text-[var(--text-secondary)]">Grupos de conversación temática</span>
+                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.agora.ateneo.title", { defaultValue: "Ateneo" })}</span>
+                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.agora.ateneo.subtitle", { defaultValue: "Grupos de conversación temática" })}</span>
                     </span>
                   </span>
                   <Chevron open={mobileExpandedPanel === "ateneo"} />
@@ -370,7 +379,7 @@ export function TopBarMobile({
 
                 {mobileExpandedPanel === "ateneo" ? (
                   <div className="border-t border-[var(--line)] px-3 py-2">
-                    <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">GRUPOS QUE ADMINISTRÁS</p>
+                    <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.agora.adminGroups", { defaultValue: "GRUPOS QUE ADMINISTRÁS" })}</p>
                     {ateneoAdminGroups.length > 0 ? (
                       ateneoAdminGroups.slice(0, 2).map((group) => (
                         <AteneoGroupMenuLink
@@ -388,11 +397,11 @@ export function TopBarMobile({
                         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                           <TopBarNavIcon icon="cup" />
                         </span>
-                        Ver grupos que administrás
+                        {t("topbar:mobile.agora.viewAdminGroups", { defaultValue: "Ver grupos que administrás" })}
                       </Link>
                     )}
 
-                    <p className="mt-2 px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">TUS GRUPOS</p>
+                    <p className="mt-2 px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.agora.myGroups", { defaultValue: "TUS GRUPOS" })}</p>
                     {ateneoMineGroups.length > 0 ? (
                       ateneoMineGroups.slice(0, 3).map((group) => (
                         <AteneoGroupMenuLink
@@ -410,29 +419,29 @@ export function TopBarMobile({
                         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                           <TopBarNavIcon icon="groups" />
                         </span>
-                        Ver mis grupos
+                        {t("topbar:mobile.agora.viewMyGroups", { defaultValue: "Ver mis grupos" })}
                       </Link>
                     )}
 
-                    <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">DESCUBRIR</p>
+                    <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.discover", { defaultValue: "DESCUBRIR" })}</p>
                     <Link href="/ateneo/groups?tab=discover" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="search" /></span>
-                      Explorar / Unirse a grupos
+                      {t("topbar:mobile.agora.exploreGroups", { defaultValue: "Explorar / Unirse a grupos" })}
                     </Link>
                     <Link href="/ateneo/create" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">+</span>
-                      Crear grupo nuevo
+                      {t("topbar:mobile.agora.createGroup", { defaultValue: "Crear grupo nuevo" })}
                     </Link>
 
-                    <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">ACTIVIDAD</p>
-                    <DisabledMenuRow label="Mis Temas guardados" icon="doc" />
-                    <DisabledMenuRow label="Reconocimiento semanal" icon="badge" />
-                    <DisabledMenuRow label="Salud del Grupo (admin)" icon="settings" />
+                    <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.activity", { defaultValue: "ACTIVIDAD" })}</p>
+                    <DisabledMenuRow label={t("topbar:mobile.agora.savedTopics", { defaultValue: "Mis Temas guardados" })} icon="doc" />
+                    <DisabledMenuRow label={t("topbar:mobile.agora.weeklyRecognition", { defaultValue: "Reconocimiento semanal" })} icon="badge" />
+                    <DisabledMenuRow label={t("topbar:mobile.agora.groupHealth", { defaultValue: "Salud del Grupo (admin)" })} icon="settings" />
 
-                    <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">ACERCA DE</p>
-                    <DisabledMenuRow label="Reglas de Ateneo" icon="badge" />
-                    <DisabledMenuRow label="Política de Privacidad" icon="doc" />
-                    <DisabledMenuRow label="Acuerdo de Usuarios" icon="doc" />
+                    <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.about", { defaultValue: "ACERCA DE" })}</p>
+                    <DisabledMenuRow label={t("topbar:mobile.agora.rules", { defaultValue: "Reglas de Ateneo" })} icon="badge" />
+                    <DisabledMenuRow label={t("topbar:mobile.agora.privacyPolicy", { defaultValue: "Política de Privacidad" })} icon="doc" />
+                    <DisabledMenuRow label={t("topbar:mobile.agora.userAgreement", { defaultValue: "Acuerdo de Usuarios" })} icon="doc" />
                   </div>
                 ) : null}
               </article>
@@ -444,11 +453,11 @@ export function TopBarMobile({
                       <TopBarNavIcon icon="puzzle" />
                     </span>
                     <span>
-                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">Acertijos</span>
-                      <span className="block text-scale-2 text-[var(--text-secondary)]">Retos y juegos de ingenio de la comunidad</span>
+                      <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.agora.riddles.title", { defaultValue: "Acertijos" })}</span>
+                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.agora.riddles.subtitle", { defaultValue: "Retos y juegos de ingenio de la comunidad" })}</span>
                     </span>
                   </span>
-                  <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.6rem] font-semibold tracking-[0.08em] text-[var(--brand-700)]">PRÓXIMAMENTE</span>
+                  <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.6rem] font-semibold tracking-[0.08em] text-[var(--brand-700)]">{t("topbar:common.comingSoon", { defaultValue: "PRÓXIMAMENTE" })}</span>
                 </div>
               </article>
             </div>
@@ -456,7 +465,7 @@ export function TopBarMobile({
 
           <section>
             <h3 className="px-1 font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
-              Mathesis
+              {t("topbar:mobile.mathesis.title", { defaultValue: "Mathesis" })}
             </h3>
 
             <article className="mt-2 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-[0_1px_2px_color-mix(in_srgb,var(--navy-900)_9%,transparent)]">
@@ -470,8 +479,8 @@ export function TopBarMobile({
                     <TopBarNavIcon icon="settings" />
                   </span>
                   <span>
-                    <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">Cuenta y Administración</span>
-                    <span className="block text-scale-2 text-[var(--text-secondary)]">Configuración, legales y herramientas de Admin</span>
+                    <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.mathesis.accountAdmin.title", { defaultValue: "Cuenta y Administración" })}</span>
+                    <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.mathesis.accountAdmin.subtitle", { defaultValue: "Configuración, legales y herramientas de Admin" })}</span>
                   </span>
                 </span>
                 <Chevron open={mobileExpandedPanel === "account-admin"} />
@@ -479,40 +488,40 @@ export function TopBarMobile({
 
               {mobileExpandedPanel === "account-admin" ? (
                 <div className="border-t border-[var(--line)] px-3 py-2">
-                  <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">CUENTA</p>
+                  <p className="px-2 pb-1 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.account", { defaultValue: "CUENTA" })}</p>
                   <Link href="/account/configuration" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="settings" /></span>
-                    Configuración
+                    {t("topbar:profile.settings", { defaultValue: "Configuración" })}
                   </Link>
                   <Link href="/account/configuration/change-password" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="search" /></span>
-                    Cambiar contraseña
+                    {t("settings:rows.changePassword", { defaultValue: "Cambiar contraseña" })}
                   </Link>
                   <Link href="/account/configuration/blocked" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="ban" /></span>
-                    Bloqueados
+                    {t("settings:rows.blocked", { defaultValue: "Bloqueados" })}
                   </Link>
 
-                  <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">LEGALES</p>
-                  <DisabledMenuRow label="Reglas de Ateneo y Mathesis" icon="badge" />
-                  <DisabledMenuRow label="Términos y Política de Privacidad" icon="doc" />
+                  <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.legal", { defaultValue: "LEGALES" })}</p>
+                  <DisabledMenuRow label={t("topbar:mobile.mathesis.legalRules", { defaultValue: "Reglas de Ateneo y Mathesis" })} icon="badge" />
+                  <DisabledMenuRow label={t("topbar:mobile.mathesis.legalTermsPrivacy", { defaultValue: "Términos y Política de Privacidad" })} icon="doc" />
 
-                  <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">ADMINISTRACIÓN</p>
+                  <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.administration", { defaultValue: "ADMINISTRACIÓN" })}</p>
                   {isAdmin ? (
                     <Link href="/admin" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="user" /></span>
-                      Usuarios Mathesis
+                      {t("topbar:mobile.mathesis.adminUsers", { defaultValue: "Usuarios Mathesis" })}
                     </Link>
                   ) : (
-                    <DisabledMenuRow label="Usuarios Mathesis" icon="user" />
+                    <DisabledMenuRow label={t("topbar:mobile.mathesis.adminUsers", { defaultValue: "Usuarios Mathesis" })} icon="user" />
                   )}
                   {[
-                    "ABM de Mathesis",
-                    "Denuncias de Publicación",
-                    "Denuncias de Perfil",
-                    "Mensajería",
-                    "Banco de Desafíos y Premios",
-                    "Calendario de Acertijos",
+                    t("topbar:mobile.mathesis.adminMathesis", { defaultValue: "ABM de Mathesis" }),
+                    t("topbar:mobile.mathesis.reportPost", { defaultValue: "Denuncias de Publicación" }),
+                    t("topbar:mobile.mathesis.reportProfile", { defaultValue: "Denuncias de Perfil" }),
+                    t("topbar:mobile.mathesis.messaging", { defaultValue: "Mensajería" }),
+                    t("topbar:mobile.mathesis.challengeBank", { defaultValue: "Banco de Desafíos y Premios" }),
+                    t("topbar:mobile.mathesis.riddleCalendar", { defaultValue: "Calendario de Acertijos" }),
                   ].map((label) => (
                     <DisabledMenuRow key={label} label={label} icon="doc" />
                   ))}
@@ -520,14 +529,14 @@ export function TopBarMobile({
                   {hasCompaniesAdminAccess ? (
                     <Link href="/admin/companies-admin" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="building" /></span>
-                      ABM Mathesis Empresarios
+                      {t("topbar:mobile.mathesis.adminCompanies", { defaultValue: "ABM Mathesis Empresarios" })}
                     </Link>
                   ) : null}
 
-                  <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">AYUDA</p>
+                  <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.help", { defaultValue: "AYUDA" })}</p>
                   <Link href="/account/contact" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="message" /></span>
-                    Contactar a Mathesis
+                    {t("settings:rows.contact", { defaultValue: "Contactar a Mathesis" })}
                   </Link>
                 </div>
               ) : null}
@@ -541,7 +550,7 @@ export function TopBarMobile({
             }}
             className="mt-3 w-full rounded-2xl border border-[color:color-mix(in_srgb,var(--danger-500)_35%,transparent)] bg-[var(--surface)] px-4 py-3 text-left text-scale-3 font-semibold text-[var(--danger-500)]"
           >
-            Cerrar sesión
+            {t("topbar:profile.logout", { defaultValue: "Cerrar sesión" })}
           </button>
         </div>
       </aside>

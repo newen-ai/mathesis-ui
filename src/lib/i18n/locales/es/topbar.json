@@ -1,0 +1,118 @@
+{
+  "items": {
+    "messages": "Mensajes",
+    "notifications": "Notificaciones",
+    "nexum": "Nexum",
+    "agora": "Agora",
+    "admin": "Admin",
+    "companiesAdmin": "ME Admin"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "comingSoon": "PRÓXIMAMENTE"
+  },
+  "search": {
+    "label": "Buscar perfiles",
+    "placeholder": "Buscar",
+    "searching": "Buscando..."
+  },
+  "nexum": {
+    "myProfile": "Mi Perfil Profesional",
+    "jobs": "Bolsa de Trabajo",
+    "directory": "Directorio de Empresas",
+    "myCompanies": "Mis Empresas"
+  },
+  "agora": {
+    "ateneo": "Ateneo",
+    "riddles": "Acertijos",
+    "affinitas": "Afinitas",
+    "advancedSearch": "Buscar Usuarios (avanzada)",
+    "convivium": "Convivium"
+  },
+  "profile": {
+    "openMenu": "Abrir menú de perfil",
+    "photo": "Foto de perfil",
+    "myProfile": "Mi perfil",
+    "digitalCredential": "Credencial digital",
+    "settings": "Configuración",
+    "memberOfMathesis": "Miembro de Mathesis",
+    "logout": "Cerrar sesión"
+  },
+  "mobile": {
+    "closeMenu": "Cerrar menú",
+    "openMenu": "Abrir menú",
+    "goToNotifications": "Ir a notificaciones",
+    "defaultIdentity": "CEO · Mathesis & Newen Solutions",
+    "membership": {
+      "loading": "Cargando membresía...",
+      "sending": "Enviando solicitud...",
+      "removing": "Quitando solicitud...",
+      "requested": "Solicitud pendiente · Cancelar solicitud",
+      "request": "Solicitar Membresía"
+    },
+    "sections": {
+      "administration": "ADMINISTRACIÓN",
+      "discover": "DESCUBRIR",
+      "activity": "ACTIVIDAD",
+      "about": "ACERCA DE",
+      "account": "CUENTA",
+      "legal": "LEGALES",
+      "help": "AYUDA"
+    },
+    "nexum": {
+      "title": "Nexum · tu red profesional",
+      "profile": {
+        "title": "Tu Perfil Profesional",
+        "subtitle": "CV, experiencia y verificación Mensa"
+      },
+      "editProfessionalProfile": "Editar Perfil Profesional",
+      "companies": {
+        "title": "Empresas",
+        "subtitle": "Directorio de Mathesis Empresarios",
+        "explore": "Explorar Mathesis Empresarios",
+        "manageMine": "Gestionar mis empresas",
+        "admin": "Admin. Mathesis Empresarios"
+      }
+    },
+    "agora": {
+      "title": "Agora · tu espacio social",
+      "ateneo": {
+        "title": "Ateneo",
+        "subtitle": "Grupos de conversación temática"
+      },
+      "savedTopics": "Mis Temas guardados",
+      "weeklyRecognition": "Reconocimiento semanal",
+      "groupHealth": "Salud del Grupo (admin)",
+      "rules": "Reglas de Ateneo",
+      "privacyPolicy": "Política de Privacidad",
+      "userAgreement": "Acuerdo de Usuarios",
+      "riddles": {
+        "title": "Acertijos",
+        "subtitle": "Retos y juegos de ingenio de la comunidad"
+      },
+      "adminGroups": "GRUPOS QUE ADMINISTRÁS",
+      "viewAdminGroups": "Ver grupos que administrás",
+      "myGroups": "TUS GRUPOS",
+      "viewMyGroups": "Ver mis grupos",
+      "exploreGroups": "Explorar / Unirse a grupos",
+      "createGroup": "Crear grupo nuevo"
+    },
+    "mathesis": {
+      "title": "Mathesis",
+      "accountAdmin": {
+        "title": "Cuenta y Administración",
+        "subtitle": "Configuración, legales y herramientas de Admin"
+      },
+      "legalRules": "Reglas de Ateneo y Mathesis",
+      "legalTermsPrivacy": "Términos y Política de Privacidad",
+      "adminUsers": "Usuarios Mathesis",
+      "adminMathesis": "ABM de Mathesis",
+      "reportPost": "Denuncias de Publicación",
+      "reportProfile": "Denuncias de Perfil",
+      "messaging": "Mensajería",
+      "challengeBank": "Banco de Desafíos y Premios",
+      "riddleCalendar": "Calendario de Acertijos",
+      "adminCompanies": "ABM Mathesis Empresarios"
+    }
+  }
+}

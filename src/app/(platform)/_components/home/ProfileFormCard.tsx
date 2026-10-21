@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import type { Profile } from "../../_lib/types";
 
@@ -29,6 +30,7 @@ export function ProfileFormCard({
   onSave,
   onClearSaveError,
 }: ProfileFormCardProps) {
+  const { t } = useTranslation("profile");
   const [formState, setFormState] = useState<Profile>(profile);
 
   const onCancel = () => {
@@ -56,7 +58,7 @@ export function ProfileFormCard({
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3" id="profile-form-card">
       <div className="flex items-start justify-between gap-3 border-b border-[var(--line)] pb-2">
         <h2 className="font-[family-name:var(--font-spectral)] text-[0.85rem] font-bold text-[var(--navy-900)]">
-          {canEdit && isEditingMode ? "Editar perfil" : "Acerca de"}
+          {canEdit && isEditingMode ? t("profileForm.title.editing") : t("profileForm.title.about")}
         </h2>
         {canEdit && !isEditingMode ? (
           <button
@@ -65,7 +67,7 @@ export function ProfileFormCard({
             className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] px-3 py-1 text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)]"
           >
             <span aria-hidden="true">✎</span>
-            Editar
+            {t("common.edit")}
           </button>
         ) : null}
       </div>
@@ -73,7 +75,7 @@ export function ProfileFormCard({
       {canEdit && isEditingMode ? (
         <div className="mt-3">
           <div className="flex items-center justify-between text-xs font-medium text-[var(--text-secondary)]">
-            <span>Completitud del perfil</span>
+            <span>{t("profileForm.completion")}</span>
             <span>{profileCompletion}%</span>
           </div>
           <div className="mt-2 h-2 rounded-full bg-[var(--surface-muted)]">
@@ -87,25 +89,25 @@ export function ProfileFormCard({
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {isLoading ? (
-          <p className="text-[0.68rem] text-[var(--text-secondary)]">Cargando perfil...</p>
+          <p className="text-[0.68rem] text-[var(--text-secondary)]">{t("profileForm.loading")}</p>
         ) : canEdit && isEditingMode ? (
           <>
             <label className="mathesis-field">
-              Nombre
+              {t("profileForm.fields.firstName")}
               <input
                 value={formState.nombre}
                 onChange={(event) => onFormChange("nombre", event.target.value)}
               />
             </label>
             <label className="mathesis-field">
-              Apellido
+              {t("profileForm.fields.lastName")}
               <input
                 value={formState.apellido}
                 onChange={(event) => onFormChange("apellido", event.target.value)}
               />
             </label>
             <label className="mathesis-field">
-              Fecha de nacimiento
+              {t("profileForm.fields.birthDate")}
               <input
                 type="date"
                 value={formState.fechaNacimiento}
@@ -115,7 +117,7 @@ export function ProfileFormCard({
               />
             </label>
             <label className="mathesis-field">
-              Nacionalidad
+              {t("profileForm.fields.nationality")}
               <input
                 value={formState.nacionalidad}
                 onChange={(event) =>
@@ -124,7 +126,7 @@ export function ProfileFormCard({
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Titular profesional (max. 80)
+              {t("profileForm.fields.headline")}
               <input
                 value={formState.puesto}
                 maxLength={80}
@@ -133,7 +135,7 @@ export function ProfileFormCard({
               <span className="text-right text-xs text-[var(--text-soft)]">{formState.puesto.length}/80</span>
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Empresa actual
+              {t("profileForm.fields.currentCompany")}
               <input
                 value={formState.empresaActual}
                 onChange={(event) =>
@@ -142,28 +144,28 @@ export function ProfileFormCard({
               />
             </label>
             <label className="mathesis-field">
-              Pais
+              {t("profileForm.fields.country")}
               <input
                 value={formState.locationCountry}
                 onChange={(event) => onFormChange("locationCountry", event.target.value)}
               />
             </label>
             <label className="mathesis-field">
-              Ciudad
+              {t("profileForm.fields.city")}
               <input
                 value={formState.locationCity}
                 onChange={(event) => onFormChange("locationCity", event.target.value)}
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Codigo postal
+              {t("profileForm.fields.postalCode")}
               <input
                 value={formState.locationPostalCode}
                 onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Acerca de (max. 800)
+              {t("profileForm.fields.about")}
               <textarea
                 value={formState.about}
                 maxLength={800}
@@ -186,7 +188,7 @@ export function ProfileFormCard({
                 disabled={isSaving}
                 className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSaving ? "Guardando..." : "Guardar"}
+                  {isSaving ? t("common.saving") : t("common.save")}
               </button>
               <button
                 type="button"
@@ -194,7 +196,7 @@ export function ProfileFormCard({
                 disabled={isSaving}
                 className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Cancelar
+                  {t("common.cancel")}
               </button>
             </div>
           </>
@@ -202,7 +204,7 @@ export function ProfileFormCard({
           <>
             <div className="sm:col-span-2 pt-1">
               <p className="whitespace-pre-wrap break-words text-[0.7rem] leading-[1.55] text-[var(--text-primary)]">
-                {profile.about?.trim() || "Aun no agregaste una descripcion profesional."}
+                  {profile.about?.trim() || t("profileForm.emptyAbout")}
               </p>
             </div>
           </>

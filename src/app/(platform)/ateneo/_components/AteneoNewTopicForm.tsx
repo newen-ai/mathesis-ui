@@ -4,6 +4,7 @@ import { createAteneoTopic, getAteneoGroup, listAteneoGroups } from "@/lib/api/a
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
@@ -47,6 +48,7 @@ function formatMaxSizeLabel(bytes: number): string {
 }
 
 export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
+  const { t } = useTranslation("ateneo");
   const preferredGroupId = groupId?.trim() ?? "";
   const hasFixedGroupContext = preferredGroupId.length > 0;
   const router = useRouter();
@@ -108,14 +110,14 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const shouldLockBodyScroll = isGroupPickerOpen || isImagePreviewOpen;
   const selectedGroupLabel = useMemo(() => {
     if (!selectedGroupId) {
-      return "Seleccioná un grupo";
+      return t("newTopic.selectGroup");
     }
 
     return (
       groupOptions.find((group) => group.id === selectedGroupId)?.name ||
-      "Seleccioná un grupo"
+      t("newTopic.selectGroup")
     );
-  }, [groupOptions, selectedGroupId]);
+  }, [groupOptions, selectedGroupId, t]);
 
   const getGroupOptionLabel = (group: TopicGroupOption) => {
     return group.canCreateTopics ? group.name : `${group.name} ⚠`;
@@ -152,21 +154,24 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
     const rejectedByType = Array.from(files).length - allowedFiles.length;
     if (rejectedByType > 0) {
-      toast.info(kind === "image" ? "Solo se permiten imágenes JPG, PNG o HEIC/HEIF." : "Solo se permiten archivos PDF.");
+      toast.info(kind === "image" ? t("newTopic.toasts.imageTypesOnly") : t("newTopic.toasts.pdfOnly"));
     }
 
     const oversizedFiles = allowedFiles.filter((file) => file.size > MAX_ATTACHMENT_SIZE_BYTES);
     if (oversizedFiles.length > 0) {
       const firstOversizedFile = oversizedFiles[0];
       toast.info(
-        `El archivo ${firstOversizedFile.name} es demasiado grande. Máximo ${formatMaxSizeLabel(MAX_ATTACHMENT_SIZE_BYTES)} por archivo.`
+        t("newTopic.toasts.fileTooLarge", {
+          name: firstOversizedFile.name,
+          maxSize: formatMaxSizeLabel(MAX_ATTACHMENT_SIZE_BYTES),
+        })
       );
     }
 
     const acceptedFiles = allowedFiles.filter((file) => file.size <= MAX_ATTACHMENT_SIZE_BYTES);
 
     if (acceptedFiles.length === 0) {
-      toast.info(kind === "image" ? "Elegí una imagen JPG, PNG o HEIC." : "Elegí un archivo PDF.");
+      toast.info(kind === "image" ? t("newTopic.toasts.chooseImage") : t("newTopic.toasts.choosePdf"));
       return;
     }
 
@@ -183,7 +188,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
     const droppedCount = Math.max(0, attachments.length + nextAttachments.length - MAX_ATTACHMENTS_PER_TOPIC);
     if (droppedCount > 0) {
-      toast.info("Máximo 5 adjuntos por tema. Quitá alguno para sumar otro.");
+      toast.info(t("newTopic.toasts.maxAttachments"));
     }
 
     setAttachments((current) => {
@@ -327,17 +332,17 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     const safeDescription = description.trim();
 
     if (!targetGroupId) {
-      toast.info("Elegí un grupo antes de publicar.");
+      toast.info(t("newTopic.toasts.chooseGroupBeforePublish"));
       return;
     }
 
     if (!safeTitle || !safeDescription) {
-      toast.info("Completá título y descripción antes de publicar.");
+      toast.info(t("newTopic.toasts.completeBeforePublish"));
       return;
     }
 
     if (isOverAnyLimit) {
-      toast.info("Respetá los límites: título hasta 100 y descripción hasta 1000 caracteres.");
+      toast.info(t("newTopic.toasts.respectLimits"));
       return;
     }
 
@@ -350,7 +355,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         attachments: attachments.map((attachment) => attachment.file)
       });
 
-      toast.success("Tema publicado");
+      toast.success(t("newTopic.toasts.published"));
       attachments.forEach((attachment) => {
         if (attachment.previewUrl) {
           URL.revokeObjectURL(attachment.previewUrl);
@@ -474,13 +479,13 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            aria-label="Volver"
+            aria-label={t("newTopic.backAria")}
             className="inline-flex items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)]"
           >
             <span aria-hidden="true">&lt;</span>
           </button>
           <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
-            Nuevo tema
+            {t("newTopic.title")}
           </h1>
         </div>
 
@@ -491,20 +496,20 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
             onClick={() => void handleSubmit()}
             className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:brightness-100"
           >
-            {isSubmitting ? "Publicando..." : "Publicar"}
+            {isSubmitting ? t("newTopic.publishing") : t("newTopic.publish")}
           </button>
         ) : null}
       </div>
 
       {!hasFixedGroupContext && groupOptions.length === 0 ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
-          Todavía no tenés grupos disponibles para publicar temas. Sumate a un grupo o creá uno nuevo desde Ateneo.
+          {t("newTopic.emptyGroupsMessage")}
         </div>
       ) : null}
 
       {groupOptions.length > 0 && selectedGroupId.trim().length > 0 && !canCreateTopics ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
-          Solo los administradores pueden crear temas en este grupo.
+          {t("newTopic.adminsOnlyMessage")}
         </div>
       ) : null}
 
@@ -518,10 +523,10 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       >
         <div className="flex items-center gap-3">
           <label className="min-w-0 flex-1">
-            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Grupo</span>
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.groupLabel")}</span>
             {hasFixedGroupContext ? (
               <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-3 font-medium text-[var(--text-primary)]">
-                {groupOptions.find((group) => group.id === selectedGroupId)?.name || "Grupo seleccionado"}
+                {groupOptions.find((group) => group.id === selectedGroupId)?.name || t("newTopic.selectedGroup")}
               </div>
             ) : (
               <div className="space-y-2">
@@ -543,9 +548,9 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     className="w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
                   >
                     {groupOptions.length > 0 ? (
-                      <option value="">Seleccioná un grupo</option>
+                      <option value="">{t("newTopic.selectGroup")}</option>
                     ) : (
-                      <option value="">No hay grupos disponibles</option>
+                      <option value="">{t("newTopic.noGroupsAvailable")}</option>
                     )}
                     {groupOptions.map((group) => (
                       <option key={group.id} value={group.id}>
@@ -557,7 +562,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     ⌄
                   </span>
                 </div>
-                <p className="text-scale-1 text-[var(--text-secondary)]">⚠ Solo admins pueden publicar en esos grupos.</p>
+                <p className="text-scale-1 text-[var(--text-secondary)]">{t("newTopic.adminsOnlyHint")}</p>
               </div>
             )}
           </label>
@@ -565,11 +570,11 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
         <div className="mt-5 space-y-5">
           <label className="block">
-            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Título</span>
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.titleLabel")}</span>
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Título del tema..."
+              placeholder={t("newTopic.titlePlaceholder")}
               className={[
                 "w-full rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
                 isTitleTooLong ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]" : "border-[var(--line)] focus:border-[var(--brand-700)]",
@@ -586,11 +591,11 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           </label>
 
           <label className="block">
-            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">Descripción</span>
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.descriptionLabel")}</span>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Contá de qué se trata..."
+              placeholder={t("newTopic.descriptionPlaceholder")}
               rows={6}
               className={[
                 "w-full resize-none rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
@@ -610,7 +615,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
             {detectedUrls.length > 0 ? (
               <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
-                <p className="text-scale-2 font-semibold text-[var(--heading-primary)]">Links detectados</p>
+                <p className="text-scale-2 font-semibold text-[var(--heading-primary)]">{t("newTopic.detectedLinks")}</p>
                 <LinkifiedText
                   text={description}
                   className="mt-2 whitespace-pre-wrap text-scale-2 text-[var(--text-secondary)]"
@@ -623,7 +628,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-scale-3 font-semibold text-[var(--heading-primary)]">Adjuntar</span>
+              <span className="text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.attachLabel")}</span>
             </div>
 
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
@@ -634,7 +639,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                   className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
                 >
                   <span aria-hidden="true">◫</span>
-                  Foto
+                  {t("newTopic.attachPhoto")}
                 </button>
 
                 <button
@@ -643,7 +648,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                   className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
                 >
                   <span aria-hidden="true">▣</span>
-                  Archivo
+                  {t("newTopic.attachFile")}
                 </button>
               </div>
 
@@ -670,11 +675,11 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                               }
                             }}
                             className="block"
-                            aria-label={`Abrir vista previa de ${attachment.file.name}`}
+                            aria-label={t("newTopic.openPreviewAria", { name: attachment.file.name })}
                           >
                             <Image
                               src={previewItem.previewUrl}
-                              alt={`Vista previa de ${attachment.file.name}`}
+                              alt={t("newTopic.previewAlt", { name: attachment.file.name })}
                               width={80}
                               height={80}
                               unoptimized
@@ -691,7 +696,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                               removeAttachmentAt(index);
                             }}
                             className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_84%,transparent)] text-sm text-[var(--text-primary)] backdrop-blur transition hover:bg-[var(--surface)]"
-                            aria-label={`Quitar ${attachment.file.name}`}
+                            aria-label={t("newTopic.removeAria", { name: attachment.file.name })}
                           >
                             ×
                           </button>
@@ -707,7 +712,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                           type="button"
                           onClick={() => removeAttachmentAt(index)}
                           className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
-                          aria-label={`Quitar ${attachment.file.name}`}
+                          aria-label={t("newTopic.removeAria", { name: attachment.file.name })}
                         >
                           ×
                         </button>
@@ -718,13 +723,13 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
               ) : null}
 
               <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-2 text-[var(--text-secondary)]">
-                Foto: JPG, PNG o HEIC · Archivo: solo PDF
+                {t("newTopic.fileTypesHint")}
               </div>
             </div>
           </div>
 
           <div className="pt-1">
-              <div className="mb-3 text-scale-3 font-semibold text-[var(--heading-primary)]">Tono del tema (opcional, indicativo)</div>
+              <div className="mb-3 text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.toneLabel")}</div>
             <div className="grid grid-cols-3 gap-2">
               {toneOptions.map((tone) => {
                 const isSelected = selectedTone === tone;
@@ -741,13 +746,13 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                         : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
                     ].join(" ")}
                   >
-                    {tone}
+                    {tone === "SERIO" ? t("newTopic.tones.serio") : tone === "RECOMENDADO" ? t("newTopic.tones.recomendado") : t("newTopic.tones.libre")}
                   </button>
                 );
               })}
             </div>
             <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">
-              Solo indicativo — no cambia moderación ni el Sermonio real de reacciones.
+              {t("newTopic.toneHint")}
             </p>
           </div>
         </div>
@@ -757,20 +762,20 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         <div className="fixed inset-0 z-[140] flex items-center justify-center px-4 md:hidden">
           <button
             type="button"
-            aria-label="Cerrar selector de grupos"
+            aria-label={t("newTopic.closeGroupPickerAria")}
             className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--navy-900)_48%,transparent)]"
             onClick={() => setIsGroupPickerOpen(false)}
           />
           <section className="relative z-[141] w-full max-w-[28rem] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_20px_50px_color-mix(in_srgb,var(--navy-900)_26%,transparent)]">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
-                Elegir grupo
+                {t("newTopic.chooseGroupTitle")}
               </h2>
               <button
                 type="button"
                 onClick={() => setIsGroupPickerOpen(false)}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
-                aria-label="Cerrar selector"
+                aria-label={t("newTopic.closePickerAria")}
               >
                 ×
               </button>
@@ -787,12 +792,12 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]",
                 ].join(" ")}
               >
-                <span>Seleccioná un grupo</span>
+                <span>{t("newTopic.selectGroup")}</span>
               </button>
 
               {groupOptions.length === 0 ? (
                 <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 text-[var(--text-secondary)]">
-                  No hay grupos disponibles
+                  {t("newTopic.noGroupsAvailable")}
                 </div>
               ) : null}
 
@@ -825,7 +830,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         <div className="fixed inset-0 z-[150] flex items-center justify-center px-3 sm:px-6">
           <button
             type="button"
-            aria-label="Cerrar vista previa"
+            aria-label={t("newTopic.closePreviewAria")}
             className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--navy-900)_72%,transparent)]"
             onClick={closeImagePreview}
           />
@@ -845,7 +850,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                   type="button"
                   onClick={removeActivePreviewImage}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--danger-500)] bg-[var(--surface)] text-[var(--danger-500)] transition hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,var(--surface))]"
-                  aria-label="Quitar imagen actual"
+                  aria-label={t("newTopic.removeCurrentImageAria")}
                 >
                   🗑
                 </button>
@@ -853,7 +858,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                   type="button"
                   onClick={closeImagePreview}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
-                  aria-label="Cerrar vista previa"
+                  aria-label={t("newTopic.closePreviewAria")}
                 >
                   ×
                 </button>
@@ -867,7 +872,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
             >
               <Image
                 src={activePreviewImage.previewUrl}
-                alt={`Vista previa de ${activePreviewImage.file.name}`}
+                alt={t("newTopic.previewAlt", { name: activePreviewImage.file.name })}
                 width={1600}
                 height={1200}
                 unoptimized
@@ -880,7 +885,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     type="button"
                     onClick={showPreviousPreviewImage}
                     className="absolute left-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-xl text-[var(--text-primary)] backdrop-blur sm:left-3"
-                    aria-label="Imagen anterior"
+                    aria-label={t("newTopic.previousImageAria")}
                   >
                     ‹
                   </button>
@@ -888,7 +893,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     type="button"
                     onClick={showNextPreviewImage}
                     className="absolute right-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-xl text-[var(--text-primary)] backdrop-blur sm:right-3"
-                    aria-label="Imagen siguiente"
+                    aria-label={t("newTopic.nextImageAria")}
                   >
                     ›
                   </button>

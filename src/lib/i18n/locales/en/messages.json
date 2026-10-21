@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Messages",
+    "subtitle": "Private conversations for high-impact collaboration."
+  },
+  "time": {
+    "now": "Now",
+    "yesterday": "Yesterday"
+  },
+  "fallbacks": {
+    "user": "User",
+    "you": "You",
+    "noProfessionalData": "No professional information",
+    "noMembers": "No members",
+    "untitledGroup": "Untitled group",
+    "directChat": "Direct chat",
+    "contact": "Contact",
+    "searchResult": "Search result",
+    "noMessagesYet": "No messages yet",
+    "chat": "Chat"
+  },
+  "errors": {
+    "groupTitleRequired": "Group title is required.",
+    "createGroupOrSend": "Couldn't create the group or send the message.",
+    "createGroup": "Couldn't create the group.",
+    "selectContactCreateChat": "Select at least one contact to create the chat.",
+    "createDirectChat": "Couldn't create the direct chat.",
+    "selectContactStartConversation": "Select at least one contact to start the conversation.",
+    "openDirectOrSend": "Couldn't open the direct chat or send the message.",
+    "selectConversation": "Select a conversation.",
+    "sendMessage": "Couldn't send the message.",
+    "loadConversations": "We couldn't load your conversations.",
+    "refreshConversations": "We couldn't refresh conversations.",
+    "loadHistory": "Couldn't load earlier history.",
+    "loadChatHistory": "Couldn't load chat history.",
+    "confirmCreation": "Couldn't confirm chat creation.",
+    "completeSend": "Couldn't complete sending."
+  },
+  "blocked": {
+    "blockedByOther": "You were blocked by this user",
+    "blockedByYou": "You blocked this user"
+  },
+  "composer": {
+    "newConversation": "New conversation",
+    "confirm": "Confirm",
+    "confirming": "Confirming...",
+    "to": "To",
+    "searchMembers": "Search members...",
+    "searchResults": "Search results",
+    "contacts": "Contacts",
+    "searchingContacts": "Searching contacts...",
+    "emptySearch": "No contacts found for that search.",
+    "emptyContacts": "No contacts available yet.",
+    "writeMessage": "Write a message...",
+    "send": "Send",
+    "sending": "Sending...",
+    "confirmButton": "Create and send"
+  },
+  "conversations": {
+    "loading": "Loading conversations...",
+    "empty": "You don't have conversations yet.",
+    "selectToStart": "Select a conversation to begin.",
+    "backToList": "Back to list",
+    "loadingOlder": "Loading earlier messages...",
+    "emptyThread": "No messages yet.",
+    "deletedMessage": "Deleted message",
+    "newConversationButton": "New conversation"
+  },
+  "groupTitleModal": {
+    "title": "Group title",
+    "subtitle": "Enter a title to create the group chat.",
+    "placeholder": "e.g. Founding Team",
+    "cancel": "Cancel",
+    "creating": "Creating..."
+  },
+  "groupMembersModal": {
+    "ariaLabel": "Group members",
+    "membersCount": "{{count}} members",
+    "close": "Close",
+    "roleAdmin": "Admin",
+    "roleMember": "Member"
+  },
+  "aria": {
+    "backToConversations": "Back to conversations",
+    "viewGroupMembers": "View group members",
+    "profilePhoto": "Profile photo of {{name}}"
+  }
+}

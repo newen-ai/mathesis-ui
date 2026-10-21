@@ -3,16 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { TopBar } from "../../_components/TopBar";
 import { navItems } from "../../_lib/constants";
 import { listAteneoGroups, type AteneoGroup, type AteneoTabKey } from "@/lib/api/ateneo";
-
-const ateneoTabs: Array<{ key: AteneoTabKey; label: string }> = [
-  { key: "mine", label: "Tus grupos" },
-  { key: "discover", label: "Descubrir" },
-  { key: "admin", label: "Grupos que administrás" }
-];
 
 function resolveTab(searchTab: string | null): AteneoTabKey {
   if (searchTab === "admin" || searchTab === "discover" || searchTab === "mine") {
@@ -67,10 +62,12 @@ function GroupCard({
   group,
   onAction,
   onOpenGroup,
+  t,
 }: {
   group: AteneoGroup;
   onAction: () => void;
   onOpenGroup: (groupId: string) => void;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }) {
   const isOpenable = true;
 
@@ -106,7 +103,7 @@ function GroupCard({
           {group.isOfficial ? (
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="inline-flex items-center rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_70%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_62%,var(--surface))] px-3 py-1 text-scale-2 font-semibold text-[var(--brand-900)]">
-                Oficial
+                {t("explorer.official")}
               </span>
             </div>
           ) : null}
@@ -120,7 +117,7 @@ function GroupCard({
               onAction();
             }}
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
-            aria-label={`Opciones de ${group.name}`}
+            aria-label={t("explorer.optionsAria", { name: group.name })}
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
               <circle cx="6" cy="12" r="1.3" />
@@ -139,7 +136,7 @@ function GroupCard({
             }}
             className="inline-flex shrink-0 items-center rounded-full border border-[var(--brand-500)] px-4 py-2 text-scale-2 font-semibold text-[var(--brand-800)] transition hover:bg-[color:color-mix(in_srgb,var(--brand-100)_65%,var(--surface))]"
           >
-            Unirse
+            {t("explorer.join")}
           </button>
         ) : null}
       </div>
@@ -147,24 +144,31 @@ function GroupCard({
   );
 }
 
-function SearchAndHeader({ activeTab, onTabChange, searchText, onSearchTextChange }: {
+function SearchAndHeader({ activeTab, onTabChange, searchText, onSearchTextChange, t }: {
   activeTab: AteneoTabKey;
   onTabChange: (tab: AteneoTabKey) => void;
   searchText: string;
   onSearchTextChange: (value: string) => void;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }) {
+  const ateneoTabs: Array<{ key: AteneoTabKey; label: string }> = [
+    { key: "mine", label: t("explorer.tabs.mine") },
+    { key: "discover", label: t("explorer.tabs.discover") },
+    { key: "admin", label: t("explorer.tabs.admin") }
+  ];
+
   return (
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-4">
         <div>
           <h1 className="mt-1 font-[family-name:var(--font-spectral)] text-[2.2rem] font-semibold leading-tight text-[var(--heading-primary)] sm:mt-0 sm:text-[2.5rem]">
-            Explorar Grupos
+            {t("explorer.headerTitle")}
           </h1>
-          <p className="text-scale-3 text-[var(--text-secondary)]">Agora › Ateneo › Explorar</p>
+          <p className="text-scale-3 text-[var(--text-secondary)]">{t("explorer.breadcrumb")}</p>
         </div>
 
         <Link href="/ateneo/create" className="hidden rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 sm:inline-flex">
-          + Crear grupo
+          {t("explorer.createGroup")}
         </Link>
       </header>
 
@@ -177,7 +181,7 @@ function SearchAndHeader({ activeTab, onTabChange, searchText, onSearchTextChang
           type="search"
           value={searchText}
           onChange={(event) => onSearchTextChange(event.target.value)}
-          placeholder="Buscar grupos..."
+          placeholder={t("explorer.searchPlaceholder")}
           className="w-full bg-transparent text-scale-3 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-soft)]"
         />
       </div>
@@ -208,6 +212,7 @@ function SearchAndHeader({ activeTab, onTabChange, searchText, onSearchTextChang
 }
 
 export function AteneoGroupsExplorer() {
+  const { t } = useTranslation("ateneo");
   const [searchText, setSearchText] = useState("");
   const [groups, setGroups] = useState<AteneoGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -253,7 +258,7 @@ export function AteneoGroupsExplorer() {
   }, [groups, searchText]);
 
   const onAction = () => {
-    toast.info("Coming soon");
+    toast.info(t("explorer.comingSoon"));
   };
 
   const goToGroup = (groupId: string) => {
@@ -268,31 +273,31 @@ export function AteneoGroupsExplorer() {
     <div className="mathesis-shell min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <TopBar navItems={navItems} />
       <div className="mx-auto w-full max-w-[1400px] px-4 pb-24 pt-5 sm:px-8 sm:pb-8 sm:pt-8">
-        <SearchAndHeader activeTab={activeTab} onTabChange={goToTab} searchText={searchText} onSearchTextChange={setSearchText} />
+        <SearchAndHeader activeTab={activeTab} onTabChange={goToTab} searchText={searchText} onSearchTextChange={setSearchText} t={t} />
 
         <section className="mt-5 space-y-3 sm:space-y-4">
           {isLoading ? (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-7 text-center text-scale-3 text-[var(--text-secondary)]">
-              Cargando grupos...
+              {t("explorer.loading")}
             </div>
           ) : null}
 
           {filteredGroups.map((group) => (
-            <GroupCard key={group.id} group={group} onAction={onAction} onOpenGroup={goToGroup} />
+            <GroupCard key={group.id} group={group} onAction={onAction} onOpenGroup={goToGroup} t={t} />
           ))}
 
           {!isLoading && filteredGroups.length === 0 ? (
             <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-7 text-center text-scale-3 text-[var(--text-secondary)]">
-              No encontramos grupos con ese criterio.
+              {t("explorer.empty")}
             </div>
           ) : null}
         </section>
 
         <button
           type="button"
-          onClick={() => toast.info("Coming soon")}
+          onClick={() => toast.info(t("explorer.comingSoon"))}
           className="fixed bottom-24 right-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand-500)] text-[2rem] mathesis-on-brand shadow-[0_10px_28px_color-mix(in_srgb,var(--brand-500)_45%,transparent)] transition hover:brightness-95 sm:hidden"
-          aria-label="Crear grupo"
+          aria-label={t("explorer.floatingCreateAria")}
         >
           +
         </button>

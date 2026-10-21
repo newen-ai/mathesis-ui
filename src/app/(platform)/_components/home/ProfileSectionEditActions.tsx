@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 type ProfileSectionAddButtonProps = {
   label: string;
   onClick: () => void;
@@ -30,6 +32,8 @@ export function ProfileSectionFinalizeRow({
   onFinalize,
   isSaving,
 }: ProfileSectionFinalizeRowProps) {
+  const { t } = useTranslation("profile");
+
   return (
     <div className="mt-4 flex justify-start">
       <button
@@ -38,7 +42,7 @@ export function ProfileSectionFinalizeRow({
         disabled={isSaving}
         className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-[0.95rem] font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:opacity-60"
       >
-        Finalizar
+        {t("common.finalize")}
       </button>
     </div>
   );

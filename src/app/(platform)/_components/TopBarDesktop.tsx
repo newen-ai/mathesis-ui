@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Dispatch, RefObject, SetStateAction } from "react";
+import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { DesktopTopbarIcon } from "./DesktopTopbarIcons";
 import { TopBarNavIcon } from "./TopBarNavIcon";
@@ -37,6 +38,8 @@ function DesktopDropdownMenu({
   isNavItemActive: (href: string) => boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="absolute right-0 top-[calc(100%+0.4rem)] z-[80] w-[21rem] rounded-[1rem] border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
       {items.map((menuItem) => {
@@ -52,11 +55,15 @@ function DesktopDropdownMenu({
               <span className="text-[var(--text-secondary)]">
                 <TopBarNavIcon icon={menuItem.icon} />
               </span>
-              {menuItem.label}
+              {menuItem.labelKey
+                ? t(menuItem.labelKey, { defaultValue: menuItem.label })
+                : menuItem.label}
             </span>
             {menuItem.disabledText ? (
               <span className="rounded-full bg-[var(--surface-muted)] px-2 py-1 text-[0.6rem] font-semibold tracking-[0.08em] text-[var(--brand-700)]">
-                {menuItem.disabledText}
+                {menuItem.disabledTextKey
+                  ? t(menuItem.disabledTextKey, { defaultValue: menuItem.disabledText })
+                  : menuItem.disabledText}
               </span>
             ) : null}
           </>
@@ -100,6 +107,8 @@ export function TopBarDesktop({
   isLoadingUserName,
   onLogout,
 }: TopBarDesktopProps) {
+  const { t } = useTranslation();
+
   return (
     <nav ref={desktopNavRef} className="ml-auto hidden items-start gap-1.5 md:flex">
       {desktopTopbarItems.map((item) => {
@@ -122,7 +131,7 @@ export function TopBarDesktop({
                   </span>
                 ) : null}
               </span>
-              <span>{item.label}</span>
+              <span>{item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label}</span>
             </Link>
           );
         }
@@ -143,7 +152,7 @@ export function TopBarDesktop({
               <span className="mathesis-nav-icon" aria-hidden="true">
                 <DesktopTopbarIcon name={item.icon} />
               </span>
-              <span>{item.label}</span>
+              <span>{item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label}</span>
             </button>
 
             {item.menuKey === "nexum" && isOpen ? (
@@ -172,12 +181,12 @@ export function TopBarDesktop({
             setDesktopDropdownOpen((current) => (current === "profile" ? null : "profile"))
           }
           className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)]"
-          aria-label="Abrir menú de perfil"
+          aria-label={t("topbar:profile.openMenu", { defaultValue: "Abrir menú de perfil" })}
         >
           <UserAvatar
             imageUrl={userProfileImageUrl}
             initials={userInitials}
-            label="Foto de perfil"
+            label={t("topbar:profile.photo", { defaultValue: "Foto de perfil" })}
             className="flex h-full w-full items-center justify-center"
             initialsClassName="text-lg font-bold text-[var(--brand-500)]"
           />
@@ -187,10 +196,12 @@ export function TopBarDesktop({
           <aside className="absolute right-0 top-[calc(100%+0.5rem)] z-[80] h-fit max-h-[calc(100dvh-6.85rem)] w-[min(90vw,23.4rem)] overflow-y-auto rounded-[1.2rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_22px_50px_rgba(0,0,0,0.18)]">
             <div className="border-b border-[var(--line)] px-5 py-4">
               <p className="font-[family-name:var(--font-spectral)] text-[var(--menu-profile-name-size)] font-semibold leading-[1.05] mathesis-heading-primary">
-                {isLoadingUserName ? "Cargando..." : userName || "Mi perfil"}
+                {isLoadingUserName
+                  ? t("topbar:common.loading", { defaultValue: "Cargando..." })
+                  : userName || t("topbar:profile.myProfile", { defaultValue: "Mi perfil" })}
               </p>
               <p className="mt-1 text-[var(--menu-profile-meta-size)] font-semibold leading-[1.15] text-[var(--text-secondary)]">
-                {userIdentityLine || "Miembro de Mathesis"}
+                {userIdentityLine || t("topbar:profile.memberOfMathesis", { defaultValue: "Miembro de Mathesis" })}
               </p>
             </div>
 
@@ -206,7 +217,7 @@ export function TopBarDesktop({
                     <span className="text-[var(--text-secondary)]">
                       <TopBarNavIcon icon={item.icon} />
                     </span>
-                    {item.label}
+                    {item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label}
                   </span>
                 );
 
@@ -242,7 +253,7 @@ export function TopBarDesktop({
                 <span aria-hidden="true">
                   <TopBarNavIcon icon="logout" />
                 </span>
-                Cerrar sesión
+                {t("topbar:profile.logout", { defaultValue: "Cerrar sesión" })}
               </button>
             </div>
           </aside>

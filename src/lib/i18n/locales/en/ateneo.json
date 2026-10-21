@@ -1,0 +1,84 @@
+{
+  "feed": {
+    "authorFallback": "User",
+    "title": "Feed",
+    "subtitle": "All your groups, mixed together",
+    "newTopic": "+ New topic",
+    "loading": "Loading feed...",
+    "empty": "There are no topics to show."
+  },
+  "explorer": {
+    "tabs": {
+      "mine": "Your groups",
+      "discover": "Discover",
+      "admin": "Groups you manage"
+    },
+    "headerTitle": "Explore Groups",
+    "breadcrumb": "Agora > Ateneo > Explore",
+    "createGroup": "+ Create group",
+    "searchPlaceholder": "Search groups...",
+    "official": "Official",
+    "optionsAria": "Options for {{name}}",
+    "join": "Join",
+    "loading": "Loading groups...",
+    "empty": "No groups match your search.",
+    "floatingCreateAria": "Create group",
+    "comingSoon": "Coming soon"
+  },
+  "headerActions": {
+    "groupInfo": "View group info",
+    "groupMembers": "View group members",
+    "editGroup": "Edit group"
+  },
+  "newTopic": {
+    "title": "New topic",
+    "backAria": "Back",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "emptyGroupsMessage": "You do not have available groups to publish topics yet. Join a group or create a new one from Ateneo.",
+    "adminsOnlyMessage": "Only administrators can create topics in this group.",
+    "groupLabel": "Group",
+    "selectedGroup": "Selected group",
+    "selectGroup": "Select a group",
+    "noGroupsAvailable": "No groups available",
+    "adminsOnlyHint": "⚠ Only admins can publish in those groups.",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Topic title...",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Tell us what this is about...",
+    "detectedLinks": "Detected links",
+    "attachLabel": "Attach",
+    "attachPhoto": "Photo",
+    "attachFile": "File",
+    "openPreviewAria": "Open preview for {{name}}",
+    "previewAlt": "Preview of {{name}}",
+    "removeAria": "Remove {{name}}",
+    "fileTypesHint": "Photo: JPG, PNG, or HEIC · File: PDF only",
+    "toneLabel": "Topic tone (optional, indicative)",
+    "tones": {
+      "serio": "SERIOUS",
+      "recomendado": "RECOMMENDED",
+      "libre": "OPEN"
+    },
+    "toneHint": "Indicative only: this does not change moderation or the real Sermonio reactions.",
+    "closeGroupPickerAria": "Close group picker",
+    "chooseGroupTitle": "Choose group",
+    "closePickerAria": "Close picker",
+    "closePreviewAria": "Close preview",
+    "removeCurrentImageAria": "Remove current image",
+    "previousImageAria": "Previous image",
+    "nextImageAria": "Next image",
+    "toasts": {
+      "imageTypesOnly": "Only JPG, PNG, or HEIC/HEIF images are allowed.",
+      "pdfOnly": "Only PDF files are allowed.",
+      "fileTooLarge": "The file {{name}} is too large. Maximum {{maxSize}} per file.",
+      "chooseImage": "Pick a JPG, PNG, or HEIC image.",
+      "choosePdf": "Pick a PDF file.",
+      "maxAttachments": "Maximum 5 attachments per topic. Remove one to add another.",
+      "chooseGroupBeforePublish": "Choose a group before publishing.",
+      "completeBeforePublish": "Complete title and description before publishing.",
+      "respectLimits": "Respect limits: title up to 100 and description up to 1000 characters.",
+      "published": "Topic published"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { ModulePage } from "../_components/ModulePage";
@@ -42,34 +43,48 @@ const GROUP_MEMBER_PREVIEW_MAX_CHARS = 56;
 const GROUP_HEADER_PREVIEW_MAX_CHARS = 84;
 const COMPOSER_MAX_LINES = 10;
 
-function humanizeTime(isoDate: string | null) {
+function resolveDateLocale(language: string) {
+  return language.trim().toLowerCase().startsWith("en") ? "en-US" : "es-AR";
+}
+
+function humanizeTime(
+  isoDate: string | null,
+  language: string,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
   if (!isoDate) return "";
 
   const target = new Date(isoDate).getTime();
   const now = Date.now();
   const diffMinutes = Math.floor((now - target) / 60000);
 
-  if (diffMinutes <= 1) return "Ahora";
+  if (diffMinutes <= 1) return t("time.now");
   if (diffMinutes < 60) return `${diffMinutes}m`;
 
   const diffHours = Math.floor(diffMinutes / 60);
   if (diffHours < 24) return `${diffHours}h`;
-  if (diffHours < 48) return "Ayer";
+  if (diffHours < 48) return t("time.yesterday");
 
-  return new Intl.DateTimeFormat("es-AR", {
+  return new Intl.DateTimeFormat(resolveDateLocale(language), {
     day: "2-digit",
     month: "2-digit",
   }).format(new Date(isoDate));
 }
 
-function formatFullName(user: ChatUserSummary) {
+function formatFullName(
+  user: ChatUserSummary,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
   const fullName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
-  return fullName || "Usuario";
+  return fullName || t("fallbacks.user");
 }
 
-function formatRoleLine(user: ChatUserSummary) {
+function formatRoleLine(
+  user: ChatUserSummary,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
   const values = [user.currentJobTitle, user.currentCompany].filter(Boolean);
-  return values.length > 0 ? values.join(" · ") : "Sin datos profesionales";
+  return values.length > 0 ? values.join(" · ") : t("fallbacks.noProfessionalData");
 }
 
 function truncateWithEllipsis(text: string, maxChars: number) {
@@ -87,17 +102,18 @@ function truncateWithEllipsis(text: string, maxChars: number) {
 function buildGroupMembersSummary(
   members: ChatDetail["members"],
   currentUserId: string | null,
-  maxChars: number
+  maxChars: number,
+  t: (key: string, options?: Record<string, unknown>) => string
 ) {
   if (members.length === 0) {
     return {
-      fullText: "Sin miembros",
-      previewText: "Sin miembros",
+      fullText: t("fallbacks.noMembers"),
+      previewText: t("fallbacks.noMembers"),
     };
   }
 
   const names = members.map((member) =>
-    member.user.userId === currentUserId ? "Tú" : formatFullName(member.user)
+    member.user.userId === currentUserId ? t("fallbacks.you") : formatFullName(member.user, t)
   );
   const fullText = names.join(", ");
 
@@ -110,19 +126,21 @@ function buildGroupMembersSummary(
 function deriveThreadPresentation(
   summary: ChatSummary,
   detail: ChatDetail,
-  currentUserId: string | null
+  currentUserId: string | null,
+  t: (key: string, options?: Record<string, unknown>) => string
 ): Thread {
   if (detail.type === "GROUP") {
     const groupMembersSummary = buildGroupMembersSummary(
       detail.members,
       currentUserId,
-      GROUP_MEMBER_PREVIEW_MAX_CHARS
+      GROUP_MEMBER_PREVIEW_MAX_CHARS,
+      t
     );
 
     return {
       summary,
       detail,
-      displayName: detail.title?.trim() || "Grupo sin titulo",
+      displayName: detail.title?.trim() || t("fallbacks.untitledGroup"),
       roleLine: groupMembersSummary.previewText,
       profileImageUrl: null,
     };
@@ -133,8 +151,8 @@ function deriveThreadPresentation(
   return {
     summary,
     detail,
-    displayName: otherMember ? formatFullName(otherMember.user) : "Chat directo",
-    roleLine: otherMember ? formatRoleLine(otherMember.user) : "Contacto",
+    displayName: otherMember ? formatFullName(otherMember.user, t) : t("fallbacks.directChat"),
+    roleLine: otherMember ? formatRoleLine(otherMember.user, t) : t("fallbacks.contact"),
     profileImageUrl: otherMember?.user.profileImageUrl ?? null,
   };
 }
@@ -157,6 +175,7 @@ function mergeAndSortMessages(existing: ChatMessageSummary[], incoming: ChatMess
 }
 
 export default function MensajesPage() {
+  const { t, i18n } = useTranslation("messages");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState("");
@@ -256,11 +275,11 @@ export default function MensajesPage() {
     const map = new Map<string, string>();
 
     for (const member of selectedThread.detail.members) {
-      map.set(member.user.userId, formatFullName(member.user));
+      map.set(member.user.userId, formatFullName(member.user, t));
     }
 
     return map;
-  }, [selectedThread]);
+  }, [selectedThread, t]);
 
   const selectedThreadBlockedReason = useMemo(() => {
     if (!selectedThread || selectedThread.detail.type !== "DIRECT") {
@@ -268,15 +287,15 @@ export default function MensajesPage() {
     }
 
     if (selectedThread.detail.isBlockedByOtherUser) {
-      return "Has sido bloqueado por este usuario";
+      return t("blocked.blockedByOther");
     }
 
     if (selectedThread.detail.isBlockedByCurrentUser) {
-      return "Has bloqueado a este usuario";
+      return t("blocked.blockedByYou");
     }
 
     return null;
-  }, [selectedThread]);
+  }, [selectedThread, t]);
 
   const isSelectedThreadComposerBlocked = !isComposerOpen && Boolean(selectedThreadBlockedReason);
 
@@ -288,9 +307,10 @@ export default function MensajesPage() {
     return buildGroupMembersSummary(
       selectedThread.detail.members,
       currentUserId,
-      GROUP_HEADER_PREVIEW_MAX_CHARS
+      GROUP_HEADER_PREVIEW_MAX_CHARS,
+      t
     );
-  }, [currentUserId, selectedThread]);
+  }, [currentUserId, selectedThread, t]);
 
   const contactsFromExistingChats = useMemo(() => {
     const map = new Map<string, ContactOption>();
@@ -302,8 +322,8 @@ export default function MensajesPage() {
         if (!map.has(member.user.userId)) {
           map.set(member.user.userId, {
             userId: member.user.userId,
-            fullName: formatFullName(member.user),
-            roleLine: formatRoleLine(member.user),
+            fullName: formatFullName(member.user, t),
+            roleLine: formatRoleLine(member.user, t),
             profileImageUrl: member.user.profileImageUrl ?? null,
           });
         }
@@ -311,7 +331,7 @@ export default function MensajesPage() {
     }
 
     return [...map.values()].sort((a, b) => a.fullName.localeCompare(b.fullName));
-  }, [threads, currentUserId]);
+  }, [threads, currentUserId, t]);
 
   const recipientUserIds = useMemo(
     () => recipientContacts.map((recipient) => recipient.userId),
@@ -346,7 +366,8 @@ export default function MensajesPage() {
           deriveThreadPresentation(
             summary,
             detailResult.value.data,
-            viewerUserId ?? currentUserId
+            viewerUserId ?? currentUserId,
+            t
           )
         );
       }
@@ -370,7 +391,7 @@ export default function MensajesPage() {
 
       return nextSelected;
     },
-    [currentUserId, selectedThreadId]
+    [currentUserId, selectedThreadId, t]
   );
 
   const loadLatestMessages = useCallback(async (chatId: string, markAsRead = false) => {
@@ -468,7 +489,7 @@ export default function MensajesPage() {
       const sanitizedTitle = title.trim();
 
       if (!sanitizedTitle) {
-        setGroupTitleError("El titulo del grupo es obligatorio.");
+        setGroupTitleError(t("errors.groupTitleRequired"));
         return;
       }
 
@@ -495,12 +516,12 @@ export default function MensajesPage() {
         setGroupTitle("");
         setPendingGroupMessage("");
       } catch {
-        setComposerError("No se pudo crear el grupo o enviar el mensaje.");
+        setComposerError(t("errors.createGroupOrSend"));
       } finally {
         setIsSending(false);
       }
     },
-    [loadLatestMessages, recipientUserIds, refreshThreads]
+    [loadLatestMessages, recipientUserIds, refreshThreads, t]
   );
 
   const runGroupCreationOnly = useCallback(
@@ -508,7 +529,7 @@ export default function MensajesPage() {
       const sanitizedTitle = title.trim();
 
       if (!sanitizedTitle) {
-        setGroupTitleError("El titulo del grupo es obligatorio.");
+        setGroupTitleError(t("errors.groupTitleRequired"));
         return;
       }
 
@@ -534,12 +555,12 @@ export default function MensajesPage() {
         setGroupTitle("");
         setPendingGroupMessage("");
       } catch {
-        setComposerError("No se pudo crear el grupo.");
+        setComposerError(t("errors.createGroup"));
       } finally {
         setIsSending(false);
       }
     },
-    [loadLatestMessages, recipientUserIds, refreshThreads]
+    [loadLatestMessages, recipientUserIds, refreshThreads, t]
   );
 
   const onConfirmChatCreation = useCallback(async () => {
@@ -550,7 +571,7 @@ export default function MensajesPage() {
     setComposerError(null);
 
     if (recipientUserIds.length === 0) {
-      setComposerError("Selecciona al menos un contacto para crear el chat.");
+      setComposerError(t("errors.selectContactCreateChat"));
       return;
     }
 
@@ -572,7 +593,7 @@ export default function MensajesPage() {
         setContactSearchText("");
         setSearchResults([]);
       } catch {
-        setComposerError("No se pudo crear el chat directo.");
+        setComposerError(t("errors.createDirectChat"));
       } finally {
         setIsSending(false);
       }
@@ -582,7 +603,7 @@ export default function MensajesPage() {
 
     setGroupTitleError(null);
     setIsTitleModalOpen(true);
-  }, [isComposerOpen, isSending, loadLatestMessages, recipientUserIds, refreshThreads]);
+  }, [isComposerOpen, isSending, loadLatestMessages, recipientUserIds, refreshThreads, t]);
 
   const onSend = useCallback(async () => {
     const trimmedMessage = draftMessage.trim();
@@ -595,7 +616,7 @@ export default function MensajesPage() {
 
     if (isComposerOpen) {
       if (recipientUserIds.length === 0) {
-        setComposerError("Selecciona al menos un contacto para iniciar la conversacion.");
+        setComposerError(t("errors.selectContactStartConversation"));
         return;
       }
 
@@ -619,7 +640,7 @@ export default function MensajesPage() {
           setContactSearchText("");
           setSearchResults([]);
         } catch {
-          setComposerError("No se pudo abrir el chat directo o enviar el mensaje.");
+          setComposerError(t("errors.openDirectOrSend"));
         } finally {
           setIsSending(false);
         }
@@ -634,7 +655,7 @@ export default function MensajesPage() {
     }
 
     if (!selectedThreadId) {
-      setComposerError("Selecciona una conversacion.");
+      setComposerError(t("errors.selectConversation"));
       return;
     }
 
@@ -672,7 +693,7 @@ export default function MensajesPage() {
       scrollToBottom();
       await refreshThreads(selectedThreadId);
     } catch {
-      setComposerError("No se pudo enviar el mensaje.");
+      setComposerError(t("errors.sendMessage"));
     } finally {
       setIsSending(false);
     }
@@ -686,6 +707,7 @@ export default function MensajesPage() {
     scrollToBottom,
     selectedThreadBlockedReason,
     selectedThreadId,
+    t,
   ]);
 
   useEffect(() => {
@@ -709,7 +731,7 @@ export default function MensajesPage() {
         }
       } catch {
         if (!cancelled) {
-          setGlobalError("No pudimos cargar tus conversaciones.");
+          setGlobalError(t("errors.loadConversations"));
         }
       } finally {
         if (!cancelled) {
@@ -723,7 +745,7 @@ export default function MensajesPage() {
     return () => {
       cancelled = true;
     };
-  }, [loadLatestMessages, refreshThreads]);
+  }, [loadLatestMessages, refreshThreads, t]);
 
   useEffect(() => {
     if (!selectedThreadId || isComposerOpen) return;
@@ -735,14 +757,14 @@ export default function MensajesPage() {
           return loadLatestMessages(chatIdToLoad, false);
         })
         .catch(() => {
-          setGlobalError("No pudimos actualizar las conversaciones.");
+          setGlobalError(t("errors.refreshConversations"));
         });
     }, POLLING_INTERVAL_MS);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isComposerOpen, loadLatestMessages, refreshThreads, selectedThreadId]);
+  }, [isComposerOpen, loadLatestMessages, refreshThreads, selectedThreadId, t]);
 
   useEffect(() => {
     const search = contactSearchText.trim();
@@ -765,7 +787,7 @@ export default function MensajesPage() {
               .map((item) => ({
                 userId: item.userId,
                 fullName: `${item.firstName} ${item.lastName}`.trim(),
-                roleLine: "Resultado de busqueda",
+                roleLine: t("fallbacks.searchResult"),
                 profileImageUrl: item.profileImageUrl ?? null,
               }))
           );
@@ -781,7 +803,7 @@ export default function MensajesPage() {
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [contactSearchText, currentUserId, isComposerOpen]);
+  }, [contactSearchText, currentUserId, isComposerOpen, t]);
 
   useEffect(() => {
     if (!selectedThreadId || isComposerOpen) {
@@ -880,7 +902,7 @@ export default function MensajesPage() {
 
       if (viewport.scrollTop <= 80) {
         loadOlderMessages(selectedThread.summary.id).catch(() => {
-          setComposerError("No se pudo cargar el historial anterior.");
+          setComposerError(t("errors.loadHistory"));
         });
       }
     };
@@ -891,7 +913,7 @@ export default function MensajesPage() {
     return () => {
       viewport.removeEventListener("scroll", onScroll);
     };
-  }, [isComposerOpen, isMobileViewport, loadOlderMessages, mobileActivePanel, selectedThread]);
+  }, [isComposerOpen, isMobileViewport, loadOlderMessages, mobileActivePanel, selectedThread, t]);
 
   useEffect(() => {
     adjustComposerTextareaHeight(composerTextareaRef.current);
@@ -980,8 +1002,8 @@ export default function MensajesPage() {
 
   return (
     <ModulePage
-      title="Mensajes"
-      subtitle="Conversaciones privadas para colaboraciones de alto impacto."
+      title={t("page.title")}
+      subtitle={t("page.subtitle")}
       subtitleClassName="mt-1 text-sm text-white"
       hideHeader={isConversationDetailMode}
       lockDesktopScroll
@@ -1005,19 +1027,19 @@ export default function MensajesPage() {
                 }}
                 className="inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-4 py-2.5 text-sm font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)]"
               >
-                Nueva conversación
+                {t("conversations.newConversationButton")}
               </button>
             </div>
 
             <div className="max-h-[560px] overflow-y-auto md:max-h-none md:min-h-0 md:flex-1">
               {isLoadingThreads ? (
-                <div className="p-4 text-sm text-[var(--text-secondary)]">Cargando conversaciones...</div>
+                <div className="p-4 text-sm text-[var(--text-secondary)]">{t("conversations.loading")}</div>
               ) : null}
 
               {threads.map((thread) => {
                 const initials = getTwoInitials({ fullName: thread.displayName });
                 const isActive = !isComposerOpen && selectedThreadId === thread.summary.id;
-                const lastPreview = thread.summary.lastMessagePreview || "Sin mensajes por ahora";
+                const lastPreview = thread.summary.lastMessagePreview || t("fallbacks.noMessagesYet");
 
                 return (
                   <button
@@ -1031,7 +1053,7 @@ export default function MensajesPage() {
                       setComposerError(null);
 
                       loadLatestMessages(thread.summary.id, true).catch(() => {
-                        setComposerError("No se pudo cargar el historial del chat.");
+                        setComposerError(t("errors.loadChatHistory"));
                       });
                     }}
                     className={`w-full border-b border-[var(--line)] px-4 py-3 text-left transition ${
@@ -1044,7 +1066,7 @@ export default function MensajesPage() {
                       <UserAvatar
                         imageUrl={thread.profileImageUrl}
                         initials={initials}
-                        label={`Foto de perfil de ${thread.displayName}`}
+                        label={t("aria.profilePhoto", { name: thread.displayName })}
                         className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
                         initialsClassName="text-xs font-bold text-[var(--brand-300)]"
                       />
@@ -1054,7 +1076,7 @@ export default function MensajesPage() {
                             {thread.displayName}
                           </p>
                           <span className="text-xs text-[var(--text-soft)]">
-                            {humanizeTime(thread.summary.lastMessageAt)}
+                            {humanizeTime(thread.summary.lastMessageAt, i18n.language, t)}
                           </span>
                         </div>
                         <p className="truncate text-xs text-[var(--text-secondary)]">{thread.roleLine}</p>
@@ -1074,7 +1096,7 @@ export default function MensajesPage() {
 
               {!isLoadingThreads && threads.length === 0 ? (
                 <div className="p-4 text-sm text-[var(--text-secondary)]">
-                  Aun no tienes conversaciones.
+                  {t("conversations.empty")}
                 </div>
               ) : null}
             </div>
@@ -1100,30 +1122,30 @@ export default function MensajesPage() {
                           setDraftMessage("");
                         }}
                         className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
-                        aria-label="Volver a conversaciones"
+                        aria-label={t("aria.backToConversations")}
                       >
                         ←
                       </button>
-                      <h2 className="text-xl font-semibold text-[var(--text-primary)]">Nueva conversación</h2>
+                      <h2 className="text-xl font-semibold text-[var(--text-primary)]">{t("composer.newConversation")}</h2>
                     </div>
                     <button
                       type="button"
                       onClick={() => {
                         onConfirmChatCreation().catch(() => {
-                          setComposerError("No se pudo confirmar la creacion del chat.");
+                          setComposerError(t("errors.confirmCreation"));
                         });
                       }}
                       disabled={isSending}
                       className="rounded-full bg-[var(--brand-500)] px-3.5 py-2 text-xs font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      {isSending ? "Confirmando..." : "Confirmar"}
+                      {isSending ? t("composer.confirming") : t("composer.confirm")}
                     </button>
                   </div>
                 </header>
 
                 <div className="border-b border-[var(--line)] px-5 py-4">
                   <label className="mb-2 block text-sm font-semibold text-[var(--text-secondary)]" htmlFor="contact-search">
-                    Para
+                    {t("composer.to")}
                   </label>
                   <input
                     id="contact-search"
@@ -1136,7 +1158,7 @@ export default function MensajesPage() {
                         setSearchResults([]);
                       }
                     }}
-                    placeholder="Buscar miembros..."
+                    placeholder={t("composer.searchMembers")}
                     className="w-full rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-300)_35%,transparent)]"
                   />
 
@@ -1162,11 +1184,11 @@ export default function MensajesPage() {
 
                 <div className="flex-1 overflow-y-auto px-5 py-4">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-soft)]">
-                    {contactSearchText.trim() ? "Resultados de busqueda" : "Contactos"}
+                    {contactSearchText.trim() ? t("composer.searchResults") : t("composer.contacts")}
                   </p>
 
                   {isSearchingContacts ? (
-                    <p className="text-sm text-[var(--text-secondary)]">Buscando contactos...</p>
+                    <p className="text-sm text-[var(--text-secondary)]">{t("composer.searchingContacts")}</p>
                   ) : null}
 
                   <div className="space-y-2">
@@ -1197,7 +1219,7 @@ export default function MensajesPage() {
                             <UserAvatar
                               imageUrl={contact.profileImageUrl}
                               initials={initials}
-                              label={`Foto de perfil de ${contact.fullName}`}
+                              label={t("aria.profilePhoto", { name: contact.fullName })}
                               className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-800)]"
                               initialsClassName="text-xs font-bold text-[var(--brand-300)]"
                             />
@@ -1215,8 +1237,8 @@ export default function MensajesPage() {
                     {!isSearchingContacts && displayedContacts.length === 0 ? (
                       <p className="text-sm text-[var(--text-secondary)]">
                         {contactSearchText.trim()
-                          ? "No encontramos contactos para esa busqueda."
-                          : "No hay contactos disponibles todavia."}
+                          ? t("composer.emptySearch")
+                          : t("composer.emptyContacts")}
                       </p>
                     ) : null}
                   </div>
@@ -1231,7 +1253,7 @@ export default function MensajesPage() {
                         type="button"
                         onClick={() => setMobileActivePanel("list")}
                         className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
-                        aria-label="Volver a conversaciones"
+                        aria-label={t("aria.backToConversations")}
                       >
                         ←
                       </button>
@@ -1239,14 +1261,14 @@ export default function MensajesPage() {
                         type="button"
                         onClick={() => setIsGroupMembersModalOpen(true)}
                         className="w-full rounded-xl p-1 text-left outline-none transition hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-300)_45%,transparent)]"
-                        aria-label="Ver miembros del grupo"
+                        aria-label={t("aria.viewGroupMembers")}
                       >
                         <p className="text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
                         <p
                           className="truncate text-sm text-[var(--text-secondary)]"
                           title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
                         >
-                          {selectedThreadGroupMembersSummary?.previewText ?? "Sin miembros"}
+                          {selectedThreadGroupMembersSummary?.previewText ?? t("fallbacks.noMembers")}
                         </p>
                       </button>
                     </div>
@@ -1256,7 +1278,7 @@ export default function MensajesPage() {
                         type="button"
                         onClick={() => setMobileActivePanel("list")}
                         className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
-                        aria-label="Volver a conversaciones"
+                        aria-label={t("aria.backToConversations")}
                       >
                         ←
                       </button>
@@ -1278,7 +1300,7 @@ export default function MensajesPage() {
                   }}
                 >
                   {loadingOlderByChatId[selectedThread.summary.id] ? (
-                    <div className="mb-3 text-center text-xs text-[var(--text-soft)]">Cargando mensajes anteriores...</div>
+                    <div className="mb-3 text-center text-xs text-[var(--text-soft)]">{t("conversations.loadingOlder")}</div>
                   ) : null}
 
                   <div className="flex min-h-full flex-col justify-end gap-3">
@@ -1286,9 +1308,9 @@ export default function MensajesPage() {
                       const isMine = message.senderUserId === currentUserId;
                       const showSenderName = selectedThread.detail.type === "GROUP";
                       const senderName = isMine
-                        ? "Tú"
-                        : (selectedThreadMemberNamesByUserId.get(message.senderUserId) ?? "Usuario");
-                      const messageTime = new Intl.DateTimeFormat("es-AR", {
+                        ? t("fallbacks.you")
+                        : (selectedThreadMemberNamesByUserId.get(message.senderUserId) ?? t("fallbacks.user"));
+                      const messageTime = new Intl.DateTimeFormat(resolveDateLocale(i18n.language), {
                         hour: "2-digit",
                         minute: "2-digit",
                         hour12: false,
@@ -1315,7 +1337,7 @@ export default function MensajesPage() {
                                 {senderName}
                               </p>
                             ) : null}
-                            <p>{message.isDeleted ? "Mensaje eliminado" : message.content}</p>
+                            <p>{message.isDeleted ? t("conversations.deletedMessage") : message.content}</p>
                             <p
                               className={`mt-1 text-[0.65rem] font-medium ${
                                 isMine ? "text-white/80" : "text-[var(--text-soft)]"
@@ -1330,20 +1352,20 @@ export default function MensajesPage() {
 
                     {!loadingMessagesByChatId[selectedThread.summary.id] &&
                     selectedMessages.length === 0 ? (
-                      <p className="text-sm text-[var(--text-secondary)]">Sin mensajes todavia.</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{t("conversations.emptyThread")}</p>
                     ) : null}
                   </div>
                 </div>
               </>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 px-5 text-center text-sm text-[var(--text-secondary)]">
-                <p>Selecciona una conversacion para empezar.</p>
+                <p>{t("conversations.selectToStart")}</p>
                 <button
                   type="button"
                   onClick={() => setMobileActivePanel("list")}
                   className="rounded-full border border-[var(--line)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)] lg:hidden"
                 >
-                  Volver a la lista
+                  {t("conversations.backToList")}
                 </button>
               </div>
             )}
@@ -1362,7 +1384,7 @@ export default function MensajesPage() {
                     type="button"
                     onClick={() => setMobileActivePanel("list")}
                     className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)]"
-                    aria-label="Volver a conversaciones"
+                    aria-label={t("aria.backToConversations")}
                   >
                     ←
                   </button>
@@ -1370,14 +1392,14 @@ export default function MensajesPage() {
                     type="button"
                     onClick={() => setIsGroupMembersModalOpen(true)}
                     className="w-full rounded-xl px-1 py-0.5 text-left outline-none transition hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-300)_45%,transparent)]"
-                    aria-label="Ver miembros del grupo"
+                    aria-label={t("aria.viewGroupMembers")}
                   >
-                    <p className="text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? "Chat"}</p>
+                    <p className="text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
                     <p
                       className="truncate text-[10px] text-[var(--text-secondary)]"
                       title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
                     >
-                      {selectedThreadGroupMembersSummary?.previewText ?? "Sin miembros"}
+                      {selectedThreadGroupMembersSummary?.previewText ?? t("fallbacks.noMembers")}
                     </p>
                   </button>
                 </div>
@@ -1387,12 +1409,12 @@ export default function MensajesPage() {
                     type="button"
                     onClick={() => setMobileActivePanel("list")}
                     className="mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)] text-lg font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)]"
-                    aria-label="Volver a conversaciones"
+                    aria-label={t("aria.backToConversations")}
                   >
                     ←
                   </button>
                   <div className="min-w-0">
-                    <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? "Chat"}</p>
+                    <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
                     <p className="truncate text-[10px] text-[var(--text-secondary)]">{selectedThread?.roleLine ?? ""}</p>
                   </div>
                 </div>
@@ -1431,7 +1453,7 @@ export default function MensajesPage() {
                   }
                 }}
                 title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
-                placeholder={selectedThreadBlockedReason ?? "Escribir un mensaje..."}
+                placeholder={selectedThreadBlockedReason ?? t("composer.writeMessage")}
                 rows={1}
                 className="w-full resize-none rounded-3xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-300)_35%,transparent)]"
               />
@@ -1439,14 +1461,14 @@ export default function MensajesPage() {
                 type="button"
                 onClick={() => {
                   onSend().catch(() => {
-                    setComposerError("No se pudo completar el envio.");
+                    setComposerError(t("errors.completeSend"));
                   });
                 }}
                 disabled={isSending || isSelectedThreadComposerBlocked}
                 title={isSelectedThreadComposerBlocked ? selectedThreadBlockedReason ?? undefined : undefined}
                 className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-sm font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSending ? "Enviando..." : "Enviar"}
+                {isSending ? t("composer.sending") : t("composer.send")}
               </button>
             </div>
           </footer>
@@ -1455,9 +1477,9 @@ export default function MensajesPage() {
         {isTitleModalOpen ? (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-[color-mix(in_srgb,var(--navy-900)_45%,transparent)] px-4">
             <div className="w-full max-w-md rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-xl">
-              <h3 className="text-lg font-semibold text-[var(--text-primary)]">Titulo del grupo</h3>
+              <h3 className="text-lg font-semibold text-[var(--text-primary)]">{t("groupTitleModal.title")}</h3>
               <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                Ingresa un titulo para crear el chat grupal.
+                {t("groupTitleModal.subtitle")}
               </p>
 
               <input
@@ -1468,7 +1490,7 @@ export default function MensajesPage() {
                     setGroupTitleError(null);
                   }
                 }}
-                placeholder="Ej: Equipo Fundador"
+                placeholder={t("groupTitleModal.placeholder")}
                 className="mt-4 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--brand-300)_35%,transparent)]"
               />
 
@@ -1486,26 +1508,26 @@ export default function MensajesPage() {
                   }}
                   className="rounded-full border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)]"
                 >
-                  Cancelar
+                  {t("groupTitleModal.cancel")}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     if (pendingGroupMessage.trim()) {
                       runGroupCreationAndSend(groupTitle, pendingGroupMessage).catch(() => {
-                        setComposerError("No se pudo crear el grupo.");
+                        setComposerError(t("errors.createGroup"));
                       });
                       return;
                     }
 
                     runGroupCreationOnly(groupTitle).catch(() => {
-                      setComposerError("No se pudo crear el grupo.");
+                      setComposerError(t("errors.createGroup"));
                     });
                   }}
                   disabled={isSending}
                   className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-sm font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {isSending ? "Creando..." : "Crear y enviar"}
+                  {isSending ? t("groupTitleModal.creating") : t("composer.confirmButton")}
                 </button>
               </div>
             </div>
@@ -1523,7 +1545,7 @@ export default function MensajesPage() {
               onClick={(event) => event.stopPropagation()}
               role="dialog"
               aria-modal="true"
-              aria-label="Miembros del grupo"
+              aria-label={t("groupMembersModal.ariaLabel")}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -1531,7 +1553,7 @@ export default function MensajesPage() {
                     {selectedThread.displayName}
                   </h3>
                   <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                    {selectedThread.detail.members.length} miembros
+                    {t("groupMembersModal.membersCount", { count: selectedThread.detail.members.length })}
                   </p>
                 </div>
                 <button
@@ -1539,16 +1561,16 @@ export default function MensajesPage() {
                   onClick={() => setIsGroupMembersModalOpen(false)}
                   className="rounded-full border border-[var(--line)] px-3 py-1 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--line-strong)]"
                 >
-                  Cerrar
+                  {t("groupMembersModal.close")}
                 </button>
               </div>
 
               <div className="mt-4 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
                 {selectedThread.detail.members.map((member) => {
                   const memberName =
-                    member.user.userId === currentUserId ? "Tú" : formatFullName(member.user);
+                    member.user.userId === currentUserId ? t("fallbacks.you") : formatFullName(member.user, t);
                   const initials = getTwoInitials({ fullName: memberName });
-                  const memberRole = member.role === "ADMIN" ? "Administrador" : "Miembro";
+                  const memberRole = member.role === "ADMIN" ? t("groupMembersModal.roleAdmin") : t("groupMembersModal.roleMember");
 
                   return (
                     <div
@@ -1558,7 +1580,7 @@ export default function MensajesPage() {
                       <UserAvatar
                         imageUrl={member.user.profileImageUrl ?? null}
                         initials={initials}
-                        label={`Foto de perfil de ${memberName}`}
+                        label={t("aria.profilePhoto", { name: memberName })}
                         className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
                         initialsClassName="text-xs font-bold text-[var(--brand-300)]"
                       />

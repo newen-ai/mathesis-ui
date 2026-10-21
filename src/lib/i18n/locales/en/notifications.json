@@ -1,0 +1,50 @@
+{
+  "title": "Notifications",
+  "sections": {
+    "unread": "Unread",
+    "read": "Read"
+  },
+  "actions": {
+    "markAllRead": "Mark all as read"
+  },
+  "quickLinks": {
+    "title": "Quick links",
+    "messages": "Messages",
+    "profile": "My Profile",
+    "settings": "Settings"
+  },
+  "states": {
+    "loading": "Loading notifications...",
+    "empty": "You have no notifications."
+  },
+  "errors": {
+    "load": "We couldn't load your notifications.",
+    "markOneRead": "We couldn't mark the notification as read.",
+    "markAllRead": "We couldn't mark all notifications as read."
+  },
+  "relative": {
+    "now": "now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}} h ago",
+    "daysAgo": "{{count}} d ago"
+  },
+  "dynamic": {
+    "postReaction": {
+      "prefix": "Your post received ",
+      "suffix": ". Only you can see this number.",
+      "countOne": "1 reaction",
+      "countMany": "{{count}} reactions"
+    },
+    "badgeApproved": {
+      "prefix": "You were approved for ",
+      "highlight": "Mathesis Empresarios",
+      "suffix": "! You can now complete your company profile."
+    },
+    "groupMemberKicked": {
+      "prefix": "You were removed from group ",
+      "suffix": ".",
+      "reason": " Reason: {{reason}}",
+      "fallbackGroup": "this group"
+    }
+  }
+}

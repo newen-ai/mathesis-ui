@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   navItems,
@@ -159,10 +160,10 @@ async function renderBannerFromEditor(
   return canvas.toDataURL("image/jpeg", 0.92);
 }
 
-function buildHeadline(puesto: string, empresa: string, city: string) {
+function buildHeadline(puesto: string, empresa: string, city: string, fallback: string) {
   const firstPart = [puesto, empresa].filter((item) => item.trim().length > 0).join(" · ");
   if (!firstPart && !city) {
-    return "Completa tu titular profesional";
+    return fallback;
   }
   if (!city) {
     return firstPart;
@@ -174,6 +175,7 @@ function buildHeadline(puesto: string, empresa: string, city: string) {
 }
 
 export function ProfileView() {
+  const { t } = useTranslation("profile");
   const router = useRouter();
   const bannerInputRef = useRef<HTMLInputElement | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -227,7 +229,8 @@ export function ProfileView() {
   const headline = buildHeadline(
     profile.puesto,
     profile.empresaActual,
-    profile.locationCity
+    profile.locationCity,
+    t("profileView.headlineFallback")
   );
 
   const onStartSectionEdit = (section: "profile" | "experience" | "education" | "interests") => {
@@ -299,12 +302,12 @@ export function ProfileView() {
     try {
       const normalizedReason = blockReasonNote.trim();
       await blockUser(activeProfileId, normalizedReason.length > 0 ? normalizedReason : undefined);
-      toast.success("Usuario bloqueado");
+      toast.success(t("profileView.toasts.userBlocked"));
       setIsBlockModalOpen(false);
       setBlockReasonNote("");
       await refetchProfile();
     } catch {
-      toast.error("No pudimos bloquear a este usuario.");
+      toast.error(t("profileView.errors.blockUser"));
     } finally {
       setIsBlockingUser(false);
     }
@@ -314,7 +317,7 @@ export function ProfileView() {
     setHeaderImageError(null);
     const result = await onSaveProfile(nextProfile);
     if (!result.ok) {
-      setHeaderImageError(result.message ?? "No se pudo guardar la imagen");
+      setHeaderImageError(result.message ?? t("profileView.errors.saveImage"));
     }
   };
 
@@ -324,7 +327,7 @@ export function ProfileView() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setHeaderImageError("Selecciona un archivo de imagen valido para el banner.");
+      setHeaderImageError(t("profileView.errors.invalidBannerImage"));
       return;
     }
 
@@ -343,7 +346,7 @@ export function ProfileView() {
       });
       setHeaderImageError(null);
     } catch {
-      setHeaderImageError("No se pudo procesar la imagen del banner.");
+      setHeaderImageError(t("profileView.errors.processBannerImage"));
     }
   };
 
@@ -353,7 +356,7 @@ export function ProfileView() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setHeaderImageError("Selecciona un archivo de imagen valido para el perfil.");
+      setHeaderImageError(t("profileView.errors.invalidProfileImage"));
       return;
     }
 
@@ -367,7 +370,7 @@ export function ProfileView() {
       });
       setHeaderImageError(null);
     } catch {
-      setHeaderImageError("No se pudo procesar la imagen de perfil.");
+      setHeaderImageError(t("profileView.errors.processProfileImage"));
     }
   };
 
@@ -382,7 +385,7 @@ export function ProfileView() {
       });
       setAvatarEditor(null);
     } catch {
-      setHeaderImageError("No se pudo preparar la imagen de perfil.");
+      setHeaderImageError(t("profileView.errors.prepareProfileImage"));
     }
   };
 
@@ -570,7 +573,7 @@ export function ProfileView() {
       });
       setBannerEditor(null);
     } catch {
-      setHeaderImageError("No se pudo preparar la imagen del banner.");
+      setHeaderImageError(t("profileView.errors.prepareBannerImage"));
     }
   };
 
@@ -670,10 +673,10 @@ export function ProfileView() {
         <main className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
           <section className="mathesis-card px-6 py-10 text-center sm:px-8">
             <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
-              Perfil no disponible
+              {t("profileView.unavailable.title")}
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-scale-3 text-[var(--text-secondary)]">
-              Este perfil no se puede visualizar desde tu cuenta en este momento.
+              {t("profileView.unavailable.description")}
             </p>
           </section>
         </main>
@@ -707,7 +710,7 @@ export function ProfileView() {
                 onClick={() => bannerInputRef.current?.click()}
                 disabled={isSavingProfile}
                 className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition hover:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed"
-                aria-label="Cambiar imagen de banner"
+                aria-label={t("profileView.aria.changeBannerImage")}
               >
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-black/35 px-4 py-2 text-sm font-semibold">
                   <svg
@@ -723,7 +726,7 @@ export function ProfileView() {
                     <path d="M4 7h3l2-2h6l2 2h3v12H4z" />
                     <circle cx="12" cy="13" r="3" />
                   </svg>
-                  Cambiar banner
+                  {t("profileView.actions.changeBanner")}
                 </span>
               </button>
             ) : null}
@@ -733,7 +736,7 @@ export function ProfileView() {
               {profile.imagenPerfilUrl.trim() ? (
                 <div
                   role="img"
-                  aria-label={`Foto de perfil de ${userDisplayName}`}
+                  aria-label={t("profileView.aria.profilePhotoOf", { name: userDisplayName })}
                   className="h-full w-full bg-cover bg-center"
                   style={{ backgroundImage: `url(${profile.imagenPerfilUrl.trim()})` }}
                 />
@@ -746,7 +749,7 @@ export function ProfileView() {
                   onClick={() => avatarInputRef.current?.click()}
                   disabled={isSavingProfile}
                   className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition hover:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed"
-                  aria-label="Cambiar imagen de perfil"
+                  aria-label={t("profileView.aria.changeProfileImage")}
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -823,12 +826,12 @@ export function ProfileView() {
                       <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
-                    Ver perfil
+                    {t("profileView.actions.viewProfile")}
                   </button>
                   <button
                     type="button"
                     className="inline-flex h-[2rem] w-[2rem] items-center justify-center rounded-[0.5rem] border border-[var(--line)] text-[1rem] text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] sm:h-[2.4rem] sm:w-[2.4rem] sm:rounded-[0.55rem] sm:text-[1.1rem]"
-                    aria-label="Mas opciones"
+                    aria-label={t("profileView.aria.moreOptions")}
                   >
                     ···
                   </button>
@@ -838,7 +841,7 @@ export function ProfileView() {
                   <button
                     type="button"
                     onClick={() => setIsHeaderActionsOpen((current) => !current)}
-                    aria-label="Más opciones"
+                    aria-label={t("profileView.aria.moreOptions")}
                     aria-haspopup="menu"
                     aria-expanded={isHeaderActionsOpen}
                     className="inline-flex h-[2rem] w-[2rem] items-center justify-center rounded-[0.5rem] border border-[var(--line)] text-[1rem] text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] sm:h-[2.4rem] sm:w-[2.4rem] sm:rounded-[0.55rem] sm:text-[1.1rem]"
@@ -865,14 +868,14 @@ export function ProfileView() {
                             <path d="m7 7 10 10" />
                           </svg>
                         </span>
-                        <span>{isBlockingUser ? "Bloqueando..." : "Bloquear"}</span>
+                        <span>{isBlockingUser ? t("profileView.actions.blocking") : t("profileView.actions.block")}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
                           setIsHeaderActionsOpen(false);
-                          toast.info("Coming soon");
+                          toast.info(t("profileView.toasts.comingSoon"));
                         }}
                         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[0.96rem] font-semibold text-[var(--danger-500)] transition hover:bg-[var(--surface-2)]"
                       >
@@ -882,7 +885,7 @@ export function ProfileView() {
                             <path d="M6 5.5h9l-1.2 3 1.2 3H6" />
                           </svg>
                         </span>
-                        <span>Denunciar</span>
+                        <span>{t("profileView.actions.report")}</span>
                       </button>
                     </div>
                   ) : null}
@@ -968,10 +971,10 @@ export function ProfileView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3">
           <div className="w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl">
             <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--navy-900)]">
-              Ajustar imagen de banner
+              {t("profileView.bannerEditor.title")}
             </h3>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Arrastra para mover y usa la rueda del mouse para acercar o alejar. Esta vista muestra lo que se vera en tu encabezado.
+              {t("profileView.bannerEditor.description")}
             </p>
 
             <div className="mt-4 flex justify-center">
@@ -1018,7 +1021,7 @@ export function ProfileView() {
               >
                 <div
                   role="img"
-                  aria-label="Previsualizacion de banner"
+                  aria-label={t("profileView.aria.bannerPreview")}
                   className={`absolute left-1/2 top-1/2 h-full w-full bg-contain bg-center bg-no-repeat ${isDraggingBanner ? "cursor-grabbing" : "cursor-grab"}`}
                   style={{
                     backgroundImage: `url(${bannerEditor.sourceDataUrl})`,
@@ -1029,7 +1032,7 @@ export function ProfileView() {
             </div>
 
             <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)]">
-              Tip: mueve el banner hasta alinear la zona importante. El resto quedara fuera del area visible.
+              {t("profileView.bannerEditor.tip")}
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -1039,7 +1042,7 @@ export function ProfileView() {
                 disabled={isSavingProfile}
                 className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSavingProfile ? "Guardando..." : "Guardar banner"}
+                {isSavingProfile ? t("common.saving") : t("profileView.actions.saveBanner")}
               </button>
               <button
                 type="button"
@@ -1047,7 +1050,7 @@ export function ProfileView() {
                 disabled={isSavingProfile}
                 className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -1058,10 +1061,10 @@ export function ProfileView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3">
           <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
             <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--navy-900)]">
-              Ajustar foto de perfil
+              {t("profileView.avatarEditor.title")}
             </h3>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Mueve y ajusta la imagen para previsualizar exactamente lo que se vera en el circulo.
+              {t("profileView.avatarEditor.description")}
             </p>
 
             <div className="mt-4 flex justify-center">
@@ -1104,7 +1107,7 @@ export function ProfileView() {
               >
                 <div
                   role="img"
-                  aria-label="Previsualizacion de perfil"
+                  aria-label={t("profileView.aria.profilePreview")}
                   className={`absolute left-1/2 top-1/2 h-full w-full bg-cover bg-center ${isDraggingAvatar ? "cursor-grabbing" : "cursor-grab"}`}
                   style={{
                     backgroundImage: `url(${avatarEditor.sourceDataUrl})`,
@@ -1115,7 +1118,7 @@ export function ProfileView() {
             </div>
 
             <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)]">
-              Arrastra la imagen con el mouse para posicionarla. Usa la rueda del mouse para acercar o alejar.
+              {t("profileView.avatarEditor.tip")}
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-2">
@@ -1125,7 +1128,7 @@ export function ProfileView() {
                 disabled={isSavingProfile}
                 className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isSavingProfile ? "Guardando..." : "Guardar imagen"}
+                {isSavingProfile ? t("common.saving") : t("profileView.actions.saveImage")}
               </button>
               <button
                 type="button"
@@ -1133,7 +1136,7 @@ export function ProfileView() {
                 disabled={isSavingProfile}
                 className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -1151,14 +1154,14 @@ export function ProfileView() {
         >
           <div className="w-full max-w-xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-2xl sm:p-6">
             <h3 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
-              Bloquear usuario
+              {t("profileView.blockModal.title")}
             </h3>
             <p className="mt-2 text-scale-3 leading-relaxed text-[var(--text-secondary)]">
-              Podés agregar una nota privada para recordar por qué estás bloqueando este perfil. Esta nota solo la vas a ver vos en tu lista de bloqueados.
+              {t("profileView.blockModal.description")}
             </p>
 
             <label className="mt-4 block text-scale-2 font-semibold text-[var(--text-primary)]" htmlFor="block-reason-note">
-              Nota (opcional)
+              {t("profileView.blockModal.noteLabel")}
             </label>
             <textarea
               id="block-reason-note"
@@ -1166,7 +1169,7 @@ export function ProfileView() {
               onChange={(event) => setBlockReasonNote(event.target.value)}
               maxLength={400}
               rows={4}
-              placeholder="Ej.: Comentarios despectivos repetidos en el feed."
+              placeholder={t("profileView.blockModal.notePlaceholder")}
               className="mt-2 w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-scale-3 text-[var(--text-primary)] outline-none ring-0 placeholder:text-[var(--text-secondary)]"
             />
             <p className="mt-1 text-right text-scale-1 text-[var(--text-secondary)]">
@@ -1180,7 +1183,7 @@ export function ProfileView() {
                 disabled={isBlockingUser}
                 className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-scale-2 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Cancelar
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -1190,7 +1193,7 @@ export function ProfileView() {
                 disabled={isBlockingUser}
                 className="inline-flex items-center rounded-xl bg-[var(--danger-500)] px-4 py-2 text-scale-2 font-semibold text-[var(--surface)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isBlockingUser ? "Bloqueando..." : "Bloquear"}
+                {isBlockingUser ? t("profileView.actions.blocking") : t("profileView.actions.block")}
               </button>
             </div>
           </div>

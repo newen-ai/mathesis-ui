@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   listAteneoFeed,
   listAteneoGroups,
@@ -16,7 +17,7 @@ type AteneoFeedTopic = AteneoTopicCardTopic & {
   attachments: AteneoTopicAttachment[];
 };
 
-function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
+function mapTopic(topic: AteneoTopic, authorFallback: string): AteneoFeedTopic {
   const authorName = [topic.author.firstName, topic.author.lastName].filter(Boolean).join(" ").trim();
 
   return {
@@ -25,7 +26,7 @@ function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
     groupLabel: topic.groupLabel,
     authorImageUrl: topic.author.profileImageUrl,
     authorInitial: topic.author.initials,
-    authorName: authorName || "Usuario",
+    authorName: authorName || authorFallback,
     timeLabel: topic.timeLabel,
     title: topic.title,
     description: topic.description,
@@ -39,6 +40,7 @@ function mapTopic(topic: AteneoTopic): AteneoFeedTopic {
 }
 
 export function AteneoFeedMiddle() {
+  const { t } = useTranslation("ateneo");
   const [topics, setTopics] = useState<AteneoFeedTopic[]>([]);
   const [createTopicGroupId, setCreateTopicGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +53,7 @@ export function AteneoFeedMiddle() {
       try {
         const [feedResponse, mineResponse] = await Promise.all([listAteneoFeed(), listAteneoGroups("mine", 1)]);
         if (cancelled) return;
-        setTopics(feedResponse.data.topics.map((topic) => mapTopic(topic)));
+        setTopics(feedResponse.data.topics.map((topic) => mapTopic(topic, t("feed.authorFallback"))));
         setCreateTopicGroupId(mineResponse.data.groups[0]?.id ?? null);
       } catch {
         if (cancelled) return;
@@ -69,7 +71,7 @@ export function AteneoFeedMiddle() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const createTopicHref = createTopicGroupId
     ? `/ateneo/groups/${encodeURIComponent(createTopicGroupId)}/new-topic`
@@ -80,22 +82,22 @@ export function AteneoFeedMiddle() {
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">Feed</h1>
-            <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">Todos tus grupos, mezclados</p>
+            <h1 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">{t("feed.title")}</h1>
+            <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">{t("feed.subtitle")}</p>
           </div>
 
           <Link
             href={createTopicHref}
             className="inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-2 font-semibold mathesis-on-brand transition hover:brightness-95"
           >
-            + Nuevo tema
+            {t("feed.newTopic")}
           </Link>
         </div>
       </div>
 
       <div className="space-y-3 sm:space-y-4">
-        {isLoading ? <p className="px-1 text-scale-3 text-[var(--text-secondary)]">Cargando feed...</p> : null}
-        {!isLoading && topics.length === 0 ? <p className="px-1 text-scale-3 text-[var(--text-secondary)]">No hay temas para mostrar.</p> : null}
+        {isLoading ? <p className="px-1 text-scale-3 text-[var(--text-secondary)]">{t("feed.loading")}</p> : null}
+        {!isLoading && topics.length === 0 ? <p className="px-1 text-scale-3 text-[var(--text-secondary)]">{t("feed.empty")}</p> : null}
         {topics.map((topic) => (
           <AteneoTopicCard
             key={topic.id}

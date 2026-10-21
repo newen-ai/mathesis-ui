@@ -1,0 +1,31 @@
+{
+  "title": "Configuración",
+  "category": {
+    "account": "Cuenta",
+    "privacy": "Privacidad",
+    "legal": "Legal",
+    "accountActions": "Acciones de cuenta",
+    "help": "Ayuda y soporte"
+  },
+  "rows": {
+    "email": "Correo electrónico",
+    "darkMode": "Modo oscuro",
+    "appLanguage": "Idioma de la app",
+    "appLanguageDescription": "Elegí el idioma de la interfaz.",
+    "blocked": "Bloqueados",
+    "terms": "Términos y Condiciones",
+    "privacyPolicy": "Política de Privacidad",
+    "changePassword": "Cambiar contraseña",
+    "logout": "Cerrar sesión",
+    "deactivate": "Desactivar cuenta",
+    "delete": "Eliminar cuenta de Mathesis",
+    "contact": "Contactar a Mathesis"
+  },
+  "values": {
+    "notAvailable": "No disponible"
+  },
+  "aria": {
+    "toggleDarkMode": "Cambiar modo oscuro",
+    "appLanguage": "Idioma de la app"
+  }
+}
