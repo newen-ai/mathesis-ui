@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import { searchInterestSuggestions } from "@/lib/api/profile";
 import type { Profile } from "../../_lib/types";
@@ -52,6 +53,7 @@ export function InteresesCard({
   onSave,
   onClearSaveError,
 }: InteresesCardProps) {
+  const { t } = useTranslation("profile");
   const [workingInterests, setWorkingInterests] = useState<string[]>(profile.intereses);
   const [draftInterest, setDraftInterest] = useState("");
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -135,7 +137,7 @@ export function InteresesCard({
   const onAddInterest = () => {
     const normalized = normalizeInterest(draftInterest);
     if (!normalized) {
-      setDraftError("Ingresa un interés válido antes de agregarlo.");
+      setDraftError(t("interests.errors.invalid"));
       return;
     }
 
@@ -143,7 +145,7 @@ export function InteresesCard({
       (item) => item.toLocaleLowerCase() === normalized.toLocaleLowerCase()
     );
     if (exists) {
-      setDraftError("Ese interés ya está agregado.");
+      setDraftError(t("interests.errors.duplicate"));
       return;
     }
 
@@ -274,7 +276,7 @@ export function InteresesCard({
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
       <div className="flex items-start justify-between gap-3 border-b border-[var(--line)] pb-2">
         <h2 className="font-[family-name:var(--font-spectral)] text-[0.85rem] font-bold text-[var(--navy-900)]">
-          Intereses
+          {t("interests.title")}
         </h2>
         {canEdit && !isEditingMode ? (
           <button
@@ -283,7 +285,7 @@ export function InteresesCard({
             className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] px-3 py-1 text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)]"
           >
             <span aria-hidden="true">✎</span>
-            Editar
+            {t("common.edit")}
           </button>
         ) : null}
       </div>
@@ -355,7 +357,7 @@ export function InteresesCard({
                     );
                   }
                 }}
-                placeholder="Agregar interés"
+                placeholder={t("interests.inputPlaceholder")}
                 className="w-full rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
               />
 
@@ -377,7 +379,7 @@ export function InteresesCard({
                       }`}
                     >
                       <span>{suggestion}</span>
-                      <span className="text-xs text-[var(--text-soft)]">sugerencia</span>
+                      <span className="text-xs text-[var(--text-soft)]">{t("interests.suggestionTag")}</span>
                     </button>
                   ))}
                 </div>
@@ -385,7 +387,7 @@ export function InteresesCard({
 
               {isSuggestionsOpen && draftNormalized.length >= 3 && isSuggestionsLoading ? (
                 <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
-                  Buscando sugerencias...
+                  {t("interests.loadingSuggestions")}
                 </div>
               ) : null}
 
@@ -394,7 +396,7 @@ export function InteresesCard({
               suggestionOptions.length === 0 &&
               !isSuggestionsLoading ? (
                 <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
-                  No hay sugerencias para este texto.
+                  {t("interests.noSuggestions")}
                 </div>
               ) : null}
             </div>
@@ -404,15 +406,15 @@ export function InteresesCard({
               onClick={onAddInterest}
               className="inline-flex items-center justify-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-sm font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)]"
             >
-              Agregar
+                {t("interests.add")}
             </button>
           </div>
 
           <p className="text-[0.65rem] text-[var(--text-soft)]">
-            Escribe al menos 3 caracteres para ver sugerencias.
+              {t("interests.helpTypeToSuggest")}
           </p>
           <p className="text-[0.65rem] text-[var(--text-soft)]">
-            Arrastra y suelta los intereses para reordenarlos.
+              {t("interests.helpDragToReorder")}
           </p>
 
           {workingInterests.length > 0 ? (
@@ -454,7 +456,7 @@ export function InteresesCard({
                     type="button"
                     onClick={() => onRemoveInterest(interest)}
                     className="text-[0.85rem] leading-none text-[var(--danger-500)] transition hover:opacity-85"
-                    aria-label={`Eliminar interés ${interest}`}
+                    aria-label={t("interests.aria.removeInterest", { interest })}
                   >
                     ×
                   </button>
@@ -463,7 +465,7 @@ export function InteresesCard({
             </div>
           ) : (
             <p className="text-[0.7rem] text-[var(--text-secondary)]">
-              Aún no agregaste intereses.
+              {t("interests.empty")}
             </p>
           )}
 
@@ -488,7 +490,7 @@ export function InteresesCard({
               disabled={isSaving || !hasChanges}
               className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Guardar
+              {t("interests.save")}
             </button>
             <button
               type="button"
@@ -496,7 +498,7 @@ export function InteresesCard({
               disabled={isSaving}
               className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Descartar
+              {t("interests.discard")}
             </button>
           </div>
         </div>
@@ -513,7 +515,7 @@ export function InteresesCard({
         </div>
       ) : (
         <p className="mt-3 text-[0.7rem] leading-[1.55] text-[var(--text-primary)]">
-          Aún no agregaste intereses.
+          {t("interests.empty")}
         </p>
       )}
     </AppCard>

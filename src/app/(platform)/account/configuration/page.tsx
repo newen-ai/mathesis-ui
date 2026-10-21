@@ -2,11 +2,25 @@
 
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { logout } from "@/lib/api/auth";
 import { getMyProfileEmail } from "@/lib/api/profile";
+import i18next from "@/lib/i18n";
 import { type ThemeMode, useUiTheme } from "@/lib/theme/useUiTheme";
 import { navItems } from "../../_lib/constants";
 import { TopBar } from "../../_components/TopBar";
+
+type AppLanguage = "es" | "en";
+
+const LANGUAGE_STORAGE_KEY = "mathesis-ui-language";
+
+function normalizeAppLanguage(value?: string): AppLanguage {
+  if (typeof value !== "string") {
+    return "es";
+  }
+
+  return value.trim().toLowerCase().startsWith("en") ? "en" : "es";
+}
 
 type SettingsCategoryKey =
   | "cuenta"
@@ -68,110 +82,111 @@ type SettingsCategory = {
   rows: SettingsRow[];
 };
 
-const SETTINGS_CATEGORIES: SettingsCategory[] = [
-  {
-    key: "cuenta",
-    label: "Cuenta",
-    icon: "settings",
-    rows: [
-      {
-        key: "email",
-        type: "email",
-        label: "Correo electrónico",
-      },
-      {
-        key: "theme",
-        type: "theme",
-        label: "Modo oscuro",
-      },
-      {
-        key: "language",
-        type: "language",
-        label: "Idioma de la app",
-        description:
-          "Por ahora la app está solo en español — otros idiomas quedan para más adelante",
-      },
-    ],
-  },
-  {
-    key: "privacidad",
-    label: "Privacidad",
-    icon: "lock",
-    rows: [
-      {
-        key: "blocked",
-        type: "placeholder",
-        label: "Bloqueados",
-        icon: "block"
-      },
-    ],
-  },
-  {
-    key: "legal",
-    label: "Legal",
-    icon: "file",
-    rows: [
-      {
-        key: "terms",
-        type: "placeholder",
-        label: "Términos y Condiciones",
-        icon: "file",
-      },
-      {
-        key: "privacy-policy",
-        type: "placeholder",
-        label: "Política de Privacidad",
-        icon: "lock",
-      },
-    ],
-  },
-  {
-    key: "acciones",
-    label: "Acciones de cuenta",
-    icon: "user",
-    rows: [
-      {
-        key: "change-password",
-        type: "placeholder",
-        label: "Cambiar contraseña",
-        icon: "key",
-      },
-      {
-        key: "logout",
-        type: "logout",
-        label: "Cerrar sesión",
-        icon: "logout",
-      },
-      {
-        key: "deactivate",
-        type: "placeholder",
-        label: "Desactivar cuenta",
-        icon: "deactivate",
-        variant: "danger",
-      },
-      {
-        key: "delete",
-        type: "placeholder",
-        label: "Eliminar cuenta de Mathesis",
-        icon: "delete",
-        variant: "danger",
-      },
-    ],
-  },
-  {
-    key: "ayuda",
-    label: "Ayuda y soporte",
-    icon: "message",
-    rows: [
-      {
-        key: "contact",
-        type: "placeholder",
-        label: "Contactar a Mathesis",
-        icon: "message",
-      },
-    ],
-  },
-];
+function createSettingsCategories(t: (key: string, defaultValue: string) => string): SettingsCategory[] {
+  return [
+    {
+      key: "cuenta",
+      label: t("settings:category.account", "Cuenta"),
+      icon: "settings",
+      rows: [
+        {
+          key: "email",
+          type: "email",
+          label: t("settings:rows.email", "Correo electrónico"),
+        },
+        {
+          key: "theme",
+          type: "theme",
+          label: t("settings:rows.darkMode", "Modo oscuro"),
+        },
+        {
+          key: "language",
+          type: "language",
+          label: t("settings:rows.appLanguage", "Idioma de la app"),
+          description: t("settings:rows.appLanguageDescription", "Elegí el idioma de la interfaz."),
+        },
+      ],
+    },
+    {
+      key: "privacidad",
+      label: t("settings:category.privacy", "Privacidad"),
+      icon: "lock",
+      rows: [
+        {
+          key: "blocked",
+          type: "placeholder",
+          label: t("settings:rows.blocked", "Bloqueados"),
+          icon: "block",
+        },
+      ],
+    },
+    {
+      key: "legal",
+      label: t("settings:category.legal", "Legal"),
+      icon: "file",
+      rows: [
+        {
+          key: "terms",
+          type: "placeholder",
+          label: t("settings:rows.terms", "Términos y Condiciones"),
+          icon: "file",
+        },
+        {
+          key: "privacy-policy",
+          type: "placeholder",
+          label: t("settings:rows.privacyPolicy", "Política de Privacidad"),
+          icon: "lock",
+        },
+      ],
+    },
+    {
+      key: "acciones",
+      label: t("settings:category.accountActions", "Acciones de cuenta"),
+      icon: "user",
+      rows: [
+        {
+          key: "change-password",
+          type: "placeholder",
+          label: t("settings:rows.changePassword", "Cambiar contraseña"),
+          icon: "key",
+        },
+        {
+          key: "logout",
+          type: "logout",
+          label: t("settings:rows.logout", "Cerrar sesión"),
+          icon: "logout",
+        },
+        {
+          key: "deactivate",
+          type: "placeholder",
+          label: t("settings:rows.deactivate", "Desactivar cuenta"),
+          icon: "deactivate",
+          variant: "danger",
+        },
+        {
+          key: "delete",
+          type: "placeholder",
+          label: t("settings:rows.delete", "Eliminar cuenta de Mathesis"),
+          icon: "delete",
+          variant: "danger",
+        },
+      ],
+    },
+    {
+      key: "ayuda",
+      label: t("settings:category.help", "Ayuda y soporte"),
+      icon: "message",
+      rows: [
+        {
+          key: "contact",
+          type: "placeholder",
+          label: t("settings:rows.contact", "Contactar a Mathesis"),
+          icon: "message",
+        },
+      ],
+    },
+  ];
+}
 
 function SettingsIcon({
   name,
@@ -292,8 +307,10 @@ function SettingsIcon({
 
 function ThemeSwitch({
   theme,
+  ariaLabel,
 }: {
   theme: ThemeMode;
+  ariaLabel: string;
 }) {
   const enabled = theme === "dark";
 
@@ -306,7 +323,7 @@ function ThemeSwitch({
           ? "border-[color:color-mix(in_srgb,var(--brand-500)_60%,transparent)] bg-[var(--brand-500)]"
           : "border-[var(--line)] bg-[var(--surface-muted)]"
       }`}
-      aria-label="Cambiar modo oscuro"
+      aria-label={ariaLabel}
     >
       <span
         className={`absolute top-1 h-8 w-8 rounded-full bg-[var(--surface)] shadow-sm transition ${
@@ -355,8 +372,11 @@ function MobileSectionTitle({ label }: { label: string }) {
 function ConfigurationSectionRows({
   rows,
   theme,
+  appLanguage,
   accountEmail,
+  t,
   onToggleTheme,
+  onChangeLanguage,
   onLogout,
   onOpenBlockedUsers,
   onOpenChangePassword,
@@ -364,8 +384,11 @@ function ConfigurationSectionRows({
 }: {
   rows: SettingsRow[];
   theme: ThemeMode;
+  appLanguage: AppLanguage;
   accountEmail: string | null;
+  t: (key: string, defaultValue: string) => string;
   onToggleTheme: () => void;
+  onChangeLanguage: (nextLanguage: AppLanguage) => void;
   onLogout: () => void;
   onOpenBlockedUsers: () => void;
   onOpenChangePassword: () => void;
@@ -387,7 +410,7 @@ function ConfigurationSectionRows({
               </div>
             </div>
             <span className="text-[0.98rem] font-medium text-[var(--text-secondary)] md:text-[0.95rem]">
-              {accountEmail ?? "No disponible"}
+              {accountEmail ?? t("settings:values.notAvailable", "No disponible")}
             </span>
           </SettingsRowButton>
         </div>
@@ -403,7 +426,10 @@ function ConfigurationSectionRows({
                 {row.label}
               </div>
             </div>
-            <ThemeSwitch theme={theme} />
+            <ThemeSwitch
+              theme={theme}
+              ariaLabel={t("settings:aria.toggleDarkMode", "Cambiar modo oscuro")}
+            />
           </SettingsRowButton>
         </div>
       );
@@ -422,12 +448,13 @@ function ConfigurationSectionRows({
               </div>
             </div>
             <select
-              aria-label="Idioma de la app"
-              disabled
-              defaultValue="Español"
-              className="min-w-[9rem] rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[1rem] font-medium text-[var(--text-secondary)] outline-none md:min-w-[8rem] md:px-3 md:py-2 md:text-[0.95rem]"
+              aria-label={t("settings:aria.appLanguage", "Idioma de la app")}
+              value={appLanguage}
+              onChange={(event) => onChangeLanguage(event.target.value as AppLanguage)}
+              className="min-w-[9rem] rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-[1rem] font-medium text-[var(--text-secondary)] outline-none transition hover:border-[var(--brand-300)] focus:border-[var(--brand-500)] md:min-w-[8rem] md:px-3 md:py-2 md:text-[0.95rem]"
             >
-              <option>Español</option>
+              <option value="es">Español</option>
+              <option value="en">English</option>
             </select>
           </SettingsRowButton>
         </div>
@@ -493,9 +520,36 @@ function ConfigurationSectionRows({
 
 export default function ConfigurationPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { theme, toggleTheme } = useUiTheme();
   const [activeCategory, setActiveCategory] = useState<SettingsCategoryKey>("cuenta");
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const settingsCategories = createSettingsCategories((key, defaultValue) =>
+    t(key, { defaultValue })
+  );
+  const [appLanguage, setAppLanguage] = useState<AppLanguage>(() => {
+    if (typeof window === "undefined") {
+      return normalizeAppLanguage(i18next.resolvedLanguage ?? i18next.language);
+    }
+
+    return normalizeAppLanguage(window.localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? undefined);
+  });
+
+  useEffect(() => {
+    if (appLanguage !== normalizeAppLanguage(i18next.resolvedLanguage ?? i18next.language)) {
+      void i18next.changeLanguage(appLanguage);
+    }
+
+    const handleLanguageChanged = (nextLanguage: string) => {
+      setAppLanguage(normalizeAppLanguage(nextLanguage));
+    };
+
+    i18next.on("languageChanged", handleLanguageChanged);
+
+    return () => {
+      i18next.off("languageChanged", handleLanguageChanged);
+    };
+  }, [appLanguage]);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -517,15 +571,24 @@ export default function ConfigurationPage() {
 
   const activePanel = useMemo(
     () =>
-      SETTINGS_CATEGORIES.find((category) => category.key === activeCategory) ??
-      SETTINGS_CATEGORIES[0],
-    [activeCategory]
+      settingsCategories.find((category) => category.key === activeCategory) ??
+      settingsCategories[0],
+    [activeCategory, settingsCategories]
   );
 
   const handleLogout = async () => {
     await logout();
     router.replace("/login");
     router.refresh();
+  };
+
+  const handleChangeLanguage = (nextLanguage: AppLanguage) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+    }
+
+    void i18next.changeLanguage(nextLanguage);
+    setAppLanguage(nextLanguage);
   };
 
   return (
@@ -535,19 +598,22 @@ export default function ConfigurationPage() {
         <div className="lg:hidden">
           <div className="border-b border-[var(--line)] bg-[var(--surface)] px-6 py-5">
             <h1 className="font-[family-name:var(--font-spectral)] text-[2.2rem] font-semibold leading-none text-[var(--text-primary)]">
-              Configuración
+              {t("settings:title", { defaultValue: "Configuración" })}
             </h1>
           </div>
 
-          {SETTINGS_CATEGORIES.map((category) => (
+          {settingsCategories.map((category) => (
             <section key={category.key} className="bg-[var(--surface)]">
               <MobileSectionTitle label={category.label} />
               <div>
                 <ConfigurationSectionRows
                   rows={category.rows}
                   theme={theme}
+                  appLanguage={appLanguage}
                   accountEmail={accountEmail}
+                  t={(key, defaultValue) => t(key, { defaultValue })}
                   onToggleTheme={toggleTheme}
+                  onChangeLanguage={handleChangeLanguage}
                   onLogout={handleLogout}
                   onOpenBlockedUsers={() => router.push("/account/configuration/blocked")}
                   onOpenChangePassword={() => router.push("/account/configuration/change-password")}
@@ -561,14 +627,14 @@ export default function ConfigurationPage() {
         <div className="hidden overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_18px_40px_rgba(0,0,0,0.08)] lg:block">
           <div className="px-8 pb-5 pt-7">
             <h1 className="font-[family-name:var(--font-spectral)] text-[2.45rem] font-semibold leading-none text-[var(--text-primary)]">
-              Configuración
+              {t("settings:title", { defaultValue: "Configuración" })}
             </h1>
           </div>
 
           <div className="border-t border-[var(--line)] lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
             <aside className="border-r border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface-muted)_78%,var(--surface))] px-4 py-6">
               <nav className="space-y-2">
-                {SETTINGS_CATEGORIES.map((category) => {
+                {settingsCategories.map((category) => {
                   const active = category.key === activeCategory;
 
                   return (
@@ -603,8 +669,11 @@ export default function ConfigurationPage() {
                 <ConfigurationSectionRows
                   rows={activePanel.rows}
                   theme={theme}
+                  appLanguage={appLanguage}
                   accountEmail={accountEmail}
+                  t={(key, defaultValue) => t(key, { defaultValue })}
                   onToggleTheme={toggleTheme}
+                  onChangeLanguage={handleChangeLanguage}
                   onLogout={handleLogout}
                   onOpenBlockedUsers={() => router.push("/account/configuration/blocked")}
                   onOpenChangePassword={() => router.push("/account/configuration/change-password")}

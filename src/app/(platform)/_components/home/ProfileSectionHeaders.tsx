@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 type EditingSectionHeaderProps = {
   title: string;
   onBack: () => void;
@@ -11,6 +13,8 @@ type ReadOnlySectionHeaderProps = {
 };
 
 export function EditingSectionHeader({ title, onBack, isSaving }: EditingSectionHeaderProps) {
+  const { t } = useTranslation("profile");
+
   return (
     <div className="flex items-center gap-3">
       <button
@@ -18,7 +22,7 @@ export function EditingSectionHeader({ title, onBack, isSaving }: EditingSection
         onClick={onBack}
         disabled={isSaving}
         className="text-[1.25rem] leading-none text-[var(--navy-900)] disabled:opacity-60"
-        aria-label="Volver"
+        aria-label={t("common.back")}
       >
         ‹
       </button>
@@ -30,6 +34,8 @@ export function EditingSectionHeader({ title, onBack, isSaving }: EditingSection
 }
 
 export function ReadOnlySectionHeader({ title, canEdit, onEdit }: ReadOnlySectionHeaderProps) {
+  const { t } = useTranslation("profile");
+
   return (
     <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
       <h3 className="font-[family-name:var(--font-spectral)] text-[0.85rem] font-bold text-[var(--navy-900)]">
@@ -42,7 +48,7 @@ export function ReadOnlySectionHeader({ title, canEdit, onEdit }: ReadOnlySectio
           className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] px-3 py-1 text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)]"
         >
           <span aria-hidden="true">✎</span>
-          Editar
+          {t("common.edit")}
         </button>
       ) : null}
     </div>

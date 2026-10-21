@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import QRCode from "react-qr-code";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
 import { BRAND_LOGO_SRC, MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
@@ -30,19 +31,19 @@ type CredentialBadgeCriterion = {
 const CREDENTIAL_BADGE_CRITERIA: CredentialBadgeCriterion[] = [
   {
     id: "mensa-argentina",
-    label: "Mensa Argentina",
-    criteria: "Miembro activo de Mensa Argentina",
+    label: "credential.labels.mensaArgentina",
+    criteria: "credential.criteria.mensaArgentina",
     aliases: ["mensa_argentina", "mensa_ar"],
     logoSrc: MENSA_ARGENTINA_LOGO_SRC,
-    logoAlt: "Logo Mensa Argentina",
+    logoAlt: "credential.logoMensaAlt",
   },
   {
     id: "mathesis-empresarios",
-    label: "Mathesis Empresarios",
-    criteria: "Membresía de Empresarios aprobada",
+    label: "credential.labels.mathesisBusiness",
+    criteria: "credential.criteria.mathesisBusiness",
     aliases: ["mensa_empresarios", "mathesis_empresarios"],
     logoSrc: BRAND_LOGO_SRC,
-    logoAlt: "Logo Mathesis",
+    logoAlt: "credential.logoMathesisAlt",
   },
 ];
 
@@ -58,6 +59,7 @@ function formatBadgeLabel(slug: string) {
 }
 
 export function DigitalCredentialCard() {
+  const { t } = useTranslation("profile");
   const { badges, userDisplayName } = useProfessionalProfile();
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardView, setCardView] = useState<CardView>("front");
@@ -111,10 +113,10 @@ export function DigitalCredentialCard() {
 
     const configuredCriteria = CREDENTIAL_BADGE_CRITERIA.map((criterion) => ({
       id: criterion.id,
-      label: criterion.label,
-      criteria: criterion.criteria,
+      label: t(criterion.label),
+      criteria: t(criterion.criteria),
       logoSrc: criterion.logoSrc,
-      logoAlt: criterion.logoAlt,
+      logoAlt: criterion.logoAlt ? t(criterion.logoAlt) : undefined,
       active: criterion.aliases.some((alias) => normalizedUserBadges.has(alias)),
     }));
 
@@ -128,12 +130,12 @@ export function DigitalCredentialCard() {
       .map((badgeSlug) => ({
         id: `extra-${badgeSlug}`,
         label: formatBadgeLabel(badgeSlug),
-        criteria: "Insignia activa en tu perfil",
+        criteria: t("credential.activeBadgeCriteria"),
         active: true,
       }));
 
     return [...configuredCriteria, ...extraOwnedBadges].slice(0, 4);
-  }, [badges]);
+  }, [badges, t]);
 
   const frontMembershipChip = useMemo(() => {
     const primaryActiveBadge = badgePreviews.find((badge) => badge.active);
@@ -143,15 +145,15 @@ export function DigitalCredentialCard() {
 
     return {
       id: "fallback-membership",
-      label: "Mensa Argentina",
-      criteria: "Miembro de Mensa Argentina",
+      label: t("credential.frontMembershipFallbackLabel"),
+      criteria: t("credential.frontMembershipFallbackCriteria"),
       logoSrc: MENSA_ARGENTINA_LOGO_SRC,
-      logoAlt: "Logo Mensa Argentina",
+      logoAlt: t("credential.logoMensaAlt"),
       active: true,
     } as BadgePreview;
-  }, [badgePreviews]);
+  }, [badgePreviews, t]);
 
-  const fullName = userDisplayName || "María López";
+  const fullName = userDisplayName || t("credential.fallbackName");
 
   const flipTo = (nextView: CardView) => {
     if (cardView === nextView) {
@@ -241,11 +243,11 @@ export function DigitalCredentialCard() {
 
                 <div className="mt-5 flex items-end justify-between gap-4">
                   <div className="space-y-1 text-[0.7rem] text-white/90">
-                    <div className="text-[0.72rem] font-medium text-white">Socio desde jul 2026</div>
+                    <div className="text-[0.72rem] font-medium text-white">{t("credential.memberSince")}</div>
                   </div>
 
                   <div className="text-[0.68rem] font-medium uppercase tracking-[0.08em] text-[var(--brand-200)]">
-                    Credencial activa
+                    {t("credential.activeCredential")}
                   </div>
                 </div>
               </div>
@@ -262,11 +264,11 @@ export function DigitalCredentialCard() {
                         bgColor="#ffffff"
                         fgColor="#0f273f"
                         level="M"
-                        aria-label="Código QR de verificación de credencial"
+                        aria-label={t("credential.qrAria")}
                       />
                     ) : (
                       <div className="flex h-[180px] w-[180px] items-center justify-center text-[0.7rem] font-medium text-[var(--navy-700)]">
-                        Generando QR...
+                        {t("credential.generatingQr")}
                       </div>
                     )}
                   </div>
@@ -276,7 +278,7 @@ export function DigitalCredentialCard() {
                   <div className="flex items-center gap-2 pb-1 text-[var(--brand-200)]">
                     <span className="font-[family-name:var(--font-spectral)] text-[1.6rem] leading-none text-[var(--brand-500)]">∫</span>
                     <span className="font-[family-name:var(--font-spectral)] text-[1.1rem] font-medium text-white">
-                      Mathesis · Insignias
+                      {t("credential.badgesTitle")}
                     </span>
                   </div>
 
@@ -330,7 +332,7 @@ export function DigitalCredentialCard() {
             className="inline-flex items-center gap-2 rounded-full border border-[rgba(15,39,63,0.12)] bg-[var(--surface-card)] px-4 py-2 text-[0.92rem] font-medium text-[var(--text-primary)] transition hover:border-[#d4af66] hover:bg-[var(--navy-800)] hover:text-white"
           >
             <span className="text-base">{cardView === "back" ? "↩" : "↪"}</span>
-            {cardView === "back" ? "Volver al frente" : "Ver al dorso"}
+            {cardView === "back" ? t("credential.actions.flipToFront") : t("credential.actions.flipToBack")}
           </button>
 
           <button
@@ -339,7 +341,7 @@ export function DigitalCredentialCard() {
             className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-500)] bg-[var(--brand-500)] px-4 py-2 text-[0.92rem] font-medium text-[var(--navy-900)] transition hover:border-[#d4af66] hover:bg-[var(--navy-800)] hover:text-white"
           >
             <span className="text-base">{cardView === "qr" ? "◌" : "◍"}</span>
-            {cardView === "qr" ? "Ocultar QR" : "Mostrar QR"}
+            {cardView === "qr" ? t("credential.actions.hideQr") : t("credential.actions.showQr")}
           </button>
         </div>
 

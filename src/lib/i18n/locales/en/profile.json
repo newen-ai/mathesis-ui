@@ -1,0 +1,240 @@
+{
+  "common": {
+    "edit": "Edit",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "close": "Close",
+    "finalize": "Finish",
+    "back": "Back",
+    "month": "Month",
+    "year": "Year",
+    "current": "Current"
+  },
+  "months": {
+    "01": "January",
+    "02": "February",
+    "03": "March",
+    "04": "April",
+    "05": "May",
+    "06": "June",
+    "07": "July",
+    "08": "August",
+    "09": "September",
+    "10": "October",
+    "11": "November",
+    "12": "December"
+  },
+  "credential": {
+    "backToProfileAria": "Back to my profile",
+    "backToProfile": "Back to my Profile",
+    "activeCredential": "Active credential",
+    "qrAria": "Credential verification QR code",
+    "generatingQr": "Generating QR...",
+    "badgesTitle": "Mathesis · Badges",
+    "activeBadgeCriteria": "Active badge on your profile",
+    "memberSince": "Member since Jul 2026",
+    "fallbackName": "Maria Lopez",
+    "frontMembershipFallbackLabel": "Mensa Argentina",
+    "frontMembershipFallbackCriteria": "Mensa Argentina member",
+    "logoMensaAlt": "Mensa Argentina logo",
+    "logoMathesisAlt": "Mathesis logo",
+    "actions": {
+      "flipToFront": "Back to front",
+      "flipToBack": "View back side",
+      "hideQr": "Hide QR",
+      "showQr": "Show QR"
+    },
+    "criteria": {
+      "mensaArgentina": "Active Mensa Argentina member",
+      "mathesisBusiness": "Approved Business membership"
+    },
+    "labels": {
+      "mensaArgentina": "Mensa Argentina",
+      "mathesisBusiness": "Mathesis Business"
+    }
+  },
+  "profileView": {
+    "headlineFallback": "Complete your professional headline",
+    "errors": {
+      "blockUser": "We could not block this user.",
+      "saveImage": "We could not save the image",
+      "invalidBannerImage": "Select a valid image file for the banner.",
+      "processBannerImage": "We could not process the banner image.",
+      "invalidProfileImage": "Select a valid image file for the profile.",
+      "processProfileImage": "We could not process the profile image.",
+      "prepareProfileImage": "We could not prepare the profile image.",
+      "prepareBannerImage": "We could not prepare the banner image."
+    },
+    "toasts": {
+      "userBlocked": "User blocked",
+      "comingSoon": "Coming soon"
+    },
+    "unavailable": {
+      "title": "Profile unavailable",
+      "description": "This profile cannot be viewed from your account right now."
+    },
+    "aria": {
+      "changeBannerImage": "Change banner image",
+      "profilePhotoOf": "Profile photo of {{name}}",
+      "changeProfileImage": "Change profile image",
+      "moreOptions": "More options",
+      "bannerPreview": "Banner preview",
+      "profilePreview": "Profile preview"
+    },
+    "actions": {
+      "changeBanner": "Change banner",
+      "viewProfile": "View profile",
+      "blocking": "Blocking...",
+      "block": "Block",
+      "report": "Report",
+      "saveBanner": "Save banner",
+      "saveImage": "Save image"
+    },
+    "bannerEditor": {
+      "title": "Adjust banner image",
+      "description": "Drag to move and use your mouse wheel to zoom in or out. This view shows what will be visible in your header.",
+      "tip": "Tip: move the banner to align the most important area. The rest will be out of the visible area."
+    },
+    "avatarEditor": {
+      "title": "Adjust profile photo",
+      "description": "Move and adjust the image to preview exactly what will appear in the circle.",
+      "tip": "Drag the image with the mouse to position it. Use the mouse wheel to zoom in or out."
+    },
+    "blockModal": {
+      "title": "Block user",
+      "description": "You can add a private note to remember why you are blocking this profile. This note is only visible to you in your blocked list.",
+      "noteLabel": "Note (optional)",
+      "notePlaceholder": "Example: repeated disrespectful comments in the feed."
+    }
+  },
+  "profileForm": {
+    "title": {
+      "editing": "Edit profile",
+      "about": "About"
+    },
+    "completion": "Profile completeness",
+    "loading": "Loading profile...",
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "birthDate": "Date of birth",
+      "nationality": "Nationality",
+      "headline": "Professional headline (max. 80)",
+      "currentCompany": "Current company",
+      "country": "Country",
+      "city": "City",
+      "postalCode": "Postal code",
+      "about": "About (max. 800)"
+    },
+    "emptyAbout": "You have not added a professional description yet."
+  },
+  "experience": {
+    "title": "Experience",
+    "add": "+ Add experience",
+    "empty": "You have not added work experience yet.",
+    "new": "New experience",
+    "editTitle": "Edit experience",
+    "update": "Update experience",
+    "addAction": "Add experience",
+    "present": "Present",
+    "labels": {
+      "workplace": "Workplace",
+      "jobTitle": "Job title",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "currentlyWorking": "I currently work here",
+      "description": "Description (max. 300)"
+    },
+    "placeholders": {
+      "workplace": "Mathesis Business",
+      "jobTitle": "Strategy Analyst"
+    },
+    "confirmDelete": "Delete this experience? This change will be saved immediately.",
+    "errors": {
+      "delete": "We could not delete the experience.",
+      "required": "Complete all required fields to add or update an experience.",
+      "save": "We could not save the experience."
+    },
+    "aria": {
+      "edit": "Edit experience",
+      "delete": "Delete experience"
+    }
+  },
+  "education": {
+    "title": "Academic education",
+    "add": "+ Add education",
+    "empty": "You have not added academic education yet.",
+    "new": "New education",
+    "editTitle": "Edit education",
+    "update": "Update education",
+    "addAction": "Add education",
+    "labels": {
+      "institution": "Institution",
+      "degree": "Degree",
+      "field": "Field of study",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "currentlyStudying": "I currently study here",
+      "description": "Description (max. 300)"
+    },
+    "placeholders": {
+      "institution": "University of Buenos Aires",
+      "degree": "Bachelor's degree",
+      "field": "Theoretical physics"
+    },
+    "confirmDelete": "Delete this education entry? This change will be saved immediately.",
+    "errors": {
+      "required": "Complete all required fields to add or update an education entry.",
+      "save": "We could not save the education entry.",
+      "delete": "We could not delete the education entry."
+    },
+    "aria": {
+      "edit": "Edit education",
+      "delete": "Delete education"
+    }
+  },
+  "interests": {
+    "title": "Interests",
+    "add": "Add",
+    "save": "Save",
+    "discard": "Discard",
+    "empty": "You have not added interests yet.",
+    "suggestionTag": "suggestion",
+    "inputPlaceholder": "Add interest",
+    "helpTypeToSuggest": "Type at least 3 characters to see suggestions.",
+    "helpDragToReorder": "Drag and drop interests to reorder them.",
+    "loadingSuggestions": "Searching suggestions...",
+    "noSuggestions": "No suggestions for this text.",
+    "errors": {
+      "invalid": "Enter a valid interest before adding it.",
+      "duplicate": "That interest has already been added."
+    },
+    "aria": {
+      "removeInterest": "Remove interest {{interest}}"
+    }
+  },
+  "collapsible": {
+    "more": "more",
+    "less": "less"
+  },
+  "initialization": {
+    "title": "Initialize your profile",
+    "description": "We could not find profile data for your account. Complete the fields and we will save the information in the backend to create or update your profile.",
+    "saveProfile": "Save profile",
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "birthDate": "Date of birth",
+      "nationality": "Nationality",
+      "headline": "Professional headline (max. 80)",
+      "currentCompany": "Current company",
+      "profileImageUrl": "Profile image URL",
+      "bannerImageUrl": "Banner image URL",
+      "country": "Country",
+      "city": "City",
+      "postalCode": "Postal code",
+      "about": "About (max. 800)"
+    }
+  }
+}

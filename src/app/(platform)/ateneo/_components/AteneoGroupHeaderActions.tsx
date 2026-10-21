@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 type AteneoGroupHeaderActionsProps = {
   groupId: string;
@@ -21,11 +22,13 @@ function HeaderButton({ href, label, icon }: { href: string; label: string; icon
 }
 
 export function AteneoGroupHeaderActions({ groupId, isAdmin }: AteneoGroupHeaderActionsProps) {
+  const { t } = useTranslation("ateneo");
+
   return (
     <div className="flex items-center gap-2">
       <HeaderButton
         href={`/ateneo/groups/${encodeURIComponent(groupId)}/info`}
-        label="Ver info del grupo"
+        label={t("headerActions.groupInfo")}
         icon={
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
             <path d="M7 6.5h10M7 12h10M7 17.5h7" />
@@ -35,7 +38,7 @@ export function AteneoGroupHeaderActions({ groupId, isAdmin }: AteneoGroupHeader
       />
       <HeaderButton
         href={`/ateneo/groups/${encodeURIComponent(groupId)}/members`}
-        label="Ver miembros del grupo"
+        label={t("headerActions.groupMembers")}
         icon={
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
             <circle cx="8.5" cy="9" r="2.2" />
@@ -48,7 +51,7 @@ export function AteneoGroupHeaderActions({ groupId, isAdmin }: AteneoGroupHeader
       {isAdmin ? (
         <HeaderButton
           href={`/ateneo/groups/${encodeURIComponent(groupId)}/edit`}
-          label="Editar grupo"
+          label={t("headerActions.editGroup")}
           icon={
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
               <circle cx="12" cy="12" r="3.1" />

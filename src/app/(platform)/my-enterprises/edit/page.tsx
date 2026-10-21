@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { listMyEnterprises, updateEnterprise } from "@/lib/api/enterprise";
 import { TopBar } from "../../_components/TopBar";
 import { navItems } from "../../_lib/constants";
@@ -19,9 +20,8 @@ type EnterpriseErrors = {
   role?: string;
 };
 
-const REQUIRED_FIELD_MESSAGE = "Este campo es obligatorio.";
-
 export default function EditEnterprisePage() {
+  const { t } = useTranslation("myEnterprises");
   const router = useRouter();
   const searchParams = useSearchParams();
   const enterpriseId = searchParams.get("id") ?? "";
@@ -60,14 +60,14 @@ export default function EditEnterprisePage() {
           description: selected.description ?? "",
         });
       } catch {
-        setSubmitError("No pudimos cargar la empresa para editar.");
+        setSubmitError(t("edit.errors.load"));
       } finally {
         setIsLoading(false);
       }
     };
 
     void loadEnterprise();
-  }, [enterpriseId, router]);
+  }, [enterpriseId, router, t]);
 
   const onFieldChange = (field: keyof EnterpriseForm, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -96,11 +96,11 @@ export default function EditEnterprisePage() {
     const nextErrors: EnterpriseErrors = {};
 
     if (form.companyName.trim().length === 0) {
-      nextErrors.companyName = REQUIRED_FIELD_MESSAGE;
+      nextErrors.companyName = t("edit.requiredField");
     }
 
     if (form.role.trim().length === 0) {
-      nextErrors.role = REQUIRED_FIELD_MESSAGE;
+      nextErrors.role = t("edit.requiredField");
     }
 
     setErrors(nextErrors);
@@ -121,13 +121,13 @@ export default function EditEnterprisePage() {
       });
 
       if (!response.success) {
-        setSubmitError(response.message || "No pudimos guardar los cambios.");
+        setSubmitError(response.message || t("edit.errors.save"));
         return;
       }
 
       router.push("/my-enterprises");
     } catch {
-      setSubmitError("No pudimos conectar con el servicio de empresas.");
+      setSubmitError(t("edit.errors.service"));
     } finally {
       setIsSubmitting(false);
     }
@@ -140,18 +140,18 @@ export default function EditEnterprisePage() {
       <main className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-7 lg:px-10 lg:py-8">
         <section className="min-w-0 border-r-0 lg:border-r lg:border-[var(--line)] lg:pr-7">
           <h1 className="text-scale-5 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-            Editar empresa
+            {t("edit.title")}
           </h1>
 
           {isLoading ? (
             <div className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 text-[var(--text-secondary)]">
-              Cargando empresa...
+              {t("edit.loading")}
             </div>
           ) : (
             <form className="mt-5 space-y-4" onSubmit={onSubmit} noValidate>
               <label className="block">
                 <span className="text-scale-3 mathesis-heading-primary font-semibold">
-                  Nombre de la empresa <span className="text-[var(--danger-500)]">*</span>
+                  {t("edit.fields.companyName")} <span className="text-[var(--danger-500)]">*</span>
                 </span>
                 <input
                   value={form.companyName}
@@ -166,7 +166,7 @@ export default function EditEnterprisePage() {
 
               <label className="block">
                 <span className="text-scale-3 mathesis-heading-primary font-semibold">
-                  Tu rol <span className="text-[var(--danger-500)]">*</span>
+                  {t("edit.fields.role")} <span className="text-[var(--danger-500)]">*</span>
                 </span>
                 <input
                   value={form.role}
@@ -180,7 +180,7 @@ export default function EditEnterprisePage() {
               </label>
 
               <label className="block">
-                <span className="text-scale-3 mathesis-heading-primary font-semibold">Sitio web</span>
+                <span className="text-scale-3 mathesis-heading-primary font-semibold">{t("edit.fields.website")}</span>
                 <input
                   value={form.website}
                   onChange={(event) => onFieldChange("website", event.target.value)}
@@ -190,7 +190,7 @@ export default function EditEnterprisePage() {
               </label>
 
               <label className="block">
-                <span className="text-scale-3 mathesis-heading-primary font-semibold">Descripción breve</span>
+                <span className="text-scale-3 mathesis-heading-primary font-semibold">{t("edit.fields.description")}</span>
                 <textarea
                   value={form.description}
                   onChange={(event) => onFieldChange("description", event.target.value)}
@@ -204,7 +204,7 @@ export default function EditEnterprisePage() {
                 disabled={isSubmitting}
                 className="text-scale-4 mathesis-on-brand mt-3 inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting ? "Guardando..." : "Guardar cambios"}
+                {isSubmitting ? t("edit.submit.loading") : t("edit.submit.idle")}
               </button>
 
               {submitError ? (
@@ -213,7 +213,7 @@ export default function EditEnterprisePage() {
 
               <div className="pt-1 text-center">
                 <Link href="/my-enterprises" className="text-scale-4 mathesis-link-accent font-semibold transition">
-                  ← Volver a Mis empresas
+                  {t("edit.back")}
                 </Link>
               </div>
             </form>
@@ -223,10 +223,10 @@ export default function EditEnterprisePage() {
         <aside className="mt-6 space-y-4 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
             <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-              Actualizar empresa
+              {t("edit.aside.title")}
             </h2>
             <p className="text-scale-3 mt-4 text-[var(--text-primary)]">
-              Ajustá el nombre, el rol y los datos básicos de tu ficha para mantener la información actualizada.
+              {t("edit.aside.body")}
             </p>
           </div>
         </aside>

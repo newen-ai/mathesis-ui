@@ -1,4 +1,5 @@
 import { isFutureMonthForYear, monthOptions, yearOptions } from "./ProfileSectionDateUtils";
+import { useTranslation } from "react-i18next";
 
 type ProfileYearMonthRangeFieldsProps = {
   startLabel: string;
@@ -31,6 +32,8 @@ export function ProfileYearMonthRangeFields({
   onEndYearChange,
   onCurrentChange,
 }: ProfileYearMonthRangeFieldsProps) {
+  const { t } = useTranslation("profile");
+
   return (
     <>
       <label className="mathesis-field sm:col-span-1">
@@ -41,14 +44,14 @@ export function ProfileYearMonthRangeFields({
             onChange={(event) => onStartMonthChange(event.target.value)}
             className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
           >
-            <option value="">Mes</option>
+            <option value="">{t("common.month")}</option>
             {monthOptions.map((month) => (
               <option
                 key={month.value}
                 value={month.value}
                 disabled={isFutureMonthForYear(month.value, startYear)}
               >
-                {month.label}
+                {t(`months.${month.value}`)}
               </option>
             ))}
           </select>
@@ -58,7 +61,7 @@ export function ProfileYearMonthRangeFields({
             onChange={(event) => onStartYearChange(event.target.value)}
             className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
           >
-            <option value="">Año</option>
+            <option value="">{t("common.year")}</option>
             {yearOptions.map((year) => (
               <option key={year} value={year}>
                 {year}
@@ -77,14 +80,14 @@ export function ProfileYearMonthRangeFields({
               onChange={(event) => onEndMonthChange(event.target.value)}
               className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
             >
-              <option value="">Mes</option>
+              <option value="">{t("common.month")}</option>
               {monthOptions.map((month) => (
                 <option
                   key={month.value}
                   value={month.value}
                   disabled={isFutureMonthForYear(month.value, endYear)}
                 >
-                  {month.label}
+                  {t(`months.${month.value}`)}
                 </option>
               ))}
             </select>
@@ -94,7 +97,7 @@ export function ProfileYearMonthRangeFields({
               onChange={(event) => onEndYearChange(event.target.value)}
               className="rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)]"
             >
-              <option value="">Año</option>
+              <option value="">{t("common.year")}</option>
               {yearOptions.map((year) => (
                 <option key={year} value={year}>
                   {year}

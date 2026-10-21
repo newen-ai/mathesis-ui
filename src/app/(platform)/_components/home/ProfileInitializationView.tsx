@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import { navItems } from "../../_lib/constants";
 import type { Profile } from "../../_lib/types";
@@ -33,6 +34,7 @@ export function ProfileInitializationView({
   onSave,
   onClearSaveError,
 }: ProfileInitializationViewProps) {
+  const { t } = useTranslation("profile");
   const [formState, setFormState] = useState<Profile>(emptyProfileState);
 
   const canSubmit = useMemo(() => {
@@ -59,17 +61,16 @@ export function ProfileInitializationView({
         <AppCard className="w-full p-5 sm:p-7">
           <div className="space-y-1">
             <h1 className="font-[family-name:var(--font-spectral)] text-3xl font-semibold text-[var(--text-primary)]">
-              Inicializa tu perfil
+              {t("initialization.title")}
             </h1>
             <p className="text-sm text-[var(--text-secondary)]">
-              No encontramos datos de perfil para tu cuenta. Completa los campos y
-              guardaremos la informacion en el backend para crear o actualizar tu perfil.
+              {t("initialization.description")}
             </p>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <label className="mathesis-field">
-              Nombre
+              {t("initialization.fields.firstName")}
               <input
                 value={formState.nombre}
                 onChange={(event) => onFormChange("nombre", event.target.value)}
@@ -77,7 +78,7 @@ export function ProfileInitializationView({
               />
             </label>
             <label className="mathesis-field">
-              Apellido
+              {t("initialization.fields.lastName")}
               <input
                 value={formState.apellido}
                 onChange={(event) => onFormChange("apellido", event.target.value)}
@@ -85,7 +86,7 @@ export function ProfileInitializationView({
               />
             </label>
             <label className="mathesis-field">
-              Fecha de nacimiento
+              {t("initialization.fields.birthDate")}
               <input
                 type="date"
                 value={formState.fechaNacimiento}
@@ -95,14 +96,14 @@ export function ProfileInitializationView({
               />
             </label>
             <label className="mathesis-field">
-              Nacionalidad
+              {t("initialization.fields.nationality")}
               <input
                 value={formState.nacionalidad}
                 onChange={(event) => onFormChange("nacionalidad", event.target.value)}
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Titular profesional (max. 80)
+              {t("initialization.fields.headline")}
               <input
                 value={formState.puesto}
                 maxLength={80}
@@ -110,14 +111,14 @@ export function ProfileInitializationView({
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Empresa actual
+              {t("initialization.fields.currentCompany")}
               <input
                 value={formState.empresaActual}
                 onChange={(event) => onFormChange("empresaActual", event.target.value)}
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              URL imagen de perfil
+              {t("initialization.fields.profileImageUrl")}
               <input
                 value={formState.imagenPerfilUrl}
                 onChange={(event) => onFormChange("imagenPerfilUrl", event.target.value)}
@@ -125,7 +126,7 @@ export function ProfileInitializationView({
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              URL imagen de banner
+              {t("initialization.fields.bannerImageUrl")}
               <input
                 value={formState.imagenBannerUrl}
                 onChange={(event) => onFormChange("imagenBannerUrl", event.target.value)}
@@ -133,28 +134,28 @@ export function ProfileInitializationView({
               />
             </label>
             <label className="mathesis-field">
-              Pais
+              {t("initialization.fields.country")}
               <input
                 value={formState.locationCountry}
                 onChange={(event) => onFormChange("locationCountry", event.target.value)}
               />
             </label>
             <label className="mathesis-field">
-              Ciudad
+              {t("initialization.fields.city")}
               <input
                 value={formState.locationCity}
                 onChange={(event) => onFormChange("locationCity", event.target.value)}
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Codigo postal
+              {t("initialization.fields.postalCode")}
               <input
                 value={formState.locationPostalCode}
                 onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
               />
             </label>
             <label className="mathesis-field sm:col-span-2">
-              Acerca de (max. 800)
+              {t("initialization.fields.about")}
               <textarea
                 value={formState.about}
                 maxLength={800}
@@ -177,7 +178,7 @@ export function ProfileInitializationView({
               disabled={isSaving || !canSubmit}
               className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSaving ? "Guardando..." : "Guardar perfil"}
+              {isSaving ? t("common.saving") : t("initialization.saveProfile")}
             </button>
           </div>
         </AppCard>

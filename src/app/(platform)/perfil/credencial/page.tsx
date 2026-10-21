@@ -1,9 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { TopBar } from "../../_components/TopBar";
 import { DigitalCredentialCard } from "../../_components/home/DigitalCredentialCard";
 import { navItems } from "../../_lib/constants";
 
 export default function CredentialPage() {
+  const { t } = useTranslation("profile");
+
   return (
     <>
       <TopBar navItems={navItems} />
@@ -14,12 +19,12 @@ export default function CredentialPage() {
             <Link
               href="/perfil"
               className="inline-flex items-center justify-center text-[1.2rem] text-[var(--text-primary)]"
-              aria-label="Volver a mi perfil"
+              aria-label={t("credential.backToProfileAria")}
             >
               ‹
             </Link>
             <Link href="/perfil" className="text-[var(--text-primary)] hover:text-[var(--brand-700)]">
-              Volver a mi Perfil
+              {t("credential.backToProfile")}
             </Link>
           </div>
 

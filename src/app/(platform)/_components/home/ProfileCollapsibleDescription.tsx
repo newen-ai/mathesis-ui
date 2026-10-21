@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 type ProfileCollapsibleDescriptionProps = {
   text: string;
   isExpanded: boolean;
@@ -9,6 +11,8 @@ export function ProfileCollapsibleDescription({
   isExpanded,
   onToggle,
 }: ProfileCollapsibleDescriptionProps) {
+  const { t } = useTranslation("profile");
+
   const normalizedText = text.trim();
   if (!normalizedText) {
     return null;
@@ -41,7 +45,7 @@ export function ProfileCollapsibleDescription({
           onClick={onToggle}
           className="mt-1 text-[0.6rem] font-bold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
         >
-          {isExpanded ? "menos" : "más"}
+            {isExpanded ? t("collapsible.less") : t("collapsible.more")}
         </button>
       ) : null}
     </>

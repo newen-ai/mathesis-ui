@@ -1,0 +1,84 @@
+{
+  "feed": {
+    "authorFallback": "Usuario",
+    "title": "Feed",
+    "subtitle": "Todos tus grupos, mezclados",
+    "newTopic": "+ Nuevo tema",
+    "loading": "Cargando feed...",
+    "empty": "No hay temas para mostrar."
+  },
+  "explorer": {
+    "tabs": {
+      "mine": "Tus grupos",
+      "discover": "Descubrir",
+      "admin": "Grupos que administrás"
+    },
+    "headerTitle": "Explorar Grupos",
+    "breadcrumb": "Agora > Ateneo > Explorar",
+    "createGroup": "+ Crear grupo",
+    "searchPlaceholder": "Buscar grupos...",
+    "official": "Oficial",
+    "optionsAria": "Opciones de {{name}}",
+    "join": "Unirse",
+    "loading": "Cargando grupos...",
+    "empty": "No encontramos grupos con ese criterio.",
+    "floatingCreateAria": "Crear grupo",
+    "comingSoon": "Coming soon"
+  },
+  "headerActions": {
+    "groupInfo": "Ver info del grupo",
+    "groupMembers": "Ver miembros del grupo",
+    "editGroup": "Editar grupo"
+  },
+  "newTopic": {
+    "title": "Nuevo tema",
+    "backAria": "Volver",
+    "publish": "Publicar",
+    "publishing": "Publicando...",
+    "emptyGroupsMessage": "Todavía no tenés grupos disponibles para publicar temas. Sumate a un grupo o creá uno nuevo desde Ateneo.",
+    "adminsOnlyMessage": "Solo los administradores pueden crear temas en este grupo.",
+    "groupLabel": "Grupo",
+    "selectedGroup": "Grupo seleccionado",
+    "selectGroup": "Seleccioná un grupo",
+    "noGroupsAvailable": "No hay grupos disponibles",
+    "adminsOnlyHint": "⚠ Solo admins pueden publicar en esos grupos.",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Título del tema...",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Contá de qué se trata...",
+    "detectedLinks": "Links detectados",
+    "attachLabel": "Adjuntar",
+    "attachPhoto": "Foto",
+    "attachFile": "Archivo",
+    "openPreviewAria": "Abrir vista previa de {{name}}",
+    "previewAlt": "Vista previa de {{name}}",
+    "removeAria": "Quitar {{name}}",
+    "fileTypesHint": "Foto: JPG, PNG o HEIC · Archivo: solo PDF",
+    "toneLabel": "Tono del tema (opcional, indicativo)",
+    "tones": {
+      "serio": "SERIO",
+      "recomendado": "RECOMENDADO",
+      "libre": "LIBRE"
+    },
+    "toneHint": "Solo indicativo: no cambia moderación ni el Sermonio real de reacciones.",
+    "closeGroupPickerAria": "Cerrar selector de grupos",
+    "chooseGroupTitle": "Elegir grupo",
+    "closePickerAria": "Cerrar selector",
+    "closePreviewAria": "Cerrar vista previa",
+    "removeCurrentImageAria": "Quitar imagen actual",
+    "previousImageAria": "Imagen anterior",
+    "nextImageAria": "Imagen siguiente",
+    "toasts": {
+      "imageTypesOnly": "Solo se permiten imágenes JPG, PNG o HEIC/HEIF.",
+      "pdfOnly": "Solo se permiten archivos PDF.",
+      "fileTooLarge": "El archivo {{name}} es demasiado grande. Máximo {{maxSize}} por archivo.",
+      "chooseImage": "Elegí una imagen JPG, PNG o HEIC.",
+      "choosePdf": "Elegí un archivo PDF.",
+      "maxAttachments": "Máximo 5 adjuntos por tema. Quitá alguno para sumar otro.",
+      "chooseGroupBeforePublish": "Elegí un grupo antes de publicar.",
+      "completeBeforePublish": "Completá título y descripción antes de publicar.",
+      "respectLimits": "Respetá los límites: título hasta 100 y descripción hasta 1000 caracteres.",
+      "published": "Tema publicado"
+    }
+  }
+}

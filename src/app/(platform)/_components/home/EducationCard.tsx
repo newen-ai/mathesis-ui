@@ -1,4 +1,5 @@
 import { ChangeEvent, FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import { toDateLabel } from "../../_lib/utils/date";
 import type { Education, EducationDraft } from "../../_lib/types";
@@ -53,6 +54,7 @@ export function EducationCard({
   onSaveOperations,
   onClearSaveError,
 }: EducationCardProps) {
+  const { t, i18n } = useTranslation("profile");
   const [draft, setDraft] = useState<EducationDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -181,7 +183,7 @@ export function EducationCard({
       !draft.fechaComienzo ||
       (!draft.estudiandoActualmente && !draft.fechaFinalizacion)
     ) {
-      setDraftError("Completa todos los campos requeridos para agregar o actualizar una formacion.");
+      setDraftError(t("education.errors.required"));
       return;
     }
 
@@ -213,7 +215,7 @@ export function EducationCard({
     setDraftError(null);
     const result = await onSaveOperations(operations);
     if (!result.ok) {
-      setDraftError(result.message ?? "No pudimos guardar la formacion.");
+      setDraftError(result.message ?? t("education.errors.save"));
       return;
     }
 
@@ -252,7 +254,7 @@ export function EducationCard({
       return;
     }
 
-    const shouldDelete = window.confirm("¿Eliminar esta formación? Este cambio se guardará de inmediato.");
+    const shouldDelete = window.confirm(t("education.confirmDelete"));
     if (!shouldDelete) {
       return;
     }
@@ -261,7 +263,7 @@ export function EducationCard({
     onClearSaveError();
     const result = await onSaveOperations([{ action: "REMOVE", id }]);
     if (!result.ok) {
-      setDraftError(result.message ?? "No pudimos eliminar la formación.");
+      setDraftError(result.message ?? t("education.errors.delete"));
       return;
     }
 
@@ -283,9 +285,9 @@ export function EducationCard({
   if (isEducationManagerMode) {
     return (
       <AppCard className="px-3 py-3 sm:px-4 sm:py-4">
-        <EditingSectionHeader title="Formacion academica" onBack={onCancelEditing} isSaving={isSaving} />
+        <EditingSectionHeader title={t("education.title")} onBack={onCancelEditing} isSaving={isSaving} />
 
-        <ProfileSectionAddButton label="+ Agregar formacion" onClick={onStartAdding} isSaving={isSaving} />
+        <ProfileSectionAddButton label={t("education.add")} onClick={onStartAdding} isSaving={isSaving} />
 
         {listItems.length > 0 ? (
           <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
@@ -299,7 +301,7 @@ export function EducationCard({
                   <div>
                     <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.titulo}</p>
                     <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)]">
-                      {item.institucion} · {toDateLabel(item.fechaComienzo)} - {item.estudiandoActualmente ? "Actualidad" : toDateLabel(item.fechaFinalizacion)}
+                      {item.institucion} · {toDateLabel(item.fechaComienzo, i18n.language)} - {item.estudiandoActualmente ? t("common.current") : toDateLabel(item.fechaFinalizacion, i18n.language)}
                     </p>
                   </div>
                 </div>
@@ -310,7 +312,7 @@ export function EducationCard({
                     onClick={() => onEditEducation(item)}
                     disabled={isSaving}
                     className="text-[1.1rem] leading-none text-[var(--text-soft)] hover:text-[var(--navy-900)]"
-                    aria-label="Editar formacion"
+                    aria-label={t("education.aria.edit")}
                   >
                     ✎
                   </button>
@@ -319,7 +321,7 @@ export function EducationCard({
                     onClick={() => onDeleteEducation(item.id)}
                     disabled={isSaving}
                     className="text-[1.1rem] leading-none text-[var(--danger-500)] hover:opacity-85"
-                    aria-label="Eliminar formacion"
+                    aria-label={t("education.aria.delete")}
                   >
                     🗑
                   </button>
@@ -328,14 +330,14 @@ export function EducationCard({
             ))}
           </div>
         ) : (
-          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste formacion academica.</p>
+          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">{t("education.empty")}</p>
         )}
 
         {isFormOpen ? (
           <form onSubmit={onSubmitEducation} className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
             <div className="mb-3 flex items-center justify-between">
               <h4 className="text-[0.8rem] font-semibold text-[var(--navy-900)]">
-                {editingId ? "Editar formacion" : "Nueva formacion"}
+                {editingId ? t("education.editTitle") : t("education.new")}
               </h4>
               <button
                 type="button"
@@ -346,45 +348,45 @@ export function EducationCard({
                 }}
                 className="text-[0.66rem] font-semibold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
               >
-                Cerrar
+                {t("common.close")}
               </button>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="mathesis-field sm:col-span-1">
-                Institucion
+                {t("education.labels.institution")}
                 <input
                   name="institucion"
                   value={draft.institucion}
                   onChange={onDraftChange}
-                  placeholder="Universidad de Buenos Aires"
+                  placeholder={t("education.placeholders.institution")}
                 />
               </label>
 
               <label className="mathesis-field sm:col-span-1">
-                Titulo
+                {t("education.labels.degree")}
                 <input
                   name="titulo"
                   value={draft.titulo}
                   onChange={onDraftChange}
-                  placeholder="Licenciatura"
+                  placeholder={t("education.placeholders.degree")}
                 />
               </label>
 
               <label className="mathesis-field sm:col-span-2">
-                Campo de estudio
+                {t("education.labels.field")}
                 <input
                   name="campoEstudio"
                   value={draft.campoEstudio}
                   onChange={onDraftChange}
-                  placeholder="Fisica teorica"
+                  placeholder={t("education.placeholders.field")}
                 />
               </label>
 
               <ProfileYearMonthRangeFields
-                startLabel="Fecha de comienzo"
-                endLabel="Fecha de finalizacion"
-                currentLabel="Actualmente estudio aqui"
+                startLabel={t("education.labels.startDate")}
+                endLabel={t("education.labels.endDate")}
+                currentLabel={t("education.labels.currentlyStudying")}
                 currentChecked={draft.estudiandoActualmente}
                 startMonth={startMonth}
                 startYear={startYear}
@@ -398,7 +400,7 @@ export function EducationCard({
               />
 
               <label className="mathesis-field sm:col-span-2">
-                Descripcion (max. 300)
+                {t("education.labels.description")}
                 <textarea
                   name="descripcion"
                   value={draft.descripcion}
@@ -414,7 +416,7 @@ export function EducationCard({
               disabled={isSaving}
               className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
             >
-              {editingId ? "Actualizar formacion" : "Agregar formacion"}
+              {editingId ? t("education.update") : t("education.addAction")}
             </button>
 
             {draftError ? (
@@ -444,11 +446,11 @@ export function EducationCard({
 
   return (
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
-      <ReadOnlySectionHeader title="Formacion academica" canEdit={canEdit} onEdit={onStartEditing} />
+      <ReadOnlySectionHeader title={t("education.title")} canEdit={canEdit} onEdit={onStartEditing} />
 
       <div className="mt-2 border-t border-[var(--line)] pt-2">
         {listItems.length === 0 ? (
-          <p className="text-[0.7rem] text-[var(--text-secondary)]">Todavia no agregaste formacion academica.</p>
+          <p className="text-[0.7rem] text-[var(--text-secondary)]">{t("education.empty")}</p>
         ) : (
           <ul>
             {listItems.map((item) => (
@@ -459,7 +461,7 @@ export function EducationCard({
                 <div>
                   <p className="text-[0.72rem] font-bold text-[var(--text-primary)]">{item.titulo}</p>
                   <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-secondary)]">
-                    {item.institucion} · {toDateLabel(item.fechaComienzo)} - {item.estudiandoActualmente ? "Actualidad" : toDateLabel(item.fechaFinalizacion)}
+                    {item.institucion} · {toDateLabel(item.fechaComienzo, i18n.language)} - {item.estudiandoActualmente ? t("common.current") : toDateLabel(item.fechaFinalizacion, i18n.language)}
                   </p>
                   {item.campoEstudio ? (
                     <p className="mt-1 text-[0.64rem] text-[var(--text-secondary)]">{item.campoEstudio}</p>

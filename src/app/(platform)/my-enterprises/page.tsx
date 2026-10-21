@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { deleteEnterprise, listMyEnterprises, type Enterprise as ApiEnterprise } from "@/lib/api/enterprise";
 import { getTwoInitials } from "@/lib/utils/name";
 import { TopBar } from "../_components/TopBar";
@@ -16,28 +17,33 @@ type Enterprise = {
   description: string;
 };
 
-function mapEnterpriseFromApi(enterprise: ApiEnterprise): Enterprise {
+function mapEnterpriseFromApi(
+  enterprise: ApiEnterprise,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): Enterprise {
   return {
     id: enterprise.id,
     name: enterprise.name,
     role: enterprise.role,
     website: enterprise.website,
-    description: enterprise.description?.trim() || "Sin descripción cargada."
+    description: enterprise.description?.trim() || t("list.card.noDescription")
   };
 }
 
 function EnterpriseCard({
   enterprise,
-  onDelete
+  onDelete,
+  t,
 }: {
   enterprise: Enterprise;
   onDelete: (enterpriseId: string) => Promise<void>;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
   const handleDelete = async () => {
-    const confirmed = window.confirm(`¿Seguro que quieres eliminar la empresa “${enterprise.name}”?`);
+    const confirmed = window.confirm(t("list.card.confirmDelete", { name: enterprise.name }));
     if (!confirmed) {
       return;
     }
@@ -81,14 +87,14 @@ function EnterpriseCard({
               <path d="M4 20h4.2L19 9.2 14.8 5 4 15.8V20Z" />
               <path d="M12.8 7 17 11.2" />
             </svg>
-            Editar
+            {t("list.card.edit")}
           </button>
 
           <button
             type="button"
             disabled={isDeleting}
             onClick={handleDelete}
-            aria-label={`Eliminar ${enterprise.name}`}
+            aria-label={t("list.card.deleteAria", { name: enterprise.name })}
             className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] text-[color:color-mix(in_srgb,var(--danger-500)_82%,var(--text-primary))] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
@@ -105,6 +111,7 @@ function EnterpriseCard({
 }
 
 export default function MyEnterprisesPage() {
+  const { t } = useTranslation("myEnterprises");
   const [enterprises, setEnterprises] = useState<Enterprise[]>([]);
   const [isLoadingEnterprises, setIsLoadingEnterprises] = useState(true);
 
@@ -112,7 +119,7 @@ export default function MyEnterprisesPage() {
     const response = await deleteEnterprise(enterpriseId);
 
     if (!response.success) {
-      window.alert(response.message || "No pudimos eliminar la empresa.");
+      window.alert(response.message || t("list.errors.delete"));
       return;
     }
 
@@ -124,7 +131,7 @@ export default function MyEnterprisesPage() {
 
     void listMyEnterprises(controller.signal)
       .then((response) => {
-        setEnterprises(response.map(mapEnterpriseFromApi));
+        setEnterprises(response.map((enterprise) => mapEnterpriseFromApi(enterprise, t)));
       })
       .catch(() => {
         setEnterprises([]);
@@ -136,7 +143,7 @@ export default function MyEnterprisesPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [t]);
 
   return (
     <div className="mathesis-shell min-h-screen bg-[var(--background)]">
@@ -147,10 +154,10 @@ export default function MyEnterprisesPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-scale-5 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-                Mis empresas
+                {t("list.title")}
               </h1>
               <p className="text-scale-3 mt-4 max-w-[890px] text-[var(--text-secondary)]">
-                Estas son las empresas que gestionás en Mathesis. Solo el Admin puede editar o eliminar una ficha. El Admin es quien la generó en Mathesis.
+                {t("list.subtitle")}
               </p>
             </div>
 
@@ -158,20 +165,20 @@ export default function MyEnterprisesPage() {
               href="/my-enterprises/create"
               className="text-scale-2 inline-flex items-center justify-center rounded-xl border border-[var(--brand-500)] px-4 py-2 font-semibold text-[var(--brand-700)]"
             >
-              + Crear nueva empresa
+              {t("list.createNew")}
             </Link>
           </div>
 
           <div className="mt-6 space-y-4">
             {isLoadingEnterprises ? (
               <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 text-[var(--text-secondary)] sm:px-5">
-                Cargando empresas...
+                {t("list.loading")}
               </div>
             ) : null}
 
             {!isLoadingEnterprises && enterprises.length === 0 ? (
               <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 text-[var(--text-secondary)] sm:px-5">
-                Todavía no tenés empresas creadas.
+                {t("list.empty")}
               </div>
             ) : null}
 
@@ -181,6 +188,7 @@ export default function MyEnterprisesPage() {
                     key={enterprise.id}
                     enterprise={enterprise}
                     onDelete={handleDelete}
+                    t={t}
                   />
                 ))
               : null}
@@ -190,25 +198,25 @@ export default function MyEnterprisesPage() {
         <aside className="mt-6 space-y-4 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
             <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-              Directorio de Mathesis Empresarios
+              {t("list.aside.directoryTitle")}
             </h2>
             <p className="text-scale-3 mt-4 text-[var(--text-primary)]">
-              Tus empresas aprobadas ya son visibles ahí para el resto de la comunidad.
+              {t("list.aside.directoryBody")}
             </p>
             <button
               type="button"
               className="text-scale-2 mathesis-on-brand mt-4 inline-flex items-center rounded-full bg-[var(--brand-500)] px-5 py-2 font-semibold"
             >
-              Ver directorio →
+              {t("list.aside.viewDirectory")}
             </button>
           </div>
 
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
             <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-              ¿Quién puede editar?
+              {t("list.aside.whoCanEditTitle")}
             </h2>
             <p className="text-scale-3 mt-4 text-[var(--text-primary)]">
-              Solo el Admin que generó la ficha en Mathesis. Los demás cofundadores la ven pero no la editan.
+              {t("list.aside.whoCanEditBody")}
             </p>
           </div>
         </aside>

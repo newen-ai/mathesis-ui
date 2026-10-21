@@ -1,0 +1,82 @@
+{
+  "list": {
+    "title": "My companies",
+    "subtitle": "These are the companies you manage in Mathesis. Only the Admin can edit or delete a record. The Admin is the user who created it in Mathesis.",
+    "createNew": "+ Create new company",
+    "loading": "Loading companies...",
+    "empty": "You do not have any companies yet.",
+    "errors": {
+      "delete": "We could not delete the company."
+    },
+    "card": {
+      "noDescription": "No description provided.",
+      "edit": "Edit",
+      "deleteAria": "Delete {{name}}",
+      "confirmDelete": "Are you sure you want to delete the company \"{{name}}\"?"
+    },
+    "aside": {
+      "directoryTitle": "Mathesis Business Directory",
+      "directoryBody": "Your approved companies are already visible there for the rest of the community.",
+      "viewDirectory": "View directory ->",
+      "whoCanEditTitle": "Who can edit?",
+      "whoCanEditBody": "Only the Admin who created the record in Mathesis. Other co-founders can view it but cannot edit it."
+    }
+  },
+  "create": {
+    "title": "Apply to Mathesis Business",
+    "subtitle": "Tell us about your company. Your request is reviewed by the Mathesis Business team and we will notify you.",
+    "fields": {
+      "companyName": "Company name",
+      "role": "Your role",
+      "website": "Website",
+      "description": "Short description"
+    },
+    "placeholders": {
+      "role": "Example: CEO and founder",
+      "website": "www.yourcompany.com",
+      "description": "What does your company do?"
+    },
+    "submit": {
+      "idle": "Create company",
+      "loading": "Creating..."
+    },
+    "requiredField": "This field is required.",
+    "requiredLegend": "Required fields.",
+    "errors": {
+      "create": "We could not create the company.",
+      "service": "We could not connect to the enterprise service."
+    },
+    "back": "<- Back",
+    "aside": {
+      "whatIsTitle": "What is Mathesis Business?",
+      "whatIsBody": "An additional membership for members with their own company or startup. It adds access to a verified company directory and an exclusive networking feed for Mensa entrepreneurs.",
+      "howItWorksTitle": "How it works",
+      "howItWorksBody": "Your request is reviewed by the Mathesis Business team and we will notify you once it is approved."
+    }
+  },
+  "edit": {
+    "title": "Edit company",
+    "loading": "Loading company...",
+    "fields": {
+      "companyName": "Company name",
+      "role": "Your role",
+      "website": "Website",
+      "description": "Short description"
+    },
+    "submit": {
+      "idle": "Save changes",
+      "loading": "Saving..."
+    },
+    "requiredField": "This field is required.",
+    "errors": {
+      "load": "We could not load the company for editing.",
+      "save": "We could not save your changes.",
+      "service": "We could not connect to the enterprise service."
+    },
+    "back": "<- Back to My companies",
+    "aside": {
+      "title": "Update company",
+      "body": "Update the name, role, and basic details of your record to keep information up to date."
+    }
+  }
+}

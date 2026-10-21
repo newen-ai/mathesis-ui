@@ -4,18 +4,18 @@ type MonthOption = {
 };
 
 export const monthOptions: MonthOption[] = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
-  { value: "10", label: "Octubre" },
-  { value: "11", label: "Noviembre" },
-  { value: "12", label: "Diciembre" },
+  { value: "01", label: "January" },
+  { value: "02", label: "February" },
+  { value: "03", label: "March" },
+  { value: "04", label: "April" },
+  { value: "05", label: "May" },
+  { value: "06", label: "June" },
+  { value: "07", label: "July" },
+  { value: "08", label: "August" },
+  { value: "09", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
 ];
 
 const today = new Date();

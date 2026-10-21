@@ -1,0 +1,118 @@
+{
+  "items": {
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "nexum": "Nexum",
+    "agora": "Agora",
+    "admin": "Admin",
+    "companiesAdmin": "ME Admin"
+  },
+  "common": {
+    "loading": "Loading...",
+    "comingSoon": "COMING SOON"
+  },
+  "search": {
+    "label": "Search profiles",
+    "placeholder": "Search",
+    "searching": "Searching..."
+  },
+  "nexum": {
+    "myProfile": "My Professional Profile",
+    "jobs": "Job Board",
+    "directory": "Company Directory",
+    "myCompanies": "My Companies"
+  },
+  "agora": {
+    "ateneo": "Ateneo",
+    "riddles": "Riddles",
+    "affinitas": "Affinitas",
+    "advancedSearch": "User Search (advanced)",
+    "convivium": "Convivium"
+  },
+  "profile": {
+    "openMenu": "Open profile menu",
+    "photo": "Profile photo",
+    "myProfile": "My profile",
+    "digitalCredential": "Digital credential",
+    "settings": "Settings",
+    "memberOfMathesis": "Mathesis member",
+    "logout": "Sign out"
+  },
+  "mobile": {
+    "closeMenu": "Close menu",
+    "openMenu": "Open menu",
+    "goToNotifications": "Go to notifications",
+    "defaultIdentity": "CEO · Mathesis & Newen Solutions",
+    "membership": {
+      "loading": "Loading membership...",
+      "sending": "Sending request...",
+      "removing": "Removing request...",
+      "requested": "Request pending · Cancel request",
+      "request": "Request membership"
+    },
+    "sections": {
+      "administration": "ADMINISTRATION",
+      "discover": "DISCOVER",
+      "activity": "ACTIVITY",
+      "about": "ABOUT",
+      "account": "ACCOUNT",
+      "legal": "LEGAL",
+      "help": "HELP"
+    },
+    "nexum": {
+      "title": "Nexum · your professional network",
+      "profile": {
+        "title": "Your Professional Profile",
+        "subtitle": "CV, experience and Mensa verification"
+      },
+      "editProfessionalProfile": "Edit Professional Profile",
+      "companies": {
+        "title": "Companies",
+        "subtitle": "Mathesis Entrepreneurs directory",
+        "explore": "Explore Mathesis Entrepreneurs",
+        "manageMine": "Manage my companies",
+        "admin": "Mathesis Entrepreneurs admin"
+      }
+    },
+    "agora": {
+      "title": "Agora · your social space",
+      "ateneo": {
+        "title": "Ateneo",
+        "subtitle": "Topic conversation groups"
+      },
+      "savedTopics": "My saved topics",
+      "weeklyRecognition": "Weekly recognition",
+      "groupHealth": "Group health (admin)",
+      "rules": "Ateneo rules",
+      "privacyPolicy": "Privacy policy",
+      "userAgreement": "User agreement",
+      "riddles": {
+        "title": "Riddles",
+        "subtitle": "Community logic challenges and games"
+      },
+      "adminGroups": "GROUPS YOU ADMIN",
+      "viewAdminGroups": "View groups you admin",
+      "myGroups": "YOUR GROUPS",
+      "viewMyGroups": "View my groups",
+      "exploreGroups": "Explore / Join groups",
+      "createGroup": "Create new group"
+    },
+    "mathesis": {
+      "title": "Mathesis",
+      "accountAdmin": {
+        "title": "Account and Administration",
+        "subtitle": "Settings, legal, and admin tools"
+      },
+      "legalRules": "Ateneo and Mathesis rules",
+      "legalTermsPrivacy": "Terms and Privacy Policy",
+      "adminUsers": "Mathesis users",
+      "adminMathesis": "Mathesis management",
+      "reportPost": "Post reports",
+      "reportProfile": "Profile reports",
+      "messaging": "Messaging",
+      "challengeBank": "Challenges and rewards bank",
+      "riddleCalendar": "Riddle calendar",
+      "adminCompanies": "Mathesis Entrepreneurs management"
+    }
+  }
+}

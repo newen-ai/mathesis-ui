@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   cancelCompaniesMembershipRequest,
   createCompaniesMembershipRequest,
@@ -31,17 +32,20 @@ function initialsFromName(name: string): string {
 }
 
 function formatWebsite(value: string | null): string {
-  if (!value) {
-    return "Website";
-  }
-
-  return value.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+  return (value ?? "").replace(/^https?:\/\//i, "").replace(/\/$/, "");
 }
 
-function DirectoryCard({ enterprise }: { enterprise: DirectoryEnterprise }) {
+function DirectoryCard({
+  enterprise,
+  t,
+}: {
+  enterprise: DirectoryEnterprise;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}) {
   const initials = initialsFromName(enterprise.name);
   const badge = "AR";
-  const sector = enterprise.role || "Empresario/a";
+  const sector = enterprise.role || t("card.fallbackRole");
+  const website = formatWebsite(enterprise.website);
 
   return (
     <article className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] px-5 py-5 shadow-[0_1px_0_rgba(16,24,40,0.02)] sm:px-6">
@@ -59,14 +63,14 @@ function DirectoryCard({ enterprise }: { enterprise: DirectoryEnterprise }) {
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-scale-2 text-[var(--text-secondary)]">
-              <span>{enterprise.founder ?? "Socio Mensa"}</span>
+              <span>{enterprise.founder ?? t("card.fallbackFounder")}</span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[0.67rem] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
                 {badge}
               </span>
             </div>
 
             <p className="mt-4 max-w-[980px] text-scale-3 leading-relaxed text-[var(--text-primary)]">
-              {enterprise.description || "Sin descripción disponible."}
+              {enterprise.description || t("card.fallbackDescription")}
             </p>
           </div>
         </div>
@@ -85,7 +89,7 @@ function DirectoryCard({ enterprise }: { enterprise: DirectoryEnterprise }) {
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                 <path d="M12 21s-6-4.4-8.5-8.1C1.5 10.4 2.7 6 7 6a4 4 0 0 1 5 2.2A4 4 0 0 1 17 6c4.3 0 5.5 4.4 3.5 6.9C18 16.6 12 21 12 21Z" />
               </svg>
-              {enterprise.location || "Ubicación"}
+              {enterprise.location || t("card.fallbackLocation")}
             </span>
 
             <span className="inline-flex items-center gap-2">
@@ -101,16 +105,16 @@ function DirectoryCard({ enterprise }: { enterprise: DirectoryEnterprise }) {
                 <path d="M9.5 5.5h8.5a1 1 0 0 1 1 1v10.9a1 1 0 0 1-1 1H9.5a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z" />
                 <path d="M6 7.5H4.5a1 1 0 0 0-1 1V18a1 1 0 0 0 1 1H15a1 1 0 0 0 1-1v-1.5" />
               </svg>
-              {formatWebsite(enterprise.website)}
+              {website || t("card.website")}
             </span>
           </div>
 
           <button
             type="button"
-            aria-label={`Ver perfil completo de ${enterprise.name}`}
+            aria-label={t("card.viewFullProfileAria", { name: enterprise.name })}
             className="inline-flex items-center gap-2 self-end rounded-full border border-transparent px-2 py-1 text-scale-2 font-semibold text-[var(--brand-700)] transition hover:text-[var(--brand-800)]"
           >
-            <span>Ver perfil completo</span>
+            <span>{t("card.viewFullProfile")}</span>
             <span aria-hidden="true">→</span>
           </button>
         </div>
@@ -120,6 +124,7 @@ function DirectoryCard({ enterprise }: { enterprise: DirectoryEnterprise }) {
 }
 
 export default function DirectorioPage() {
+  const { t } = useTranslation("directory");
   const [enterprises, setEnterprises] = useState<DirectoryEnterprise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -157,7 +162,7 @@ export default function DirectorioPage() {
         }
 
         setEnterprises([]);
-        setError("No pudimos cargar el directorio en este momento.");
+        setError(t("states.loadError"));
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -170,7 +175,7 @@ export default function DirectorioPage() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -207,20 +212,20 @@ export default function DirectorioPage() {
         toast.error(
           result.message ||
             (membershipCtaMode === "requested"
-              ? "No se pudo cancelar la solicitud."
-              : "No se pudo enviar la solicitud.")
+              ? t("membership.errorCancel")
+              : t("membership.errorRequest"))
         );
         return;
       }
 
       toast.success(
         membershipCtaMode === "requested"
-          ? "Solicitud cancelada."
-          : "Solicitud enviada."
+          ? t("membership.successCancel")
+          : t("membership.successRequest")
       );
       await reloadMembershipState();
     } catch {
-      toast.error("No pudimos actualizar tu membresía en este momento.");
+      toast.error(t("membership.errorUpdate"));
     } finally {
       setIsMembershipActionPending(false);
     }
@@ -239,14 +244,14 @@ export default function DirectorioPage() {
         <header className="mb-6">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface)] px-3 py-1.5 text-scale-1 font-semibold uppercase tracking-[0.12em] text-[var(--navy-900)] shadow-sm">
             <span className="inline-flex h-2.5 w-2.5 rounded-sm bg-[var(--brand-500)]" aria-hidden="true" />
-            Mathesis Empresarios
+            {t("brand")}
           </div>
 
           <h1 className="mathesis-heading-primary text-scale-5 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
-            Empresas de la comunidad
+            {t("header.title")}
           </h1>
           <p className="mt-3 text-scale-3 text-[var(--text-secondary)]">
-            Fundadas o lideradas por socios Mensa. Verificadas.
+            {t("header.subtitle")}
           </p>
         </header>
 
@@ -254,10 +259,10 @@ export default function DirectorioPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
               <h2 className="mathesis-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
-                ¿Sos empresario/a Mensa?
+                {t("membership.title")}
               </h2>
               <p className="mt-2 text-scale-3 text-[var(--text-primary)]">
-                Mathesis Empresarios es nuevo — te contamos de qué se trata. Podés también solicitarlo desde tu perfil.
+                {t("membership.subtitle")}
               </p>
             </div>
 
@@ -268,7 +273,7 @@ export default function DirectorioPage() {
                   void onMembershipAction();
                 }}
                 disabled={membershipCtaMode === "loading" || isMembershipActionPending}
-                aria-label={membershipCtaMode === "requested" ? "Cancelar solicitud de membresía Mathesis Empresarios" : "Solicitar membresía Mathesis Empresarios"}
+                aria-label={membershipCtaMode === "requested" ? t("membership.ariaCancel") : t("membership.ariaRequest")}
                 className={`inline-flex items-center justify-between gap-3 rounded-xl border px-5 py-3 text-scale-2 font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-70 ${
                   membershipCtaMode === "requested"
                     ? "border-[color:color-mix(in_srgb,var(--danger-500)_45%,var(--line-strong))] bg-[color:color-mix(in_srgb,var(--danger-500)_14%,var(--surface))] text-[var(--danger-500)]"
@@ -277,14 +282,14 @@ export default function DirectorioPage() {
               >
                 <span>
                   {membershipCtaMode === "loading"
-                    ? "Cargando membresía..."
+                    ? t("membership.loading")
                     : isMembershipActionPending && membershipCtaMode === "requested"
-                      ? "Cancelando solicitud..."
+                      ? t("membership.cancelling")
                       : isMembershipActionPending
-                        ? "Enviando solicitud..."
+                        ? t("membership.sending")
                         : membershipCtaMode === "requested"
-                          ? "Cancelar solicitud"
-                          : "Solicitar membresía Empresarios"}
+                          ? t("membership.cancel")
+                          : t("membership.request")}
                 </span>
                 <span aria-hidden="true" className="text-lg">
                   {membershipCtaMode === "requested" ? "−" : "+"}
@@ -297,7 +302,7 @@ export default function DirectorioPage() {
         <div className="space-y-5">
           {isLoading ? (
             <div className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] px-5 py-5 text-scale-2 text-[var(--text-secondary)]">
-              Cargando empresas...
+              {t("states.loadingEnterprises")}
             </div>
           ) : null}
 
@@ -309,12 +314,12 @@ export default function DirectorioPage() {
 
           {!isLoading && emptyState ? (
             <div className="rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface)] px-5 py-5 text-scale-2 text-[var(--text-secondary)]">
-              Todavía no hay empresas verificadas en el directorio.
+              {t("states.empty")}
             </div>
           ) : null}
 
           {!isLoading && !error && enterprises.map((enterprise) => (
-            <DirectoryCard key={enterprise.id} enterprise={enterprise} />
+            <DirectoryCard key={enterprise.id} enterprise={enterprise} t={t} />
           ))}
         </div>
       </main>

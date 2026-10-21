@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createEnterprise as createEnterpriseRequest } from "@/lib/api/enterprise";
 import { TopBar } from "../../_components/TopBar";
 import { navItems } from "../../_lib/constants";
@@ -19,9 +20,8 @@ type CreateEnterpriseErrors = {
   role?: string;
 };
 
-const REQUIRED_FIELD_MESSAGE = "Este campo es obligatorio.";
-
 export default function CreateEnterprisePage() {
+  const { t } = useTranslation("myEnterprises");
   const router = useRouter();
   const [form, setForm] = useState<CreateEnterpriseForm>({
     companyName: "",
@@ -55,11 +55,11 @@ export default function CreateEnterprisePage() {
     const nextErrors: CreateEnterpriseErrors = {};
 
     if (form.companyName.trim().length === 0) {
-      nextErrors.companyName = REQUIRED_FIELD_MESSAGE;
+      nextErrors.companyName = t("create.requiredField");
     }
 
     if (form.role.trim().length === 0) {
-      nextErrors.role = REQUIRED_FIELD_MESSAGE;
+      nextErrors.role = t("create.requiredField");
     }
 
     setErrors(nextErrors);
@@ -80,13 +80,13 @@ export default function CreateEnterprisePage() {
       });
 
       if (!response.success) {
-        setSubmitError(response.message || "No pudimos crear la empresa.");
+        setSubmitError(response.message || t("create.errors.create"));
         return;
       }
 
       router.push("/my-enterprises");
     } catch {
-      setSubmitError("No pudimos conectar con el servicio de empresas.");
+      setSubmitError(t("create.errors.service"));
     } finally {
       setIsSubmitting(false);
     }
@@ -99,16 +99,16 @@ export default function CreateEnterprisePage() {
       <main className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-7 lg:px-10 lg:py-8">
         <section className="min-w-0 border-r-0 lg:border-r lg:border-[var(--line)] lg:pr-7">
           <h1 className="text-scale-5 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-            Solicitar Mathesis Empresarios
+            {t("create.title")}
           </h1>
           <p className="text-scale-3 mt-2 text-[var(--text-secondary)]">
-            Contanos sobre tu empresa. Tu solicitud la revisa el equipo de Mathesis Empresarios — te avisamos por notificación.
+            {t("create.subtitle")}
           </p>
 
           <form className="mt-5 space-y-4" onSubmit={onSubmit} noValidate>
             <label className="block">
               <span className="text-scale-3 mathesis-heading-primary font-semibold">
-                Nombre de la empresa <span className="text-[var(--danger-500)]">*</span>
+                {t("create.fields.companyName")} <span className="text-[var(--danger-500)]">*</span>
               </span>
               <input
                 value={form.companyName}
@@ -123,13 +123,13 @@ export default function CreateEnterprisePage() {
 
             <label className="block">
               <span className="text-scale-3 mathesis-heading-primary font-semibold">
-                Tu rol <span className="text-[var(--danger-500)]">*</span>
+                {t("create.fields.role")} <span className="text-[var(--danger-500)]">*</span>
               </span>
               <input
                 value={form.role}
                 onChange={(event) => onFieldChange("role", event.target.value)}
                 type="text"
-                placeholder="Ej: CEO y fundador"
+                placeholder={t("create.placeholders.role")}
                 className={`text-scale-3 mt-1.5 w-full rounded-xl border bg-[var(--surface)] px-4 py-2.5 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-soft)] focus:border-[var(--brand-700)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand-500)_24%,transparent)] ${errors.role ? "border-[var(--danger-500)]" : "border-[var(--line)]"}`}
               />
               {errors.role ? (
@@ -138,23 +138,23 @@ export default function CreateEnterprisePage() {
             </label>
 
             <label className="block">
-              <span className="text-scale-3 mathesis-heading-primary font-semibold">Sitio web</span>
+              <span className="text-scale-3 mathesis-heading-primary font-semibold">{t("create.fields.website")}</span>
               <input
                 value={form.website}
                 onChange={(event) => onFieldChange("website", event.target.value)}
                 type="text"
-                placeholder="www.tuempresa.com"
+                placeholder={t("create.placeholders.website")}
                 className="text-scale-3 mt-1.5 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-soft)] focus:border-[var(--brand-700)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand-500)_24%,transparent)]"
               />
             </label>
 
             <label className="block">
-              <span className="text-scale-3 mathesis-heading-primary font-semibold">Descripción breve</span>
+              <span className="text-scale-3 mathesis-heading-primary font-semibold">{t("create.fields.description")}</span>
               <textarea
                 value={form.description}
                 onChange={(event) => onFieldChange("description", event.target.value)}
                 rows={3}
-                placeholder="¿A qué se dedica tu empresa?"
+                placeholder={t("create.placeholders.description")}
                 className="text-scale-3 mt-1.5 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-2.5 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-soft)] focus:border-[var(--brand-700)] focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--brand-500)_24%,transparent)]"
               />
             </label>
@@ -164,7 +164,7 @@ export default function CreateEnterprisePage() {
               disabled={isSubmitting}
               className="text-scale-4 mathesis-on-brand mt-3 inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-3 font-semibold"
             >
-              {isSubmitting ? "Creando..." : "Crear empresa"}
+              {isSubmitting ? t("create.submit.loading") : t("create.submit.idle")}
             </button>
 
             {submitError ? (
@@ -172,7 +172,7 @@ export default function CreateEnterprisePage() {
             ) : null}
 
             <p className="text-scale-2 text-[var(--text-secondary)]">
-              <span className="text-[var(--danger-500)]">*</span> Campos obligatorios.
+              <span className="text-[var(--danger-500)]">*</span> {t("create.requiredLegend")}
             </p>
 
             <div className="pt-1 text-center">
@@ -180,7 +180,7 @@ export default function CreateEnterprisePage() {
                 href="/my-enterprises"
                 className="text-scale-4 mathesis-link-accent font-semibold transition"
               >
-                ← Volver a buscar
+                {t("create.back")}
               </Link>
             </div>
           </form>
@@ -189,19 +189,19 @@ export default function CreateEnterprisePage() {
         <aside className="mt-6 space-y-4 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
             <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-              ¿Qué es Mathesis Empresarios?
+              {t("create.aside.whatIsTitle")}
             </h2>
             <p className="text-scale-3 mt-4 leading-relaxed text-[var(--text-primary)]">
-              Membresía adicional para Miembros con empresa propia o startup. Suma acceso a un directorio de empresas verificadas y a un Feed exclusivo de networking entre empresarios Mensa.
+              {t("create.aside.whatIsBody")}
             </p>
           </div>
 
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
             <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
-              Cómo funciona
+              {t("create.aside.howItWorksTitle")}
             </h2>
             <p className="text-scale-3 mt-4 leading-relaxed text-[var(--text-primary)]">
-              Tu solicitud la revisa el equipo de Mathesis Empresarios y te avisamos por notificación cuando quede aprobada.
+              {t("create.aside.howItWorksBody")}
             </p>
           </div>
         </aside>

@@ -1,0 +1,37 @@
+{
+  "brand": "Mathesis Empresarios",
+  "header": {
+    "title": "Empresas de la comunidad",
+    "subtitle": "Fundadas o lideradas por socios Mensa. Verificadas."
+  },
+  "membership": {
+    "title": "¿Sos empresario/a Mensa?",
+    "subtitle": "Mathesis Empresarios es nuevo; te contamos de qué se trata. También podés solicitarlo desde tu perfil.",
+    "ariaRequest": "Solicitar membresía Mathesis Empresarios",
+    "ariaCancel": "Cancelar solicitud de membresía Mathesis Empresarios",
+    "loading": "Cargando membresía...",
+    "sending": "Enviando solicitud...",
+    "cancelling": "Cancelando solicitud...",
+    "request": "Solicitar membresía Empresarios",
+    "cancel": "Cancelar solicitud",
+    "errorRequest": "No se pudo enviar la solicitud.",
+    "errorCancel": "No se pudo cancelar la solicitud.",
+    "errorUpdate": "No pudimos actualizar tu membresía en este momento.",
+    "successRequest": "Solicitud enviada.",
+    "successCancel": "Solicitud cancelada."
+  },
+  "card": {
+    "fallbackFounder": "Socio Mensa",
+    "fallbackRole": "Empresario/a",
+    "fallbackDescription": "Sin descripción disponible.",
+    "fallbackLocation": "Ubicación",
+    "website": "Sitio web",
+    "viewFullProfile": "Ver perfil completo",
+    "viewFullProfileAria": "Ver perfil completo de {{name}}"
+  },
+  "states": {
+    "loadingEnterprises": "Cargando empresas...",
+    "loadError": "No pudimos cargar el directorio en este momento.",
+    "empty": "Todavía no hay empresas verificadas en el directorio."
+  }
+}

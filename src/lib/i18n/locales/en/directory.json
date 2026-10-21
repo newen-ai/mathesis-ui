@@ -1,0 +1,37 @@
+{
+  "brand": "Mathesis Entrepreneurs",
+  "header": {
+    "title": "Community companies",
+    "subtitle": "Founded or led by Mensa members. Verified."
+  },
+  "membership": {
+    "title": "Are you a Mensa entrepreneur?",
+    "subtitle": "Mathesis Entrepreneurs is new; we will tell you what it is about. You can also request it from your profile.",
+    "ariaRequest": "Request Mathesis Entrepreneurs membership",
+    "ariaCancel": "Cancel Mathesis Entrepreneurs membership request",
+    "loading": "Loading membership...",
+    "sending": "Sending request...",
+    "cancelling": "Cancelling request...",
+    "request": "Request Entrepreneurs membership",
+    "cancel": "Cancel request",
+    "errorRequest": "Couldn't send the request.",
+    "errorCancel": "Couldn't cancel the request.",
+    "errorUpdate": "We couldn't update your membership right now.",
+    "successRequest": "Request sent.",
+    "successCancel": "Request cancelled."
+  },
+  "card": {
+    "fallbackFounder": "Mensa member",
+    "fallbackRole": "Entrepreneur",
+    "fallbackDescription": "No description available.",
+    "fallbackLocation": "Location",
+    "website": "Website",
+    "viewFullProfile": "View full profile",
+    "viewFullProfileAria": "View full profile of {{name}}"
+  },
+  "states": {
+    "loadingEnterprises": "Loading companies...",
+    "loadError": "We couldn't load the directory right now.",
+    "empty": "There are no verified companies in the directory yet."
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "language": {
+    "label": "Language",
+    "options": {
+      "es": "Spanish",
+      "en": "English"
+    }
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "retry": "Retry",
+    "back": "Back",
+    "continue": "Continue"
+  },
+  "states": {
+    "loading": "Loading...",
+    "empty": "There is no data to display.",
+    "error": "An unexpected error occurred."
+  },
+  "navigation": {
+    "home": "Home",
+    "profile": "Profile",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "logout": "Sign out"
+  }
+}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { NavItem } from "../_lib/constants";
 import {
   checkCompaniesAdminAccess,
@@ -55,6 +56,7 @@ type SessionAccess = {
 
 export function TopBar({ navItems }: TopBarProps) {
   void navItems;
+  const { t } = useTranslation();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -113,11 +115,17 @@ export function TopBar({ navItems }: TopBarProps) {
   }, [hasCompaniesAdminAccess, isAdmin]);
 
   const isNavItemActive = (href: string) => {
+    const normalizedPathname = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
+
     if (href === "/") {
-      return pathname === "/";
+      return normalizedPathname === "/";
     }
 
-    return pathname.startsWith(href);
+    if (href === "/perfil") {
+      return normalizedPathname === "/perfil";
+    }
+
+    return normalizedPathname.startsWith(href);
   };
 
   const forceLogout = useCallback(() => {
@@ -565,7 +573,7 @@ export function TopBar({ navItems }: TopBarProps) {
 
         <div className="relative ml-2 w-full max-w-[560px] min-w-0 md:ml-4">
           <label className="sr-only" htmlFor="topbar-search">
-            Buscar perfiles
+            {t("topbar:search.label", { defaultValue: "Buscar perfiles" })}
           </label>
           <div className="flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface-2)] px-4 py-2.5 md:py-3">
             <span className="text-[var(--text-soft)]" aria-hidden="true">
@@ -576,7 +584,7 @@ export function TopBar({ navItems }: TopBarProps) {
               type="search"
               value={searchText}
               onChange={(event) => onSearchTextChange(event.target.value)}
-              placeholder="Buscar"
+              placeholder={t("topbar:search.placeholder", { defaultValue: "Buscar" })}
               className="w-full bg-transparent text-base font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-soft)] md:text-xl"
               autoComplete="off"
             />
@@ -585,7 +593,7 @@ export function TopBar({ navItems }: TopBarProps) {
           {showSearchPanel ? (
             <div className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-40 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-1 shadow-lg">
               {isSearching ? (
-                <p className="px-3 py-2 text-sm text-[var(--text-secondary)]">Buscando...</p>
+                <p className="px-3 py-2 text-sm text-[var(--text-secondary)]">{t("topbar:search.searching", { defaultValue: "Buscando..." })}</p>
               ) : null}
 
               {!isSearching && searchMessage ? (
@@ -655,7 +663,7 @@ export function TopBar({ navItems }: TopBarProps) {
               router.push("/notificaciones");
             }}
             className="relative flex h-10 w-10 items-center justify-center text-[var(--brand-500)]"
-            aria-label="Ir a notificaciones"
+            aria-label={t("topbar:mobile.goToNotifications", { defaultValue: "Ir a notificaciones" })}
           >
             <TopBarNavIcon icon="bell" className="h-6 w-6" />
             {unreadNotificationsCount > 0 ? (
@@ -677,7 +685,7 @@ export function TopBar({ navItems }: TopBarProps) {
               });
             }}
             className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface-2)]"
-            aria-label="Abrir menú"
+            aria-label={t("topbar:mobile.openMenu", { defaultValue: "Abrir menú" })}
           >
             <svg viewBox="0 0 24 24" className="h-7 w-7 text-[var(--brand-500)]" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
               <path d="M4 6h16M4 12h16M4 18h16" />

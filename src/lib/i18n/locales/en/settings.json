@@ -1,0 +1,31 @@
+{
+  "title": "Settings",
+  "category": {
+    "account": "Account",
+    "privacy": "Privacy",
+    "legal": "Legal",
+    "accountActions": "Account actions",
+    "help": "Help and support"
+  },
+  "rows": {
+    "email": "Email",
+    "darkMode": "Dark mode",
+    "appLanguage": "App language",
+    "appLanguageDescription": "Choose the interface language.",
+    "blocked": "Blocked users",
+    "terms": "Terms and Conditions",
+    "privacyPolicy": "Privacy Policy",
+    "changePassword": "Change password",
+    "logout": "Sign out",
+    "deactivate": "Deactivate account",
+    "delete": "Delete Mathesis account",
+    "contact": "Contact Mathesis"
+  },
+  "values": {
+    "notAvailable": "Not available"
+  },
+  "aria": {
+    "toggleDarkMode": "Toggle dark mode",
+    "appLanguage": "App language"
+  }
+}

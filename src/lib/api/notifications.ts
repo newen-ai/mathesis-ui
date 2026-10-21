@@ -17,6 +17,8 @@ export type NotificationAction = {
   href: string;
 };
 
+export type NotificationParams = Record<string, string | number | boolean | null>;
+
 export type NotificationSummary = {
   id: string;
   type: string;
@@ -29,6 +31,10 @@ export type NotificationSummary = {
     value: string;
     tone: NotificationLeadTone;
   };
+  messageKey: string | null;
+  messageParams: NotificationParams | null;
+  actionKey: string | null;
+  actionParams: NotificationParams | null;
   body: NotificationSegment[];
   action: NotificationAction | null;
 };
