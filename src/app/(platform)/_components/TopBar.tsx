@@ -45,6 +45,7 @@ import {
   type MembershipCtaMode,
   type MobileAccordionKey,
 } from "./topbar.shared";
+import { isTopbarItemActive } from "../_lib/topbar-active";
 
 type TopBarProps = {
   navItems: NavItem[];
@@ -114,19 +115,7 @@ export function TopBar({ navItems }: TopBarProps) {
     return items;
   }, [hasCompaniesAdminAccess, isAdmin]);
 
-  const isNavItemActive = (href: string) => {
-    const normalizedPathname = pathname.endsWith("/") && pathname.length > 1 ? pathname.slice(0, -1) : pathname;
-
-    if (href === "/") {
-      return normalizedPathname === "/";
-    }
-
-    if (href === "/perfil") {
-      return normalizedPathname === "/perfil";
-    }
-
-    return normalizedPathname.startsWith(href);
-  };
+  const isNavItemActive = (href: string) => isTopbarItemActive(pathname, href);
 
   const forceLogout = useCallback(() => {
     router.replace("/login");
