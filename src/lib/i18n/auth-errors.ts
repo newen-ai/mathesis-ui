@@ -62,7 +62,7 @@ export function extractAuthErrorCode(details?: unknown): string | undefined {
 
 export function getAuthErrorTranslation(
   codeOrMessage?: string | unknown,
-  fallback = "No pudimos iniciar sesión."
+  fallback = i18next.t("auth:default", { defaultValue: "No pudimos iniciar sesión." })
 ): string {
   const code =
     typeof codeOrMessage === "string"

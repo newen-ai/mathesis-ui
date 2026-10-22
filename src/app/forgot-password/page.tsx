@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { normalizeEmailInput } from "@/lib/utils/email";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
@@ -18,6 +19,7 @@ function isValidEmail(email: string) {
 }
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation("auth");
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,7 +37,7 @@ export default function ForgotPasswordPage() {
     const nextErrors: ValidationErrors = {};
 
     if (!trimmedEmail || !isValidEmail(trimmedEmail)) {
-      nextErrors.email = "Ingresa un email valido.";
+      nextErrors.email = t("forgotPassword.errors.emailInvalid");
     }
 
     setErrors(nextErrors);
@@ -50,7 +52,7 @@ export default function ForgotPasswordPage() {
 
     if (!result.success) {
       setPopupInfo({
-        title: "Error de servicio",
+        title: t("common.serviceErrorTitle"),
         message: result.message,
         details: formatApiErrorDetails(result.details, result.status),
       });
@@ -81,10 +83,10 @@ export default function ForgotPasswordPage() {
             href="/login"
             className="inline-flex text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C] transition hover:opacity-80"
           >
-            ← Atrás
+            {t("forgotPassword.back")}
           </Link>
           <h1 className="mt-3 font-[family-name:Georgia] text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
-            Recuperar contraseña
+            {t("forgotPassword.mobileTitle")}
           </h1>
           <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
         </div>
@@ -106,7 +108,7 @@ export default function ForgotPasswordPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BRAND_LOGO_SRC}
-              alt="Logo Mathesis"
+              alt={t("common.brandLogoAlt")}
               width={40}
               height={40}
               loading="eager"
@@ -119,12 +121,12 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div className="relative z-10 mt-10 lg:mt-0">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">Recuperar acceso</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">{t("forgotPassword.desktopEyebrow")}</p>
             <h1 className="mt-4 font-[family-name:Georgia] text-[2.2rem] font-bold leading-tight text-[#FAF8F5] lg:max-w-[350px] lg:text-[3.15rem] lg:leading-[1.08]">
-              ¿Olvidaste tu contraseña?
+              {t("forgotPassword.desktopTitle")}
             </h1>
             <p className="mx-auto mt-4 max-w-[370px] font-[family-name:Georgia] text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
-              Ingresá el mail con el que te registraste en Mathesis y te mandaremos un link para crear una contraseña nueva.
+              {t("forgotPassword.desktopDescription")}
             </p>
           </div>
 
@@ -141,10 +143,10 @@ export default function ForgotPasswordPage() {
                 className="hidden font-[family-name:Georgia] text-[1.35rem] font-bold text-[#0A2540] lg:block"
                 style={{ color: "var(--text-primary)" }}
               >
-                Recuperar contraseña
+                {t("forgotPassword.formTitle")}
               </h2>
               <p className="text-sm leading-relaxed lg:mt-2 lg:text-sm" style={{ color: "var(--text-secondary)" }}>
-                Te mandaremos un link para crear una nueva.
+                {t("forgotPassword.formSubtitle")}
               </p>
             </div>
 
@@ -155,13 +157,13 @@ export default function ForgotPasswordPage() {
                   className="text-sm font-bold tracking-wide lg:text-xs"
                   style={{ color: "var(--text-primary)" }}
                 >
-                  Mail
+                  {t("forgotPassword.emailLabel")}
                 </label>
                 <input
                   id="email"
                   autoComplete="email"
                   inputMode="email"
-                  placeholder="tu@mail.com"
+                  placeholder={t("forgotPassword.emailPlaceholder")}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   aria-invalid={Boolean(errors.email)}
@@ -186,7 +188,7 @@ export default function ForgotPasswordPage() {
                 className="mt-4 w-full rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70 lg:mt-1 lg:text-sm"
                 style={{ backgroundColor: "var(--brand-500)" }}
               >
-                {isSubmitting ? "Enviando..." : "Enviar link de recuperación"}
+                {isSubmitting ? t("forgotPassword.submitting") : t("forgotPassword.submit")}
               </button>
 
               <Link
@@ -194,7 +196,7 @@ export default function ForgotPasswordPage() {
                 className="mt-1 hidden text-center text-sm transition hover:opacity-80 lg:block lg:text-xs"
                 style={{ color: "var(--text-secondary)" }}
               >
-                ← Volver a ingresar
+                {t("forgotPassword.backToLogin")}
               </Link>
             </form>
           </div>
