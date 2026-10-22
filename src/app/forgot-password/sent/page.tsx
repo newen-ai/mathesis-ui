@@ -1,15 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { maskEmailForDisplay, resolveEmailParam } from "@/lib/utils/email";
 
-type PageProps = {
-  searchParams?: {
-    email?: string | string[];
-  };
-};
-
-export default function ForgotPasswordSentPage({ searchParams }: PageProps) {
-  const email = resolveEmailParam(searchParams?.email);
+export default function ForgotPasswordSentPage() {
+  const { t } = useTranslation("auth");
+  const searchParams = useSearchParams();
+  const email = resolveEmailParam(searchParams.get("email") ?? undefined);
   const maskedEmail = email ? maskEmailForDisplay(email) : null;
 
   return (
@@ -23,10 +23,10 @@ export default function ForgotPasswordSentPage({ searchParams }: PageProps) {
             href="/login"
             className="inline-flex text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C] transition hover:opacity-80"
           >
-            ← Atrás
+            {t("forgotPasswordSent.back")}
           </Link>
           <h1 className="mt-3 font-[family-name:Georgia] text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
-            Revisa tu correo
+            {t("forgotPasswordSent.mobileTitle")}
           </h1>
           <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
         </div>
@@ -48,7 +48,7 @@ export default function ForgotPasswordSentPage({ searchParams }: PageProps) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BRAND_LOGO_SRC}
-              alt="Logo Mathesis"
+              alt={t("common.brandLogoAlt")}
               width={40}
               height={40}
               loading="eager"
@@ -61,12 +61,12 @@ export default function ForgotPasswordSentPage({ searchParams }: PageProps) {
           </div>
 
           <div className="relative z-10 mt-10 lg:mt-0">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">Recuperar acceso</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">{t("forgotPasswordSent.desktopEyebrow")}</p>
             <h1 className="mt-4 font-[family-name:Georgia] text-[2.2rem] font-bold leading-tight text-[#FAF8F5] lg:max-w-[350px] lg:text-[3.15rem] lg:leading-[1.08]">
-              Revisa tu correo
+              {t("forgotPasswordSent.desktopTitle")}
             </h1>
             <p className="mx-auto mt-4 max-w-[370px] font-[family-name:Georgia] text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
-              Si tu email esta registrado, te mandaremos un link para restablecer tu contraseña.
+              {t("forgotPasswordSent.desktopDescription")}
             </p>
           </div>
 
@@ -83,19 +83,19 @@ export default function ForgotPasswordSentPage({ searchParams }: PageProps) {
                 className="hidden font-[family-name:Georgia] text-[1.35rem] font-bold"
                 style={{ color: "var(--text-primary)" }}
               >
-                Te enviamos el link
+                {t("forgotPasswordSent.title")}
               </h2>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
                 {maskedEmail ? (
                   <>
-                    Enviamos instrucciones a <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>{maskedEmail}</span> para que puedas crear una nueva contraseña.
+                    {t("forgotPasswordSent.descriptionWithEmail", { email: maskedEmail })}
                   </>
                 ) : (
-                  <>Enviamos instrucciones para que puedas crear una nueva contraseña.</>
+                  <>{t("forgotPasswordSent.descriptionWithoutEmail")}</>
                 )}
               </p>
               <p className="mt-3 text-xs leading-relaxed lg:text-xs" style={{ color: "var(--text-soft)" }}>
-                Si no ves el correo, revisa spam o promociones.
+                {t("forgotPasswordSent.spamHint")}
               </p>
             </div>
 
@@ -105,7 +105,7 @@ export default function ForgotPasswordSentPage({ searchParams }: PageProps) {
                 className="inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95 lg:text-sm"
                 style={{ backgroundColor: "var(--brand-500)" }}
               >
-                Volver a ingresar
+                {t("forgotPasswordSent.backToLogin")}
               </Link>
             </div>
           </div>

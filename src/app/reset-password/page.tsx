@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
@@ -17,6 +18,7 @@ type ValidationErrors = {
 };
 
 function ResetPasswordContent() {
+  const { t } = useTranslation("auth");
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -72,16 +74,16 @@ function ResetPasswordContent() {
     const nextErrors: ValidationErrors = {};
 
     if (!token) {
-      nextErrors.token = "Este enlace no es válido o ya expiró.";
+      nextErrors.token = t("resetPassword.invalidToken");
     }
 
     if (!strength.meetsPolicy) {
       nextErrors.password =
-        "La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y carácter especial.";
+        t("resetPassword.passwordPolicyError");
     }
 
     if (!confirmPassword || confirmPassword !== password) {
-      nextErrors.confirmPassword = "Las contraseñas no coinciden.";
+      nextErrors.confirmPassword = t("resetPassword.passwordMismatch");
     }
 
     setErrors(nextErrors);
@@ -99,7 +101,7 @@ function ResetPasswordContent() {
 
     if (!result.success) {
       setPopupInfo({
-        title: "Error de servicio",
+        title: t("common.serviceErrorTitle"),
         message: result.message,
         details: formatApiErrorDetails(result.details, result.status),
       });
@@ -132,10 +134,10 @@ function ResetPasswordContent() {
               href="/login"
               className="inline-flex text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C] transition hover:opacity-80"
             >
-              ← Atrás
+              {t("resetPassword.back")}
             </Link>
             <h1 className="mt-3 font-[family-name:Georgia] text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
-              Creá una nueva contraseña
+              {t("resetPassword.title")}
             </h1>
             <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
           </div>
@@ -157,7 +159,7 @@ function ResetPasswordContent() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={BRAND_LOGO_SRC}
-                alt="Logo Mathesis"
+                alt={t("common.brandLogoAlt")}
                 width={40}
                 height={40}
                 loading="eager"
@@ -171,10 +173,10 @@ function ResetPasswordContent() {
 
             <div className="relative z-10 mt-10 lg:mt-0">
               <h1 className="mt-4 font-[family-name:Georgia] text-[1.35rem] font-bold leading-tight text-[#FAF8F5]">
-                Creá una nueva contraseña
+                {t("resetPassword.title")}
               </h1>
               <p className="mx-auto mt-4 max-w-[370px] font-[family-name:Georgia] text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
-                Definí una contraseña segura para volver a ingresar a tu cuenta.
+                {t("resetPassword.subtitle")}
               </p>
             </div>
 
@@ -198,11 +200,13 @@ function ResetPasswordContent() {
                     className="font-[family-name:Georgia] text-[1.35rem] font-bold"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    Contraseña actualizada correctamente
+                    {t("resetPassword.successTitle")}
                   </h2>
                   <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                    Te redirigimos a iniciar sesión en {secondsUntilRedirect} segundo
-                    {secondsUntilRedirect === 1 ? "" : "s"}.
+                    {t("resetPassword.successDescription", {
+                      seconds: secondsUntilRedirect,
+                      suffix: secondsUntilRedirect === 1 ? "" : "s",
+                    })}
                   </p>
                   <button
                     type="button"
@@ -213,7 +217,7 @@ function ResetPasswordContent() {
                     className="mt-2 w-full rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
                     style={{ backgroundColor: "var(--brand-500)" }}
                   >
-                    Ir ahora a iniciar sesión
+                    {t("resetPassword.successNow")}
                   </button>
                 </div>
               ) : (
@@ -224,12 +228,12 @@ function ResetPasswordContent() {
                     className="text-sm font-bold tracking-wide lg:text-xs"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    Nueva contraseña
+                    {t("resetPassword.newPasswordLabel")}
                   </label>
                   <PasswordInput
                     id="password"
                     autoComplete="new-password"
-                    placeholder="••••••••"
+                    placeholder={t("resetPassword.newPasswordPlaceholder")}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     aria-invalid={Boolean(errors.password)}
@@ -242,7 +246,7 @@ function ResetPasswordContent() {
                     }}
                   />
 
-                  <div className="mt-1 grid grid-cols-3 gap-2" aria-label={`Nivel de seguridad: ${strength.strength}`}>
+                  <div className="mt-1 grid grid-cols-3 gap-2" aria-label={t("resetPassword.securityLevelAria", { level: strength.strength })}>
                     <span
                       className="h-2 rounded-full"
                       style={{ backgroundColor: semaphoreColors[0] }}
@@ -258,7 +262,7 @@ function ResetPasswordContent() {
                   </div>
 
                   <p id="password-help" className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                    Mínimo 8 caracteres, con al menos una mayúscula, una minúscula, un número y un carácter especial (ej: ! @ # $).
+                    {t("resetPassword.passwordHelp")}
                   </p>
 
                   {errors.password ? (
@@ -274,12 +278,12 @@ function ResetPasswordContent() {
                     className="text-sm font-bold tracking-wide lg:text-xs"
                     style={{ color: "var(--text-primary)" }}
                   >
-                    Repetir nueva contraseña
+                    {t("resetPassword.repeatPasswordLabel")}
                   </label>
                   <PasswordInput
                     id="confirmPassword"
                     autoComplete="new-password"
-                    placeholder="••••••••"
+                    placeholder={t("resetPassword.newPasswordPlaceholder")}
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     aria-invalid={Boolean(errors.confirmPassword)}
@@ -304,7 +308,7 @@ function ResetPasswordContent() {
                   className="w-full rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
                   style={{ backgroundColor: "var(--brand-500)" }}
                 >
-                  {isSubmitting ? "Guardando..." : "Guardar nueva contraseña"}
+                  {isSubmitting ? t("resetPassword.savingPassword") : t("resetPassword.savePassword")}
                 </button>
               </form>
               )}
@@ -318,6 +322,8 @@ function ResetPasswordContent() {
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation("auth");
+
   return (
     <Suspense
       fallback={
@@ -325,7 +331,7 @@ export default function ResetPasswordPage() {
           className="flex min-h-screen items-center justify-center"
           style={{ backgroundColor: "var(--background)", color: "var(--text-secondary)" }}
         >
-          <p className="text-sm">Cargando...</p>
+          <p className="text-sm">{t("common.loading")}</p>
         </main>
       }
     >

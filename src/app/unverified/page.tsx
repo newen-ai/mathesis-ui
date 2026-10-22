@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { requestVerificationEmail } from "@/lib/api/auth";
 import { getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
@@ -36,12 +37,13 @@ function extractRetryAfterSeconds(details: unknown): number | null {
 }
 
 export default function UnverifiedPage() {
+  const { t } = useTranslation("auth");
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = useMemo(() => normalizeEmailInput(searchParams.get("email")), [searchParams]);
   const maskedEmail = useMemo(
-    () => (email ? maskEmailForDisplay(email) : "tu correo"),
-    [email]
+    () => (email ? maskEmailForDisplay(email) : t("unverified.fallbackMaskedEmail")),
+    [email, t]
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,7 +125,7 @@ export default function UnverifiedPage() {
       window.localStorage.setItem(getCooldownStorageKey(email), String(nextCooldownUntil));
     }
 
-    setFeedback("Te enviamos un nuevo correo de verificación. Revisá tu bandeja de entrada y la carpeta de spam.");
+    setFeedback(t("unverified.feedbackSent"));
     setIsSubmitting(false);
   };
 
@@ -138,10 +140,10 @@ export default function UnverifiedPage() {
             href={`/login?email=${encodeURIComponent(email)}`}
             className="inline-flex text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C] transition hover:opacity-80"
           >
-            ← Atrás
+            {t("unverified.back")}
           </Link>
           <h1 className="mt-3 font-[family-name:Georgia] text-[1.35rem] font-bold leading-[1.08] text-[#FAF8F5]">
-            Verificá tu email
+            {t("unverified.mobileTitle")}
           </h1>
           <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
         </div>
@@ -154,7 +156,7 @@ export default function UnverifiedPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BRAND_LOGO_SRC}
-              alt="Logo Mathesis"
+              alt={t("common.brandLogoAlt")}
               width={40}
               height={40}
               loading="eager"
@@ -168,13 +170,13 @@ export default function UnverifiedPage() {
 
           <div className="relative z-10 mt-10 lg:mt-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">
-              Confirmación de cuenta
+              {t("unverified.desktopEyebrow")}
             </p>
             <h1 className="mt-4 font-[family-name:Georgia] text-[2.2rem] font-bold leading-tight text-[#FAF8F5] lg:max-w-[360px] lg:text-[3.15rem] lg:leading-[1.08]">
-              Necesitamos verificar tu email
+              {t("unverified.desktopTitle")}
             </h1>
             <p className="mx-auto mt-4 max-w-[370px] font-[family-name:Georgia] text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
-              Para ingresar a Mathesis, primero confirmá el enlace que te enviamos por correo.
+              {t("unverified.desktopDescription")}
             </p>
           </div>
 
@@ -190,12 +192,10 @@ export default function UnverifiedPage() {
               className="font-[family-name:Georgia] text-[1.35rem] font-bold"
               style={{ color: "var(--text-primary)" }}
             >
-              Tu cuenta todavía no está verificada
+              {t("unverified.title")}
             </h2>
             <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-              Te enviamos el enlace de confirmación a
-              <span style={{ color: "var(--text-primary)", fontWeight: 700 }}> {maskedEmail}</span>.
-              Si no lo encontrás, podés solicitar uno nuevo.
+              {t("unverified.description", { email: maskedEmail })}
             </p>
 
             {feedback ? (
@@ -233,10 +233,10 @@ export default function UnverifiedPage() {
                 style={{ backgroundColor: "var(--brand-500)" }}
               >
                 {isSubmitting
-                  ? "Enviando..."
+                  ? t("unverified.resending")
                   : remainingSeconds > 0
-                    ? `Reenviar en ${formatCountdown(remainingSeconds)}`
-                    : "Reenviar correo de verificación"}
+                    ? t("unverified.resendIn", { countdown: formatCountdown(remainingSeconds) })
+                    : t("unverified.resendNow")}
               </button>
 
               <Link
@@ -248,12 +248,12 @@ export default function UnverifiedPage() {
                   backgroundColor: "var(--surface)",
                 }}
               >
-                Volver a iniciar sesión
+                {t("unverified.backToLogin")}
               </Link>
             </div>
 
             <p className="mt-4 text-xs leading-relaxed" style={{ color: "var(--text-soft)" }}>
-              Por seguridad, solo podés solicitar un nuevo correo cada 3 minutos.
+              {t("unverified.cooldownHint")}
             </p>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { register } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
@@ -29,12 +30,13 @@ function isValidEmail(email: string) {
 }
 
 export default function RegistroPage() {
+  const { t } = useTranslation("auth");
   const router = useRouter();
 
   const [step, setStep] = useState<1 | 2>(1);
 
   // Paso 1 — verificación de membresía
-  const [organization, setOrganization] = useState("Mensa Argentina");
+  const [organization, setOrganization] = useState(t("register.organizationMensa"));
   const [dni, setDni] = useState("");
   const [email, setEmail] = useState("");
   const [isAdult, setIsAdult] = useState(false);
@@ -72,13 +74,13 @@ export default function RegistroPage() {
     const nextErrors: ValidationErrors = {};
 
     if (!dni.trim() || !/^\d{6,}$/.test(dni.trim())) {
-      nextErrors.dni = "Ingresa un DNI valido (solo numeros).";
+      nextErrors.dni = t("register.errors.dniInvalid");
     }
     if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
-      nextErrors.email = "Ingresa un email valido.";
+      nextErrors.email = t("register.errors.emailInvalid");
     }
     if (!isAdult) {
-      nextErrors.adult = "Debes confirmar que sos mayor de 18 anios.";
+      nextErrors.adult = t("register.errors.adultRequired");
     }
 
     setErrors(nextErrors);
@@ -97,23 +99,23 @@ export default function RegistroPage() {
     const nextErrors: ValidationErrors = {};
 
     if (!firstName.trim()) {
-      nextErrors.firstName = "Ingresa tu nombre.";
+      nextErrors.firstName = t("register.errors.firstNameRequired");
     }
     if (middleName.trim().length > 80) {
-      nextErrors.middleName = "El segundo nombre no puede superar los 80 caracteres.";
+      nextErrors.middleName = t("register.errors.middleNameTooLong");
     }
     if (!lastName.trim()) {
-      nextErrors.lastName = "Ingresa tu apellido.";
+      nextErrors.lastName = t("register.errors.lastNameRequired");
     }
 
     if (!password || password.length < 8) {
-      nextErrors.password = "La clave debe tener al menos 8 caracteres.";
+      nextErrors.password = t("register.errors.passwordTooShort");
     }
     if (confirmPassword !== password) {
-      nextErrors.confirmPassword = "Las claves no coinciden.";
+      nextErrors.confirmPassword = t("register.errors.passwordMismatch");
     }
     if (!acceptedTerms) {
-      nextErrors.terms = "Debes aceptar los Terminos y Condiciones.";
+      nextErrors.terms = t("register.errors.termsRequired");
     }
 
     setErrors(nextErrors);
@@ -133,7 +135,7 @@ export default function RegistroPage() {
     if (!result.success) {
       setErrors({ general: result.message });
       setPopupInfo({
-        title: "Error de servicio",
+        title: t("common.serviceErrorTitle"),
         message: result.message,
         details: formatApiErrorDetails(result.details, result.status),
       });
@@ -146,13 +148,13 @@ export default function RegistroPage() {
   };
 
   const stepLabel =
-    step === 1 ? "Paso 1 de 2 · Verificación de Miembro" : "Paso 2 de 2 · Crear acceso";
-  const stepTitle = step === 1 ? "Verificá tu membresía" : "Creá tu acceso";
-  const formHeading = step === 1 ? "Registrate" : "Creá tu acceso";
+    step === 1 ? t("register.step1Label") : t("register.step2Label");
+  const stepTitle = step === 1 ? t("register.step1Title") : t("register.step2Title");
+  const formHeading = step === 1 ? t("register.formHeadingStep1") : t("register.formHeadingStep2");
   const formSub =
     step === 1
-      ? "Verificamos tu membresía con Mensa Argentina."
-      : "Ya verificamos tu membresía. Completá tu nombre y tu contraseña para terminar.";
+      ? t("register.formSubStep1")
+      : t("register.formSubStep2");
 
   return (
     <>
@@ -173,7 +175,7 @@ export default function RegistroPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                   src={BRAND_LOGO_SRC}
-                alt="Logo Mathesis"
+                alt={t("common.brandLogoAlt")}
                 width={32}
                 height={32}
                 loading="eager"
@@ -190,7 +192,7 @@ export default function RegistroPage() {
               <button
                 type="button"
                 onClick={onBack}
-                aria-label="Volver"
+                aria-label={t("register.backAria")}
                 className="text-base font-bold text-[#FAF8F5]"
               >
                 ←
@@ -208,17 +210,16 @@ export default function RegistroPage() {
               {step === 1 ? (
                 <>
                   <div className="mt-3 font-[family-name:Georgia] text-2xl font-bold leading-snug text-[#FAF8F5]">
-                    Verificá tu membresía
+                    {t("register.desktopIntroTitle")}
                   </div>
                   <div className="mt-4 text-sm leading-relaxed text-[#FAF8F5]/70 lg:mx-auto lg:max-w-xs">
-                    Mathesis verifica tu identidad con los datos que ya tenés registrados en tu
-                    organización — no hace falta ningún trámite adicional.
+                    {t("register.desktopIntroBody")}
                   </div>
                 </>
               ) : (
                 <>
                   <div className="mt-3 font-[family-name:Georgia] text-2xl font-bold leading-snug text-[#FAF8F5]">
-                    ¡Bienvenido!
+                    {t("register.welcomeTitle")}
                   </div>
                   <div className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#C9A84C]">
                     <svg
@@ -235,7 +236,7 @@ export default function RegistroPage() {
                       <circle cx="12" cy="12" r="10" />
                       <path d="m8 12 3 3 5-6" />
                     </svg>
-                    Membresía verificada
+                    {t("register.membershipVerified")}
                   </div>
                   <div className="mt-3 text-sm text-[#FAF8F5]/70">{organization}</div>
                 </>
@@ -273,7 +274,7 @@ export default function RegistroPage() {
                     step === 2 ? "text-[#C9A84C]" : "text-[#FAF8F5]"
                   }`}
                 >
-                  Verificación
+                  {t("register.stepVerification")}
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
@@ -289,7 +290,7 @@ export default function RegistroPage() {
                     step === 2 ? "text-[#FAF8F5]" : "text-white/50"
                   }`}
                 >
-                  Contraseña
+                  {t("register.stepPassword")}
                 </span>
               </div>
             </div>
@@ -309,13 +310,12 @@ export default function RegistroPage() {
               {step === 1 ? (
                 <form className="flex flex-col gap-2.5" onSubmit={onVerify} noValidate>
                   <p className="text-xs leading-relaxed text-[#666666] lg:hidden">
-                    Mathesis verifica tu identidad con los datos que ya tenés registrados en tu
-                    organización — no hace falta ningún trámite adicional.
+                    {t("register.mobileStep1Intro")}
                   </p>
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="organization" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      ¿De qué organización sos Miembro?
+                      {t("register.organizationLabel")}
                     </label>
                     <select
                       id="organization"
@@ -323,18 +323,18 @@ export default function RegistroPage() {
                       onChange={(event) => setOrganization(event.target.value)}
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     >
-                      <option value="Mensa Argentina">Mensa Argentina</option>
+                      <option value={t("register.organizationMensa")}>{t("register.organizationMensa")}</option>
                     </select>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="dni" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      DNI (Documento Nacional de Identidad)
+                      {t("register.dniLabel")}
                     </label>
                     <input
                       id="dni"
                       inputMode="numeric"
-                      placeholder="Ej: 30123456"
+                      placeholder={t("register.dniPlaceholder")}
                       value={dni}
                       onChange={(event) => setDni(event.target.value)}
                       aria-invalid={Boolean(errors.dni)}
@@ -347,21 +347,20 @@ export default function RegistroPage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="email" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      Email registrado en Mensa Argentina
+                      {t("register.emailLabel")}
                     </label>
                     <input
                       id="email"
                       autoComplete="email"
                       inputMode="email"
-                      placeholder="tu@email.com"
+                      placeholder={t("register.emailPlaceholder")}
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       aria-invalid={Boolean(errors.email)}
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     <p className="text-[0.7rem] leading-relaxed text-[#666666]">
-                      Es el mail con el que Mensa Argentina se comunica con vos. Puede ser tu mail
-                      personal o tu mail @mensa.org.ar.
+                      {t("register.emailHelp")}
                     </p>
                     {errors.email ? (
                       <p className="text-xs font-medium text-red-700">{errors.email}</p>
@@ -375,7 +374,7 @@ export default function RegistroPage() {
                       checked={isAdult}
                       onChange={(event) => setIsAdult(event.target.checked)}
                     />
-                    Confirmo que soy mayor de 18 años.
+                    {t("register.adultLabel")}
                   </label>
                   {errors.adult ? (
                     <p className="text-xs font-medium text-red-700">{errors.adult}</p>
@@ -399,20 +398,17 @@ export default function RegistroPage() {
                     >
                       <path d="M20 6 9 17l-5-5" />
                     </svg>
-                    Verificar y continuar
+                    {t("register.verifyAndContinue")}
                   </button>
 
                   <p className="rounded-lg bg-white px-3 py-2 text-[0.7rem] leading-relaxed text-[#666666] lg:bg-[#FAF8F5]">
-                    Si el DNI y el email no coinciden con lo que Mensa Argentina tiene registrado, no
-                    vamos a poder crear tu cuenta todavía. El piloto es exclusivo para Miembros de
-                    Mensa Argentina. Este DNI se usa solo para verificar contra Mensa Argentina en el
-                    momento del registro — Mathesis no lo guarda.
+                    {t("register.step1Footnote")}
                   </p>
 
                   <p className="text-center text-xs text-[#666666]">
-                    ¿Ya tenés cuenta?{" "}
+                    {t("register.alreadyHaveAccount")}{" "}
                     <Link href="/login" className="font-bold text-[#7A6435] hover:underline">
-                      Iniciar sesión
+                      {t("register.loginLink")}
                     </Link>
                   </p>
                 </form>
@@ -434,7 +430,7 @@ export default function RegistroPage() {
                         <circle cx="12" cy="12" r="10" />
                         <path d="m8 12 3 3 5-6" />
                       </svg>
-                      Membresía verificada
+                      {t("register.membershipVerified")}
                     </div>
                     <div className="mt-1.5 text-sm font-bold text-[#0A2540]">{email}</div>
                     <div className="text-xs text-[#666666]">{organization}</div>
@@ -443,12 +439,12 @@ export default function RegistroPage() {
                   <div className="grid gap-2.5 lg:grid-cols-2">
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="firstName" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                        Nombre *
+                        {t("register.firstNameLabel")}
                       </label>
                       <input
                         id="firstName"
                         autoComplete="given-name"
-                        placeholder="Tu nombre"
+                        placeholder={t("register.firstNamePlaceholder")}
                         value={firstName}
                         onChange={(event) => setFirstName(event.target.value)}
                         aria-invalid={Boolean(errors.firstName)}
@@ -464,12 +460,12 @@ export default function RegistroPage() {
 
                     <div className="flex flex-col gap-1.5">
                       <label htmlFor="middleName" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                        Segundo nombre (opcional)
+                        {t("register.middleNameLabel")}
                       </label>
                       <input
                         id="middleName"
                         autoComplete="additional-name"
-                        placeholder="Tu segundo nombre"
+                        placeholder={t("register.middleNamePlaceholder")}
                         value={middleName}
                         onChange={(event) => setMiddleName(event.target.value)}
                         aria-invalid={Boolean(errors.middleName)}
@@ -486,12 +482,12 @@ export default function RegistroPage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="lastName" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      Apellido *
+                      {t("register.lastNameLabel")}
                     </label>
                     <input
                       id="lastName"
                       autoComplete="family-name"
-                      placeholder="Tu apellido"
+                      placeholder={t("register.lastNamePlaceholder")}
                       value={lastName}
                       onChange={(event) => setLastName(event.target.value)}
                       aria-invalid={Boolean(errors.lastName)}
@@ -507,20 +503,19 @@ export default function RegistroPage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="password" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      Contraseña
+                      {t("register.passwordLabel")}
                     </label>
                     <PasswordInput
                       id="password"
                       autoComplete="new-password"
-                      placeholder="••••••••"
+                      placeholder={t("register.passwordPlaceholder")}
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       aria-invalid={Boolean(errors.password)}
                       className="w-full rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     <p className="text-[0.7rem] leading-relaxed text-[#666666]">
-                      Mínimo 8 caracteres, con al menos una mayúscula, una minúscula, un número y un
-                      carácter especial (ej: ! @ # $).
+                      {t("register.passwordHelp")}
                     </p>
                     {errors.password ? (
                       <p className="text-xs font-medium text-red-700">{errors.password}</p>
@@ -529,12 +524,12 @@ export default function RegistroPage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="confirmPassword" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      Repetir contraseña
+                      {t("register.confirmPasswordLabel")}
                     </label>
                     <PasswordInput
                       id="confirmPassword"
                       autoComplete="new-password"
-                      placeholder="••••••••"
+                      placeholder={t("register.passwordPlaceholder")}
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       aria-invalid={Boolean(errors.confirmPassword)}
@@ -553,15 +548,15 @@ export default function RegistroPage() {
                       onChange={(event) => setAcceptedTerms(event.target.checked)}
                     />
                     <span>
-                      Leí y acepto los{" "}
+                      {t("register.termsPrefix")}{" "}
                       <span className="font-semibold text-[#7A6435] hover:underline">
-                        Términos y Condiciones
+                        {t("register.termsLink")}
                       </span>{" "}
-                      y la{" "}
+                      {t("register.termsMiddle")}{" "}
                       <span className="font-semibold text-[#7A6435] hover:underline">
-                        Política de Privacidad
+                        {t("register.privacyLink")}
                       </span>{" "}
-                      de Mathesis.
+                      {t("register.termsSuffix")}
                     </span>
                   </label>
                   {errors.terms ? (
@@ -579,11 +574,11 @@ export default function RegistroPage() {
                     disabled={isSubmitting}
                     className="mt-1 w-full rounded-full bg-[#C9A84C] px-6 py-2.5 text-sm font-bold text-[#1A1A1A] transition hover:bg-[#b8973f] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSubmitting ? "Creando cuenta..." : "Crear cuenta"}
+                    {isSubmitting ? t("register.creatingAccount") : t("register.createAccount")}
                   </button>
 
                   <p className="text-center text-xs italic text-[#666666]">
-                    Ya casi sos parte de una comunidad que piensa distinto.
+                    {t("register.step2Tagline")}
                   </p>
                 </form>
               )}
