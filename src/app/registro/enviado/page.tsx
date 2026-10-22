@@ -1,16 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { resolveEmailParam } from "@/lib/utils/email";
 
-type PageProps = {
-  searchParams?: {
-    email?: string | string[];
-  };
-};
-
-export default function RegistroEnviadoPage({ searchParams }: PageProps) {
+export default function RegistroEnviadoPage() {
   const { t } = useTranslation("auth");
-  const email = resolveEmailParam(searchParams?.email);
+  const searchParams = useSearchParams();
+  const email = resolveEmailParam(searchParams.get("email") ?? undefined);
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-[#FAF8F5] px-6 py-16">

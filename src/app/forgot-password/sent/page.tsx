@@ -1,17 +1,15 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { maskEmailForDisplay, resolveEmailParam } from "@/lib/utils/email";
 
-type PageProps = {
-  searchParams?: {
-    email?: string | string[];
-  };
-};
-
-export default function ForgotPasswordSentPage({ searchParams }: PageProps) {
+export default function ForgotPasswordSentPage() {
   const { t } = useTranslation("auth");
-  const email = resolveEmailParam(searchParams?.email);
+  const searchParams = useSearchParams();
+  const email = resolveEmailParam(searchParams.get("email") ?? undefined);
   const maskedEmail = email ? maskEmailForDisplay(email) : null;
 
   return (
