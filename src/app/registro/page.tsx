@@ -183,7 +183,7 @@ export default function RegistroPage() {
                 className="h-8 w-8"
               />
               <span className="font-[family-name:Georgia] text-lg font-bold tracking-[0.1em] text-[#FAF8F5]">
-                Mathesis
+                Sophium
               </span>
             </div>
 

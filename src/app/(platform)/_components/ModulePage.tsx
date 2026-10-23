@@ -21,8 +21,8 @@ export function ModulePage({
   children,
 }: ModulePageProps) {
   const rootClassName = lockDesktopScroll
-    ? "mathesis-shell min-h-screen md:flex md:h-[calc(100dvh-2.75rem)] md:min-h-[calc(100dvh-2.75rem)] md:flex-col md:overflow-hidden"
-    : "mathesis-shell min-h-screen";
+    ? "sophium-shell min-h-screen md:flex md:h-[calc(100dvh-2.75rem)] md:min-h-[calc(100dvh-2.75rem)] md:flex-col md:overflow-hidden"
+    : "sophium-shell min-h-screen";
   const mainClassName = lockDesktopScroll
     ? "mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 md:flex md:min-h-0 md:flex-1 md:flex-col md:overflow-hidden"
     : "mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8";

@@ -122,8 +122,8 @@ export function TopBarDesktop({
                 : 0;
 
           return (
-            <Link key={item.id} href={item.href} className={`mathesis-nav-item ${active ? "is-active" : ""}`}>
-              <span className="relative mathesis-nav-icon" aria-hidden="true">
+            <Link key={item.id} href={item.href} className={`sophium-nav-item ${active ? "is-active" : ""}`}>
+              <span className="relative sophium-nav-icon" aria-hidden="true">
                 <DesktopTopbarIcon name={item.icon} />
                 {badgeCount > 0 ? (
                   <span className="absolute -right-2 -top-2 min-w-[1.1rem] rounded-full bg-[var(--danger-500)] px-1.5 py-[0.12rem] text-center text-[0.62rem] font-bold leading-none text-white">
@@ -147,9 +147,9 @@ export function TopBarDesktop({
                   current === item.menuKey ? null : item.menuKey ?? null
                 )
               }
-              className={`mathesis-nav-item ${isOpen ? "is-active" : ""}`}
+              className={`sophium-nav-item ${isOpen ? "is-active" : ""}`}
             >
-              <span className="mathesis-nav-icon" aria-hidden="true">
+              <span className="sophium-nav-icon" aria-hidden="true">
                 <DesktopTopbarIcon name={item.icon} />
               </span>
               <span>{item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label}</span>
@@ -195,13 +195,13 @@ export function TopBarDesktop({
         {desktopDropdownOpen === "profile" ? (
           <aside className="absolute right-0 top-[calc(100%+0.5rem)] z-[80] h-fit max-h-[calc(100dvh-6.85rem)] w-[min(90vw,23.4rem)] overflow-y-auto rounded-[1.2rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_22px_50px_rgba(0,0,0,0.18)]">
             <div className="border-b border-[var(--line)] px-5 py-4">
-              <p className="font-[family-name:var(--font-spectral)] text-[var(--menu-profile-name-size)] font-semibold leading-[1.05] mathesis-heading-primary">
+              <p className="font-[family-name:var(--font-spectral)] text-[var(--menu-profile-name-size)] font-semibold leading-[1.05] sophium-heading-primary">
                 {isLoadingUserName
                   ? t("topbar:common.loading", { defaultValue: "Cargando..." })
                   : userName || t("topbar:profile.myProfile", { defaultValue: "Mi perfil" })}
               </p>
               <p className="mt-1 text-[var(--menu-profile-meta-size)] font-semibold leading-[1.15] text-[var(--text-secondary)]">
-                {userIdentityLine || t("topbar:profile.memberOfMathesis", { defaultValue: "Miembro de Mathesis" })}
+                {userIdentityLine || t("topbar:profile.memberOfSophium", { defaultValue: "Miembro de Sophium" })}
               </p>
             </div>
 

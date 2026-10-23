@@ -59,8 +59,8 @@ Available files:
 
 Profile implementation in this workspace is guided by backend live files:
 
-- `../mathesis-backend/docs/ui-spec-live.md`
-- `../mathesis-backend/docs/agent-live-context.md`
+- `../sophium-backend/docs/ui-spec-live.md`
+- `../sophium-backend/docs/agent-live-context.md`
 
 Read both before coding profile features, then update them after meaningful scope or status changes.
 
@@ -105,7 +105,7 @@ Example:
 ```yaml
 env:
 	APP_ENV: dev
-	NEXT_PUBLIC_BASE_PATH: /mathesis-ui
+	NEXT_PUBLIC_BASE_PATH: /sophium-ui
   NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
 ```
 

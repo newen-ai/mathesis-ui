@@ -58,9 +58,9 @@ export const ateneoBadgeOptions: AteneoBadgeOption[] = [
   },
   {
     id: "mensa-empresarios",
-    label: "Mathesis Empresarios",
+    label: "Sophium Empresarios",
     logoSrc: BRAND_LOGO_SRC,
-    logoAlt: "Logo Mathesis",
+    logoAlt: "Logo Sophium",
   },
 ];
 
@@ -216,14 +216,14 @@ export const ateneoGroupsByTab: Record<AteneoTabKey, AteneoGroup[]> = {
   discover: [
     {
       id: "group-mensa-empresarios",
-      name: "Comunicación Mathesis Empresarios",
+      name: "Comunicación Sophium Empresarios",
       subtitle: "Solo visible con insignia Empresarios",
       activity: "No la tenés aún",
       rules: ["Grupo privado con validación de insignia."],
       icon: "gift",
       badges: [
         { id: "official", label: "Oficial" },
-        { id: "mensa-emp", label: "∫ Mathesis Empresarios" },
+        { id: "mensa-emp", label: "∫ Sophium Empresarios" },
       ],
       action: "menu",
       isMember: false,
@@ -339,8 +339,8 @@ export const ateneoGroupsByTab: Record<AteneoTabKey, AteneoGroup[]> = {
   ],
   admin: [
     {
-      id: "group-cafe-mathesis",
-      name: "Café Mathesis",
+      id: "group-cafe-sophium",
+      name: "Café Sophium",
       subtitle: "Social",
       activity: "Activo hoy",
       rules: [

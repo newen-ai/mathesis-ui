@@ -6,7 +6,7 @@ type AppCardProps = ComponentPropsWithoutRef<"section"> & {
 
 export function AppCard({ children, className = "", ...rest }: AppCardProps) {
   return (
-    <section {...rest} className={`mathesis-card ${className}`.trim()}>
+    <section {...rest} className={`sophium-card ${className}`.trim()}>
       {children}
     </section>
   );

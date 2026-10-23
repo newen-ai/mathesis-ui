@@ -12,7 +12,7 @@ import { TopBar } from "../../_components/TopBar";
 
 type AppLanguage = "es" | "en";
 
-const LANGUAGE_STORAGE_KEY = "mathesis-ui-language";
+const LANGUAGE_STORAGE_KEY = "sophium-ui-language";
 
 function normalizeAppLanguage(value?: string): AppLanguage {
   if (typeof value !== "string") {
@@ -166,7 +166,7 @@ function createSettingsCategories(t: (key: string, defaultValue: string) => stri
         {
           key: "delete",
           type: "placeholder",
-          label: t("settings:rows.delete", "Eliminar cuenta de Mathesis"),
+          label: t("settings:rows.delete", "Eliminar cuenta de Sophium"),
           icon: "delete",
           variant: "danger",
         },
@@ -180,7 +180,7 @@ function createSettingsCategories(t: (key: string, defaultValue: string) => stri
         {
           key: "contact",
           type: "placeholder",
-          label: t("settings:rows.contact", "Contactar a Mathesis"),
+          label: t("settings:rows.contact", "Contactar a Sophium"),
           icon: "message",
         },
       ],
@@ -592,7 +592,7 @@ export default function ConfigurationPage() {
   };
 
   return (
-    <div className="mathesis-shell min-h-screen bg-[var(--background)]">
+    <div className="sophium-shell min-h-screen bg-[var(--background)]">
       <TopBar navItems={navItems} />
       <main className="mx-auto flex min-h-[calc(100dvh-5rem)] w-full max-w-[1320px] flex-col lg:px-8 lg:py-8">
         <div className="lg:hidden">

@@ -18,8 +18,8 @@
     "changePassword": "Change password",
     "logout": "Sign out",
     "deactivate": "Deactivate account",
-    "delete": "Delete Mathesis account",
-    "contact": "Contact Mathesis"
+    "delete": "Delete Sophium account",
+    "contact": "Contact Sophium"
   },
   "values": {
     "notAvailable": "Not available"

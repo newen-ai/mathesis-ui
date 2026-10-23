@@ -583,7 +583,7 @@ export function BugReportWidget() {
                 </p>
                 <h2
                   id="bug-report-title"
-                  className="mt-1 font-[family-name:var(--font-spectral)] text-scale-5 font-semibold mathesis-heading-primary"
+                  className="mt-1 font-[family-name:var(--font-spectral)] text-scale-5 font-semibold sophium-heading-primary"
                 >
                   Contanos qué falló
                 </h2>
@@ -615,7 +615,7 @@ export function BugReportWidget() {
             </div>
 
             <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
-              <label className="mathesis-field">
+              <label className="sophium-field">
                 <span>Título</span>
                 <input
                   type="text"
@@ -630,7 +630,7 @@ export function BugReportWidget() {
                 </span>
               </label>
 
-              <label className="mathesis-field">
+              <label className="sophium-field">
                 <span>Descripción</span>
                 <textarea
                   value={draft.description}
@@ -735,7 +735,7 @@ export function BugReportWidget() {
                 <button
                   type="submit"
                   disabled={!canSubmit || isSubmitting}
-                  className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-scale-2 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="rounded-full bg-[var(--brand-500)] px-4 py-2 text-scale-2 font-semibold sophium-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSubmitting ? "Guardando..." : "Enviar reporte"}
                 </button>
@@ -769,7 +769,7 @@ export function BugReportWidget() {
         >
           <svg
             viewBox="0 0 24 24"
-            className="h-6 w-6 mathesis-on-brand"
+            className="h-6 w-6 sophium-on-brand"
             aria-hidden="true"
             fill="none"
             stroke="currentColor"

@@ -54,7 +54,7 @@ export function ProfileInitializationView({
   };
 
   return (
-    <div className="mathesis-shell min-h-screen">
+    <div className="sophium-shell min-h-screen">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto flex w-full max-w-4xl items-start px-4 py-6 sm:px-6 lg:px-8">
@@ -69,7 +69,7 @@ export function ProfileInitializationView({
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("initialization.fields.firstName")}
               <input
                 value={formState.nombre}
@@ -77,7 +77,7 @@ export function ProfileInitializationView({
                 required
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("initialization.fields.lastName")}
               <input
                 value={formState.apellido}
@@ -85,7 +85,7 @@ export function ProfileInitializationView({
                 required
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("initialization.fields.birthDate")}
               <input
                 type="date"
@@ -95,14 +95,14 @@ export function ProfileInitializationView({
                 }
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("initialization.fields.nationality")}
               <input
                 value={formState.nacionalidad}
                 onChange={(event) => onFormChange("nacionalidad", event.target.value)}
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("initialization.fields.headline")}
               <input
                 value={formState.puesto}
@@ -110,14 +110,14 @@ export function ProfileInitializationView({
                 onChange={(event) => onFormChange("puesto", event.target.value)}
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("initialization.fields.currentCompany")}
               <input
                 value={formState.empresaActual}
                 onChange={(event) => onFormChange("empresaActual", event.target.value)}
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("initialization.fields.profileImageUrl")}
               <input
                 value={formState.imagenPerfilUrl}
@@ -125,7 +125,7 @@ export function ProfileInitializationView({
                 placeholder="https://..."
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("initialization.fields.bannerImageUrl")}
               <input
                 value={formState.imagenBannerUrl}
@@ -133,28 +133,28 @@ export function ProfileInitializationView({
                 placeholder="https://..."
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("initialization.fields.country")}
               <input
                 value={formState.locationCountry}
                 onChange={(event) => onFormChange("locationCountry", event.target.value)}
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("initialization.fields.city")}
               <input
                 value={formState.locationCity}
                 onChange={(event) => onFormChange("locationCity", event.target.value)}
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("initialization.fields.postalCode")}
               <input
                 value={formState.locationPostalCode}
                 onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("initialization.fields.about")}
               <textarea
                 value={formState.about}

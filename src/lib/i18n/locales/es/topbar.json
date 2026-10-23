@@ -35,14 +35,14 @@
     "myProfile": "Mi perfil",
     "digitalCredential": "Credencial digital",
     "settings": "Configuración",
-    "memberOfMathesis": "Miembro de Mathesis",
+    "memberOfSophium": "Miembro de Sophium",
     "logout": "Cerrar sesión"
   },
   "mobile": {
     "closeMenu": "Cerrar menú",
     "openMenu": "Abrir menú",
     "goToNotifications": "Ir a notificaciones",
-    "defaultIdentity": "CEO · Mathesis & Newen Solutions",
+    "defaultIdentity": "CEO · Sophium & Newen Solutions",
     "membership": {
       "loading": "Cargando membresía...",
       "sending": "Enviando solicitud...",
@@ -68,10 +68,10 @@
       "editProfessionalProfile": "Editar Perfil Profesional",
       "companies": {
         "title": "Empresas",
-        "subtitle": "Directorio de Mathesis Empresarios",
-        "explore": "Explorar Mathesis Empresarios",
+        "subtitle": "Directorio de Sophium Empresarios",
+        "explore": "Explorar Sophium Empresarios",
         "manageMine": "Gestionar mis empresas",
-        "admin": "Admin. Mathesis Empresarios"
+        "admin": "Admin. Sophium Empresarios"
       }
     },
     "agora": {
@@ -97,22 +97,22 @@
       "exploreGroups": "Explorar / Unirse a grupos",
       "createGroup": "Crear grupo nuevo"
     },
-    "mathesis": {
-      "title": "Mathesis",
+    "sophium": {
+      "title": "Sophium",
       "accountAdmin": {
         "title": "Cuenta y Administración",
         "subtitle": "Configuración, legales y herramientas de Admin"
       },
-      "legalRules": "Reglas de Ateneo y Mathesis",
+      "legalRules": "Reglas de Ateneo y Sophium",
       "legalTermsPrivacy": "Términos y Política de Privacidad",
-      "adminUsers": "Usuarios Mathesis",
-      "adminMathesis": "ABM de Mathesis",
+      "adminUsers": "Usuarios Sophium",
+      "adminSophium": "ABM de Sophium",
       "reportPost": "Denuncias de Publicación",
       "reportProfile": "Denuncias de Perfil",
       "messaging": "Mensajería",
       "challengeBank": "Banco de Desafíos y Premios",
       "riddleCalendar": "Calendario de Acertijos",
-      "adminCompanies": "ABM Mathesis Empresarios"
+      "adminCompanies": "ABM Sophium Empresarios"
     }
   }
 }

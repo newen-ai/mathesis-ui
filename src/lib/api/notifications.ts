@@ -1,7 +1,7 @@
 import { apiRequest, parseDataResponse } from "@/lib/api/client";
 
 const NOTIFICATIONS_UNREAD_COUNT_UPDATED_EVENT =
-  "mathesis:notifications-unread-count-updated";
+  "sophium:notifications-unread-count-updated";
 
 export type NotificationLeadKind = "INITIALS" | "SYMBOL";
 export type NotificationLeadTone = "NAVY" | "GOLD" | "GREEN" | "RED" | "GRAY" | "TEAL";

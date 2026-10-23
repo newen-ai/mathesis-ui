@@ -237,7 +237,7 @@ export default function AteneoCreateGroupPage() {
   };
 
   return (
-    <div className="mathesis-shell min-h-screen bg-[var(--background)]">
+    <div className="sophium-shell min-h-screen bg-[var(--background)]">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto w-full max-w-[1450px] px-4 py-6 sm:px-6 lg:px-10">
@@ -519,7 +519,7 @@ export default function AteneoCreateGroupPage() {
             </section>
 
             <div className="pt-1 text-center">
-              <Link href="/ateneo" className="text-scale-3 font-semibold mathesis-link-accent">
+              <Link href="/ateneo" className="text-scale-3 font-semibold sophium-link-accent">
                 ← Volver a explorar grupos
               </Link>
             </div>
@@ -528,7 +528,7 @@ export default function AteneoCreateGroupPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center rounded-full bg-[var(--brand-500)] px-7 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center justify-center rounded-full bg-[var(--brand-500)] px-7 py-2.5 text-scale-3 font-semibold sophium-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting ? "Creando..." : "Crear"}
               </button>

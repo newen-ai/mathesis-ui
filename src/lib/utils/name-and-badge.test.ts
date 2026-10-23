@@ -5,7 +5,7 @@ import { getTwoInitials, normalizeImageUrl } from "./name";
 describe("badge utils", () => {
   it("formats slug words in title case", () => {
     expect(formatBadgeSlug("mensa_argentina")).toBe("Mensa Argentina");
-    expect(formatBadgeSlug("_MATHESIS__empresarios_")).toBe("Mathesis Empresarios");
+    expect(formatBadgeSlug("_SOPHIUM__empresarios_")).toBe("Sophium Empresarios");
   });
 });
 

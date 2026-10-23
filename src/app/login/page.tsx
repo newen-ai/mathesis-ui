@@ -148,7 +148,7 @@ function LoginPageContent() {
 
   return (
     <SharedBrandedLoginScreen
-      brandName="Mathesis"
+      brandName="Sophium"
       logoSrc={BRAND_LOGO_SRC}
       logoAlt={t("common.brandLogoAlt")}
       mobileTagline={t("login.screen.mobileTagline")}

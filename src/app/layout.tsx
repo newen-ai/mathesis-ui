@@ -25,13 +25,13 @@ const spectral = Spectral({
 });
 
 export const metadata: Metadata = {
-  title: "Mathesis | Red Profesional",
+  title: "Sophium | Red Profesional",
   description:
-    "Red profesional de Mathesis para construir perfiles y mostrar experiencia laboral.",
+    "Red profesional de Sophium para construir perfiles y mostrar experiencia laboral.",
   icons: {
-    icon: withBasePath("/mathesis-logo.png"),
-    shortcut: withBasePath("/mathesis-logo.png"),
-    apple: withBasePath("/mathesis-logo.png"),
+    icon: withBasePath("/sophium-logo.png"),
+    shortcut: withBasePath("/sophium-logo.png"),
+    apple: withBasePath("/sophium-logo.png"),
   },
 };
 

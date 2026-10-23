@@ -31,14 +31,14 @@
     "activeCredential": "Credencial activa",
     "qrAria": "Código QR de verificación de credencial",
     "generatingQr": "Generando QR...",
-    "badgesTitle": "Mathesis · Insignias",
+    "badgesTitle": "Sophium · Insignias",
     "activeBadgeCriteria": "Insignia activa en tu perfil",
     "memberSince": "Socio desde jul 2026",
     "fallbackName": "María López",
     "frontMembershipFallbackLabel": "Mensa Argentina",
     "frontMembershipFallbackCriteria": "Miembro de Mensa Argentina",
     "logoMensaAlt": "Logo Mensa Argentina",
-    "logoMathesisAlt": "Logo Mathesis",
+    "logoSophiumAlt": "Logo Sophium",
     "actions": {
       "flipToFront": "Volver al frente",
       "flipToBack": "Ver al dorso",
@@ -47,11 +47,11 @@
     },
     "criteria": {
       "mensaArgentina": "Miembro activo de Mensa Argentina",
-      "mathesisBusiness": "Membresía de Empresarios aprobada"
+      "sophiumBusiness": "Membresía de Empresarios aprobada"
     },
     "labels": {
       "mensaArgentina": "Mensa Argentina",
-      "mathesisBusiness": "Mathesis Empresarios"
+      "sophiumBusiness": "Sophium Empresarios"
     }
   },
   "profileView": {
@@ -147,7 +147,7 @@
       "description": "Descripción (máx. 300)"
     },
     "placeholders": {
-      "workplace": "Mathesis Empresarios",
+      "workplace": "Sophium Empresarios",
       "jobTitle": "Analista de Estrategia"
     },
     "confirmDelete": "¿Eliminar esta experiencia? Este cambio se guardará de inmediato.",

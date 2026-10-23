@@ -219,9 +219,9 @@ export function TopBar({ navItems }: TopBarProps) {
       setMobileExpandedPanel(null);
     };
 
-    window.addEventListener("mathesis:close-mobile-drawer-request", onCloseDrawerRequest);
+    window.addEventListener("sophium:close-mobile-drawer-request", onCloseDrawerRequest);
     return () => {
-      window.removeEventListener("mathesis:close-mobile-drawer-request", onCloseDrawerRequest);
+      window.removeEventListener("sophium:close-mobile-drawer-request", onCloseDrawerRequest);
     };
   }, []);
 
@@ -535,13 +535,13 @@ export function TopBar({ navItems }: TopBarProps) {
 
   return (
     <>
-      <header className="mathesis-topbar fixed left-0 right-0 top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
+      <header className="sophium-topbar fixed left-0 right-0 top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
       <div className="flex h-16 w-full items-center gap-3 px-4 md:h-[5.5rem] md:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-2 rounded-md px-1 py-1 transition hover:bg-[var(--surface-2)]/70">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={BRAND_LOGO_SRC}
-            alt="Logo Mathesis"
+            alt="Logo Sophium"
             width={56}
             height={56}
             loading="eager"
@@ -551,7 +551,7 @@ export function TopBar({ navItems }: TopBarProps) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={BRAND_LOGO_FULL_SRC}
-            alt="Logo Mathesis"
+            alt="Logo Sophium"
             width={160}
             height={42}
             loading="eager"
@@ -645,7 +645,7 @@ export function TopBar({ navItems }: TopBarProps) {
           <button
             type="button"
             onClick={() => {
-              window.dispatchEvent(new Event("mathesis:close-mobile-footer-overlay-request"));
+              window.dispatchEvent(new Event("sophium:close-mobile-footer-overlay-request"));
               setMobileDrawerOpen(false);
               setMobileExpandedPanel(null);
               setDesktopDropdownOpen(null);
@@ -664,7 +664,7 @@ export function TopBar({ navItems }: TopBarProps) {
           <button
             type="button"
             onClick={() => {
-              window.dispatchEvent(new Event("mathesis:close-mobile-footer-overlay-request"));
+              window.dispatchEvent(new Event("sophium:close-mobile-footer-overlay-request"));
               setDesktopDropdownOpen(null);
               setMobileDrawerOpen((current) => {
                 if (current) {

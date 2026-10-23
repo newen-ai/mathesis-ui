@@ -30,13 +30,13 @@ const nexumOverlayItems: OverlayItem[] = [
   },
   {
     label: "Bolsa de Trabajo",
-    description: "Búsquedas publicadas por Mathesis Empresarios",
+    description: "Búsquedas publicadas por Sophium Empresarios",
     icon: "briefcase",
     disabled: true,
   },
   {
     label: "Empresas",
-    description: "Directorio de Mathesis Empresarios",
+    description: "Directorio de Sophium Empresarios",
     icon: "building",
     href: "/directorio",
   },
@@ -237,14 +237,14 @@ export function MobilePlatformFooter() {
       setOpenOverlay(null);
     };
 
-    window.addEventListener("mathesis:close-mobile-footer-overlay-request", onCloseRequest);
+    window.addEventListener("sophium:close-mobile-footer-overlay-request", onCloseRequest);
     return () => {
-      window.removeEventListener("mathesis:close-mobile-footer-overlay-request", onCloseRequest);
+      window.removeEventListener("sophium:close-mobile-footer-overlay-request", onCloseRequest);
     };
   }, []);
 
   const openSectionOverlay = (section: FooterOverlayKey) => {
-    window.dispatchEvent(new Event("mathesis:close-mobile-drawer-request"));
+    window.dispatchEvent(new Event("sophium:close-mobile-drawer-request"));
     setOpenOverlay((current) => (current === section ? null : section));
   };
 

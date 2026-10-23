@@ -31,14 +31,14 @@
     "activeCredential": "Active credential",
     "qrAria": "Credential verification QR code",
     "generatingQr": "Generating QR...",
-    "badgesTitle": "Mathesis · Badges",
+    "badgesTitle": "Sophium · Badges",
     "activeBadgeCriteria": "Active badge on your profile",
     "memberSince": "Member since Jul 2026",
     "fallbackName": "Maria Lopez",
     "frontMembershipFallbackLabel": "Mensa Argentina",
     "frontMembershipFallbackCriteria": "Mensa Argentina member",
     "logoMensaAlt": "Mensa Argentina logo",
-    "logoMathesisAlt": "Mathesis logo",
+    "logoSophiumAlt": "Sophium logo",
     "actions": {
       "flipToFront": "Back to front",
       "flipToBack": "View back side",
@@ -47,11 +47,11 @@
     },
     "criteria": {
       "mensaArgentina": "Active Mensa Argentina member",
-      "mathesisBusiness": "Approved Business membership"
+      "sophiumBusiness": "Approved Business membership"
     },
     "labels": {
       "mensaArgentina": "Mensa Argentina",
-      "mathesisBusiness": "Mathesis Business"
+      "sophiumBusiness": "Sophium Business"
     }
   },
   "profileView": {
@@ -147,7 +147,7 @@
       "description": "Description (max. 300)"
     },
     "placeholders": {
-      "workplace": "Mathesis Business",
+      "workplace": "Sophium Business",
       "jobTitle": "Strategy Analyst"
     },
     "confirmDelete": "Delete this experience? This change will be saved immediately.",

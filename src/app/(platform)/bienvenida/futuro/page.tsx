@@ -16,7 +16,7 @@ const priorityCards = [
     ),
   },
   {
-    eyebrow: "Visión Mathesis",
+    eyebrow: "Visión Sophium",
     title: "Comunidad Global",
     description:
       "Empezamos en Mensa Argentina, pero la comunidad que estamos construyendo no tiene fronteras: cada Mensa Nacional del mundo, conectada.",
@@ -153,7 +153,7 @@ export default function BienvenidaFuturoPage() {
               Lo mejor todavía no llegó
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-[0.9rem] leading-[1.35] text-white/82 lg:text-[1rem]">
-              Mathesis no para de sumar funciones nuevas. Esto es apenas el comienzo de lo que esta comunidad puede ser para vos.
+              Sophium no para de sumar funciones nuevas. Esto es apenas el comienzo de lo que esta comunidad puede ser para vos.
             </p>
           </div>
         </section>

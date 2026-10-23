@@ -181,7 +181,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
                 void onJoin();
               }}
               disabled={isJoining || joinBlockedByExpulsion}
-              className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold sophium-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isJoining ? "Uniéndote..." : "Unirse al grupo"}
             </button>
@@ -222,7 +222,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
           <div className="mt-4">
             <Link
               href={`/ateneo/groups/${encodeURIComponent(groupId)}/new-topic`}
-              className="flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95"
+              className="flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold sophium-on-brand transition hover:brightness-95"
             >
               + Nuevo tema
             </Link>

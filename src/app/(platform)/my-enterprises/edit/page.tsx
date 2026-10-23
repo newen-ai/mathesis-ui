@@ -134,12 +134,12 @@ export default function EditEnterprisePage() {
   };
 
   return (
-    <div className="mathesis-shell min-h-screen bg-[var(--background)]">
+    <div className="sophium-shell min-h-screen bg-[var(--background)]">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-7 lg:px-10 lg:py-8">
         <section className="min-w-0 border-r-0 lg:border-r lg:border-[var(--line)] lg:pr-7">
-          <h1 className="text-scale-5 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
+          <h1 className="text-scale-5 sophium-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
             {t("edit.title")}
           </h1>
 
@@ -150,7 +150,7 @@ export default function EditEnterprisePage() {
           ) : (
             <form className="mt-5 space-y-4" onSubmit={onSubmit} noValidate>
               <label className="block">
-                <span className="text-scale-3 mathesis-heading-primary font-semibold">
+                <span className="text-scale-3 sophium-heading-primary font-semibold">
                   {t("edit.fields.companyName")} <span className="text-[var(--danger-500)]">*</span>
                 </span>
                 <input
@@ -165,7 +165,7 @@ export default function EditEnterprisePage() {
               </label>
 
               <label className="block">
-                <span className="text-scale-3 mathesis-heading-primary font-semibold">
+                <span className="text-scale-3 sophium-heading-primary font-semibold">
                   {t("edit.fields.role")} <span className="text-[var(--danger-500)]">*</span>
                 </span>
                 <input
@@ -180,7 +180,7 @@ export default function EditEnterprisePage() {
               </label>
 
               <label className="block">
-                <span className="text-scale-3 mathesis-heading-primary font-semibold">{t("edit.fields.website")}</span>
+                <span className="text-scale-3 sophium-heading-primary font-semibold">{t("edit.fields.website")}</span>
                 <input
                   value={form.website}
                   onChange={(event) => onFieldChange("website", event.target.value)}
@@ -190,7 +190,7 @@ export default function EditEnterprisePage() {
               </label>
 
               <label className="block">
-                <span className="text-scale-3 mathesis-heading-primary font-semibold">{t("edit.fields.description")}</span>
+                <span className="text-scale-3 sophium-heading-primary font-semibold">{t("edit.fields.description")}</span>
                 <textarea
                   value={form.description}
                   onChange={(event) => onFieldChange("description", event.target.value)}
@@ -202,7 +202,7 @@ export default function EditEnterprisePage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="text-scale-4 mathesis-on-brand mt-3 inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                className="text-scale-4 sophium-on-brand mt-3 inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? t("edit.submit.loading") : t("edit.submit.idle")}
               </button>
@@ -212,7 +212,7 @@ export default function EditEnterprisePage() {
               ) : null}
 
               <div className="pt-1 text-center">
-                <Link href="/my-enterprises" className="text-scale-4 mathesis-link-accent font-semibold transition">
+                <Link href="/my-enterprises" className="text-scale-4 sophium-link-accent font-semibold transition">
                   {t("edit.back")}
                 </Link>
               </div>
@@ -222,7 +222,7 @@ export default function EditEnterprisePage() {
 
         <aside className="mt-6 space-y-4 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
-            <h2 className="text-scale-4 mathesis-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
+            <h2 className="text-scale-4 sophium-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
               {t("edit.aside.title")}
             </h2>
             <p className="text-scale-3 mt-4 text-[var(--text-primary)]">
