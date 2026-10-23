@@ -9,6 +9,7 @@ import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
 import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { getSessionUserId } from "@/lib/api/auth";
+import { buildReplyMentionPrefill } from "../_lib/reply-prefill";
 import {
   AteneoGroupMember,
   downloadAteneoTopicAttachment,
@@ -73,6 +74,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const previewUrlsRef = useRef<string[]>([]);
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
+  const replyTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [reportOpenFor, setReportOpenFor] = useState<string | null>(null);
   const [groupMembersByUserId, setGroupMembersByUserId] = useState<Record<string, AteneoGroupMember>>({});
   const [kickTarget, setKickTarget] = useState<{ userId: string; name: string; sourceContext: "TOPIC" | "COMMENT"; sourceCommentId?: string } | null>(null);
@@ -293,6 +295,21 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     };
   }, []);
 
+  useEffect(() => {
+    if (!openReplyFor || openReplyFor === "new-comment") {
+      return;
+    }
+
+    const textarea = replyTextareaRefs.current[openReplyFor];
+    if (!textarea) {
+      return;
+    }
+
+    textarea.focus();
+    const end = textarea.value.length;
+    textarea.setSelectionRange(end, end);
+  }, [openReplyFor]);
+
   const carouselImages = useMemo(
     () =>
       topicImageAttachments
@@ -384,7 +401,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     setOpenReplyFor(commentId);
     setReplyDraft((current) => ({
       ...current,
-      [commentId]: `@${author} `,
+      [commentId]: buildReplyMentionPrefill(author),
     }));
   };
 
@@ -905,6 +922,9 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                 <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3">
                   <textarea
                     autoFocus
+                    ref={(element) => {
+                      replyTextareaRefs.current[comment.id] = element;
+                    }}
                     value={replyDraft[comment.id] ?? ""}
                     onChange={(event) =>
                       setReplyDraft((current) => ({

@@ -16,6 +16,7 @@ export default defineConfig({
       reporter: ["text", "json-summary", "html"],
       include: [
         "src/app/(platform)/_lib/topbar-active.ts",
+        "src/app/(platform)/ateneo/_lib/reply-prefill.ts",
         "src/app/login/login-password-field.ts",
         "src/lib/utils/email.ts",
         "src/lib/utils/badge.ts",
