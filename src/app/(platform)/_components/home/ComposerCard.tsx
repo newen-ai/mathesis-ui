@@ -162,7 +162,7 @@ export function ComposerCard({
 					<button
 						type="button"
 						onClick={() => setIsOpen(true)}
-						className="mathesis-composer-trigger w-full rounded-full border border-[var(--line-strong)] bg-[var(--surface)] px-4 py-2.5 text-left text-lg font-medium text-[var(--text-secondary)]"
+						className="sophium-composer-trigger w-full rounded-full border border-[var(--line-strong)] bg-[var(--surface)] px-4 py-2.5 text-left text-lg font-medium text-[var(--text-secondary)]"
 					>
 						¿Qué querés compartir con la comunidad?
 					</button>

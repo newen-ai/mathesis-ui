@@ -36,7 +36,7 @@ export function ProfileYearMonthRangeFields({
 
   return (
     <>
-      <label className="mathesis-field sm:col-span-1">
+      <label className="sophium-field sm:col-span-1">
         {startLabel}
         <div className="grid grid-cols-2 gap-2">
           <select
@@ -72,7 +72,7 @@ export function ProfileYearMonthRangeFields({
       </label>
 
       {!currentChecked ? (
-        <label className="mathesis-field sm:col-span-1">
+        <label className="sophium-field sm:col-span-1">
           {endLabel}
           <div className="grid grid-cols-2 gap-2">
             <select

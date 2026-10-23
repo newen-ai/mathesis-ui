@@ -88,7 +88,7 @@ export function AteneoFeedMiddle() {
 
           <Link
             href={createTopicHref}
-            className="inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-2 font-semibold mathesis-on-brand transition hover:brightness-95"
+            className="inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-2 font-semibold sophium-on-brand transition hover:brightness-95"
           >
             {t("feed.newTopic")}
           </Link>

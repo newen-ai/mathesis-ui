@@ -38,12 +38,12 @@ const CREDENTIAL_BADGE_CRITERIA: CredentialBadgeCriterion[] = [
     logoAlt: "credential.logoMensaAlt",
   },
   {
-    id: "mathesis-empresarios",
-    label: "credential.labels.mathesisBusiness",
-    criteria: "credential.criteria.mathesisBusiness",
-    aliases: ["mensa_empresarios", "mathesis_empresarios"],
+    id: "sophium-empresarios",
+    label: "credential.labels.sophiumBusiness",
+    criteria: "credential.criteria.sophiumBusiness",
+    aliases: ["mensa_empresarios", "sophium_empresarios"],
     logoSrc: BRAND_LOGO_SRC,
-    logoAlt: "credential.logoMathesisAlt",
+    logoAlt: "credential.logoSophiumAlt",
   },
 ];
 
@@ -216,7 +216,7 @@ export function DigitalCredentialCard() {
                 <div className="flex items-center gap-3 text-[var(--brand-100)]">
                   <span className="font-[family-name:var(--font-spectral)] text-[1.7rem] leading-none text-[#d4af66]">∫</span>
                   <span className="font-[family-name:var(--font-spectral)] text-[1.05rem] font-medium text-white">
-                    Mathesis
+                    Sophium
                   </span>
                 </div>
 

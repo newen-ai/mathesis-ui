@@ -7,8 +7,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 For every coding task in this workspace, agents must:
 
-1. Read `../mathesis-backend/docs/ui-spec-live.md` before implementation.
-2. Read `../mathesis-backend/docs/agent-live-context.md` before implementation.
+1. Read `../sophium-backend/docs/ui-spec-live.md` before implementation.
+2. Read `../sophium-backend/docs/agent-live-context.md` before implementation.
 3. Read `docs/ui-agent-live-guidelines.md` before implementation.
 4. Reconcile requested scope with statuses in `ui-spec-live.md`.
 5. If scope/status changed, update `ui-spec-live.md` first.

@@ -21,7 +21,7 @@ export function PasswordInput({
         type="button"
         onClick={() => setIsVisible((current) => !current)}
         aria-label={isVisible ? "Ocultar contraseña" : "Mostrar contraseña"}
-        className="mathesis-password-toggle absolute right-3 top-1/2 -translate-y-1/2"
+        className="sophium-password-toggle absolute right-3 top-1/2 -translate-y-1/2"
       >
         <svg
           width="18"

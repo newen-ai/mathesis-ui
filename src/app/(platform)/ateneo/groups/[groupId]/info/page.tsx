@@ -3,7 +3,7 @@ import { TopBar } from "../../../../_components/TopBar";
 import { navItems } from "../../../../_lib/constants";
 import { AteneoExploreGroups } from "../../../../ateneo/_components/AteneoExploreGroups";
 import { AteneoThreeColumnLayout } from "../../../../ateneo/_components/AteneoThreeColumnLayout";
-import { DiscoverMathesis } from "../../../../ateneo/_components/DiscoverMathesis";
+import { DiscoverSophium } from "../../../../ateneo/_components/DiscoverSophium";
 import { AteneoGroupLeftColumn } from "../../../../ateneo/_components/AteneoGroupLeftColumn";
 import { AteneoGroupMiddleColumn } from "../../../../ateneo/_components/AteneoGroupMiddleColumn";
 import { AteneoGroupRightColumn } from "../../../../ateneo/_components/AteneoGroupRightColumn";
@@ -18,7 +18,7 @@ export default async function AteneoGroupInfoPage({ params }: AteneoGroupInfoPag
   const decodedGroupId = decodeURIComponent(groupId);
 
   return (
-    <div className="mathesis-shell min-h-screen bg-[var(--background)]">
+    <div className="sophium-shell min-h-screen bg-[var(--background)]">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-8">
@@ -33,7 +33,7 @@ export default async function AteneoGroupInfoPage({ params }: AteneoGroupInfoPag
               topRow={
                 <Link
                   href={`/ateneo/groups/${encodeURIComponent(decodedGroupId)}`}
-                  className="inline-flex items-center gap-2 text-scale-3 font-semibold mathesis-link-accent"
+                  className="inline-flex items-center gap-2 text-scale-3 font-semibold sophium-link-accent"
                 >
                   <span aria-hidden="true">&lt;</span>
                   Volver al grupo
@@ -45,7 +45,7 @@ export default async function AteneoGroupInfoPage({ params }: AteneoGroupInfoPag
           }
           right={
             <AteneoGroupRightColumn>
-              <DiscoverMathesis />
+              <DiscoverSophium />
             </AteneoGroupRightColumn>
           }
         />

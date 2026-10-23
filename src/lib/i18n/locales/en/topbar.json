@@ -35,14 +35,14 @@
     "myProfile": "My profile",
     "digitalCredential": "Digital credential",
     "settings": "Settings",
-    "memberOfMathesis": "Mathesis member",
+    "memberOfSophium": "Sophium member",
     "logout": "Sign out"
   },
   "mobile": {
     "closeMenu": "Close menu",
     "openMenu": "Open menu",
     "goToNotifications": "Go to notifications",
-    "defaultIdentity": "CEO · Mathesis & Newen Solutions",
+    "defaultIdentity": "CEO · Sophium & Newen Solutions",
     "membership": {
       "loading": "Loading membership...",
       "sending": "Sending request...",
@@ -68,10 +68,10 @@
       "editProfessionalProfile": "Edit Professional Profile",
       "companies": {
         "title": "Companies",
-        "subtitle": "Mathesis Entrepreneurs directory",
-        "explore": "Explore Mathesis Entrepreneurs",
+        "subtitle": "Sophium Entrepreneurs directory",
+        "explore": "Explore Sophium Entrepreneurs",
         "manageMine": "Manage my companies",
-        "admin": "Mathesis Entrepreneurs admin"
+        "admin": "Sophium Entrepreneurs admin"
       }
     },
     "agora": {
@@ -97,22 +97,22 @@
       "exploreGroups": "Explore / Join groups",
       "createGroup": "Create new group"
     },
-    "mathesis": {
-      "title": "Mathesis",
+    "sophium": {
+      "title": "Sophium",
       "accountAdmin": {
         "title": "Account and Administration",
         "subtitle": "Settings, legal, and admin tools"
       },
-      "legalRules": "Ateneo and Mathesis rules",
+      "legalRules": "Ateneo and Sophium rules",
       "legalTermsPrivacy": "Terms and Privacy Policy",
-      "adminUsers": "Mathesis users",
-      "adminMathesis": "Mathesis management",
+      "adminUsers": "Sophium users",
+      "adminSophium": "Sophium management",
       "reportPost": "Post reports",
       "reportProfile": "Profile reports",
       "messaging": "Messaging",
       "challengeBank": "Challenges and rewards bank",
       "riddleCalendar": "Riddle calendar",
-      "adminCompanies": "Mathesis Entrepreneurs management"
+      "adminCompanies": "Sophium Entrepreneurs management"
     }
   }
 }

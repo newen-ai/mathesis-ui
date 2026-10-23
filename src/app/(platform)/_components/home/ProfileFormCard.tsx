@@ -92,21 +92,21 @@ export function ProfileFormCard({
           <p className="text-[0.68rem] text-[var(--text-secondary)]">{t("profileForm.loading")}</p>
         ) : canEdit && isEditingMode ? (
           <>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("profileForm.fields.firstName")}
               <input
                 value={formState.nombre}
                 onChange={(event) => onFormChange("nombre", event.target.value)}
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("profileForm.fields.lastName")}
               <input
                 value={formState.apellido}
                 onChange={(event) => onFormChange("apellido", event.target.value)}
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("profileForm.fields.birthDate")}
               <input
                 type="date"
@@ -116,7 +116,7 @@ export function ProfileFormCard({
                 }
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("profileForm.fields.nationality")}
               <input
                 value={formState.nacionalidad}
@@ -125,7 +125,7 @@ export function ProfileFormCard({
                 }
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("profileForm.fields.headline")}
               <input
                 value={formState.puesto}
@@ -134,7 +134,7 @@ export function ProfileFormCard({
               />
               <span className="text-right text-xs text-[var(--text-soft)]">{formState.puesto.length}/80</span>
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("profileForm.fields.currentCompany")}
               <input
                 value={formState.empresaActual}
@@ -143,28 +143,28 @@ export function ProfileFormCard({
                 }
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("profileForm.fields.country")}
               <input
                 value={formState.locationCountry}
                 onChange={(event) => onFormChange("locationCountry", event.target.value)}
               />
             </label>
-            <label className="mathesis-field">
+            <label className="sophium-field">
               {t("profileForm.fields.city")}
               <input
                 value={formState.locationCity}
                 onChange={(event) => onFormChange("locationCity", event.target.value)}
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("profileForm.fields.postalCode")}
               <input
                 value={formState.locationPostalCode}
                 onChange={(event) => onFormChange("locationPostalCode", event.target.value)}
               />
             </label>
-            <label className="mathesis-field sm:col-span-2">
+            <label className="sophium-field sm:col-span-2">
               {t("profileForm.fields.about")}
               <textarea
                 value={formState.about}

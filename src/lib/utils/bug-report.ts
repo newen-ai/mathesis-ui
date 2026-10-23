@@ -4,8 +4,8 @@ export const BUG_REPORT_MAX_SCREENSHOTS = 3;
 export const BUG_REPORT_MAX_STORED_SCREENSHOT_BYTES = 1_500_000;
 export const BUG_REPORT_MAX_UPLOAD_SCREENSHOT_BYTES = 5 * 1024 * 1024;
 
-const BUG_REPORT_DRAFT_KEY = "mathesis.bugReport.draft";
-const BUG_REPORT_BUTTON_CORNER_KEY = "mathesis.bugReport.buttonCorner";
+const BUG_REPORT_DRAFT_KEY = "sophium.bugReport.draft";
+const BUG_REPORT_BUTTON_CORNER_KEY = "sophium.bugReport.buttonCorner";
 const BUG_REPORT_FEATURE_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_BUG_REPORTS === "true";
 

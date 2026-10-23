@@ -666,7 +666,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
         <LinkifiedText
           text={topic.description}
           className="mt-4 whitespace-pre-wrap text-scale-3 leading-8 text-[var(--text-primary)]"
-          linkClassName="mathesis-link-accent underline underline-offset-2"
+          linkClassName="sophium-link-accent underline underline-offset-2"
         />
         <LinkPreviewList text={topic.description} className="mt-4 grid gap-2 sm:grid-cols-2" />
 
@@ -803,7 +803,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                       <LinkifiedText
                         text={comment.content}
                         className={`mt-1 whitespace-pre-wrap text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}
-                        linkClassName="mathesis-link-accent underline underline-offset-2"
+                        linkClassName="sophium-link-accent underline underline-offset-2"
                       />
                       {!comment.isDeletedPlaceholder ? <LinkPreviewList text={comment.content} className="mt-3 grid gap-2" /> : null}
                     </div>

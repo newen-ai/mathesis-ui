@@ -57,7 +57,7 @@ function DirectoryCard({
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="mathesis-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
+              <h2 className="sophium-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
                 {enterprise.name}
               </h2>
             </div>
@@ -237,7 +237,7 @@ export default function DirectorioPage() {
   );
 
   return (
-    <div className="mathesis-shell min-h-screen bg-[var(--background)]">
+    <div className="sophium-shell min-h-screen bg-[var(--background)]">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto w-full max-w-[1280px] px-4 pb-10 pt-6 sm:px-6 lg:px-10">
@@ -247,7 +247,7 @@ export default function DirectorioPage() {
             {t("brand")}
           </div>
 
-          <h1 className="mathesis-heading-primary text-scale-5 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
+          <h1 className="sophium-heading-primary text-scale-5 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
             {t("header.title")}
           </h1>
           <p className="mt-3 text-scale-3 text-[var(--text-secondary)]">
@@ -258,7 +258,7 @@ export default function DirectorioPage() {
         <section className="mb-7 rounded-[1.5rem] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--brand-200)_45%,var(--surface))] px-5 py-4 shadow-[0_1px_0_rgba(16,24,40,0.02)] sm:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="min-w-0">
-              <h2 className="mathesis-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
+              <h2 className="sophium-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
                 {t("membership.title")}
               </h2>
               <p className="mt-2 text-scale-3 text-[var(--text-primary)]">

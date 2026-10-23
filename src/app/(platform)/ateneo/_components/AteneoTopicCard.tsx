@@ -213,7 +213,7 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
           {variant === "feed" ? (
             <div className={metaClassName}>
               <span>
-                <Link href={topicHref} className="mathesis-link-accent font-medium hover:underline">
+                <Link href={topicHref} className="sophium-link-accent font-medium hover:underline">
                   {topic.groupLabel}
                 </Link>
               </span>
@@ -224,7 +224,7 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
             </div>
           ) : (
             <p className={metaClassName}>
-              <Link href={topicHref} className="mathesis-link-accent font-medium hover:underline">
+              <Link href={topicHref} className="sophium-link-accent font-medium hover:underline">
                 {topic.groupLabel}
               </Link>{" "}
               <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> {topic.timeLabel}
@@ -245,7 +245,7 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
           <LinkifiedText
             text={topic.description}
             className={descriptionClassName}
-            linkClassName="mathesis-link-accent underline underline-offset-2"
+            linkClassName="sophium-link-accent underline underline-offset-2"
           />
           <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
 

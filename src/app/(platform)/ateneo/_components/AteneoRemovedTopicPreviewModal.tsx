@@ -88,7 +88,7 @@ export function AteneoRemovedTopicPreviewModal({ isOpen, topic, deletedAt, onClo
           <LinkifiedText
             text={topic.description}
             className="mt-3 whitespace-pre-wrap text-scale-3 leading-8 text-[var(--text-primary)]"
-            linkClassName="mathesis-link-accent underline underline-offset-2"
+            linkClassName="sophium-link-accent underline underline-offset-2"
           />
           <LinkPreviewList text={topic.description} className="mt-3 grid gap-2 sm:grid-cols-2" />
 

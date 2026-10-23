@@ -16,7 +16,7 @@ export function LeftSidebar({
   profileCompletion,
 }: LeftSidebarProps) {
   return (
-    <aside className="mathesis-fade-up space-y-4 lg:sticky lg:top-20">
+    <aside className="sophium-fade-up space-y-4 lg:sticky lg:top-20">
       <AppCard className="overflow-hidden">
         <div className="h-16 bg-gradient-to-r from-[#0a66c2] to-[#20a4b8]" />
         <div className="-mt-8 px-4 pb-4">

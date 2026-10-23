@@ -98,7 +98,7 @@ export default function BienvenidaPage() {
           <div className="flex items-center gap-2.5">
             <span className="text-[1.65rem] font-semibold text-[var(--brand-500)]">∫</span>
             <span className="font-[family-name:var(--font-spectral)] text-[1.65rem] font-semibold tracking-[0.03em] text-white">
-              Mathesis
+              Sophium
             </span>
           </div>
 
@@ -107,7 +107,7 @@ export default function BienvenidaPage() {
               Ya sos parte
             </p>
             <h1 className="font-[family-name:var(--font-spectral)] text-[2.05rem] font-semibold leading-[0.98] text-white lg:text-[2.45rem]">
-              Bienvenido a Mathesis.
+              Bienvenido a Sophium.
             </h1>
             <p className="max-w-[20rem] font-[family-name:var(--font-spectral)] text-[0.9rem] italic leading-[1.35] text-white/78 lg:text-[1rem]">
               Ya sos parte de la primera comunidad intelectual verificada para mentes excepcionales.

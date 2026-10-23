@@ -619,7 +619,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                 <LinkifiedText
                   text={description}
                   className="mt-2 whitespace-pre-wrap text-scale-2 text-[var(--text-secondary)]"
-                  linkClassName="mathesis-link-accent underline underline-offset-2"
+                  linkClassName="sophium-link-accent underline underline-offset-2"
                 />
                 <LinkPreviewList text={description} className="mt-3 grid gap-2" />
               </div>

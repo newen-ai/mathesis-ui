@@ -167,7 +167,7 @@ function SearchAndHeader({ activeTab, onTabChange, searchText, onSearchTextChang
           <p className="text-scale-3 text-[var(--text-secondary)]">{t("explorer.breadcrumb")}</p>
         </div>
 
-        <Link href="/ateneo/create" className="hidden rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 sm:inline-flex">
+        <Link href="/ateneo/create" className="hidden rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold sophium-on-brand transition hover:brightness-95 sm:inline-flex">
           {t("explorer.createGroup")}
         </Link>
       </header>
@@ -270,7 +270,7 @@ export function AteneoGroupsExplorer() {
   };
 
   return (
-    <div className="mathesis-shell min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
+    <div className="sophium-shell min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <TopBar navItems={navItems} />
       <div className="mx-auto w-full max-w-[1400px] px-4 pb-24 pt-5 sm:px-8 sm:pb-8 sm:pt-8">
         <SearchAndHeader activeTab={activeTab} onTabChange={goToTab} searchText={searchText} onSearchTextChange={setSearchText} t={t} />
@@ -296,7 +296,7 @@ export function AteneoGroupsExplorer() {
         <button
           type="button"
           onClick={() => toast.info(t("explorer.comingSoon"))}
-          className="fixed bottom-24 right-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand-500)] text-[2rem] mathesis-on-brand shadow-[0_10px_28px_color-mix(in_srgb,var(--brand-500)_45%,transparent)] transition hover:brightness-95 sm:hidden"
+          className="fixed bottom-24 right-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand-500)] text-[2rem] sophium-on-brand shadow-[0_10px_28px_color-mix(in_srgb,var(--brand-500)_45%,transparent)] transition hover:brightness-95 sm:hidden"
           aria-label={t("explorer.floatingCreateAria")}
         >
           +

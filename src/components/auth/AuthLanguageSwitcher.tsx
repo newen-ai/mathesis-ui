@@ -6,7 +6,7 @@ import i18next from "@/lib/i18n";
 
 type AppLanguage = "es" | "en";
 
-const LANGUAGE_STORAGE_KEY = "mathesis-ui-language";
+const LANGUAGE_STORAGE_KEY = "sophium-ui-language";
 
 const AUTH_ROUTE_PREFIXES = [
   "/login",

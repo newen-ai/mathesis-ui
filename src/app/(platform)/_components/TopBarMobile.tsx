@@ -202,13 +202,13 @@ export function TopBarMobile({
                 initialsClassName="text-2xl font-semibold text-[var(--brand-500)]"
               />
               <div className="min-w-0">
-                <p className="truncate font-[family-name:var(--font-spectral)] text-scale-5 font-semibold leading-tight mathesis-heading-primary">
+                <p className="truncate font-[family-name:var(--font-spectral)] text-scale-5 font-semibold leading-tight sophium-heading-primary">
                   {isLoadingUserName
                     ? t("topbar:common.loading", { defaultValue: "Cargando..." })
                     : userName || t("topbar:profile.myProfile", { defaultValue: "Mi perfil" })}
                 </p>
                 <p className="text-scale-2 text-[var(--text-secondary)]">
-                  {userIdentityLine || t("topbar:mobile.defaultIdentity", { defaultValue: "CEO · Mathesis & Newen Solutions" })}
+                  {userIdentityLine || t("topbar:mobile.defaultIdentity", { defaultValue: "CEO · Sophium & Newen Solutions" })}
                 </p>
               </div>
             </div>
@@ -296,7 +296,7 @@ export function TopBarMobile({
                     </span>
                     <span>
                       <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.nexum.companies.title", { defaultValue: "Empresas" })}</span>
-                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.nexum.companies.subtitle", { defaultValue: "Directorio de Mathesis Empresarios" })}</span>
+                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.nexum.companies.subtitle", { defaultValue: "Directorio de Sophium Empresarios" })}</span>
                     </span>
                   </span>
                   <Chevron open={mobileExpandedPanel === "companies"} />
@@ -312,7 +312,7 @@ export function TopBarMobile({
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                         <TopBarNavIcon icon="doc" />
                       </span>
-                      {t("topbar:mobile.nexum.companies.explore", { defaultValue: "Explorar Mathesis Empresarios" })}
+                      {t("topbar:mobile.nexum.companies.explore", { defaultValue: "Explorar Sophium Empresarios" })}
                     </Link>
                     <Link
                       href="/my-enterprises"
@@ -341,10 +341,10 @@ export function TopBarMobile({
                           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]">
                             <TopBarNavIcon icon="settings" />
                           </span>
-                          {t("topbar:mobile.nexum.companies.admin", { defaultValue: "Admin. Mathesis Empresarios" })}
+                          {t("topbar:mobile.nexum.companies.admin", { defaultValue: "Admin. Sophium Empresarios" })}
                         </Link>
                       ) : (
-                        <DisabledMenuRow label={t("topbar:mobile.nexum.companies.admin", { defaultValue: "Admin. Mathesis Empresarios" })} icon="settings" />
+                        <DisabledMenuRow label={t("topbar:mobile.nexum.companies.admin", { defaultValue: "Admin. Sophium Empresarios" })} icon="settings" />
                       )}
                     </div>
                   </div>
@@ -465,7 +465,7 @@ export function TopBarMobile({
 
           <section>
             <h3 className="px-1 font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
-              {t("topbar:mobile.mathesis.title", { defaultValue: "Mathesis" })}
+              {t("topbar:mobile.sophium.title", { defaultValue: "Sophium" })}
             </h3>
 
             <article className="mt-2 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-[0_1px_2px_color-mix(in_srgb,var(--navy-900)_9%,transparent)]">
@@ -479,8 +479,8 @@ export function TopBarMobile({
                     <TopBarNavIcon icon="settings" />
                   </span>
                   <span>
-                    <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.mathesis.accountAdmin.title", { defaultValue: "Cuenta y Administración" })}</span>
-                    <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.mathesis.accountAdmin.subtitle", { defaultValue: "Configuración, legales y herramientas de Admin" })}</span>
+                    <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.sophium.accountAdmin.title", { defaultValue: "Cuenta y Administración" })}</span>
+                    <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.sophium.accountAdmin.subtitle", { defaultValue: "Configuración, legales y herramientas de Admin" })}</span>
                   </span>
                 </span>
                 <Chevron open={mobileExpandedPanel === "account-admin"} />
@@ -503,25 +503,25 @@ export function TopBarMobile({
                   </Link>
 
                   <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.legal", { defaultValue: "LEGALES" })}</p>
-                  <DisabledMenuRow label={t("topbar:mobile.mathesis.legalRules", { defaultValue: "Reglas de Ateneo y Mathesis" })} icon="badge" />
-                  <DisabledMenuRow label={t("topbar:mobile.mathesis.legalTermsPrivacy", { defaultValue: "Términos y Política de Privacidad" })} icon="doc" />
+                  <DisabledMenuRow label={t("topbar:mobile.sophium.legalRules", { defaultValue: "Reglas de Ateneo y Sophium" })} icon="badge" />
+                  <DisabledMenuRow label={t("topbar:mobile.sophium.legalTermsPrivacy", { defaultValue: "Términos y Política de Privacidad" })} icon="doc" />
 
                   <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.administration", { defaultValue: "ADMINISTRACIÓN" })}</p>
                   {isAdmin ? (
                     <Link href="/admin" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="user" /></span>
-                      {t("topbar:mobile.mathesis.adminUsers", { defaultValue: "Usuarios Mathesis" })}
+                      {t("topbar:mobile.sophium.adminUsers", { defaultValue: "Usuarios Sophium" })}
                     </Link>
                   ) : (
-                    <DisabledMenuRow label={t("topbar:mobile.mathesis.adminUsers", { defaultValue: "Usuarios Mathesis" })} icon="user" />
+                    <DisabledMenuRow label={t("topbar:mobile.sophium.adminUsers", { defaultValue: "Usuarios Sophium" })} icon="user" />
                   )}
                   {[
-                    t("topbar:mobile.mathesis.adminMathesis", { defaultValue: "ABM de Mathesis" }),
-                    t("topbar:mobile.mathesis.reportPost", { defaultValue: "Denuncias de Publicación" }),
-                    t("topbar:mobile.mathesis.reportProfile", { defaultValue: "Denuncias de Perfil" }),
-                    t("topbar:mobile.mathesis.messaging", { defaultValue: "Mensajería" }),
-                    t("topbar:mobile.mathesis.challengeBank", { defaultValue: "Banco de Desafíos y Premios" }),
-                    t("topbar:mobile.mathesis.riddleCalendar", { defaultValue: "Calendario de Acertijos" }),
+                    t("topbar:mobile.sophium.adminSophium", { defaultValue: "ABM de Sophium" }),
+                    t("topbar:mobile.sophium.reportPost", { defaultValue: "Denuncias de Publicación" }),
+                    t("topbar:mobile.sophium.reportProfile", { defaultValue: "Denuncias de Perfil" }),
+                    t("topbar:mobile.sophium.messaging", { defaultValue: "Mensajería" }),
+                    t("topbar:mobile.sophium.challengeBank", { defaultValue: "Banco de Desafíos y Premios" }),
+                    t("topbar:mobile.sophium.riddleCalendar", { defaultValue: "Calendario de Acertijos" }),
                   ].map((label) => (
                     <DisabledMenuRow key={label} label={label} icon="doc" />
                   ))}
@@ -529,14 +529,14 @@ export function TopBarMobile({
                   {hasCompaniesAdminAccess ? (
                     <Link href="/admin/companies-admin" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="building" /></span>
-                      {t("topbar:mobile.mathesis.adminCompanies", { defaultValue: "ABM Mathesis Empresarios" })}
+                      {t("topbar:mobile.sophium.adminCompanies", { defaultValue: "ABM Sophium Empresarios" })}
                     </Link>
                   ) : null}
 
                   <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.help", { defaultValue: "AYUDA" })}</p>
                   <Link href="/account/contact" onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="message" /></span>
-                    {t("settings:rows.contact", { defaultValue: "Contactar a Mathesis" })}
+                    {t("settings:rows.contact", { defaultValue: "Contactar a Sophium" })}
                   </Link>
                 </div>
               ) : null}

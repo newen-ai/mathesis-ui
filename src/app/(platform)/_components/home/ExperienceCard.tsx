@@ -348,7 +348,7 @@ export function ExperienceCard({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="mathesis-field sm:col-span-1">
+              <label className="sophium-field sm:col-span-1">
                 {t("experience.labels.workplace")}
                 <input
                   name="lugarTrabajo"
@@ -358,7 +358,7 @@ export function ExperienceCard({
                 />
               </label>
 
-              <label className="mathesis-field sm:col-span-1">
+              <label className="sophium-field sm:col-span-1">
                 {t("experience.labels.jobTitle")}
                 <input
                   name="puestoTrabajo"
@@ -384,7 +384,7 @@ export function ExperienceCard({
                 onCurrentChange={onCurrentWorkingChange}
               />
 
-              <label className="mathesis-field sm:col-span-2">
+              <label className="sophium-field sm:col-span-2">
                 {t("experience.labels.description")}
                 <textarea
                   name="descripcion"
