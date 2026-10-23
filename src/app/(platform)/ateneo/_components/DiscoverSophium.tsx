@@ -1,7 +1,7 @@
-export function DiscoverMathesis() {
+export function DiscoverSophium() {
   return (
     <>
-      <h2 className="pt-1 text-scale-2 font-bold tracking-[0.08em] text-[var(--text-secondary)]">DESCUBRÍ MATHESIS</h2>
+      <h2 className="pt-1 text-scale-2 font-bold tracking-[0.08em] text-[var(--text-secondary)]">DESCUBRÍ SOPHIUM</h2>
 
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--brand-100)_68%,var(--surface))] text-[var(--brand-800)]">
@@ -25,7 +25,7 @@ export function DiscoverMathesis() {
             <path d="M14.5 20h5V11.5a1 1 0 0 0-1-1h-4" />
           </svg>
         </div>
-        <h3 className="mt-3 text-[1.45rem] font-semibold leading-tight text-[var(--heading-primary)]">Mathesis Empresarios</h3>
+        <h3 className="mt-3 text-[1.45rem] font-semibold leading-tight text-[var(--heading-primary)]">Sophium Empresarios</h3>
         <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
           Directorio de empresas de socios Mensa. Encontrá proveedores o sumá la tuya.
         </p>

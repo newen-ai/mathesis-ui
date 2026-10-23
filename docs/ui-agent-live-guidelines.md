@@ -20,8 +20,8 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
   - Gold accent for call-to-action and section separators.
 - Ensure contrast stays readable in both light and dark themes.
 - Do not use hardcoded hex colors in component class names for text/background/border unless there is an explicit approved exception; prefer semantic global tokens/classes from `globals.css`.
-- For headings and high-emphasis text, use semantic heading tokens/classes (for example `--heading-primary` / `.mathesis-heading-primary`) so dark mode does not inherit light-only navy values.
-- For filled brand buttons, use semantic foreground tokens/classes (for example `--on-brand` / `.mathesis-on-brand`) instead of fixed text hex values.
+- For headings and high-emphasis text, use semantic heading tokens/classes (for example `--heading-primary` / `.sophium-heading-primary`) so dark mode does not inherit light-only navy values.
+- For filled brand buttons, use semantic foreground tokens/classes (for example `--on-brand` / `.sophium-on-brand`) instead of fixed text hex values.
 
 ## Shared Asset Rules
 - Do not redefine `basePath` + logo path constants in each page/component.
@@ -110,19 +110,19 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - In admin dashboards, tab controls must stay readable in all themes by avoiding white-on-white states.
 - Use brand navy/blue styling for inactive tab states.
 - Use brand gold styling for active/selected tab states.
-- In the Mathesis admin Mensa section, the visible admin list must include only current Mathesis Empresarios admins.
+- In the Sophium admin Mensa section, the visible admin list must include only current Sophium Empresarios admins.
 - Use blue/navy row backgrounds for the Mensa admin list (avoid white list rows there).
-- Provide an "Agregar admin" popup flow with searchable users to grant Mathesis Empresarios admin access.
+- Provide an "Agregar admin" popup flow with searchable users to grant Sophium Empresarios admin access.
 - Prioritize high-contrast text for summary/subtitle/helper copy on admin screens.
 - The dedicated Mensa admin URL is `/admin/companies-admin`.
 - On `companies-admin`, use tabs for `Solicitudes pendientes` and `Usuarios aprobados`.
 - Pending requests in `companies-admin` must use icon-only approve/reject actions (check and cross) with semantic success/danger colors.
-- Approved users in `companies-admin` must include an icon action to remove access from the Mathesis Empresarios group.
-- On `companies-admin`, apply the same blue-background + white-text readability rules used in Mathesis admin lists.
-- In Home right sidebar, the Mathesis Empresarios CTA must be state-driven:
+- Approved users in `companies-admin` must include an icon action to remove access from the Sophium Empresarios group.
+- On `companies-admin`, apply the same blue-background + white-text readability rules used in Sophium admin lists.
+- In Home right sidebar, the Sophium Empresarios CTA must be state-driven:
   - `Solicitar membresía` when user has no badge and no open request.
   - `Cancelar solicitud` (danger/negative color) when user has an open pending request and no badge.
-  - `Ir a Mathesis Empresarios` when user already has the badge.
+  - `Ir a Sophium Empresarios` when user already has the badge.
 - Add a temporary topbar shortcut for ME admins only that links directly to `/admin/companies-admin` for testing.
 - Keep the shortcut hidden for users who do not pass the ME admin access check.
 
@@ -161,13 +161,13 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Move the explore-groups screen to `/ateneo/groups`.
 - Preserve the existing explore-groups layout, search, tabs, and left-rail grouping behavior on that page.
 
-## Current Active UI Directions (2026-08-21 Directorio Mathesis Empresarios)
+## Current Active UI Directions (2026-08-21 Directorio Sophium Empresarios)
 - Add a topbar entry called `Directorio` that routes to `/directorio` and stays aligned with the e-commerce/business section of the app shell.
-- The directory page should mirror the provided mockup: a community header with the Mathesis Empresarios badge tone, a `Recién lanzado` banner, and enterprise cards showing founder, sector tag, description, city/size/website, and a CTA link at the lower right.
-- The top-of-page membership CTA must be state-driven from Mathesis Empresarios membership state:
+- The directory page should mirror the provided mockup: a community header with the Sophium Empresarios badge tone, a `Recién lanzado` banner, and enterprise cards showing founder, sector tag, description, city/size/website, and a CTA link at the lower right.
+- The top-of-page membership CTA must be state-driven from Sophium Empresarios membership state:
   - If user has no badge and no open request: show enabled `Solicitar membresía Empresarios` action.
   - If user has no badge and has open request: show enabled `Cancelar solicitud` action.
-  - If user already has Mathesis Empresarios badge: hide this CTA.
+  - If user already has Sophium Empresarios badge: hide this CTA.
 - Use the existing theme tokens and card styling conventions instead of introducing ad-hoc contrast values.
 - Keep the directory content representative but static for this pass until the backend exposes a dedicated verified-directory endpoint.
 

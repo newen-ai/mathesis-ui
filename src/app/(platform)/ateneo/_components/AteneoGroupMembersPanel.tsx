@@ -375,7 +375,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
                 void onJoin();
               }}
               disabled={isJoining || group.isJoinBlockedByExpulsion}
-              className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold sophium-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isJoining ? "Uniéndote..." : "Unirse al grupo"}
             </button>

@@ -63,7 +63,7 @@ export default async function VerifyPage({ searchParams }: PageProps) {
         <div className="mb-5 flex items-center gap-3 text-[var(--brand-700)]">
           <span className="font-[family-name:var(--font-spectral)] text-[2.2rem] leading-none text-[var(--brand-500)]">∫</span>
           <span className="font-[family-name:var(--font-spectral)] text-[1.25rem] font-medium text-[var(--text-primary)]">
-            Mathesis
+            Sophium
           </span>
         </div>
 

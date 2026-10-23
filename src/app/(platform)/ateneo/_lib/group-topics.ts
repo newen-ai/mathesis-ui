@@ -5,7 +5,7 @@ export const popularTopics: AteneoGroupTopic[] = [
     id: "topic-libro-clarke",
     authorImageUrl: null,
     authorInitial: "L",
-    groupLabel: "Café Mathesis",
+    groupLabel: "Café Sophium",
     authorName: "Laura M.",
     timeLabel: "hace 2 h",
     title: "¿Cuál fue el último libro que no pudiste soltar?",

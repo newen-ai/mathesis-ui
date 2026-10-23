@@ -80,7 +80,7 @@ export default function ContactPage() {
         Mensaje enviado
       </h2>
       <p className="mt-2 text-[0.97rem] leading-relaxed text-[var(--text-secondary)]">
-        Gracias por tu mensaje. El equipo de Mathesis lo recibió y te responderá pronto.
+        Gracias por tu mensaje. El equipo de Sophium lo recibió y te responderá pronto.
       </p>
       <button
         type="button"
@@ -147,7 +147,7 @@ export default function ContactPage() {
   );
 
   return (
-    <div className="mathesis-shell flex min-h-screen flex-col bg-[var(--background)]">
+    <div className="sophium-shell flex min-h-screen flex-col bg-[var(--background)]">
       <TopBar navItems={navItems} />
 
       {/* Mobile header */}
@@ -163,7 +163,7 @@ export default function ContactPage() {
           </svg>
         </button>
         <h1 className="font-[family-name:var(--font-spectral)] text-[1.75rem] font-semibold leading-none text-[var(--navy-900)]">
-          Contactar a Mathesis
+          Contactar a Sophium
         </h1>
       </div>
 
@@ -192,7 +192,7 @@ export default function ContactPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BRAND_LOGO_SRC}
-              alt="Logo Mathesis"
+              alt="Logo Sophium"
               width={36}
               height={36}
               loading="eager"
@@ -200,7 +200,7 @@ export default function ContactPage() {
               className="h-9 w-9"
             />
             <p className="font-[family-name:Georgia] text-xl font-bold tracking-[0.06em] text-[var(--navy-900)]">
-              Mathesis
+              Sophium
             </p>
           </div>
 
@@ -212,18 +212,18 @@ export default function ContactPage() {
               ¿Necesitás algo? Escribinos.
             </h2>
             <p className="mt-4 font-[family-name:Georgia] text-[0.95rem] italic text-[var(--navy-800)]">
-              El equipo de Mathesis lo recibe y te responde por acá mismo, a tu Mensajería.
+              El equipo de Sophium lo recibe y te responde por acá mismo, a tu Mensajería.
             </p>
           </div>
 
-          <p className="relative z-10 text-[0.66rem] text-[var(--navy-700)]">mathesis.social</p>
+          <p className="relative z-10 text-[0.66rem] text-[var(--navy-700)]">sophium.social</p>
         </div>
 
         {/* Right form panel */}
         <div className="flex flex-1 flex-col justify-center bg-[var(--surface)] px-14 py-14">
           <div className="mx-auto w-full max-w-[520px]">
             <h1 className="font-[family-name:var(--font-spectral)] text-[2.2rem] font-semibold leading-none text-[var(--navy-900)]">
-              Contactar a Mathesis
+              Contactar a Sophium
             </h1>
             <div className="mt-7">
               {form}

@@ -23,7 +23,7 @@ import enAteneo from "@/lib/i18n/locales/en/ateneo.json";
 import esProfile from "@/lib/i18n/locales/es/profile.json";
 import enProfile from "@/lib/i18n/locales/en/profile.json";
 
-const LANGUAGE_STORAGE_KEY = "mathesis-ui-language";
+const LANGUAGE_STORAGE_KEY = "sophium-ui-language";
 
 function resolveInitialLanguage(): "es" | "en" {
   if (typeof window === "undefined") {

@@ -9,7 +9,7 @@ type LinkifiedTextProps = {
 export function LinkifiedText({ text, className, linkClassName }: LinkifiedTextProps) {
   const segments = buildLinkifiedSegments(text);
   const paragraphClassName = ["break-words [overflow-wrap:anywhere]", className].filter(Boolean).join(" ");
-  const anchorClassName = ["break-all [overflow-wrap:anywhere]", linkClassName ?? "mathesis-link-accent underline underline-offset-2"].join(" ");
+  const anchorClassName = ["break-all [overflow-wrap:anywhere]", linkClassName ?? "sophium-link-accent underline underline-offset-2"].join(" ");
 
   return (
     <p className={paragraphClassName}>

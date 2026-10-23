@@ -353,7 +353,7 @@ export function EducationCard({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="mathesis-field sm:col-span-1">
+              <label className="sophium-field sm:col-span-1">
                 {t("education.labels.institution")}
                 <input
                   name="institucion"
@@ -363,7 +363,7 @@ export function EducationCard({
                 />
               </label>
 
-              <label className="mathesis-field sm:col-span-1">
+              <label className="sophium-field sm:col-span-1">
                 {t("education.labels.degree")}
                 <input
                   name="titulo"
@@ -373,7 +373,7 @@ export function EducationCard({
                 />
               </label>
 
-              <label className="mathesis-field sm:col-span-2">
+              <label className="sophium-field sm:col-span-2">
                 {t("education.labels.field")}
                 <input
                   name="campoEstudio"
@@ -399,7 +399,7 @@ export function EducationCard({
                 onCurrentChange={onCurrentStudyingChange}
               />
 
-              <label className="mathesis-field sm:col-span-2">
+              <label className="sophium-field sm:col-span-2">
                 {t("education.labels.description")}
                 <textarea
                   name="descripcion"

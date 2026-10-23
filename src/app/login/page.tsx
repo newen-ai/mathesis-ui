@@ -9,6 +9,7 @@ import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticate
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { extractAuthErrorCode, getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
 import { normalizeEmailInput } from "@/lib/utils/email";
+import { buildLoginPasswordInputClassName } from "./login-password-field";
 
 type LoginPasswordFieldProps = {
   id: string;
@@ -52,7 +53,7 @@ function LoginPasswordField({
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={hasError}
         aria-describedby={ariaDescribedBy}
-        className={`${className ?? ""} w-full pr-16`}
+        className={buildLoginPasswordInputClassName(className)}
       />
       <button
         type="button"
@@ -147,7 +148,7 @@ function LoginPageContent() {
 
   return (
     <SharedBrandedLoginScreen
-      brandName="Mathesis"
+      brandName="Sophium"
       logoSrc={BRAND_LOGO_SRC}
       logoAlt={t("common.brandLogoAlt")}
       mobileTagline={t("login.screen.mobileTagline")}

@@ -131,7 +131,7 @@ async function fetchJsonWithTimeout<T>(url: string, timeoutMs = 5000): Promise<T
       method: "GET",
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
-        "User-Agent": "MathesisLinkPreviewBot/1.0 (+https://mathesis.app)",
+        "User-Agent": "SophiumLinkPreviewBot/1.0 (+https://sophium.app)",
       },
       cache: "no-store",
     });
@@ -410,7 +410,7 @@ export async function GET(request: Request) {
       redirect: "follow",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       headers: {
-        "User-Agent": "MathesisLinkPreviewBot/1.0 (+https://mathesis.app)",
+        "User-Agent": "SophiumLinkPreviewBot/1.0 (+https://sophium.app)",
         Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
       },
       cache: "no-store",

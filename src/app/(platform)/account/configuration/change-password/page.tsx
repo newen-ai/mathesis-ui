@@ -187,7 +187,7 @@ export default function ChangePasswordPage() {
   );
 
   return (
-    <div className="mathesis-shell flex min-h-screen flex-col bg-[var(--background)]">
+    <div className="sophium-shell flex min-h-screen flex-col bg-[var(--background)]">
       <TopBar navItems={navItems} />
 
       {/* Mobile header */}
@@ -232,7 +232,7 @@ export default function ChangePasswordPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BRAND_LOGO_SRC}
-              alt="Logo Mathesis"
+              alt="Logo Sophium"
               width={36}
               height={36}
               loading="eager"
@@ -240,7 +240,7 @@ export default function ChangePasswordPage() {
               className="h-9 w-9"
             />
             <p className="font-[family-name:Georgia] text-xl font-bold tracking-[0.06em] text-[var(--navy-900)]">
-              Mathesis
+              Sophium
             </p>
           </div>
 
@@ -256,7 +256,7 @@ export default function ChangePasswordPage() {
             </p>
           </div>
 
-          <p className="relative z-10 text-[0.66rem] text-[var(--navy-700)]">mathesis.social</p>
+          <p className="relative z-10 text-[0.66rem] text-[var(--navy-700)]">sophium.social</p>
         </div>
 
         {/* Right form panel */}

@@ -217,7 +217,7 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
   };
 
   return (
-    <div className="mathesis-shell min-h-screen bg-[var(--background)]">
+    <div className="sophium-shell min-h-screen bg-[var(--background)]">
       <div className="mx-auto w-full max-w-[1450px] px-4 py-6 sm:px-6 lg:px-10">
         <form onSubmit={submitForm} className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-6" noValidate>
           <div className="flex items-center gap-3">
@@ -497,7 +497,7 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
             </section>
 
             <div className="pt-1 text-center">
-              <Link href={backHref} className="text-scale-3 font-semibold mathesis-link-accent">
+              <Link href={backHref} className="text-scale-3 font-semibold sophium-link-accent">
                 ← {backLabel}
               </Link>
             </div>
@@ -506,7 +506,7 @@ export function AteneoGroupForm({ title, submitLabel, backHref, backLabel, initi
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center rounded-full bg-[var(--brand-500)] px-7 py-2.5 text-scale-3 font-semibold mathesis-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex items-center justify-center rounded-full bg-[var(--brand-500)] px-7 py-2.5 text-scale-3 font-semibold sophium-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting ? "Guardando..." : submitLabel}
               </button>

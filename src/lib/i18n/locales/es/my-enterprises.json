@@ -1,7 +1,7 @@
 {
   "list": {
     "title": "Mis empresas",
-    "subtitle": "Estas son las empresas que gestionas en Mathesis. Solo el Admin puede editar o eliminar una ficha. El Admin es quien la genero en Mathesis.",
+    "subtitle": "Estas son las empresas que gestionas en Sophium. Solo el Admin puede editar o eliminar una ficha. El Admin es quien la genero en Sophium.",
     "createNew": "+ Crear nueva empresa",
     "loading": "Cargando empresas...",
     "empty": "Todavia no tienes empresas creadas.",
@@ -15,16 +15,16 @@
       "confirmDelete": "Seguro que quieres eliminar la empresa \"{{name}}\"?"
     },
     "aside": {
-      "directoryTitle": "Directorio de Mathesis Empresarios",
+      "directoryTitle": "Directorio de Sophium Empresarios",
       "directoryBody": "Tus empresas aprobadas ya son visibles ahi para el resto de la comunidad.",
       "viewDirectory": "Ver directorio ->",
       "whoCanEditTitle": "Quien puede editar?",
-      "whoCanEditBody": "Solo el Admin que genero la ficha en Mathesis. Los demas cofundadores la ven pero no la editan."
+      "whoCanEditBody": "Solo el Admin que genero la ficha en Sophium. Los demas cofundadores la ven pero no la editan."
     }
   },
   "create": {
-    "title": "Solicitar Mathesis Empresarios",
-    "subtitle": "Contanos sobre tu empresa. Tu solicitud la revisa el equipo de Mathesis Empresarios y te avisamos por notificacion.",
+    "title": "Solicitar Sophium Empresarios",
+    "subtitle": "Contanos sobre tu empresa. Tu solicitud la revisa el equipo de Sophium Empresarios y te avisamos por notificacion.",
     "fields": {
       "companyName": "Nombre de la empresa",
       "role": "Tu rol",
@@ -48,10 +48,10 @@
     },
     "back": "<- Volver",
     "aside": {
-      "whatIsTitle": "Que es Mathesis Empresarios?",
+      "whatIsTitle": "Que es Sophium Empresarios?",
       "whatIsBody": "Membresia adicional para Miembros con empresa propia o startup. Suma acceso a un directorio de empresas verificadas y a un Feed exclusivo de networking entre empresarios Mensa.",
       "howItWorksTitle": "Como funciona",
-      "howItWorksBody": "Tu solicitud la revisa el equipo de Mathesis Empresarios y te avisamos por notificacion cuando quede aprobada."
+      "howItWorksBody": "Tu solicitud la revisa el equipo de Sophium Empresarios y te avisamos por notificacion cuando quede aprobada."
     }
   },
   "edit": {

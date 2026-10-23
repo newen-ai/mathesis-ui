@@ -363,7 +363,7 @@ export default function NotificacionesPage() {
   };
 
   return (
-    <div className="mathesis-shell min-h-screen">
+    <div className="sophium-shell min-h-screen">
       <TopBar navItems={navItems} />
       <main className="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
         <div className="px-1 pb-4">

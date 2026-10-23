@@ -167,7 +167,7 @@ function ResetPasswordContent() {
                 className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
               />
               <p className="mt-2 font-[family-name:Georgia] text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
-                Mathesis
+                Sophium
               </p>
             </div>
 
@@ -180,7 +180,7 @@ function ResetPasswordContent() {
               </p>
             </div>
 
-            <p className="relative z-10 mt-10 text-[0.66rem] text-[#8EA0B6] lg:mt-0">mathesis.social</p>
+            <p className="relative z-10 mt-10 text-[0.66rem] text-[#8EA0B6] lg:mt-0">sophium.social</p>
           </div>
 
           <div

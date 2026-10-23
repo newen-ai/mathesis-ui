@@ -668,10 +668,10 @@ export function ProfileView() {
 
   if (isProfileUnavailable) {
     return (
-      <div className="mathesis-shell min-h-screen">
+      <div className="sophium-shell min-h-screen">
         <TopBar navItems={navItems} />
         <main className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
-          <section className="mathesis-card px-6 py-10 text-center sm:px-8">
+          <section className="sophium-card px-6 py-10 text-center sm:px-8">
             <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
               {t("profileView.unavailable.title")}
             </h1>
@@ -685,11 +685,11 @@ export function ProfileView() {
   }
 
   return (
-    <div className="mathesis-shell min-h-screen">
+    <div className="sophium-shell min-h-screen">
       <TopBar navItems={navItems} />
 
       <main className="mx-auto w-full max-w-7xl space-y-3 px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
-        <section className="mathesis-card">
+        <section className="sophium-card">
           <div className="group relative">
             <div
               ref={bannerDisplayRef}
@@ -901,7 +901,7 @@ export function ProfileView() {
           </div>
         </section>
 
-        <section className="mathesis-fade-up-delay mathesis-profile-stack space-y-2">
+        <section className="sophium-fade-up-delay sophium-profile-stack space-y-2">
           <ProfileFormCard
             profile={profile}
             canEdit={canEditProfile}
