@@ -8,7 +8,6 @@ export type SessionRole = "user" | "admin";
 
 type RegisterInput = {
 	firstName: string;
-	middleName?: string;
 	lastName: string;
 	email: string;
 	password: string;
@@ -85,7 +84,6 @@ export async function register(
 			method: "POST",
 			body: {
 				firstName: input.firstName,
-				middleName: input.middleName,
 				lastName: input.lastName,
 				email: input.email,
 				password: input.password,

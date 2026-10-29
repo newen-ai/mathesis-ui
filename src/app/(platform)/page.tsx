@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
+import { HOME_PATH } from "@/lib/routes";
 
 export default function HomePage() {
-  redirect("/ateneo");
+  redirect(HOME_PATH);
 }

@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getSessionAccessDecision, type SessionState } from "@/lib/api/auth";
+import { HOME_PATH, WELCOME_ENTRY_PATH, WELCOME_FUTURE_PATH } from "@/lib/routes";
 
 type SessionGateProps = {
   children: ReactNode;
@@ -19,8 +20,6 @@ function buildLoginPath(pathname: string) {
 }
 
 const FALLBACK_WHITELIST_PATH = "/whitelist-access";
-const WELCOME_ENTRY_PATH = "/bienvenida";
-const WELCOME_FUTURE_PATH = "/bienvenida/futuro";
 
 function normalizePathname(pathname: string) {
   if (!pathname) return "/";
@@ -89,7 +88,7 @@ export function SessionGate({ children }: SessionGateProps) {
         isWelcomePath(pathname)
       ) {
         setIsCheckingSession(false);
-        router.replace("/ateneo");
+        router.replace(HOME_PATH);
         return;
       }
 

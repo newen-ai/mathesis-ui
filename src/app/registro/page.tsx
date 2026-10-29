@@ -14,7 +14,6 @@ import { normalizeEmailInput } from "@/lib/utils/email";
 
 type ValidationErrors = {
   firstName?: string;
-  middleName?: string;
   lastName?: string;
   dni?: string;
   email?: string;
@@ -43,7 +42,6 @@ export default function RegistroPage() {
 
   // Paso 2 — crear acceso
   const [firstName, setFirstName] = useState("");
-  const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -57,7 +55,15 @@ export default function RegistroPage() {
     details?: string;
   } | null>(null);
 
-  useRedirectIfAuthenticated("/");
+  const { isChecking: isCheckingSession, isAuthenticated } = useRedirectIfAuthenticated("/");
+
+  if (isCheckingSession || isAuthenticated) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F5] px-4">
+        <p className="text-sm text-[#666666]">{t("common.loading")}</p>
+      </main>
+    );
+  }
 
   const onBack = () => {
     if (step === 2) {
@@ -101,9 +107,6 @@ export default function RegistroPage() {
     if (!firstName.trim()) {
       nextErrors.firstName = t("register.errors.firstNameRequired");
     }
-    if (middleName.trim().length > 80) {
-      nextErrors.middleName = t("register.errors.middleNameTooLong");
-    }
     if (!lastName.trim()) {
       nextErrors.lastName = t("register.errors.lastNameRequired");
     }
@@ -126,7 +129,6 @@ export default function RegistroPage() {
     setIsSubmitting(true);
     const result = await register({
       firstName: firstName.trim(),
-      middleName: middleName.trim() || undefined,
       lastName: lastName.trim(),
       email: normalizedEmail,
       password,
@@ -436,48 +438,25 @@ export default function RegistroPage() {
                     <div className="text-xs text-[#666666]">{organization}</div>
                   </div>
 
-                  <div className="grid gap-2.5 lg:grid-cols-2">
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="firstName" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                        {t("register.firstNameLabel")}
-                      </label>
-                      <input
-                        id="firstName"
-                        autoComplete="given-name"
-                        placeholder={t("register.firstNamePlaceholder")}
-                        value={firstName}
-                        onChange={(event) => setFirstName(event.target.value)}
-                        aria-invalid={Boolean(errors.firstName)}
-                        aria-describedby={errors.firstName ? "first-name-error" : undefined}
-                        className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
-                      />
-                      {errors.firstName ? (
-                        <p id="first-name-error" className="text-xs font-medium text-red-700">
-                          {errors.firstName}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label htmlFor="middleName" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                        {t("register.middleNameLabel")}
-                      </label>
-                      <input
-                        id="middleName"
-                        autoComplete="additional-name"
-                        placeholder={t("register.middleNamePlaceholder")}
-                        value={middleName}
-                        onChange={(event) => setMiddleName(event.target.value)}
-                        aria-invalid={Boolean(errors.middleName)}
-                        aria-describedby={errors.middleName ? "middle-name-error" : undefined}
-                        className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
-                      />
-                      {errors.middleName ? (
-                        <p id="middle-name-error" className="text-xs font-medium text-red-700">
-                          {errors.middleName}
-                        </p>
-                      ) : null}
-                    </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="firstName" className="text-xs font-bold tracking-wide text-[#0A2540]">
+                      {t("register.firstNameLabel")}
+                    </label>
+                    <input
+                      id="firstName"
+                      autoComplete="given-name"
+                      placeholder={t("register.firstNamePlaceholder")}
+                      value={firstName}
+                      onChange={(event) => setFirstName(event.target.value)}
+                      aria-invalid={Boolean(errors.firstName)}
+                      aria-describedby={errors.firstName ? "first-name-error" : undefined}
+                      className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
+                    />
+                    {errors.firstName ? (
+                      <p id="first-name-error" className="text-xs font-medium text-red-700">
+                        {errors.firstName}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-col gap-1.5">

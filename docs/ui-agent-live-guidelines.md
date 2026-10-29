@@ -43,6 +43,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Interaction Rules
 - Back/navigation text in auth mobile headers must be actionable links/buttons, never static labels.
 - Form validation messaging should stay concise and consistent with existing auth pages.
+- In auth and other one-shot flows, avoid using translation functions inside side-effect hooks (`useEffect`) that trigger API calls; keep effects keyed to business inputs (for example tokens/ids) and derive localized copy at render time from status state.
 
 ## Spanish Copy Rules
 - When UI copy is in Spanish, always use correct orthography: tildes and "ñ" are mandatory.
