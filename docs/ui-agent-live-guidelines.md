@@ -241,6 +241,11 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - On mobile, the image preview modal should support swipe-left and swipe-right navigation when multiple images are present.
 - The opened image preview modal should expose a trash-icon action that removes the currently displayed image from the draft.
 
+## Current Active UI Directions (2026-11-02 Ateneo Group Picker Polish)
+- In Ateneo new-topic group selectors, keep trigger content vertically centered and align chevron icons inside a dedicated circular affordance.
+- Group picker options must present two text levels (group name + permission hint) and clear selected state contrast.
+- For groups where topic creation is restricted, show a warning indicator with hover tooltip explaining the permission constraint.
+
 ## Current Active UI Directions (2026-09-10 Link Preview Images)
 - Link preview images should display fully (no cropping) using centered contain-fit behavior.
 - Link preview image areas should use a neutral dark/gray backdrop to fill side gaps created by aspect-ratio differences.

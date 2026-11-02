@@ -50,13 +50,13 @@ function formatMaxSizeLabel(bytes: number): string {
 export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const { t } = useTranslation("ateneo");
   const preferredGroupId = groupId?.trim() ?? "";
-  const hasFixedGroupContext = preferredGroupId.length > 0;
   const router = useRouter();
   const searchParams = useSearchParams();
   const cameFromFooter = searchParams.get("source") === "footer";
   const [groupOptions, setGroupOptions] = useState<TopicGroupOption[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState(preferredGroupId);
   const [isGroupPickerOpen, setIsGroupPickerOpen] = useState(false);
+  const [isDesktopGroupPickerOpen, setIsDesktopGroupPickerOpen] = useState(false);
   const [canCreateTopics, setCanCreateTopics] = useState(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -66,6 +66,8 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const desktopGroupPickerRef = useRef<HTMLDivElement | null>(null);
+  const translationRef = useRef(t);
   const attachmentsRef = useRef<TopicAttachmentDraft[]>([]);
   const previewTouchStartXRef = useRef<number | null>(null);
   const previewTouchStartYRef = useRef<number | null>(null);
@@ -119,9 +121,16 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     );
   }, [groupOptions, selectedGroupId, t]);
 
-  const getGroupOptionLabel = (group: TopicGroupOption) => {
-    return group.canCreateTopics ? group.name : `${group.name} ⚠`;
-  };
+  const selectedGroup = useMemo(
+    () => groupOptions.find((group) => group.id === selectedGroupId) ?? null,
+    [groupOptions, selectedGroupId]
+  );
+
+  const getGroupWarningMessage = () => t("newTopic.adminsOnlyMessage");
+
+  useEffect(() => {
+    translationRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     attachmentsRef.current = attachments;
@@ -219,25 +228,34 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
     const loadOptions = async () => {
       try {
-        let nextOptions: TopicGroupOption[] = [];
+        const mineGroupsResponse = await listAteneoGroups("mine", 50);
+        const nextOptions: TopicGroupOption[] = mineGroupsResponse.data.groups.map((group) => ({
+          id: group.id,
+          name: group.name,
+          canCreateTopics: group.createTopicsMode !== "admins" || group.isAdmin,
+        }));
 
-        if (hasFixedGroupContext) {
-          const groupResponse = await getAteneoGroup(preferredGroupId);
-          const currentGroup = groupResponse.data.group;
-          nextOptions = [
-            {
+        if (
+          preferredGroupId.length > 0 &&
+          !nextOptions.some((group) => group.id === preferredGroupId)
+        ) {
+          try {
+            const groupResponse = await getAteneoGroup(preferredGroupId);
+            const currentGroup = groupResponse.data.group;
+            nextOptions.unshift({
               id: currentGroup.id,
               name: currentGroup.name,
               canCreateTopics: currentGroup.createTopicsMode !== "admins" || currentGroup.isAdmin,
-            },
-          ];
-        } else {
-          const mineGroupsResponse = await listAteneoGroups("mine", 50);
-          nextOptions = mineGroupsResponse.data.groups.map((group) => ({
-            id: group.id,
-            name: group.name,
-            canCreateTopics: group.createTopicsMode !== "admins" || group.isAdmin,
-          }));
+            });
+          } catch (error) {
+            console.warn("ateneo_preferred_group_unavailable", {
+              preferredGroupId,
+              error,
+            });
+            if (!cancelled) {
+              toast.info(translationRef.current("newTopic.toasts.preferredGroupUnavailable"));
+            }
+          }
         }
 
         if (cancelled) {
@@ -246,8 +264,9 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
 
         setGroupOptions(nextOptions);
 
-        const defaultGroupId = hasFixedGroupContext
-          ? preferredGroupId
+        const preferredGroupOption = nextOptions.find((option) => option.id === preferredGroupId);
+        const defaultGroupId = preferredGroupOption
+          ? preferredGroupOption.id
           : cameFromFooter
             ? ""
             : (nextOptions[0]?.id ?? "");
@@ -270,7 +289,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [cameFromFooter, hasFixedGroupContext, preferredGroupId]);
+  }, [cameFromFooter, preferredGroupId]);
 
   useEffect(() => {
     if (!shouldLockBodyScroll) {
@@ -319,11 +338,43 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     };
   }, [imagePreviewItems, isImagePreviewOpen, shouldLockBodyScroll]);
 
+  useEffect(() => {
+    if (!isDesktopGroupPickerOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (!desktopGroupPickerRef.current?.contains(target)) {
+        setIsDesktopGroupPickerOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDesktopGroupPickerOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isDesktopGroupPickerOpen]);
+
   const handleGroupChange = (nextGroupId: string) => {
     setSelectedGroupId(nextGroupId);
     const nextGroup = groupOptions.find((group) => group.id === nextGroupId);
     setCanCreateTopics(nextGroupId.length > 0 ? Boolean(nextGroup?.canCreateTopics) : true);
     setIsGroupPickerOpen(false);
+    setIsDesktopGroupPickerOpen(false);
   };
 
   const handleSubmit = async () => {
@@ -501,7 +552,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         ) : null}
       </div>
 
-      {!hasFixedGroupContext && groupOptions.length === 0 ? (
+      {groupOptions.length === 0 ? (
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
           {t("newTopic.emptyGroupsMessage")}
         </div>
@@ -516,7 +567,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       <div
         className={[
           "rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5",
-          !hasFixedGroupContext && groupOptions.length === 0
+          groupOptions.length === 0
             ? "pointer-events-none opacity-60"
             : "",
         ].join(" ")}
@@ -524,47 +575,153 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         <div className="flex items-center gap-3">
           <label className="min-w-0 flex-1">
             <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.groupLabel")}</span>
-            {hasFixedGroupContext ? (
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-3 font-medium text-[var(--text-primary)]">
-                {groupOptions.find((group) => group.id === selectedGroupId)?.name || t("newTopic.selectedGroup")}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setIsGroupPickerOpen(true)}
-                  className="flex w-full items-center justify-between rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-left text-scale-3 outline-none transition hover:bg-[var(--surface-2)] focus:border-[var(--brand-700)] md:hidden"
-                >
-                  <span className={selectedGroupId ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setIsGroupPickerOpen(true)}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-left outline-none transition hover:border-[var(--brand-500)] hover:bg-[var(--surface-2)] focus:border-[var(--brand-700)] md:hidden"
+              >
+                <span className="min-w-0">
+                  <span className={[
+                    "block truncate text-scale-3 font-medium",
+                    selectedGroupId ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
+                  ].join(" ")}>
                     {selectedGroupLabel}
                   </span>
-                  <span aria-hidden="true" className="text-[var(--text-secondary)]">⌄</span>
+                  {selectedGroup && !selectedGroup.canCreateTopics ? (
+                    <span className="mt-0.5 block text-scale-1 text-[var(--text-secondary)]">
+                      {t("newTopic.groupAdminsOnlyLabel")}
+                    </span>
+                  ) : null}
+                </span>
+
+                <span className="flex shrink-0 items-center gap-2">
+                  {selectedGroup && !selectedGroup.canCreateTopics ? (
+                    <span
+                      aria-label={getGroupWarningMessage()}
+                      title={getGroupWarningMessage()}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                    >
+                      ⚠
+                    </span>
+                  ) : null}
+                </span>
+
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-2)] text-[var(--text-secondary)]"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                    <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </button>
+
+              <div ref={desktopGroupPickerRef} className="relative hidden md:block">
+                <button
+                  type="button"
+                  onClick={() => setIsDesktopGroupPickerOpen((current) => !current)}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-left outline-none transition hover:border-[var(--brand-500)] hover:bg-[var(--surface-2)] focus:border-[var(--brand-700)]"
+                >
+                  <span className="min-w-0">
+                    <span className={[
+                      "block truncate text-scale-3 font-medium",
+                      selectedGroupId ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
+                    ].join(" ")}>
+                      {selectedGroupLabel}
+                    </span>
+                    {selectedGroup && !selectedGroup.canCreateTopics ? (
+                      <span className="mt-0.5 block text-scale-1 text-[var(--text-secondary)]">
+                        {t("newTopic.groupAdminsOnlyLabel")}
+                      </span>
+                    ) : null}
+                  </span>
+
+                  <span className="flex shrink-0 items-center gap-2">
+                    {selectedGroup && !selectedGroup.canCreateTopics ? (
+                      <span
+                        aria-label={getGroupWarningMessage()}
+                        title={getGroupWarningMessage()}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                      >
+                        ⚠
+                      </span>
+                    ) : null}
+
+                    <span
+                      aria-hidden="true"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-2)] text-[var(--text-secondary)]"
+                    >
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        className={[
+                          "h-4 w-4 transition-transform duration-200",
+                          isDesktopGroupPickerOpen ? "rotate-180" : "",
+                        ].join(" ")}
+                      >
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  </span>
                 </button>
 
-                <div className="relative hidden md:block">
-                  <select
-                    value={selectedGroupId}
-                    onChange={(event) => handleGroupChange(event.target.value)}
-                    className="w-full appearance-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 pr-10 text-scale-3 text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-700)]"
-                  >
-                    {groupOptions.length > 0 ? (
-                      <option value="">{t("newTopic.selectGroup")}</option>
-                    ) : (
-                      <option value="">{t("newTopic.noGroupsAvailable")}</option>
-                    )}
-                    {groupOptions.map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {getGroupOptionLabel(group)}
-                      </option>
-                    ))}
-                  </select>
-                  <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--text-secondary)]">
-                    ⌄
-                  </span>
-                </div>
-                <p className="text-scale-1 text-[var(--text-secondary)]">{t("newTopic.adminsOnlyHint")}</p>
+                {isDesktopGroupPickerOpen ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-2.5 shadow-[0_24px_48px_color-mix(in_srgb,var(--navy-900)_26%,transparent)]">
+                    <button
+                      type="button"
+                      onClick={() => handleGroupChange("")}
+                      className={[
+                        "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-scale-2 transition",
+                        selectedGroupId.length === 0
+                          ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                          : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]",
+                      ].join(" ")}
+                    >
+                      <span>{groupOptions.length > 0 ? t("newTopic.selectGroup") : t("newTopic.noGroupsAvailable")}</span>
+                    </button>
+
+                    {groupOptions.map((group) => {
+                      const isSelected = selectedGroupId === group.id;
+
+                      return (
+                        <button
+                          key={group.id}
+                          type="button"
+                          onClick={() => handleGroupChange(group.id)}
+                          className={[
+                            "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition",
+                            isSelected
+                              ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                              : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
+                          ].join(" ")}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-scale-2 font-medium">{group.name}</span>
+                          </span>
+
+                          <span className="flex shrink-0 items-center gap-2">
+                            {!group.canCreateTopics ? (
+                              <span
+                                aria-label={getGroupWarningMessage()}
+                                title={getGroupWarningMessage()}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                              >
+                                ⚠
+                              </span>
+                            ) : null}
+
+                            {isSelected ? (
+                              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-700)] text-white">✓</span>
+                            ) : null}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
-            )}
+            </div>
           </label>
         </div>
 
@@ -758,7 +915,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         </div>
       </div>
 
-      {!hasFixedGroupContext && isGroupPickerOpen ? (
+      {isGroupPickerOpen ? (
         <div className="fixed inset-0 z-[140] flex items-center justify-center px-4 md:hidden">
           <button
             type="button"
@@ -810,14 +967,31 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                     type="button"
                     onClick={() => handleGroupChange(group.id)}
                     className={[
-                      "flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-scale-3",
+                      "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left transition",
                       isSelected
                         ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
-                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)]",
+                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
                     ].join(" ")}
                   >
-                    <span className="truncate">{getGroupOptionLabel(group)}</span>
-                    {isSelected ? <span aria-hidden="true">✓</span> : null}
+                    <span className="min-w-0">
+                      <span className="block truncate text-scale-3 font-medium">{group.name}</span>
+                    </span>
+
+                    <span className="flex shrink-0 items-center gap-2">
+                      {!group.canCreateTopics ? (
+                        <span
+                          aria-label={getGroupWarningMessage()}
+                          title={getGroupWarningMessage()}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                        >
+                          ⚠
+                        </span>
+                      ) : null}
+
+                      {isSelected ? (
+                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-700)] text-white">✓</span>
+                      ) : null}
+                    </span>
                   </button>
                 );
               })}
