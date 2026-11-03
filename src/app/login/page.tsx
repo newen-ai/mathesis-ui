@@ -1,10 +1,14 @@
 "use client";
 
-import { Suspense, useMemo, useState, useSyncExternalStore } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { SharedBrandedLoginScreen } from "@kenrou/shared-ui";
-import { login } from "@/lib/api/auth";
+import { getSessionAccessDecision, login } from "@/lib/api/auth";
+import {
+  resolveLoginSuccessRedirect,
+  sanitizeLoginNextPath,
+} from "@/lib/auth/login-redirect";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { extractAuthErrorCode, getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
@@ -67,11 +71,6 @@ function LoginPasswordField({
   );
 }
 
-function isSafeInternalPath(path: string | null): path is string {
-  if (!path) return false;
-  return path.startsWith("/") && !path.startsWith("//");
-}
-
 function resolveLoginErrorMessage(
   message: string | undefined,
   details: unknown,
@@ -101,7 +100,7 @@ function LoginPageContent() {
 
   const nextPath = useMemo(() => {
     const candidate = searchParams.get("next");
-    return isSafeInternalPath(candidate) ? candidate : "/";
+    return sanitizeLoginNextPath(candidate);
   }, [searchParams]);
 
   const initialEmail = useMemo(() => {
@@ -177,9 +176,12 @@ function LoginPageContent() {
             result.details,
             t("login.errorFallback")
           ),
-        onSuccess: () => {
-          router.replace(nextPath);
-          router.refresh();
+        onSuccess: async () => {
+          const accessDecision = await getSessionAccessDecision();
+          const targetPath = resolveLoginSuccessRedirect(accessDecision, nextPath);
+
+          // Use hard navigation to avoid chained App Router transitions after auth cookie writes.
+          window.location.replace(targetPath);
         },
         forgotPasswordAction: () => router.push("/forgot-password"),
         messages: {
@@ -209,20 +211,6 @@ function LoginPageContent() {
 }
 
 export default function LoginPage() {
-  const isClientReady = useSyncExternalStore(
-    () => () => undefined,
-    () => true,
-    () => false
-  );
-
-  if (!isClientReady) {
-    return (
-      <main className="flex min-h-[calc(100dvh-2.5rem)] items-center justify-center bg-white font-[family-name:Arial] md:min-h-[calc(100dvh-2.75rem)]">
-        <p className="text-center text-sm text-[#666666]">...</p>
-      </main>
-    );
-  }
-
   return (
     <Suspense
       fallback={

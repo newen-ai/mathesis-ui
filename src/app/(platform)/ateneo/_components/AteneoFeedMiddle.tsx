@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   listAteneoFeed,
@@ -44,6 +44,11 @@ export function AteneoFeedMiddle() {
   const [topics, setTopics] = useState<AteneoFeedTopic[]>([]);
   const [createTopicGroupId, setCreateTopicGroupId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const translationRef = useRef(t);
+
+  useEffect(() => {
+    translationRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +58,11 @@ export function AteneoFeedMiddle() {
       try {
         const [feedResponse, mineResponse] = await Promise.all([listAteneoFeed(), listAteneoGroups("mine", 1)]);
         if (cancelled) return;
-        setTopics(feedResponse.data.topics.map((topic) => mapTopic(topic, t("feed.authorFallback"))));
+        setTopics(
+          feedResponse.data.topics.map((topic) =>
+            mapTopic(topic, translationRef.current("feed.authorFallback"))
+          )
+        );
         setCreateTopicGroupId(mineResponse.data.groups[0]?.id ?? null);
       } catch {
         if (cancelled) return;
@@ -71,7 +80,7 @@ export function AteneoFeedMiddle() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, []);
 
   const createTopicHref = createTopicGroupId
     ? `/ateneo/groups/${encodeURIComponent(createTopicGroupId)}/new-topic`

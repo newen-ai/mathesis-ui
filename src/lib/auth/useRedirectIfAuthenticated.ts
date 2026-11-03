@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { getSessionState } from "@/lib/api/auth";
 
 type RedirectCheckState = {
@@ -10,7 +10,7 @@ type RedirectCheckState = {
 };
 
 export function useRedirectIfAuthenticated(destination: string) {
-  const router = useRouter();
+  const pathname = usePathname();
   const [state, setState] = useState<RedirectCheckState>({
     isChecking: true,
     isAuthenticated: false,
@@ -25,7 +25,11 @@ export function useRedirectIfAuthenticated(destination: string) {
 
       if (sessionState === "authenticated") {
         setState({ isChecking: false, isAuthenticated: true });
-        router.replace(destination);
+
+        if (pathname !== destination) {
+          window.location.replace(destination);
+        }
+
         return;
       }
 
@@ -37,7 +41,7 @@ export function useRedirectIfAuthenticated(destination: string) {
     return () => {
       isMounted = false;
     };
-  }, [destination, router]);
+  }, [destination, pathname]);
 
   return state;
 }
