@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { verifyEmail } from "@/lib/api/auth";
+import { getSessionAccessDecision } from "@/lib/api/auth";
+import { verifyEmailOnce } from "./confirm-request-cache";
+import { resolveConfirmAuthenticatedRedirect } from "./confirm-redirect";
 
 type ConfirmClientProps = {
   token: string;
@@ -13,27 +15,55 @@ type ConfirmClientProps = {
 export function ConfirmClient({ token }: ConfirmClientProps) {
   const { t } = useTranslation("auth");
   const router = useRouter();
+  const hasMounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState(t("confirm.loading"));
+  const [serviceErrorMessage, setServiceErrorMessage] = useState<string | null>(null);
+  const [isResolvingFallbackRedirect, setIsResolvingFallbackRedirect] = useState(false);
 
   useEffect(() => {
+    if (!hasMounted) {
+      return;
+    }
+
     const resolvedToken =
       token.trim() || new URLSearchParams(window.location.search).get("token")?.trim() || "";
 
-    void verifyEmail(resolvedToken).then((result) => {
+    void verifyEmailOnce(resolvedToken).then((result) => {
       if (result.success) {
         setStatus("success");
-        setMessage(t("confirm.successMessage"));
+        setServiceErrorMessage(null);
         return;
       }
 
-      setStatus("error");
-      setMessage(result.message || t("confirm.errorFallback"));
+      setIsResolvingFallbackRedirect(true);
+      void getSessionAccessDecision()
+        .then((accessDecision) => {
+          const redirectTarget = resolveConfirmAuthenticatedRedirect(accessDecision);
+
+          if (redirectTarget) {
+            router.replace(redirectTarget);
+            return;
+          }
+
+          setStatus("error");
+          setServiceErrorMessage(result.message || null);
+        })
+        .catch(() => {
+          setStatus("error");
+          setServiceErrorMessage(result.message || null);
+        })
+        .finally(() => {
+          setIsResolvingFallbackRedirect(false);
+        });
     });
-  }, [t, token]);
+  }, [hasMounted, router, token]);
 
   useEffect(() => {
-    if (status !== "success") {
+    if (!hasMounted || status !== "success") {
       return;
     }
 
@@ -44,7 +74,27 @@ export function ConfirmClient({ token }: ConfirmClientProps) {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [router, status]);
+  }, [hasMounted, router, status]);
+
+  if (!hasMounted) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
+        <section className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" aria-hidden="true" />
+          <p className="sr-only" suppressHydrationWarning>
+            {t("common.loading", { defaultValue: "Cargando..." })}
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  const message =
+    status === "loading" || isResolvingFallbackRedirect
+      ? t("confirm.loading")
+      : status === "success"
+      ? t("confirm.successMessage")
+      : serviceErrorMessage || t("confirm.errorFallback");
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">

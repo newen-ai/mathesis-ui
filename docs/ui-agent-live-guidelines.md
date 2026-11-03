@@ -43,6 +43,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Interaction Rules
 - Back/navigation text in auth mobile headers must be actionable links/buttons, never static labels.
 - Form validation messaging should stay concise and consistent with existing auth pages.
+- In auth and other one-shot flows, avoid using translation functions inside side-effect hooks (`useEffect`) that trigger API calls; keep effects keyed to business inputs (for example tokens/ids) and derive localized copy at render time from status state.
 
 ## Spanish Copy Rules
 - When UI copy is in Spanish, always use correct orthography: tildes and "ñ" are mandatory.
@@ -239,6 +240,11 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Attachment previews in the composer must include remove controls for both images and PDFs.
 - On mobile, the image preview modal should support swipe-left and swipe-right navigation when multiple images are present.
 - The opened image preview modal should expose a trash-icon action that removes the currently displayed image from the draft.
+
+## Current Active UI Directions (2026-11-02 Ateneo Group Picker Polish)
+- In Ateneo new-topic group selectors, keep trigger content vertically centered and align chevron icons inside a dedicated circular affordance.
+- Group picker options must present two text levels (group name + permission hint) and clear selected state contrast.
+- For groups where topic creation is restricted, show a warning indicator with hover tooltip explaining the permission constraint.
 
 ## Current Active UI Directions (2026-09-10 Link Preview Images)
 - Link preview images should display fully (no cropping) using centered contain-fit behavior.

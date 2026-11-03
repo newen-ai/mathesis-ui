@@ -1,9 +1,9 @@
 import { ConfirmClient } from "./ConfirmClient";
 
 type PageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     token?: string | string[];
-  };
+  }>;
 };
 
 function resolveToken(searchToken: string | string[] | undefined): string {
@@ -11,6 +11,8 @@ function resolveToken(searchToken: string | string[] | undefined): string {
   return typeof value === "string" ? value : "";
 }
 
-export default function ConfirmPage({ searchParams }: PageProps) {
-  return <ConfirmClient token={resolveToken(searchParams?.token)} />;
+export default async function ConfirmPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+
+  return <ConfirmClient token={resolveToken(resolvedSearchParams?.token)} />;
 }

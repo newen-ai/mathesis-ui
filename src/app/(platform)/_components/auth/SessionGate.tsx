@@ -1,43 +1,19 @@
 "use client";
 
 import { ReactNode, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { getSessionAccessDecision, type SessionState } from "@/lib/api/auth";
+import {
+  buildLoginPath,
+  normalizePathname,
+  resolveSessionGateRedirect,
+} from "@/lib/auth/session-gate-redirect";
 
 type SessionGateProps = {
   children: ReactNode;
 };
 
-function buildLoginPath(pathname: string) {
-  const loginPath = new URLSearchParams();
-  if (pathname && pathname !== "/") {
-    loginPath.set("next", pathname);
-  }
-
-  const queryString = loginPath.toString();
-  return queryString ? `/login?${queryString}` : "/login";
-}
-
-const FALLBACK_WHITELIST_PATH = "/whitelist-access";
-const WELCOME_ENTRY_PATH = "/bienvenida";
-const WELCOME_FUTURE_PATH = "/bienvenida/futuro";
-
-function normalizePathname(pathname: string) {
-  if (!pathname) return "/";
-  if (pathname === "/") return pathname;
-  return pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-}
-
-function isWelcomePath(pathname: string) {
-  const normalizedPathname = normalizePathname(pathname);
-  return (
-    normalizedPathname === WELCOME_ENTRY_PATH ||
-    normalizedPathname === WELCOME_FUTURE_PATH
-  );
-}
-
 export function SessionGate({ children }: SessionGateProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const [sessionState, setSessionState] = useState<SessionState | "checking">(
     "checking"
@@ -48,6 +24,17 @@ export function SessionGate({ children }: SessionGateProps) {
 
   useEffect(() => {
     let isMounted = true;
+    const replaceLocation = (targetPath: string) => {
+      if (normalizePathname(pathname) === normalizePathname(targetPath)) {
+        return;
+      }
+
+      window.location.replace(targetPath);
+    };
+    const finishAndRedirect = (targetPath: string) => {
+      setIsCheckingSession(false);
+      replaceLocation(targetPath);
+    };
 
     const verifySession = async () => {
       const accessDecision = await getSessionAccessDecision();
@@ -56,40 +43,14 @@ export function SessionGate({ children }: SessionGateProps) {
 
       setSessionState(nextSessionState);
 
-      if (nextSessionState === "unauthenticated") {
-        setIsCheckingSession(false);
-        router.replace(loginPath);
-        return;
-      }
+      const redirectTarget = resolveSessionGateRedirect(
+        accessDecision,
+        pathname,
+        loginPath
+      );
 
-      if (
-        nextSessionState === "authenticated" &&
-        accessDecision.role !== "admin" &&
-        !accessDecision.isWhitelisted
-      ) {
-        setIsCheckingSession(false);
-          router.replace(FALLBACK_WHITELIST_PATH);
-        return;
-      }
-
-      if (
-        nextSessionState === "authenticated" &&
-        accessDecision.hasVerifiedEmail &&
-        !accessDecision.hasCompletedWelcomeOnboarding &&
-        !isWelcomePath(pathname)
-      ) {
-        setIsCheckingSession(false);
-        router.replace(WELCOME_ENTRY_PATH);
-        return;
-      }
-
-      if (
-        nextSessionState === "authenticated" &&
-        accessDecision.hasCompletedWelcomeOnboarding &&
-        isWelcomePath(pathname)
-      ) {
-        setIsCheckingSession(false);
-        router.replace("/ateneo");
+      if (redirectTarget) {
+        finishAndRedirect(redirectTarget);
         return;
       }
 
@@ -101,7 +62,7 @@ export function SessionGate({ children }: SessionGateProps) {
     return () => {
       isMounted = false;
     };
-  }, [loginPath, pathname, router]);
+  }, [loginPath, pathname]);
 
   if (isCheckingSession || sessionState === "checking") {
     return (

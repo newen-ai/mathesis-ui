@@ -1,11 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { getSessionState } from "@/lib/api/auth";
 
+type RedirectCheckState = {
+  isChecking: boolean;
+  isAuthenticated: boolean;
+};
+
 export function useRedirectIfAuthenticated(destination: string) {
-  const router = useRouter();
+  const pathname = usePathname();
+  const [state, setState] = useState<RedirectCheckState>({
+    isChecking: true,
+    isAuthenticated: false,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -15,8 +24,16 @@ export function useRedirectIfAuthenticated(destination: string) {
       if (!isMounted) return;
 
       if (sessionState === "authenticated") {
-        router.replace(destination);
+        setState({ isChecking: false, isAuthenticated: true });
+
+        if (pathname !== destination) {
+          window.location.replace(destination);
+        }
+
+        return;
       }
+
+      setState({ isChecking: false, isAuthenticated: false });
     };
 
     void verifySession();
@@ -24,5 +41,7 @@ export function useRedirectIfAuthenticated(destination: string) {
     return () => {
       isMounted = false;
     };
-  }, [destination, router]);
+  }, [destination, pathname]);
+
+  return state;
 }

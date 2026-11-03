@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Sora, Spectral } from "next/font/google";
-import Script from "next/script";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { AuthLanguageSwitcher } from "@/components/auth/AuthLanguageSwitcher";
 import { BugReportWidget } from "./(platform)/_components/BugReportWidget";
@@ -35,43 +34,6 @@ export const metadata: Metadata = {
   },
 };
 
-const themeBootstrapScript = `(() => {
-  const isTheme = (value) => value === "light" || value === "dark";
-  const readCookieTheme = () => {
-    const entries = document.cookie.split(";");
-    for (const rawEntry of entries) {
-      const entry = rawEntry.trim();
-      if (!entry.startsWith("${THEME_COOKIE_NAME}=")) {
-        continue;
-      }
-
-      const value = decodeURIComponent(entry.slice("${THEME_COOKIE_NAME}".length + 1));
-      return isTheme(value) ? value : null;
-    }
-
-    return null;
-  };
-
-  const fromStorage = (() => {
-    try {
-      return localStorage.getItem("theme");
-    } catch {
-      return null;
-    }
-  })();
-  const fromCookie = readCookieTheme();
-  const fromSystem = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  const nextTheme = isTheme(fromStorage) ? fromStorage : (fromCookie ?? fromSystem);
-
-  document.documentElement.setAttribute("data-theme", nextTheme);
-
-  try {
-    localStorage.setItem("theme", nextTheme);
-  } catch {}
-
-  document.cookie = "${THEME_COOKIE_NAME}=" + encodeURIComponent(nextTheme) + "; Path=/; Max-Age=31536000; SameSite=Lax";
-})();`;
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -88,9 +50,6 @@ export default async function RootLayout({
       className={`${sora.variable} ${spectral.variable} h-full antialiased`}
     >
       <body className="min-h-full overflow-x-hidden">
-        <Script id="theme-bootstrap" strategy="beforeInteractive">
-          {themeBootstrapScript}
-        </Script>
         <ThemeInitializer />
         <div className="min-h-full overflow-x-hidden">{children}</div>
         <AuthLanguageSwitcher />
