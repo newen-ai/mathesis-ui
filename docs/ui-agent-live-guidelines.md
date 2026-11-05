@@ -246,6 +246,10 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Group picker options must present two text levels (group name + permission hint) and clear selected state contrast.
 - For groups where topic creation is restricted, show a warning indicator with hover tooltip explaining the permission constraint.
 
+## Current Active UI Directions (2026-11-04 Auth Password Inputs)
+- Shared password inputs with visibility toggles must guarantee full-width field rendering so the toggle never renders outside the input container.
+- Auth error text in dark mode must use the semantic danger token with sufficient contrast (avoid fixed Tailwind reds like `text-red-600` on dark surfaces).
+
 ## Current Active UI Directions (2026-09-10 Link Preview Images)
 - Link preview images should display fully (no cropping) using centered contain-fit behavior.
 - Link preview image areas should use a neutral dark/gray backdrop to fill side gaps created by aspect-ratio differences.

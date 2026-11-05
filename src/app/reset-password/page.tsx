@@ -266,7 +266,7 @@ function ResetPasswordContent() {
                   </p>
 
                   {errors.password ? (
-                    <p id="password-error" className="text-sm font-medium text-red-600">
+                    <p id="password-error" className="text-sm font-medium text-[var(--danger-500)]">
                       {errors.password}
                     </p>
                   ) : null}
@@ -296,7 +296,7 @@ function ResetPasswordContent() {
                     }}
                   />
                   {errors.confirmPassword ? (
-                    <p id="confirm-password-error" className="text-sm font-medium text-red-600">
+                    <p id="confirm-password-error" className="text-sm font-medium text-[var(--danger-500)]">
                       {errors.confirmPassword}
                     </p>
                   ) : null}

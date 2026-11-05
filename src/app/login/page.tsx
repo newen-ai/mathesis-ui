@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { SharedBrandedLoginScreen } from "@kenrou/shared-ui";
 import { getSessionAccessDecision, login } from "@/lib/api/auth";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import {
   resolveLoginSuccessRedirect,
   sanitizeLoginNextPath,
@@ -13,63 +14,6 @@ import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticate
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { extractAuthErrorCode, getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
 import { normalizeEmailInput } from "@/lib/utils/email";
-import { buildLoginPasswordInputClassName } from "./login-password-field";
-
-type LoginPasswordFieldProps = {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-  className?: string;
-  placeholder?: string;
-  autoComplete?: string;
-  hasError?: boolean;
-  ariaDescribedBy?: string;
-  showLabel: string;
-  hideLabel: string;
-  showAriaLabel: string;
-  hideAriaLabel: string;
-};
-
-function LoginPasswordField({
-  id,
-  value,
-  onChange,
-  className,
-  placeholder,
-  autoComplete,
-  hasError,
-  ariaDescribedBy,
-  showLabel,
-  hideLabel,
-  showAriaLabel,
-  hideAriaLabel,
-}: LoginPasswordFieldProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  return (
-    <div className="relative">
-      <input
-        id={id}
-        type={isVisible ? "text" : "password"}
-        autoComplete={autoComplete}
-        placeholder={placeholder}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-invalid={hasError}
-        aria-describedby={ariaDescribedBy}
-        className={buildLoginPasswordInputClassName(className)}
-      />
-      <button
-        type="button"
-        onClick={() => setIsVisible((current) => !current)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#7A6435] hover:underline"
-        aria-label={isVisible ? hideAriaLabel : showAriaLabel}
-      >
-        {isVisible ? hideLabel : showLabel}
-      </button>
-    </div>
-  );
-}
 
 function resolveLoginErrorMessage(
   message: string | undefined,
@@ -129,19 +73,25 @@ function LoginPageContent() {
     hasError?: boolean;
     ariaDescribedBy?: string;
   }) => (
-    <LoginPasswordField
+    <PasswordInput
       id={id}
       value={value}
-      onChange={onChange}
+      onChange={(event) => onChange(event.target.value)}
       className={className}
       placeholder={placeholder}
       autoComplete={autoComplete}
-      hasError={hasError}
-      ariaDescribedBy={ariaDescribedBy}
-      showLabel={t("login.showPassword")}
-      hideLabel={t("login.hidePassword")}
-      showAriaLabel={t("login.showPasswordAria")}
-      hideAriaLabel={t("login.hidePasswordAria")}
+      aria-invalid={hasError}
+      aria-describedby={ariaDescribedBy}
+      labels={{
+        show: t("login.showPassword"),
+        hide: t("login.hidePassword"),
+      }}
+      ariaLabels={{
+        show: t("login.showPasswordAria"),
+        hide: t("login.hidePasswordAria"),
+      }}
+      togglePaddingClassName="pr-16"
+      toggleClassName="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#7A6435] hover:underline"
     />
   );
 
