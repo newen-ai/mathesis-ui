@@ -3,17 +3,17 @@ import {
   resolveLoginSuccessRedirect,
   sanitizeLoginNextPath,
 } from "./login-redirect";
-import { WELCOME_ENTRY_PATH } from "@/lib/routes";
+import { HOME_PATH, WELCOME_ENTRY_PATH } from "@/lib/routes";
 
 describe("sanitizeLoginNextPath", () => {
-  it("returns root when next path is null", () => {
-    expect(sanitizeLoginNextPath(null)).toBe("/");
+  it("returns home when next path is null", () => {
+    expect(sanitizeLoginNextPath(null)).toBe(HOME_PATH);
   });
 
-  it("returns root when next path is not internal", () => {
-    expect(sanitizeLoginNextPath("https://example.com")).toBe("/");
-    expect(sanitizeLoginNextPath("//evil.example/path")).toBe("/");
-    expect(sanitizeLoginNextPath("ateneo")).toBe("/");
+  it("returns home when next path is not internal", () => {
+    expect(sanitizeLoginNextPath("https://example.com")).toBe(HOME_PATH);
+    expect(sanitizeLoginNextPath("//evil.example/path")).toBe(HOME_PATH);
+    expect(sanitizeLoginNextPath("ateneo")).toBe(HOME_PATH);
   });
 
   it("keeps safe internal paths", () => {

@@ -11,6 +11,7 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { normalizeEmailInput } from "@/lib/utils/email";
+import { HOME_PATH } from "@/lib/routes";
 
 type ValidationErrors = {
   firstName?: string;
@@ -55,7 +56,7 @@ export default function RegistroPage() {
     details?: string;
   } | null>(null);
 
-  const { isChecking: isCheckingSession, isAuthenticated } = useRedirectIfAuthenticated("/");
+  const { isChecking: isCheckingSession, isAuthenticated } = useRedirectIfAuthenticated(HOME_PATH);
 
   if (isCheckingSession || isAuthenticated) {
     return (

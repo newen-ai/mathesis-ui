@@ -22,6 +22,7 @@ import {
   type CompaniesAdminRow,
   type CompaniesEligibleAdminRow
 } from "@/lib/api/admin";
+import { HOME_PATH } from "@/lib/routes";
 
 type AccessState = "loading" | "allowed" | "denied";
 type ViewMode = "whitelist" | "mensa";
@@ -90,7 +91,7 @@ export default function AdminPage() {
 
       if (decision.sessionState !== "authenticated") {
         setAccessState("denied");
-        router.replace("/");
+        router.replace(HOME_PATH);
         return;
       }
 
@@ -98,7 +99,7 @@ export default function AdminPage() {
 
       if (decision.role !== "admin") {
         setAccessState("denied");
-        router.replace("/");
+        router.replace(HOME_PATH);
         return;
       }
 
