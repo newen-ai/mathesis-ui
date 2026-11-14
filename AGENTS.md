@@ -37,3 +37,9 @@ If these files conflict with task request, document the conflict in `agent-live-
 - In the backend repo, when the only changes are the agent docs (`docs/agent-live-context.md`, `docs/ui-spec-live.md`, `docs/agent-log/`), use the `log-ai:` prefix (for example `log-ai: profile edit split`).
 - Put each commit message in its own fenced code block (```), preceded by the repo name in bold, so the chat UI shows a copy button per message. Do not group several messages in one block.
 - Only suggest; do not commit unless explicitly asked.
+
+## Backend/UI Compatibility (Mandatory)
+- Backend, UI and admin deploy independently (backend via server deploy, UI/admin via Vercel), so for a short window old and new versions run together. Deploy order is backend first, then UI/admin.
+- Every backend change must keep working with the UI/admin currently deployed. Adding endpoints, optional fields or new enum values is compatible; renaming or removing endpoints, fields or enum values, making a field required, or changing a response shape is breaking.
+- Every migration must keep working with the backend code currently deployed (code rollback does not roll back the database). Renames/drops of columns, tables or enum values are breaking.
+- When a change is breaking, say so explicitly in the final reply (what breaks, for which client, and for how long), and propose the two-step alternative: first add the new shape while still accepting the old one, then remove the old one in a later deploy.
