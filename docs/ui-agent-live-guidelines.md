@@ -102,7 +102,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-08-12 Typography)
 - Use the shared global type-scale utility classes for product UI text to prevent ad-hoc size inflation: `.text-scale-1`, `.text-scale-2`, `.text-scale-3`, `.text-scale-4`, `.text-scale-5`.
 - Prefer these classes for new UI work instead of one-off `text-[...]` values unless a screenshot explicitly requires an exception.
-- Base size (2026-11-14): root `html` font-size is `16px` (was `14px`, then `15px`). To resize the whole UI proportionally, change only this root value; do not bump individual type-scale tokens.
+- Base size (2026-11-14): root `html` font-size is `16px` (was `14px`, then `15px`). To resize the whole UI proportionally, change only this root value; do not bump individual type-scale tokens. Never use px font sizes (`text-[Npx]`, `font-size: Npx`) outside this root rule; use rem so everything follows the base.
 - For page composition by default: helper/meta/chips use `text-scale-1`; action labels and compact buttons use `text-scale-2`; body copy uses `text-scale-3`; section headings use `text-scale-4`; page titles use `text-scale-5`.
 
 ## Current Active UI Directions (2026-08-12 Theme Parity)
