@@ -293,3 +293,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-11-14 Ateneo group header)
 - Ateneo group main view: do not render group rules for members (they belong in `/ateneo/groups/:groupId/info`); keep them only in the non-member join view.
 - The group header card mirrors the left-rail active group style: `border-[var(--brand-500)]` + `bg-[color:color-mix(in_srgb,var(--brand-100)_42%,var(--surface))]`.
+
+## Current Active UI Directions (2026-11-14 Ateneo live comments)
+- New comments arriving while a topic is open must never be injected silently: show a reveal button at the insertion point (thread end for replies, list end for new top-level comments) plus a header shortcut; highlight revealed items briefly.
+- Polling must pause while the tab is hidden and must not drop visible comments missing from a poll response.

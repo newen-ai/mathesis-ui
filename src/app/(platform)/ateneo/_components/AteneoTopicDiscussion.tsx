@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -39,6 +39,23 @@ type AteneoTopicDiscussionProps = {
   topicId: string;
 };
 
+const COMMENTS_POLLING_INTERVAL_MS = 15000;
+const RECENTLY_REVEALED_HIGHLIGHT_MS = 2500;
+const NEW_ROOT_THREADS_KEY = "__new-root-threads__";
+
+function NewCommentsButton({ label, onClick, className = "" }: { label: string; onClick: () => void; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 rounded-full border border-[var(--brand-500)] bg-[color:color-mix(in_srgb,var(--brand-100)_42%,var(--surface))] px-3 py-1.5 text-scale-2 font-semibold text-[var(--brand-700)] transition hover:brightness-95 ${className}`}
+    >
+      <span aria-hidden="true">↓</span>
+      {label}
+    </button>
+  );
+}
+
 function FlagIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
@@ -66,6 +83,10 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const [group, setGroup] = useState<AteneoGroup | null>(null);
   const [topic, setTopic] = useState<AteneoTopic | null>(null);
   const [topicComments, setTopicComments] = useState<AteneoComment[]>([]);
+  // New comments found by polling, shown only when the user asks for them.
+  const [pendingComments, setPendingComments] = useState<AteneoComment[]>([]);
+  const [recentlyRevealedIds, setRecentlyRevealedIds] = useState<Set<string>>(() => new Set());
+  const topicCommentsRef = useRef<AteneoComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const [isDeletingTopic, setIsDeletingTopic] = useState(false);
@@ -180,6 +201,68 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     };
   }, [groupId, topicId]);
 
+  useEffect(() => {
+    topicCommentsRef.current = topicComments;
+  }, [topicComments]);
+
+  const isTopicLoaded = Boolean(topic);
+
+  useEffect(() => {
+    if (!isTopicLoaded) {
+      return;
+    }
+
+    let cancelled = false;
+    let isRequestInFlight = false;
+
+    const applyPolledComments = (fetched: AteneoComment[]) => {
+      const fetchedById = new Map(fetched.map((comment) => [comment.id, comment]));
+      const visibleIds = new Set(topicCommentsRef.current.map((comment) => comment.id));
+
+      // Already visible comments are refreshed in place (reactions, moderation placeholders).
+      // Visible comments missing from the response are kept: a poll that started before the
+      // user's own post resolves without it, and dropping it would make it flicker away.
+      setTopicComments((current) => current.map((comment) => fetchedById.get(comment.id) ?? comment));
+      setPendingComments(fetched.filter((comment) => !visibleIds.has(comment.id)));
+    };
+
+    const poll = async () => {
+      if (document.visibilityState !== "visible" || isRequestInFlight) {
+        return;
+      }
+
+      isRequestInFlight = true;
+      try {
+        const response = await listAteneoTopicComments(groupId, topicId);
+        if (!cancelled) {
+          applyPolledComments(response.data.comments);
+        }
+      } catch {
+        // Polling is best-effort; the next tick retries.
+      } finally {
+        isRequestInFlight = false;
+      }
+    };
+
+    const intervalId = window.setInterval(() => {
+      void poll();
+    }, COMMENTS_POLLING_INTERVAL_MS);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void poll();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [groupId, topicId, isTopicLoaded]);
+
   const isPostValued = topic?.currentUserReactionValue === "value";
   const canDeleteTopic = Boolean(topic && sessionUserId && topic.author.userId === sessionUserId);
   const canModerateTopic = Boolean(topic && group?.isAdmin && sessionUserId && topic.author.userId !== sessionUserId);
@@ -229,6 +312,86 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
     return result;
   }, [commentsById, topicComments]);
+
+  // Pending comments grouped by where they will be inserted: an existing thread root, or the end of the list.
+  const pendingByInsertionPoint = useMemo(() => {
+    const allById = new Map<string, AteneoComment>();
+    [...topicComments, ...pendingComments].forEach((comment) => allById.set(comment.id, comment));
+
+    const resolveRootId = (comment: AteneoComment) => {
+      let cursor = comment;
+      const visited = new Set<string>();
+
+      while (cursor.parentCommentId && !visited.has(cursor.id)) {
+        visited.add(cursor.id);
+        const parent = allById.get(cursor.parentCommentId);
+        if (!parent) {
+          return cursor.parentCommentId;
+        }
+        cursor = parent;
+      }
+
+      return cursor.id;
+    };
+
+    const grouped = new Map<string, AteneoComment[]>();
+    pendingComments
+      .filter((comment) => !commentsById.has(comment.id))
+      .forEach((comment) => {
+        const rootId = resolveRootId(comment);
+        const key = commentsById.has(rootId) ? rootId : NEW_ROOT_THREADS_KEY;
+        grouped.set(key, [...(grouped.get(key) ?? []), comment]);
+      });
+
+    return grouped;
+  }, [commentsById, pendingComments, topicComments]);
+
+  const pendingCommentsCount = useMemo(
+    () => Array.from(pendingByInsertionPoint.values()).reduce((total, items) => total + items.length, 0),
+    [pendingByInsertionPoint]
+  );
+
+  // Index of the last rendered comment of each thread -> that thread root id.
+  const threadEndRootIdByIndex = useMemo(() => {
+    const result = new Map<number, string>();
+    let currentRootId: string | null = null;
+
+    orderedComments.forEach((comment, index) => {
+      if (!comment.parentCommentId) {
+        currentRootId = comment.id;
+      }
+
+      const next = orderedComments[index + 1];
+      if (currentRootId && (!next || !next.parentCommentId)) {
+        result.set(index, currentRootId);
+      }
+    });
+
+    return result;
+  }, [orderedComments]);
+
+  const revealPendingComments = (insertionKeys: string[] | "all") => {
+    const toReveal =
+      insertionKeys === "all"
+        ? Array.from(pendingByInsertionPoint.values()).flat()
+        : insertionKeys.flatMap((key) => pendingByInsertionPoint.get(key) ?? []);
+
+    if (toReveal.length === 0) {
+      return;
+    }
+
+    const revealedIds = new Set(toReveal.map((comment) => comment.id));
+    const sortedToReveal = [...toReveal].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    setTopicComments((current) => [...current, ...sortedToReveal.filter((comment) => !current.some((item) => item.id === comment.id))]);
+    setPendingComments((current) => current.filter((comment) => !revealedIds.has(comment.id)));
+    setRecentlyRevealedIds(revealedIds);
+    window.setTimeout(() => {
+      setRecentlyRevealedIds((current) => (current === revealedIds ? new Set() : current));
+    }, RECENTLY_REVEALED_HIGHLIGHT_MS);
+  };
 
   const topicImageAttachments = useMemo(
     () =>
@@ -765,6 +928,12 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           <h4 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
             Comentarios
           </h4>
+          {pendingCommentsCount > 0 ? (
+            <NewCommentsButton
+              label={pendingCommentsCount === 1 ? "1 comentario nuevo" : `${pendingCommentsCount} comentarios nuevos`}
+              onClick={() => revealPendingComments("all")}
+            />
+          ) : null}
         </div>
 
         {canComment && openReplyFor === "new-comment" && (
@@ -794,161 +963,190 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
         )}
 
         <div className="mt-4 space-y-3">
-          {orderedComments.map((comment) => (
-            <div
-              key={comment.id}
-              className={`rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3 ${comment.parentCommentId ? "ml-6" : ""}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-full text-left">
+          {orderedComments.map((comment, index) => {
+            const threadEndRootId = threadEndRootIdByIndex.get(index);
+            const pendingThreadReplies = threadEndRootId ? pendingByInsertionPoint.get(threadEndRootId) ?? [] : [];
+
+            return (
+              <Fragment key={comment.id}>
+                <div
+                  className={`rounded-xl border bg-[var(--surface-2)] p-3 transition-colors duration-700 ${
+                    recentlyRevealedIds.has(comment.id) ? "border-[var(--brand-500)]" : "border-[var(--line)]"
+                  } ${comment.parentCommentId ? "ml-6" : ""}`}
+                >
                   <div className="flex items-start gap-3">
-                    <UserAvatar
-                      imageUrl={comment.isDeletedPlaceholder ? null : comment.author.profileImageUrl}
-                      initials={comment.isDeletedPlaceholder ? "?" : comment.author.initials}
-                      label={`Foto de perfil de ${fullName(comment)}`}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
-                      initialsClassName="text-xs font-bold text-[var(--surface)]"
-                    />
+                    <div className="w-full text-left">
+                      <div className="flex items-start gap-3">
+                        <UserAvatar
+                          imageUrl={comment.isDeletedPlaceholder ? null : comment.author.profileImageUrl}
+                          initials={comment.isDeletedPlaceholder ? "?" : comment.author.initials}
+                          label={`Foto de perfil de ${fullName(comment)}`}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+                          initialsClassName="text-xs font-bold text-[var(--surface)]"
+                        />
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className={`font-semibold ${comment.isDeletedPlaceholder ? "text-[var(--text-secondary)]" : "text-[var(--heading-primary)]"}`}>
-                          {fullName(comment)}
-                        </p>
-                        <span className="text-scale-1 text-[var(--text-secondary)]">{comment.timeLabel}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className={`font-semibold ${comment.isDeletedPlaceholder ? "text-[var(--text-secondary)]" : "text-[var(--heading-primary)]"}`}>
+                              {fullName(comment)}
+                            </p>
+                            <span className="text-scale-1 text-[var(--text-secondary)]">{comment.timeLabel}</span>
+                          </div>
+                          <LinkifiedText
+                            text={comment.content}
+                            className={`mt-1 whitespace-pre-wrap text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}
+                            linkClassName="sophium-link-accent underline underline-offset-2"
+                          />
+                          {!comment.isDeletedPlaceholder ? <LinkPreviewList text={comment.content} className="mt-3 grid gap-2" /> : null}
+                        </div>
                       </div>
-                      <LinkifiedText
-                        text={comment.content}
-                        className={`mt-1 whitespace-pre-wrap text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}
-                        linkClassName="sophium-link-accent underline underline-offset-2"
-                      />
-                      {!comment.isDeletedPlaceholder ? <LinkPreviewList text={comment.content} className="mt-3 grid gap-2" /> : null}
                     </div>
-                  </div>
-                </div>
 
-                {!comment.isDeletedPlaceholder ? (
-                  <div className="relative shrink-0" data-ateneo-overflow-root="true">
-                    <button
-                      type="button"
-                      aria-label="Más opciones para comentario"
-                      onClick={() => setReportOpenFor((current) => (current === comment.id ? null : comment.id))}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-lg text-[var(--text-secondary)]"
-                    >
-                      ⋯
-                    </button>
-
-                    {reportOpenFor === comment.id && (
-                      <div className="absolute right-0 top-10 z-10 min-w-[120px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
+                    {!comment.isDeletedPlaceholder ? (
+                      <div className="relative shrink-0" data-ateneo-overflow-root="true">
                         <button
                           type="button"
-                          onClick={() => {
-                            toast.info("Comentario reportado");
-                            setReportOpenFor(null);
-                          }}
-                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                          aria-label="Más opciones para comentario"
+                          onClick={() => setReportOpenFor((current) => (current === comment.id ? null : comment.id))}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-lg text-[var(--text-secondary)]"
                         >
-                          <span className="text-[var(--danger-500)]">
-                            <FlagIcon />
-                          </span>
-                          <span className="text-[var(--danger-500)]">Denunciar</span>
+                          ⋯
                         </button>
 
-                        {canKickTarget(comment.author.userId) ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setKickTarget({
-                                userId: comment.author.userId,
-                                name: fullName(comment),
-                                sourceContext: "COMMENT",
-                                sourceCommentId: comment.id
-                              });
-                            }}
-                            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
-                          >
-                            <span>Expulsar usuario</span>
-                          </button>
-                        ) : null}
+                        {reportOpenFor === comment.id && (
+                          <div className="absolute right-0 top-10 z-10 min-w-[120px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                toast.info("Comentario reportado");
+                                setReportOpenFor(null);
+                              }}
+                              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                            >
+                              <span className="text-[var(--danger-500)]">
+                                <FlagIcon />
+                              </span>
+                              <span className="text-[var(--danger-500)]">Denunciar</span>
+                            </button>
 
-                        {group?.isAdmin ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setModerationTarget({
-                                kind: "comment",
-                                commentId: comment.id,
-                                authorName: fullName(comment)
-                              });
-                            }}
-                            className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
-                          >
-                            <span>Retirar comentario</span>
-                          </button>
-                        ) : null}
+                            {canKickTarget(comment.author.userId) ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setKickTarget({
+                                    userId: comment.author.userId,
+                                    name: fullName(comment),
+                                    sourceContext: "COMMENT",
+                                    sourceCommentId: comment.id
+                                  });
+                                }}
+                                className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                              >
+                                <span>Expulsar usuario</span>
+                              </button>
+                            ) : null}
+
+                            {group?.isAdmin ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setModerationTarget({
+                                    kind: "comment",
+                                    commentId: comment.id,
+                                    authorName: fullName(comment)
+                                  });
+                                }}
+                                className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                              >
+                                <span>Retirar comentario</span>
+                              </button>
+                            ) : null}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
 
-              {!comment.isDeletedPlaceholder ? (
-                <div className="mt-3 flex items-center gap-2">
-                  {canComment ? (
-                    <button
-                      type="button"
-                      onClick={() => startReplyFor(comment.id, fullName(comment))}
-                      className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
-                    >
-                      Responder
-                    </button>
+                  {!comment.isDeletedPlaceholder ? (
+                    <div className="mt-3 flex items-center gap-2">
+                      {canComment ? (
+                        <button
+                          type="button"
+                          onClick={() => startReplyFor(comment.id, fullName(comment))}
+                          className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
+                        >
+                          Responder
+                        </button>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => toggleCommentValue(comment.id)}
+                        className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
+                          valuedComments[comment.id]
+                            ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
+                            : "border-[var(--line)] bg-[var(--surface)] text-[var(--brand-700)]"
+                        }`}
+                      >
+                        {valuedComments[comment.id] ? "Valorado" : "Valorar"}
+                      </button>
+                    </div>
                   ) : null}
 
-                  <button
-                    type="button"
-                    onClick={() => toggleCommentValue(comment.id)}
-                    className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
-                      valuedComments[comment.id]
-                        ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
-                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--brand-700)]"
-                    }`}
-                  >
-                    {valuedComments[comment.id] ? "Valorado" : "Valorar"}
-                  </button>
+                  {canComment && !comment.isDeletedPlaceholder && openReplyFor === comment.id && (
+                    <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3">
+                      <textarea
+                        autoFocus
+                        ref={(element) => {
+                          replyTextareaRefs.current[comment.id] = element;
+                        }}
+                        value={replyDraft[comment.id] ?? ""}
+                        onChange={(event) =>
+                          setReplyDraft((current) => ({
+                            ...current,
+                            [comment.id]: event.target.value,
+                          }))
+                        }
+                        rows={3}
+                        placeholder="Responder a este comentario…"
+                        className="w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-scale-3 text-[var(--text-primary)] outline-none ring-0 placeholder:text-[var(--text-secondary)]"
+                      />
+                      <div className="mt-3 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleReplySubmit(comment.id)}
+                          className="rounded-full bg-[var(--brand-700)] px-4 py-2 text-scale-2 font-semibold text-[var(--surface)]"
+                        >
+                          Publicar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : null}
 
-              {canComment && !comment.isDeletedPlaceholder && openReplyFor === comment.id && (
-                <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3">
-                  <textarea
-                    autoFocus
-                    ref={(element) => {
-                      replyTextareaRefs.current[comment.id] = element;
-                    }}
-                    value={replyDraft[comment.id] ?? ""}
-                    onChange={(event) =>
-                      setReplyDraft((current) => ({
-                        ...current,
-                        [comment.id]: event.target.value,
-                      }))
-                    }
-                    rows={3}
-                    placeholder="Responder a este comentario…"
-                    className="w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-scale-3 text-[var(--text-primary)] outline-none ring-0 placeholder:text-[var(--text-secondary)]"
-                  />
-                  <div className="mt-3 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleReplySubmit(comment.id)}
-                      className="rounded-full bg-[var(--brand-700)] px-4 py-2 text-scale-2 font-semibold text-[var(--surface)]"
-                    >
-                      Publicar
-                    </button>
+                {threadEndRootId && pendingThreadReplies.length > 0 ? (
+                  <div className="ml-6">
+                    <NewCommentsButton
+                      label={pendingThreadReplies.length === 1 ? "Ver 1 respuesta nueva" : `Ver ${pendingThreadReplies.length} respuestas nuevas`}
+                      onClick={() => revealPendingComments([threadEndRootId])}
+                    />
                   </div>
-                </div>
-              )}
+                ) : null}
+              </Fragment>
+            );
+          })}
+
+          {(pendingByInsertionPoint.get(NEW_ROOT_THREADS_KEY)?.length ?? 0) > 0 ? (
+            <div className="flex justify-center">
+              <NewCommentsButton
+                label={(() => {
+                  const count = pendingByInsertionPoint.get(NEW_ROOT_THREADS_KEY)?.length ?? 0;
+                  return count === 1 ? "Ver 1 comentario nuevo" : `Ver ${count} comentarios nuevos`;
+                })()}
+                onClick={() => revealPendingComments([NEW_ROOT_THREADS_KEY])}
+              />
             </div>
-          ))}
+          ) : null}
         </div>
       </section>
 
