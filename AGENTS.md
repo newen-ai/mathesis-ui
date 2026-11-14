@@ -30,3 +30,10 @@ If these files conflict with task request, document the conflict in `agent-live-
 - Pre-approved verification commands include: npm run lint, npm run typecheck, npm run build, npm test.
 - Agents should still avoid destructive or state-changing commands unless explicitly requested (for example: database reset, hard git reset, force push).
 <!-- END:nextjs-agent-rules -->
+
+## Commit Message Suggestions (Mandatory)
+- When finishing a task, end the final reply with a suggested commit message for each repo that has changes (backend, ui, admin), one per repo, labeled by repo name.
+- Format: Conventional Commits, single line, lowercase, short (for example `fix: profile edit drafts`, `feat: ...`, `chore: ...`).
+- In the backend repo, when the only changes are the agent docs (`docs/agent-live-context.md`, `docs/ui-spec-live.md`, `docs/agent-log/`), use the `log-ai:` prefix (for example `log-ai: profile edit split`).
+- Put each commit message in its own fenced code block (```), preceded by the repo name in bold, so the chat UI shows a copy button per message. Do not group several messages in one block.
+- Only suggest; do not commit unless explicitly asked.

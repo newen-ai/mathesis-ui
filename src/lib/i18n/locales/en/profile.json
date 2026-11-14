@@ -83,6 +83,7 @@
       "profilePreview": "Profile preview"
     },
     "actions": {
+      "editProfile": "Edit profile",
       "changeBanner": "Change banner",
       "viewProfile": "View profile",
       "blocking": "Blocking...",

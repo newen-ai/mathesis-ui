@@ -83,6 +83,7 @@
       "profilePreview": "Previsualización de perfil"
     },
     "actions": {
+      "editProfile": "Editar perfil",
       "changeBanner": "Cambiar banner",
       "viewProfile": "Ver perfil",
       "blocking": "Bloqueando...",

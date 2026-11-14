@@ -16,7 +16,8 @@ import { TopBar } from "../TopBar";
 import { EducationCard } from "./EducationCard";
 import { ExperienceCard } from "./ExperienceCard";
 import { InteresesCard } from "./InteresesCard";
-import { ProfileFormCard } from "./ProfileFormCard";
+import { ProfileAboutCard } from "./ProfileAboutCard";
+import { ProfileBasicInfoModal } from "./ProfileBasicInfoModal";
 import { ProfileInitializationView } from "./ProfileInitializationView";
 
 const AVATAR_PREVIEW_SIZE = 220;
@@ -192,6 +193,7 @@ export function ProfileView() {
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [blockReasonNote, setBlockReasonNote] = useState("");
   const [isBlockingUser, setIsBlockingUser] = useState(false);
+  const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const bannerDragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const avatarTouchRef = useRef<TouchGestureState | null>(null);
@@ -804,6 +806,18 @@ export function ProfileView() {
                   <button
                     type="button"
                     onClick={() => {
+                      clearProfileSaveError();
+                      setIsBasicInfoModalOpen(true);
+                    }}
+                    disabled={isProfileLoading}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
+                  >
+                    <span aria-hidden="true">✎</span>
+                    {t("profileView.actions.editProfile")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       if (!currentUserId) {
                         return;
                       }
@@ -902,11 +916,10 @@ export function ProfileView() {
         </section>
 
         <section className="sophium-fade-up-delay sophium-profile-stack space-y-2">
-          <ProfileFormCard
+          <ProfileAboutCard
             profile={profile}
             canEdit={canEditProfile}
             isEditingMode={activeEditSection === "profile"}
-            profileCompletion={profileCompletion}
             isLoading={isProfileLoading}
             isSaving={isSavingProfile}
             saveError={profileSaveError}
@@ -1141,6 +1154,20 @@ export function ProfileView() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {canEditProfile && isBasicInfoModalOpen ? (
+        <ProfileBasicInfoModal
+          profile={profile}
+          profileCompletion={profileCompletion}
+          isSaving={isSavingProfile}
+          saveError={profileSaveError}
+          onSave={onSaveProfile}
+          onClose={() => {
+            clearProfileSaveError();
+            setIsBasicInfoModalOpen(false);
+          }}
+        />
       ) : null}
 
       {isBlockModalOpen ? (
