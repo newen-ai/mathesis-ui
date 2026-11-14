@@ -57,10 +57,10 @@
     "toneLabel": "Topic tone (optional, indicative)",
     "tones": {
       "serio": "SERIOUS",
-      "recomendado": "RECOMMENDED",
+      "mix": "MIX",
       "libre": "OPEN"
     },
-    "toneHint": "Indicative only: this does not change moderation or the real Sermonio reactions.",
+    "toneHint": "Indicative only: this does not change moderation or the real Seriometer from reactions.",
     "closeGroupPickerAria": "Close group picker",
     "chooseGroupTitle": "Choose group",
     "closePickerAria": "Close picker",
