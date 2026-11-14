@@ -83,7 +83,8 @@ body:has([data-welcome-scroll-lock]) {
 }
 
 html {
-  font-size: 14px;
+  /* Root of the whole type scale: every rem-based size (type-scale tokens, text-[..rem], Tailwind) scales from here. */
+  font-size: 16px;
 }
 
 :root {
