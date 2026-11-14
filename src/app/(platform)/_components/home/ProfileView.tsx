@@ -207,6 +207,7 @@ export function ProfileView() {
     activeProfileId,
     currentUserId,
     canEditProfile,
+    isViewingOwnProfileAsMember,
     profileCompletion,
     isProfileLoading,
     isSavingProfile,
@@ -841,7 +842,7 @@ export function ProfileView() {
                       <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
-                    {t("profileView.actions.viewProfile")}
+                    {t("profileView.actions.viewAsMember")}
                   </button>
                   <button
                     type="button"
@@ -851,6 +852,15 @@ export function ProfileView() {
                     ···
                   </button>
                 </div>
+              ) : isViewingOwnProfileAsMember ? (
+                <button
+                  type="button"
+                  onClick={() => router.push("/perfil")}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
+                >
+                  <span aria-hidden="true">✎</span>
+                  {t("profileView.actions.backToEditMode")}
+                </button>
               ) : activeProfileId ? (
                 <div ref={headerActionsContainerRef} className="relative z-40">
                   <button

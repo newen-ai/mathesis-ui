@@ -212,12 +212,9 @@ export const useProfessionalProfile = () => {
         badges: (remoteProfile.badges ?? []).map((badge) => badge.slug),
       }));
 
-      if (selectedUserId) {
-        setCurrentUserId(null);
-      } else {
-        const ownUserId = await getMyProfileIdentity(signal);
-        setCurrentUserId(ownUserId);
-      }
+      // Always resolved so a member-view of the own profile (`?userId=<own id>`) can be detected.
+      const ownUserId = await getMyProfileIdentity(signal);
+      setCurrentUserId(ownUserId);
 
       setNeedsProfileInitialization(false);
       setIsProfileUnavailable(false);
@@ -449,6 +446,7 @@ export const useProfessionalProfile = () => {
     activeProfileId: selectedUserId,
     currentUserId,
     canEditProfile,
+    isViewingOwnProfileAsMember: Boolean(selectedUserId) && selectedUserId === currentUserId,
     profileCompletion,
     isProfileLoading,
     isSavingProfile,

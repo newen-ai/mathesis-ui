@@ -85,7 +85,8 @@
     "actions": {
       "editProfile": "Edit profile",
       "changeBanner": "Change banner",
-      "viewProfile": "View profile",
+      "viewAsMember": "View as member",
+      "backToEditMode": "Back to edit mode",
       "blocking": "Blocking...",
       "block": "Block",
       "report": "Report",
