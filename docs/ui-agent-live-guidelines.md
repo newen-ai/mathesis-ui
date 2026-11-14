@@ -95,6 +95,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-08-12)
 - In perfil header, render zero or more badge chips below the display name from backend-provided active badges.
 - Perfil editing split (2026-11-14): the `Acerca de` card edit mode shows only the about textarea; profile base data (name, surname, birth date, nationality, headline, current company, location) is edited from an `Editar perfil` header button (own profile) that opens a modal. Edit drafts must be seeded from the latest loaded profile when editing opens, never at component mount.
+- Perfil edit overlays (2026-11-14): all perfil section edits use `ProfileEditModal` (portal, z above mobile footer, bottom sheet on mobile). Cards stay read-only. Long content collapses with `ProfileCollapsibleText` (toggle only on real overflow) and `ProfileShowAllToggle` for long lists (3 items for experience/education, 12 chips for interests).
 - Badge chip label must be generated from slug: split by underscore, replace underscores with spaces, and capitalize first letter of each word.
 - Badge chips must include the integral sign prefix `∫` before the formatted badge label, except `Mensa Argentina`, which uses the shared logo asset with the same visual size as the previous prefix glyph.
 

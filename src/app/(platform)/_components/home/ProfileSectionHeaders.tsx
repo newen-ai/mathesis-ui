@@ -1,37 +1,10 @@
 import { useTranslation } from "react-i18next";
 
-type EditingSectionHeaderProps = {
-  title: string;
-  onBack: () => void;
-  isSaving: boolean;
-};
-
 type ReadOnlySectionHeaderProps = {
   title: string;
   canEdit: boolean;
   onEdit: () => void;
 };
-
-export function EditingSectionHeader({ title, onBack, isSaving }: EditingSectionHeaderProps) {
-  const { t } = useTranslation("profile");
-
-  return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        onClick={onBack}
-        disabled={isSaving}
-        className="text-[1.25rem] leading-none text-[var(--navy-900)] disabled:opacity-60"
-        aria-label={t("common.back")}
-      >
-        ‹
-      </button>
-      <h3 className="font-[family-name:var(--font-spectral)] text-[2rem] font-semibold text-[var(--navy-900)]">
-        {title}
-      </h3>
-    </div>
-  );
-}
 
 export function ReadOnlySectionHeader({ title, canEdit, onEdit }: ReadOnlySectionHeaderProps) {
   const { t } = useTranslation("profile");

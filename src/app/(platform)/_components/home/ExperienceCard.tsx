@@ -3,11 +3,18 @@ import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import type { Experience, ExperienceDraft } from "../../_lib/types";
 import type { WorkExperienceOperation } from "@/lib/api/profile";
-import { EditingSectionHeader, ReadOnlySectionHeader } from "./ProfileSectionHeaders";
-import { ProfileCollapsibleDescription } from "./ProfileCollapsibleDescription";
-import { ProfileSectionAddButton, ProfileSectionFinalizeRow } from "./ProfileSectionEditActions";
+import { ReadOnlySectionHeader } from "./ProfileSectionHeaders";
+import { ProfileCollapsibleText, ProfileShowAllToggle } from "./ProfileCollapsibleText";
+import {
+  ProfileEditModal,
+  ProfileModalError,
+  ProfileModalPrimaryButton,
+  ProfileModalSecondaryButton,
+} from "./ProfileEditModal";
 import { isFutureMonthForYear } from "./ProfileSectionDateUtils";
 import { ProfileYearMonthRangeFields } from "./ProfileYearMonthRangeFields";
+
+const COLLAPSED_ITEMS_COUNT = 3;
 
 const emptyDraft: ExperienceDraft = {
   puestoTrabajo: "",
@@ -54,7 +61,7 @@ export function ExperienceCard({
   const [endMonth, setEndMonth] = useState("");
   const [endYear, setEndYear] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+  const [isShowingAll, setIsShowingAll] = useState(false);
 
   const isExperienceManagerMode = canEdit && isEditingMode;
 
@@ -268,167 +275,15 @@ export function ExperienceCard({
     onCloseEditing();
   };
 
-  const toggleDescription = (id: string) => {
-    setExpandedDescriptions((current) => ({
-      ...current,
-      [id]: !current[id],
-    }));
-  };
-
   const listItems = experiences;
 
-  if (isExperienceManagerMode) {
-    return (
-      <AppCard className="px-3 py-3 sm:px-4 sm:py-4">
-        <EditingSectionHeader title={t("experience.title")} onBack={onCloseManager} isSaving={isSaving} />
+  const onBackToList = () => {
+    resetDraft();
+    setDraftError(null);
+    setIsFormOpen(false);
+  };
 
-        <ProfileSectionAddButton label={t("experience.add")} onClick={onStartAdding} isSaving={isSaving} />
-
-        {listItems.length > 0 ? (
-          <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
-            {listItems.map((item, index) => (
-              <div
-                key={item.id}
-                className={`flex items-center justify-between px-4 py-5 ${index < listItems.length - 1 ? "border-b border-[var(--line)]" : ""}`}
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-[1.2rem] leading-none text-[var(--text-soft)]">⋮⋮</span>
-                  <div>
-                    <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
-                    <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)]">
-                      {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="ml-4 flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => onEditExperience(item)}
-                    disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-[var(--text-soft)] hover:text-[var(--navy-900)]"
-                    aria-label={t("experience.aria.edit")}
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteExperience(item.id)}
-                    disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-[var(--danger-500)] hover:opacity-85"
-                    aria-label={t("experience.aria.delete")}
-                  >
-                    🗑
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">{t("experience.empty")}</p>
-        )}
-
-        {isFormOpen ? (
-          <form onSubmit={onSubmitExperience} className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h4 className="text-[0.8rem] font-semibold text-[var(--navy-900)]">
-                {editingId ? t("experience.editTitle") : t("experience.new")}
-              </h4>
-              <button
-                type="button"
-                onClick={() => {
-                  resetDraft();
-                  setDraftError(null);
-                  setIsFormOpen(false);
-                }}
-                className="text-[0.66rem] font-semibold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
-              >
-                {t("common.close")}
-              </button>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="sophium-field sm:col-span-1">
-                {t("experience.labels.workplace")}
-                <input
-                  name="lugarTrabajo"
-                  value={draft.lugarTrabajo}
-                  onChange={onDraftChange}
-                  placeholder={t("experience.placeholders.workplace")}
-                />
-              </label>
-
-              <label className="sophium-field sm:col-span-1">
-                {t("experience.labels.jobTitle")}
-                <input
-                  name="puestoTrabajo"
-                  value={draft.puestoTrabajo}
-                  onChange={onDraftChange}
-                  placeholder={t("experience.placeholders.jobTitle")}
-                />
-              </label>
-
-              <ProfileYearMonthRangeFields
-                startLabel={t("experience.labels.startDate")}
-                endLabel={t("experience.labels.endDate")}
-                currentLabel={t("experience.labels.currentlyWorking")}
-                currentChecked={draft.trabajoActual}
-                startMonth={startMonth}
-                startYear={startYear}
-                endMonth={endMonth}
-                endYear={endYear}
-                onStartMonthChange={onStartMonthChange}
-                onStartYearChange={onStartYearChange}
-                onEndMonthChange={onEndMonthChange}
-                onEndYearChange={onEndYearChange}
-                onCurrentChange={onCurrentWorkingChange}
-              />
-
-              <label className="sophium-field sm:col-span-2">
-                {t("experience.labels.description")}
-                <textarea
-                  name="descripcion"
-                  value={draft.descripcion}
-                  onChange={onDraftChange}
-                  maxLength={300}
-                  rows={4}
-                />
-                <span className="text-right text-xs text-[var(--text-soft)]">{draft.descripcion.length}/300</span>
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
-            >
-              {editingId ? t("experience.update") : t("experience.addAction")}
-            </button>
-
-            {draftError ? (
-              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-                {draftError}
-              </p>
-            ) : null}
-          </form>
-        ) : null}
-
-        {saveError ? (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-            {saveError}
-          </p>
-        ) : null}
-
-        {!saveError && draftError && !isFormOpen ? (
-          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-            {draftError}
-          </p>
-        ) : null}
-
-        <ProfileSectionFinalizeRow onFinalize={onCloseManager} isSaving={isSaving} />
-      </AppCard>
-    );
-  }
+  const visibleItems = isShowingAll ? listItems : listItems.slice(0, COLLAPSED_ITEMS_COUNT);
 
   return (
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
@@ -438,35 +293,183 @@ export function ExperienceCard({
         {listItems.length === 0 ? (
           <p className="text-[0.7rem] text-[var(--text-secondary)]">{t("experience.empty")}</p>
         ) : (
-          <ul>
-            {listItems.map((item) => (
-              <li
-                key={item.id}
-                className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
-              >
-                <div>
-                  <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
-                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)]">
+          <>
+            <ul>
+              {visibleItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
+                >
+                  <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)] [overflow-wrap:anywhere]">{item.puestoTrabajo}</p>
+                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)] [overflow-wrap:anywhere]">
                     {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
                     {defaultLocation?.trim() ? ` · ${defaultLocation.trim()}` : ""}
                   </p>
-                  <ProfileCollapsibleDescription
+                  <ProfileCollapsibleText
                     text={item.descripcion}
-                    isExpanded={Boolean(expandedDescriptions[item.id])}
-                    onToggle={() => toggleDescription(item.id)}
+                    lines={3}
+                    className="mt-2 text-[0.64rem] leading-[1.5] text-[var(--text-secondary)]"
                   />
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+            <ProfileShowAllToggle
+              hiddenCount={listItems.length - COLLAPSED_ITEMS_COUNT}
+              isShowingAll={isShowingAll}
+              onToggle={() => setIsShowingAll((current) => !current)}
+            />
+          </>
         )}
-
-        {saveError ? (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-            {saveError}
-          </p>
-        ) : null}
       </div>
+
+      {isExperienceManagerMode ? (
+        <ProfileEditModal
+          title={isFormOpen ? (editingId ? t("experience.editTitle") : t("experience.new")) : t("experience.title")}
+          onClose={onCloseManager}
+          isBusy={isSaving}
+          headerStart={
+            isFormOpen ? (
+              <button
+                type="button"
+                onClick={onBackToList}
+                disabled={isSaving}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[1.4rem] leading-none text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:opacity-60"
+                aria-label={t("common.back")}
+              >
+                ‹
+              </button>
+            ) : null
+          }
+          footer={
+            isFormOpen ? (
+              <>
+                <ProfileModalSecondaryButton onClick={onBackToList} disabled={isSaving}>
+                  {t("common.cancel")}
+                </ProfileModalSecondaryButton>
+                <ProfileModalPrimaryButton type="submit" form="experience-edit-form" disabled={isSaving}>
+                  {isSaving ? t("common.saving") : editingId ? t("experience.update") : t("experience.addAction")}
+                </ProfileModalPrimaryButton>
+              </>
+            ) : (
+              <ProfileModalPrimaryButton onClick={onCloseManager} disabled={isSaving}>
+                {t("common.finalize")}
+              </ProfileModalPrimaryButton>
+            )
+          }
+        >
+          {isFormOpen ? (
+            <form id="experience-edit-form" onSubmit={onSubmitExperience}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="sophium-field sm:col-span-1">
+                  {t("experience.labels.workplace")}
+                  <input
+                    name="lugarTrabajo"
+                    value={draft.lugarTrabajo}
+                    onChange={onDraftChange}
+                    placeholder={t("experience.placeholders.workplace")}
+                  />
+                </label>
+
+                <label className="sophium-field sm:col-span-1">
+                  {t("experience.labels.jobTitle")}
+                  <input
+                    name="puestoTrabajo"
+                    value={draft.puestoTrabajo}
+                    onChange={onDraftChange}
+                    placeholder={t("experience.placeholders.jobTitle")}
+                  />
+                </label>
+
+                <ProfileYearMonthRangeFields
+                  startLabel={t("experience.labels.startDate")}
+                  endLabel={t("experience.labels.endDate")}
+                  currentLabel={t("experience.labels.currentlyWorking")}
+                  currentChecked={draft.trabajoActual}
+                  startMonth={startMonth}
+                  startYear={startYear}
+                  endMonth={endMonth}
+                  endYear={endYear}
+                  onStartMonthChange={onStartMonthChange}
+                  onStartYearChange={onStartYearChange}
+                  onEndMonthChange={onEndMonthChange}
+                  onEndYearChange={onEndYearChange}
+                  onCurrentChange={onCurrentWorkingChange}
+                />
+
+                <label className="sophium-field sm:col-span-2">
+                  {t("experience.labels.description")}
+                  <textarea
+                    name="descripcion"
+                    value={draft.descripcion}
+                    onChange={onDraftChange}
+                    maxLength={300}
+                    rows={4}
+                  />
+                  <span className="text-right text-xs text-[var(--text-soft)]">{draft.descripcion.length}/300</span>
+                </label>
+              </div>
+
+              <ProfileModalError message={draftError} tone="warning" />
+              <ProfileModalError message={saveError} />
+            </form>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onStartAdding}
+                disabled={isSaving}
+                className="inline-flex items-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-sm font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)] disabled:opacity-60"
+              >
+                {t("experience.add")}
+              </button>
+
+              {listItems.length > 0 ? (
+                <ul className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)]">
+                  {listItems.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3 last:border-b-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
+                        <p className="mt-[0.1rem] truncate text-[0.62rem] text-[var(--text-soft)]">
+                          {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onEditExperience(item)}
+                          disabled={isSaving}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[1rem] leading-none text-[var(--text-soft)] transition hover:bg-[var(--surface-2)] hover:text-[var(--navy-900)] disabled:opacity-60"
+                          aria-label={t("experience.aria.edit")}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteExperience(item.id)}
+                          disabled={isSaving}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[1rem] leading-none text-[var(--danger-500)] transition hover:bg-[var(--surface-2)] disabled:opacity-60"
+                          aria-label={t("experience.aria.delete")}
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-[0.7rem] text-[var(--text-secondary)]">{t("experience.empty")}</p>
+              )}
+
+              <ProfileModalError message={draftError} tone="warning" />
+              <ProfileModalError message={saveError} />
+            </>
+          )}
+        </ProfileEditModal>
+      ) : null}
     </AppCard>
   );
 }

@@ -20,6 +20,8 @@ import { ProfileAboutCard } from "./ProfileAboutCard";
 import { ProfileBasicInfoModal } from "./ProfileBasicInfoModal";
 import { ProfileInitializationView } from "./ProfileInitializationView";
 
+type ProfileEditSection = "basicInfo" | "about" | "experience" | "education" | "interests";
+
 const AVATAR_PREVIEW_SIZE = 220;
 const AVATAR_EXPORT_SIZE = 512;
 
@@ -183,7 +185,7 @@ export function ProfileView() {
   const headerActionsContainerRef = useRef<HTMLDivElement | null>(null);
   const bannerDisplayRef = useRef<HTMLDivElement | null>(null);
   const bannerPreviewRef = useRef<HTMLDivElement | null>(null);
-  const [activeEditSection, setActiveEditSection] = useState<"profile" | "experience" | "education" | "interests" | null>(null);
+  const [activeEditSection, setActiveEditSection] = useState<ProfileEditSection | null>(null);
   const [avatarEditor, setAvatarEditor] = useState<AvatarEditorState | null>(null);
   const [bannerEditor, setBannerEditor] = useState<BannerEditorState | null>(null);
   const [headerImageError, setHeaderImageError] = useState<string | null>(null);
@@ -193,7 +195,6 @@ export function ProfileView() {
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [blockReasonNote, setBlockReasonNote] = useState("");
   const [isBlockingUser, setIsBlockingUser] = useState(false);
-  const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const bannerDragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
   const avatarTouchRef = useRef<TouchGestureState | null>(null);
@@ -235,7 +236,7 @@ export function ProfileView() {
     t("profileView.headlineFallback")
   );
 
-  const onStartSectionEdit = (section: "profile" | "experience" | "education" | "interests") => {
+  const onStartSectionEdit = (section: ProfileEditSection) => {
     setActiveEditSection(section);
   };
 
@@ -807,7 +808,7 @@ export function ProfileView() {
                     type="button"
                     onClick={() => {
                       clearProfileSaveError();
-                      setIsBasicInfoModalOpen(true);
+                      onStartSectionEdit("basicInfo");
                     }}
                     disabled={isProfileLoading}
                     className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
@@ -919,13 +920,13 @@ export function ProfileView() {
           <ProfileAboutCard
             profile={profile}
             canEdit={canEditProfile}
-            isEditingMode={activeEditSection === "profile"}
+            isEditingMode={activeEditSection === "about"}
             isLoading={isProfileLoading}
             isSaving={isSavingProfile}
             saveError={profileSaveError}
             onSave={onSaveProfile}
             onClearSaveError={clearProfileSaveError}
-            onStartEditing={() => onStartSectionEdit("profile")}
+            onStartEditing={() => onStartSectionEdit("about")}
             onCloseEditing={onCloseSectionEdit}
           />
           <ExperienceCard
@@ -1156,7 +1157,7 @@ export function ProfileView() {
         </div>
       ) : null}
 
-      {canEditProfile && isBasicInfoModalOpen ? (
+      {canEditProfile && activeEditSection === "basicInfo" ? (
         <ProfileBasicInfoModal
           profile={profile}
           profileCompletion={profileCompletion}
@@ -1165,7 +1166,7 @@ export function ProfileView() {
           onSave={onSaveProfile}
           onClose={() => {
             clearProfileSaveError();
-            setIsBasicInfoModalOpen(false);
+            onCloseSectionEdit();
           }}
         />
       ) : null}

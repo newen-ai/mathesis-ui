@@ -216,8 +216,10 @@
     }
   },
   "collapsible": {
-    "more": "more",
-    "less": "less"
+    "more": "See more",
+    "less": "See less",
+    "showAll": "Show {{count}} more",
+    "showLess": "Show less"
   },
   "initialization": {
     "title": "Initialize your profile",

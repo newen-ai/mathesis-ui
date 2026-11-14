@@ -4,9 +4,14 @@ import { AppCard } from "@/components/ui/AppCard";
 import { toDateLabel } from "../../_lib/utils/date";
 import type { Education, EducationDraft } from "../../_lib/types";
 import type { EducationOperation } from "@/lib/api/profile";
-import { EditingSectionHeader, ReadOnlySectionHeader } from "./ProfileSectionHeaders";
-import { ProfileCollapsibleDescription } from "./ProfileCollapsibleDescription";
-import { ProfileSectionAddButton, ProfileSectionFinalizeRow } from "./ProfileSectionEditActions";
+import { ReadOnlySectionHeader } from "./ProfileSectionHeaders";
+import { ProfileCollapsibleText, ProfileShowAllToggle } from "./ProfileCollapsibleText";
+import {
+  ProfileEditModal,
+  ProfileModalError,
+  ProfileModalPrimaryButton,
+  ProfileModalSecondaryButton,
+} from "./ProfileEditModal";
 import { isFutureMonthForYear } from "./ProfileSectionDateUtils";
 import { ProfileYearMonthRangeFields } from "./ProfileYearMonthRangeFields";
 
@@ -18,6 +23,8 @@ const splitYearMonth = (value: string) => {
   const [year, month] = value.split("-");
   return { year: year ?? "", month: month ?? "" };
 };
+
+const COLLAPSED_ITEMS_COUNT = 3;
 
 const emptyDraft: EducationDraft = {
   institucion: "",
@@ -63,7 +70,7 @@ export function EducationCard({
   const [endMonth, setEndMonth] = useState("");
   const [endYear, setEndYear] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+  const [isShowingAll, setIsShowingAll] = useState(false);
 
   const isEducationManagerMode = canEdit && isEditingMode;
 
@@ -273,176 +280,15 @@ export function EducationCard({
     }
   };
 
-  const toggleDescription = (id: string) => {
-    setExpandedDescriptions((current) => ({
-      ...current,
-      [id]: !current[id],
-    }));
-  };
-
   const listItems = educations;
 
-  if (isEducationManagerMode) {
-    return (
-      <AppCard className="px-3 py-3 sm:px-4 sm:py-4">
-        <EditingSectionHeader title={t("education.title")} onBack={onCancelEditing} isSaving={isSaving} />
+  const onBackToList = () => {
+    resetDraft();
+    setDraftError(null);
+    setIsFormOpen(false);
+  };
 
-        <ProfileSectionAddButton label={t("education.add")} onClick={onStartAdding} isSaving={isSaving} />
-
-        {listItems.length > 0 ? (
-          <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
-            {listItems.map((item, index) => (
-              <div
-                key={item.id}
-                className={`flex items-center justify-between px-4 py-5 ${index < listItems.length - 1 ? "border-b border-[var(--line)]" : ""}`}
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-[1.2rem] leading-none text-[var(--text-soft)]">⋮⋮</span>
-                  <div>
-                    <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.titulo}</p>
-                    <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)]">
-                      {item.institucion} · {toDateLabel(item.fechaComienzo, i18n.language)} - {item.estudiandoActualmente ? t("common.current") : toDateLabel(item.fechaFinalizacion, i18n.language)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="ml-4 flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => onEditEducation(item)}
-                    disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-[var(--text-soft)] hover:text-[var(--navy-900)]"
-                    aria-label={t("education.aria.edit")}
-                  >
-                    ✎
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteEducation(item.id)}
-                    disabled={isSaving}
-                    className="text-[1.1rem] leading-none text-[var(--danger-500)] hover:opacity-85"
-                    aria-label={t("education.aria.delete")}
-                  >
-                    🗑
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-5 text-[0.7rem] text-[var(--text-secondary)]">{t("education.empty")}</p>
-        )}
-
-        {isFormOpen ? (
-          <form onSubmit={onSubmitEducation} className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h4 className="text-[0.8rem] font-semibold text-[var(--navy-900)]">
-                {editingId ? t("education.editTitle") : t("education.new")}
-              </h4>
-              <button
-                type="button"
-                onClick={() => {
-                  resetDraft();
-                  setDraftError(null);
-                  setIsFormOpen(false);
-                }}
-                className="text-[0.66rem] font-semibold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
-              >
-                {t("common.close")}
-              </button>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="sophium-field sm:col-span-1">
-                {t("education.labels.institution")}
-                <input
-                  name="institucion"
-                  value={draft.institucion}
-                  onChange={onDraftChange}
-                  placeholder={t("education.placeholders.institution")}
-                />
-              </label>
-
-              <label className="sophium-field sm:col-span-1">
-                {t("education.labels.degree")}
-                <input
-                  name="titulo"
-                  value={draft.titulo}
-                  onChange={onDraftChange}
-                  placeholder={t("education.placeholders.degree")}
-                />
-              </label>
-
-              <label className="sophium-field sm:col-span-2">
-                {t("education.labels.field")}
-                <input
-                  name="campoEstudio"
-                  value={draft.campoEstudio}
-                  onChange={onDraftChange}
-                  placeholder={t("education.placeholders.field")}
-                />
-              </label>
-
-              <ProfileYearMonthRangeFields
-                startLabel={t("education.labels.startDate")}
-                endLabel={t("education.labels.endDate")}
-                currentLabel={t("education.labels.currentlyStudying")}
-                currentChecked={draft.estudiandoActualmente}
-                startMonth={startMonth}
-                startYear={startYear}
-                endMonth={endMonth}
-                endYear={endYear}
-                onStartMonthChange={onStartMonthChange}
-                onStartYearChange={onStartYearChange}
-                onEndMonthChange={onEndMonthChange}
-                onEndYearChange={onEndYearChange}
-                onCurrentChange={onCurrentStudyingChange}
-              />
-
-              <label className="sophium-field sm:col-span-2">
-                {t("education.labels.description")}
-                <textarea
-                  name="descripcion"
-                  value={draft.descripcion}
-                  onChange={onDraftChange}
-                  maxLength={300}
-                  rows={4}
-                />
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
-            >
-              {editingId ? t("education.update") : t("education.addAction")}
-            </button>
-
-            {draftError ? (
-              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-                {draftError}
-              </p>
-            ) : null}
-          </form>
-        ) : null}
-
-        {saveError ? (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-            {saveError}
-          </p>
-        ) : null}
-
-        {!saveError && draftError && !isFormOpen ? (
-          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
-            {draftError}
-          </p>
-        ) : null}
-
-        <ProfileSectionFinalizeRow onFinalize={onCancelEditing} isSaving={isSaving} />
-      </AppCard>
-    );
-  }
+  const visibleItems = isShowingAll ? listItems : listItems.slice(0, COLLAPSED_ITEMS_COUNT);
 
   return (
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
@@ -452,37 +298,194 @@ export function EducationCard({
         {listItems.length === 0 ? (
           <p className="text-[0.7rem] text-[var(--text-secondary)]">{t("education.empty")}</p>
         ) : (
-          <ul>
-            {listItems.map((item) => (
-              <li
-                key={item.id}
-                className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
-              >
-                <div>
-                  <p className="text-[0.72rem] font-bold text-[var(--text-primary)]">{item.titulo}</p>
-                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-secondary)]">
+          <>
+            <ul>
+              {visibleItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
+                >
+                  <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)] [overflow-wrap:anywhere]">{item.titulo}</p>
+                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)] [overflow-wrap:anywhere]">
                     {item.institucion} · {toDateLabel(item.fechaComienzo, i18n.language)} - {item.estudiandoActualmente ? t("common.current") : toDateLabel(item.fechaFinalizacion, i18n.language)}
                   </p>
                   {item.campoEstudio ? (
-                    <p className="mt-1 text-[0.64rem] text-[var(--text-secondary)]">{item.campoEstudio}</p>
+                    <p className="mt-1 text-[0.64rem] text-[var(--text-secondary)] [overflow-wrap:anywhere]">{item.campoEstudio}</p>
                   ) : null}
-                  <ProfileCollapsibleDescription
+                  <ProfileCollapsibleText
                     text={item.descripcion}
-                    isExpanded={Boolean(expandedDescriptions[item.id])}
-                    onToggle={() => toggleDescription(item.id)}
+                    lines={3}
+                    className="mt-2 text-[0.64rem] leading-[1.5] text-[var(--text-secondary)]"
                   />
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+            <ProfileShowAllToggle
+              hiddenCount={listItems.length - COLLAPSED_ITEMS_COUNT}
+              isShowingAll={isShowingAll}
+              onToggle={() => setIsShowingAll((current) => !current)}
+            />
+          </>
         )}
-
-        {saveError ? (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-            {saveError}
-          </p>
-        ) : null}
       </div>
+
+      {isEducationManagerMode ? (
+        <ProfileEditModal
+          title={isFormOpen ? (editingId ? t("education.editTitle") : t("education.new")) : t("education.title")}
+          onClose={onCancelEditing}
+          isBusy={isSaving}
+          headerStart={
+            isFormOpen ? (
+              <button
+                type="button"
+                onClick={onBackToList}
+                disabled={isSaving}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[1.4rem] leading-none text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:opacity-60"
+                aria-label={t("common.back")}
+              >
+                ‹
+              </button>
+            ) : null
+          }
+          footer={
+            isFormOpen ? (
+              <>
+                <ProfileModalSecondaryButton onClick={onBackToList} disabled={isSaving}>
+                  {t("common.cancel")}
+                </ProfileModalSecondaryButton>
+                <ProfileModalPrimaryButton type="submit" form="education-edit-form" disabled={isSaving}>
+                  {isSaving ? t("common.saving") : editingId ? t("education.update") : t("education.addAction")}
+                </ProfileModalPrimaryButton>
+              </>
+            ) : (
+              <ProfileModalPrimaryButton onClick={onCancelEditing} disabled={isSaving}>
+                {t("common.finalize")}
+              </ProfileModalPrimaryButton>
+            )
+          }
+        >
+          {isFormOpen ? (
+            <form id="education-edit-form" onSubmit={onSubmitEducation}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="sophium-field sm:col-span-1">
+                  {t("education.labels.institution")}
+                  <input
+                    name="institucion"
+                    value={draft.institucion}
+                    onChange={onDraftChange}
+                    placeholder={t("education.placeholders.institution")}
+                  />
+                </label>
+
+                <label className="sophium-field sm:col-span-1">
+                  {t("education.labels.degree")}
+                  <input
+                    name="titulo"
+                    value={draft.titulo}
+                    onChange={onDraftChange}
+                    placeholder={t("education.placeholders.degree")}
+                  />
+                </label>
+
+                <label className="sophium-field sm:col-span-2">
+                  {t("education.labels.field")}
+                  <input
+                    name="campoEstudio"
+                    value={draft.campoEstudio}
+                    onChange={onDraftChange}
+                    placeholder={t("education.placeholders.field")}
+                  />
+                </label>
+
+                <ProfileYearMonthRangeFields
+                  startLabel={t("education.labels.startDate")}
+                  endLabel={t("education.labels.endDate")}
+                  currentLabel={t("education.labels.currentlyStudying")}
+                  currentChecked={draft.estudiandoActualmente}
+                  startMonth={startMonth}
+                  startYear={startYear}
+                  endMonth={endMonth}
+                  endYear={endYear}
+                  onStartMonthChange={onStartMonthChange}
+                  onStartYearChange={onStartYearChange}
+                  onEndMonthChange={onEndMonthChange}
+                  onEndYearChange={onEndYearChange}
+                  onCurrentChange={onCurrentStudyingChange}
+                />
+
+                <label className="sophium-field sm:col-span-2">
+                  {t("education.labels.description")}
+                  <textarea
+                    name="descripcion"
+                    value={draft.descripcion}
+                    onChange={onDraftChange}
+                    maxLength={300}
+                    rows={4}
+                  />
+                </label>
+              </div>
+
+              <ProfileModalError message={draftError} tone="warning" />
+              <ProfileModalError message={saveError} />
+            </form>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onStartAdding}
+                disabled={isSaving}
+                className="inline-flex items-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-sm font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)] disabled:opacity-60"
+              >
+                {t("education.add")}
+              </button>
+
+              {listItems.length > 0 ? (
+                <ul className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)]">
+                  {listItems.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3 last:border-b-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.titulo}</p>
+                        <p className="mt-[0.1rem] truncate text-[0.62rem] text-[var(--text-soft)]">
+                          {item.institucion} · {toDateLabel(item.fechaComienzo, i18n.language)} - {item.estudiandoActualmente ? t("common.current") : toDateLabel(item.fechaFinalizacion, i18n.language)}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onEditEducation(item)}
+                          disabled={isSaving}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[1rem] leading-none text-[var(--text-soft)] transition hover:bg-[var(--surface-2)] hover:text-[var(--navy-900)] disabled:opacity-60"
+                          aria-label={t("education.aria.edit")}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteEducation(item.id)}
+                          disabled={isSaving}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[1rem] leading-none text-[var(--danger-500)] transition hover:bg-[var(--surface-2)] disabled:opacity-60"
+                          aria-label={t("education.aria.delete")}
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-[0.7rem] text-[var(--text-secondary)]">{t("education.empty")}</p>
+              )}
+
+              <ProfileModalError message={draftError} tone="warning" />
+              <ProfileModalError message={saveError} />
+            </>
+          )}
+        </ProfileEditModal>
+      ) : null}
     </AppCard>
   );
 }
