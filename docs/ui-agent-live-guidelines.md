@@ -288,3 +288,7 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - In mobile `/mensajes`, the conversation shell should be full-bleed (no extra outer side margins/gutters around the main conversation container).
 - On `/mensajes`, place the floating `Reportar bug` trigger near the top-right conversation area so it does not cover the latest messages near the composer.
 - In `/mensajes` detail viewport, keep conversation `padding-top` and `margin-bottom` compact at `10px`.
+
+## Current Active UI Directions (2026-11-14 Ateneo group header)
+- Ateneo group main view: do not render group rules for members (they belong in `/ateneo/groups/:groupId/info`); keep them only in the non-member join view.
+- The group header card mirrors the left-rail active group style: `border-[var(--brand-500)]` + `bg-[color:color-mix(in_srgb,var(--brand-100)_42%,var(--surface))]`.
