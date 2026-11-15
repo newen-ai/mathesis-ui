@@ -57,7 +57,7 @@
   --post-file-bg: #476887;
   --post-file-preview-bg: #5f81a4;
   --accent-overlay: rgba(10, 23, 38, 0.6);
-  --danger-500: #ee7f7f;
+  --danger-500: #ff9ea1;
   --heading-primary: var(--text-primary);
   --on-brand: #1b2330;
   --link-accent: var(--brand-800);
@@ -83,7 +83,8 @@ body:has([data-welcome-scroll-lock]) {
 }
 
 html {
-  font-size: 14px;
+  /* Root of the whole type scale: every rem-based size (type-scale tokens, text-[..rem], Tailwind) scales from here. */
+  font-size: 16px;
 }
 
 :root {

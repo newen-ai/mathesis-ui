@@ -16,8 +16,11 @@ import { TopBar } from "../TopBar";
 import { EducationCard } from "./EducationCard";
 import { ExperienceCard } from "./ExperienceCard";
 import { InteresesCard } from "./InteresesCard";
-import { ProfileFormCard } from "./ProfileFormCard";
+import { ProfileAboutCard } from "./ProfileAboutCard";
+import { ProfileBasicInfoModal } from "./ProfileBasicInfoModal";
 import { ProfileInitializationView } from "./ProfileInitializationView";
+
+type ProfileEditSection = "basicInfo" | "about" | "experience" | "education" | "interests";
 
 const AVATAR_PREVIEW_SIZE = 220;
 const AVATAR_EXPORT_SIZE = 512;
@@ -182,7 +185,7 @@ export function ProfileView() {
   const headerActionsContainerRef = useRef<HTMLDivElement | null>(null);
   const bannerDisplayRef = useRef<HTMLDivElement | null>(null);
   const bannerPreviewRef = useRef<HTMLDivElement | null>(null);
-  const [activeEditSection, setActiveEditSection] = useState<"profile" | "experience" | "education" | "interests" | null>(null);
+  const [activeEditSection, setActiveEditSection] = useState<ProfileEditSection | null>(null);
   const [avatarEditor, setAvatarEditor] = useState<AvatarEditorState | null>(null);
   const [bannerEditor, setBannerEditor] = useState<BannerEditorState | null>(null);
   const [headerImageError, setHeaderImageError] = useState<string | null>(null);
@@ -204,6 +207,7 @@ export function ProfileView() {
     activeProfileId,
     currentUserId,
     canEditProfile,
+    isViewingOwnProfileAsMember,
     profileCompletion,
     isProfileLoading,
     isSavingProfile,
@@ -233,7 +237,7 @@ export function ProfileView() {
     t("profileView.headlineFallback")
   );
 
-  const onStartSectionEdit = (section: "profile" | "experience" | "education" | "interests") => {
+  const onStartSectionEdit = (section: ProfileEditSection) => {
     setActiveEditSection(section);
   };
 
@@ -804,6 +808,18 @@ export function ProfileView() {
                   <button
                     type="button"
                     onClick={() => {
+                      clearProfileSaveError();
+                      onStartSectionEdit("basicInfo");
+                    }}
+                    disabled={isProfileLoading}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
+                  >
+                    <span aria-hidden="true">✎</span>
+                    {t("profileView.actions.editProfile")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
                       if (!currentUserId) {
                         return;
                       }
@@ -826,7 +842,7 @@ export function ProfileView() {
                       <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
-                    {t("profileView.actions.viewProfile")}
+                    {t("profileView.actions.viewAsMember")}
                   </button>
                   <button
                     type="button"
@@ -836,6 +852,15 @@ export function ProfileView() {
                     ···
                   </button>
                 </div>
+              ) : isViewingOwnProfileAsMember ? (
+                <button
+                  type="button"
+                  onClick={() => router.push("/perfil")}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
+                >
+                  <span aria-hidden="true">✎</span>
+                  {t("profileView.actions.backToEditMode")}
+                </button>
               ) : activeProfileId ? (
                 <div ref={headerActionsContainerRef} className="relative z-40">
                   <button
@@ -902,17 +927,16 @@ export function ProfileView() {
         </section>
 
         <section className="sophium-fade-up-delay sophium-profile-stack space-y-2">
-          <ProfileFormCard
+          <ProfileAboutCard
             profile={profile}
             canEdit={canEditProfile}
-            isEditingMode={activeEditSection === "profile"}
-            profileCompletion={profileCompletion}
+            isEditingMode={activeEditSection === "about"}
             isLoading={isProfileLoading}
             isSaving={isSavingProfile}
             saveError={profileSaveError}
             onSave={onSaveProfile}
             onClearSaveError={clearProfileSaveError}
-            onStartEditing={() => onStartSectionEdit("profile")}
+            onStartEditing={() => onStartSectionEdit("about")}
             onCloseEditing={onCloseSectionEdit}
           />
           <ExperienceCard
@@ -1141,6 +1165,20 @@ export function ProfileView() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {canEditProfile && activeEditSection === "basicInfo" ? (
+        <ProfileBasicInfoModal
+          profile={profile}
+          profileCompletion={profileCompletion}
+          isSaving={isSavingProfile}
+          saveError={profileSaveError}
+          onSave={onSaveProfile}
+          onClose={() => {
+            clearProfileSaveError();
+            onCloseSectionEdit();
+          }}
+        />
       ) : null}
 
       {isBlockModalOpen ? (

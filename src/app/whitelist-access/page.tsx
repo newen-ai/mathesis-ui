@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { logout, requestWhitelistAccess } from "@/lib/api/auth";
 import { apiRequest } from "@/lib/api/client";
+import { HOME_PATH } from "@/lib/routes";
 
 export default function WhitelistAccessPage() {
   const { t } = useTranslation("auth");
@@ -45,7 +46,7 @@ export default function WhitelistAccessPage() {
       const response = await apiRequest("/profile/me");
 
       if (response.ok) {
-        router.replace("/");
+        router.replace(HOME_PATH);
         return;
       }
 

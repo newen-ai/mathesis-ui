@@ -1,13 +1,13 @@
 import type { SessionAccessDecision } from "@/lib/api/auth";
-import { WELCOME_ENTRY_PATH } from "@/lib/routes";
+import { HOME_PATH, WELCOME_ENTRY_PATH } from "@/lib/routes";
 
 export function sanitizeLoginNextPath(path: string | null): string {
   if (!path) {
-    return "/";
+    return HOME_PATH;
   }
 
   if (!path.startsWith("/") || path.startsWith("//")) {
-    return "/";
+    return HOME_PATH;
   }
 
   return path;

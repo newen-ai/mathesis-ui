@@ -1,7 +1,7 @@
 import { apiRequest, getApiBaseUrl, parseDataResponse } from "@/lib/api/client";
 
 export type AteneoTabKey = "mine" | "discover" | "admin";
-export type AteneoTone = "LIBRE" | "SERIO" | "RECOMENDADO";
+export type AteneoTone = "LIBRE" | "SERIO" | "MIX";
 export type AteneoReactionValue = "value";
 
 export type AteneoUserSummary = {

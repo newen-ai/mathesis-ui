@@ -94,12 +94,15 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 
 ## Current Active UI Directions (2026-08-12)
 - In perfil header, render zero or more badge chips below the display name from backend-provided active badges.
+- Perfil editing split (2026-11-14): the `Acerca de` card edit mode shows only the about textarea; profile base data (name, surname, birth date, nationality, headline, current company, location) is edited from an `Editar perfil` header button (own profile) that opens a modal. Edit drafts must be seeded from the latest loaded profile when editing opens, never at component mount.
+- Perfil edit overlays (2026-11-14): all perfil section edits use `ProfileEditModal` (portal, z above mobile footer, bottom sheet on mobile). Cards stay read-only. Long content collapses with `ProfileCollapsibleText` (toggle only on real overflow) and `ProfileShowAllToggle` for long lists (3 items for experience/education, 12 chips for interests).
 - Badge chip label must be generated from slug: split by underscore, replace underscores with spaces, and capitalize first letter of each word.
 - Badge chips must include the integral sign prefix `∫` before the formatted badge label, except `Mensa Argentina`, which uses the shared logo asset with the same visual size as the previous prefix glyph.
 
 ## Current Active UI Directions (2026-08-12 Typography)
 - Use the shared global type-scale utility classes for product UI text to prevent ad-hoc size inflation: `.text-scale-1`, `.text-scale-2`, `.text-scale-3`, `.text-scale-4`, `.text-scale-5`.
 - Prefer these classes for new UI work instead of one-off `text-[...]` values unless a screenshot explicitly requires an exception.
+- Base size (2026-11-14): root `html` font-size is `16px` (was `14px`, then `15px`). To resize the whole UI proportionally, change only this root value; do not bump individual type-scale tokens. Never use px font sizes (`text-[Npx]`, `font-size: Npx`) outside this root rule; use rem so everything follows the base.
 - For page composition by default: helper/meta/chips use `text-scale-1`; action labels and compact buttons use `text-scale-2`; body copy uses `text-scale-3`; section headings use `text-scale-4`; page titles use `text-scale-5`.
 
 ## Current Active UI Directions (2026-08-12 Theme Parity)
@@ -246,6 +249,10 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Group picker options must present two text levels (group name + permission hint) and clear selected state contrast.
 - For groups where topic creation is restricted, show a warning indicator with hover tooltip explaining the permission constraint.
 
+## Current Active UI Directions (2026-11-04 Auth Password Inputs)
+- Shared password inputs with visibility toggles must guarantee full-width field rendering so the toggle never renders outside the input container.
+- Auth error text in dark mode must use the semantic danger token with sufficient contrast (avoid fixed Tailwind reds like `text-red-600` on dark surfaces).
+
 ## Current Active UI Directions (2026-09-10 Link Preview Images)
 - Link preview images should display fully (no cropping) using centered contain-fit behavior.
 - Link preview image areas should use a neutral dark/gray backdrop to fill side gaps created by aspect-ratio differences.
@@ -282,3 +289,11 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - In mobile `/mensajes`, the conversation shell should be full-bleed (no extra outer side margins/gutters around the main conversation container).
 - On `/mensajes`, place the floating `Reportar bug` trigger near the top-right conversation area so it does not cover the latest messages near the composer.
 - In `/mensajes` detail viewport, keep conversation `padding-top` and `margin-bottom` compact at `10px`.
+
+## Current Active UI Directions (2026-11-14 Ateneo group header)
+- Ateneo group main view: do not render group rules for members (they belong in `/ateneo/groups/:groupId/info`); keep them only in the non-member join view.
+- The group header card mirrors the left-rail active group style: `border-[var(--brand-500)]` + `bg-[color:color-mix(in_srgb,var(--brand-100)_42%,var(--surface))]`.
+
+## Current Active UI Directions (2026-11-14 Ateneo live comments)
+- New comments arriving while a topic is open must never be injected silently: show a reveal button at the insertion point (thread end for replies, list end for new top-level comments) plus a header shortcut; highlight revealed items briefly.
+- Polling must pause while the tab is hidden and must not drop visible comments missing from a poll response.

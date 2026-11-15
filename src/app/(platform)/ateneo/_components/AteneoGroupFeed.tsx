@@ -23,6 +23,10 @@ type AteneoGroupFeedProps = {
   groupId: string;
 };
 
+// Same "selected" treatment as the active group item in the left rail (AteneoExploreGroups).
+const GROUP_HEADER_CLASS_NAME =
+  "rounded-2xl border border-[var(--brand-500)] bg-[color:color-mix(in_srgb,var(--brand-100)_42%,var(--surface))] p-5 sm:p-6";
+
 function GroupHeaderIcon() {
   return (
     <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--navy-900)] text-[var(--brand-500)]">
@@ -147,7 +151,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
       : undefined;
 
     return (
-      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
+      <section className={GROUP_HEADER_CLASS_NAME}>
         <div className="flex min-w-0 items-start gap-3">
           <GroupHeaderIcon />
           <div>
@@ -201,7 +205,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
 
   return (
     <>
-      <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
+      <section className={GROUP_HEADER_CLASS_NAME}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3">
             <GroupHeaderIcon />
@@ -229,14 +233,6 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
           </div>
         ) : null}
 
-        <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-4">
-          <h2 className="text-scale-4 font-semibold text-[var(--heading-primary)]">Reglas del grupo</h2>
-          <ul className="mt-2 list-disc space-y-1.5 pl-5 text-scale-3 text-[var(--text-primary)]">
-            {rules.map((rule) => (
-              <li key={rule}>{rule}</li>
-            ))}
-          </ul>
-        </div>
       </section>
 
       <section className="mt-4">

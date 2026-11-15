@@ -12,7 +12,7 @@ import { extractUniqueUrlsFromText } from "@/lib/utils/link-preview";
 import { createRenderableImageUrlFromBlob } from "@/lib/utils/image-preview";
 import { getAteneoTopicPublishErrorTranslation } from "@/lib/i18n/ateneo-errors";
 
-const toneOptions = ["SERIO", "RECOMENDADO", "LIBRE"] as const;
+const toneOptions = ["SERIO", "MIX", "LIBRE"] as const;
 const TOPIC_TITLE_LIMIT = 100;
 const TOPIC_DESCRIPTION_LIMIT = 1000;
 const MAX_ATTACHMENTS_PER_TOPIC = 5;
@@ -903,7 +903,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                         : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
                     ].join(" ")}
                   >
-                    {tone === "SERIO" ? t("newTopic.tones.serio") : tone === "RECOMENDADO" ? t("newTopic.tones.recomendado") : t("newTopic.tones.libre")}
+                    {tone === "SERIO" ? t("newTopic.tones.serio") : tone === "MIX" ? t("newTopic.tones.mix") : t("newTopic.tones.libre")}
                   </button>
                 );
               })}

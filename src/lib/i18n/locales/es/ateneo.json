@@ -57,10 +57,10 @@
     "toneLabel": "Tono del tema (opcional, indicativo)",
     "tones": {
       "serio": "SERIO",
-      "recomendado": "RECOMENDADO",
+      "mix": "MIX",
       "libre": "LIBRE"
     },
-    "toneHint": "Solo indicativo: no cambia moderación ni el Sermonio real de reacciones.",
+    "toneHint": "Solo indicativo: no cambia moderación ni el Seriómetro real de reacciones.",
     "closeGroupPickerAria": "Cerrar selector de grupos",
     "chooseGroupTitle": "Elegir grupo",
     "closePickerAria": "Cerrar selector",

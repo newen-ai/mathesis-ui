@@ -1394,9 +1394,9 @@ export default function MensajesPage() {
                     className="w-full rounded-xl px-1 py-0.5 text-left outline-none transition hover:bg-[var(--surface-2)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-300)_45%,transparent)]"
                     aria-label={t("aria.viewGroupMembers")}
                   >
-                    <p className="text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
+                    <p className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
                     <p
-                      className="truncate text-[10px] text-[var(--text-secondary)]"
+                      className="truncate text-[0.625rem] text-[var(--text-secondary)]"
                       title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
                     >
                       {selectedThreadGroupMembersSummary?.previewText ?? t("fallbacks.noMembers")}
@@ -1414,8 +1414,8 @@ export default function MensajesPage() {
                     ←
                   </button>
                   <div className="min-w-0">
-                    <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
-                    <p className="truncate text-[10px] text-[var(--text-secondary)]">{selectedThread?.roleLine ?? ""}</p>
+                    <p className="truncate text-[0.9375rem] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
+                    <p className="truncate text-[0.625rem] text-[var(--text-secondary)]">{selectedThread?.roleLine ?? ""}</p>
                   </div>
                 </div>
               )}

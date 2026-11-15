@@ -83,8 +83,10 @@
       "profilePreview": "Previsualización de perfil"
     },
     "actions": {
+      "editProfile": "Editar perfil",
       "changeBanner": "Cambiar banner",
-      "viewProfile": "Ver perfil",
+      "viewAsMember": "Ver como miembro",
+      "backToEditMode": "Volver a modo edición",
       "blocking": "Bloqueando...",
       "block": "Bloquear",
       "report": "Denunciar",
@@ -215,8 +217,10 @@
     }
   },
   "collapsible": {
-    "more": "más",
-    "less": "menos"
+    "more": "Ver más",
+    "less": "Ver menos",
+    "showAll": "Ver {{count}} más",
+    "showLess": "Ver menos"
   },
   "initialization": {
     "title": "Inicializá tu perfil",

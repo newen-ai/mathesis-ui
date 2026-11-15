@@ -1,8 +1,18 @@
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
+import { ProfileShowAllToggle } from "./ProfileCollapsibleText";
+import { ReadOnlySectionHeader } from "./ProfileSectionHeaders";
+import {
+  ProfileEditModal,
+  ProfileModalError,
+  ProfileModalPrimaryButton,
+  ProfileModalSecondaryButton,
+} from "./ProfileEditModal";
 import { searchInterestSuggestions } from "@/lib/api/profile";
 import type { Profile } from "../../_lib/types";
+
+const COLLAPSED_INTERESTS_COUNT = 12;
 
 type InteresesCardProps = {
   profile: Profile;
@@ -55,6 +65,10 @@ export function InteresesCard({
 }: InteresesCardProps) {
   const { t } = useTranslation("profile");
   const [workingInterests, setWorkingInterests] = useState<string[]>(profile.intereses);
+  const [isShowingAllInterests, setIsShowingAllInterests] = useState(false);
+  const visibleInterests = isShowingAllInterests
+    ? profile.intereses
+    : profile.intereses.slice(0, COLLAPSED_INTERESTS_COUNT);
   const [draftInterest, setDraftInterest] = useState("");
   const [draftError, setDraftError] = useState<string | null>(null);
   const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
@@ -274,250 +288,238 @@ export function InteresesCard({
 
   return (
     <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
-      <div className="flex items-start justify-between gap-3 border-b border-[var(--line)] pb-2">
-        <h2 className="font-[family-name:var(--font-spectral)] text-[0.85rem] font-bold text-[var(--navy-900)]">
-          {t("interests.title")}
-        </h2>
-        {canEdit && !isEditingMode ? (
-          <button
-            type="button"
-            onClick={onEnterEdit}
-            className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] px-3 py-1 text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)]"
-          >
-            <span aria-hidden="true">✎</span>
-            {t("common.edit")}
-          </button>
-        ) : null}
-      </div>
+      <ReadOnlySectionHeader title={t("interests.title")} canEdit={canEdit} onEdit={onEnterEdit} />
 
-      {canEdit && isEditingMode ? (
-        <div className="mt-3 space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-            <div className="relative w-full">
-              <input
-                value={draftInterest}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  const normalized = normalizeInterest(value);
-
-                  setDraftInterest(value);
-                  setIsSuggestionsOpen(normalized.length >= 3);
-                  setHighlightedSuggestionIndex(0);
-
-                  if (draftError) {
-                    setDraftError(null);
-                  }
-
-                  scheduleSuggestionsFetch(value, workingInterests);
-                }}
-                onFocus={() => {
-                  if (draftNormalized.length >= 3) {
-                    setIsSuggestionsOpen(true);
-                    scheduleSuggestionsFetch(draftNormalized, workingInterests);
-                  }
-                }}
-                onBlur={() => {
-                  setTimeout(() => {
-                    setIsSuggestionsOpen(false);
-                  }, 120);
-                }}
-                onKeyDown={(event) => {
-                  if (!isSuggestionsOpen || suggestionOptions.length === 0) {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      onAddInterest();
-                    }
-                    return;
-                  }
-
-                  if (event.key === "ArrowDown") {
-                    event.preventDefault();
-                    setHighlightedSuggestionIndex((current) =>
-                      Math.min(current + 1, suggestionOptions.length - 1)
-                    );
-                    return;
-                  }
-
-                  if (event.key === "ArrowUp") {
-                    event.preventDefault();
-                    setHighlightedSuggestionIndex((current) => Math.max(current - 1, 0));
-                    return;
-                  }
-
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    setIsSuggestionsOpen(false);
-                    return;
-                  }
-
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    onSelectSuggestion(
-                      suggestionOptions[highlightedSuggestionIndex] ?? suggestionOptions[0]
-                    );
-                  }
-                }}
-                placeholder={t("interests.inputPlaceholder")}
-                className="w-full rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
-              />
-
-              {isSuggestionsOpen && suggestionOptions.length > 0 ? (
-                <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] shadow-lg">
-                  {suggestionOptions.map((suggestion, index) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        onSelectSuggestion(suggestion);
-                      }}
-                      onMouseEnter={() => setHighlightedSuggestionIndex(index)}
-                      className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm ${
-                        index === highlightedSuggestionIndex
-                          ? "bg-[var(--surface-2)] text-[var(--text-primary)]"
-                          : "bg-[var(--surface)] text-[var(--text-secondary)]"
-                      }`}
-                    >
-                      <span>{suggestion}</span>
-                      <span className="text-xs text-[var(--text-soft)]">{t("interests.suggestionTag")}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              {isSuggestionsOpen && draftNormalized.length >= 3 && isSuggestionsLoading ? (
-                <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
-                  {t("interests.loadingSuggestions")}
-                </div>
-              ) : null}
-
-              {isSuggestionsOpen &&
-              draftNormalized.length >= 3 &&
-              suggestionOptions.length === 0 &&
-              !isSuggestionsLoading ? (
-                <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
-                  {t("interests.noSuggestions")}
-                </div>
-              ) : null}
-            </div>
-
-            <button
-              type="button"
-              onClick={onAddInterest}
-              className="inline-flex items-center justify-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-sm font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)]"
-            >
-                {t("interests.add")}
-            </button>
+      {profile.intereses.length > 0 ? (
+        <>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {visibleInterests.map((interest) => (
+              <span
+                key={interest}
+                className="inline-flex max-w-full items-center rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-3 py-[0.32rem] text-[0.64rem] font-semibold text-[var(--brand-700)] [overflow-wrap:anywhere]"
+              >
+                {interest}
+              </span>
+            ))}
           </div>
-
-          <p className="text-[0.65rem] text-[var(--text-soft)]">
-              {t("interests.helpTypeToSuggest")}
-          </p>
-          <p className="text-[0.65rem] text-[var(--text-soft)]">
-              {t("interests.helpDragToReorder")}
-          </p>
-
-          {workingInterests.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {workingInterests.map((interest) => (
-                <span
-                  key={interest}
-                  draggable
-                  onDragStart={() => {
-                    setDraggedInterest(interest);
-                    setDragOverInterest(null);
-                  }}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    if (draggedInterest && draggedInterest !== interest) {
-                      setDragOverInterest(interest);
-                    }
-                  }}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    onDropInterest(interest);
-                  }}
-                  onDragEnd={() => {
-                    setDraggedInterest(null);
-                    setDragOverInterest(null);
-                  }}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-[0.32rem] text-[0.64rem] font-semibold text-[var(--brand-700)] ${
-                    draggedInterest === interest
-                      ? "cursor-grabbing border-[var(--brand-500)] bg-[var(--brand-100)]"
-                      : "cursor-grab border-[var(--line-strong)] bg-[var(--brand-50)]"
-                  } ${
-                    dragOverInterest === interest
-                      ? "ring-2 ring-[var(--brand-300)] ring-offset-1"
-                      : ""
-                  }`}
-                >
-                  {interest}
-                  <button
-                    type="button"
-                    onClick={() => onRemoveInterest(interest)}
-                    className="text-[0.85rem] leading-none text-[var(--danger-500)] transition hover:opacity-85"
-                    aria-label={t("interests.aria.removeInterest", { interest })}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[0.7rem] text-[var(--text-secondary)]">
-              {t("interests.empty")}
-            </p>
-          )}
-
-          {draftError ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-              {draftError}
-            </p>
-          ) : null}
-
-          {saveError ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-              {saveError}
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                void onSaveAll();
-              }}
-              disabled={isSaving || !hasChanges}
-              className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {t("interests.save")}
-            </button>
-            <button
-              type="button"
-              onClick={onDiscard}
-              disabled={isSaving}
-              className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {t("interests.discard")}
-            </button>
-          </div>
-        </div>
-      ) : profile.intereses.length > 0 ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {profile.intereses.map((interest) => (
-            <span
-              key={interest}
-              className="inline-flex items-center rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-3 py-[0.32rem] text-[0.64rem] font-semibold text-[var(--brand-700)]"
-            >
-              {interest}
-            </span>
-          ))}
-        </div>
+          <ProfileShowAllToggle
+            hiddenCount={profile.intereses.length - COLLAPSED_INTERESTS_COUNT}
+            isShowingAll={isShowingAllInterests}
+            onToggle={() => setIsShowingAllInterests((current) => !current)}
+          />
+        </>
       ) : (
-        <p className="mt-3 text-[0.7rem] leading-[1.55] text-[var(--text-primary)]">
+        <p className="mt-3 text-[0.7rem] leading-[1.55] text-[var(--text-secondary)]">
           {t("interests.empty")}
         </p>
       )}
+
+      {canEdit && isEditingMode ? (
+        <ProfileEditModal
+          title={t("interests.title")}
+          onClose={onDiscard}
+          isBusy={isSaving}
+          footer={
+            <>
+              <ProfileModalSecondaryButton onClick={onDiscard} disabled={isSaving}>
+                {t("interests.discard")}
+              </ProfileModalSecondaryButton>
+              <ProfileModalPrimaryButton
+                onClick={() => {
+                  void onSaveAll();
+                }}
+                disabled={isSaving || !hasChanges}
+              >
+                {isSaving ? t("common.saving") : t("interests.save")}
+              </ProfileModalPrimaryButton>
+            </>
+          }
+        >
+          {/* min-height leaves room for the suggestions dropdown inside the scrollable body */}
+          <div className="min-h-[16rem] space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+              <div className="relative w-full">
+                <input
+                  value={draftInterest}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    const normalized = normalizeInterest(value);
+
+                    setDraftInterest(value);
+                    setIsSuggestionsOpen(normalized.length >= 3);
+                    setHighlightedSuggestionIndex(0);
+
+                    if (draftError) {
+                      setDraftError(null);
+                    }
+
+                    scheduleSuggestionsFetch(value, workingInterests);
+                  }}
+                  onFocus={() => {
+                    if (draftNormalized.length >= 3) {
+                      setIsSuggestionsOpen(true);
+                      scheduleSuggestionsFetch(draftNormalized, workingInterests);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      setIsSuggestionsOpen(false);
+                    }, 120);
+                  }}
+                  onKeyDown={(event) => {
+                    if (!isSuggestionsOpen || suggestionOptions.length === 0) {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        onAddInterest();
+                      }
+                      return;
+                    }
+
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      setHighlightedSuggestionIndex((current) =>
+                        Math.min(current + 1, suggestionOptions.length - 1)
+                      );
+                      return;
+                    }
+
+                    if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setHighlightedSuggestionIndex((current) => Math.max(current - 1, 0));
+                      return;
+                    }
+
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      setIsSuggestionsOpen(false);
+                      return;
+                    }
+
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      onSelectSuggestion(
+                        suggestionOptions[highlightedSuggestionIndex] ?? suggestionOptions[0]
+                      );
+                    }
+                  }}
+                  placeholder={t("interests.inputPlaceholder")}
+                  className="w-full rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
+                />
+
+                {isSuggestionsOpen && suggestionOptions.length > 0 ? (
+                  <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] shadow-lg">
+                    {suggestionOptions.map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          onSelectSuggestion(suggestion);
+                        }}
+                        onMouseEnter={() => setHighlightedSuggestionIndex(index)}
+                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm ${
+                          index === highlightedSuggestionIndex
+                            ? "bg-[var(--surface-2)] text-[var(--text-primary)]"
+                            : "bg-[var(--surface)] text-[var(--text-secondary)]"
+                        }`}
+                      >
+                        <span>{suggestion}</span>
+                        <span className="text-xs text-[var(--text-soft)]">{t("interests.suggestionTag")}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {isSuggestionsOpen && draftNormalized.length >= 3 && isSuggestionsLoading ? (
+                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
+                    {t("interests.loadingSuggestions")}
+                  </div>
+                ) : null}
+
+                {isSuggestionsOpen &&
+                draftNormalized.length >= 3 &&
+                suggestionOptions.length === 0 &&
+                !isSuggestionsLoading ? (
+                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
+                    {t("interests.noSuggestions")}
+                  </div>
+                ) : null}
+              </div>
+
+              <button
+                type="button"
+                onClick={onAddInterest}
+                className="inline-flex items-center justify-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-sm font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)]"
+              >
+                  {t("interests.add")}
+              </button>
+            </div>
+
+            <p className="text-[0.65rem] text-[var(--text-soft)]">
+                {t("interests.helpTypeToSuggest")}
+            </p>
+            <p className="text-[0.65rem] text-[var(--text-soft)]">
+                {t("interests.helpDragToReorder")}
+            </p>
+
+            {workingInterests.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                {workingInterests.map((interest) => (
+                  <span
+                    key={interest}
+                    draggable
+                    onDragStart={() => {
+                      setDraggedInterest(interest);
+                      setDragOverInterest(null);
+                    }}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      if (draggedInterest && draggedInterest !== interest) {
+                        setDragOverInterest(interest);
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      onDropInterest(interest);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedInterest(null);
+                      setDragOverInterest(null);
+                    }}
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-[0.32rem] text-[0.64rem] font-semibold text-[var(--brand-700)] ${
+                      draggedInterest === interest
+                        ? "cursor-grabbing border-[var(--brand-500)] bg-[var(--brand-100)]"
+                        : "cursor-grab border-[var(--line-strong)] bg-[var(--brand-50)]"
+                    } ${
+                      dragOverInterest === interest
+                        ? "ring-2 ring-[var(--brand-300)] ring-offset-1"
+                        : ""
+                    }`}
+                  >
+                    {interest}
+                    <button
+                      type="button"
+                      onClick={() => onRemoveInterest(interest)}
+                      className="text-[0.85rem] leading-none text-[var(--danger-500)] transition hover:opacity-85"
+                      aria-label={t("interests.aria.removeInterest", { interest })}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[0.7rem] text-[var(--text-secondary)]">
+                {t("interests.empty")}
+              </p>
+            )}
+
+            <ProfileModalError message={draftError} />
+
+            <ProfileModalError message={saveError} />
+          </div>
+        </ProfileEditModal>
+      ) : null}
     </AppCard>
   );
 }
