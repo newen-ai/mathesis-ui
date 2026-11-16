@@ -334,9 +334,10 @@ export const useProfessionalProfile = () => {
     await loadProfile(undefined, false);
   };
 
+  // Returns the error message (or null on success) so callers never read stale state.
   const persistWorkExperienceOperations = async (
     operations: PatchWorkExperiencesInput["operations"]
-  ) => {
+  ): Promise<string | null> => {
     setExperienceSaveError(null);
     setIsSavingExperiences(true);
 
@@ -345,15 +346,16 @@ export const useProfessionalProfile = () => {
     if (!result.success) {
       setExperienceSaveError(result.message);
       setIsSavingExperiences(false);
-      return false;
+      return result.message;
     }
 
     try {
       await refreshProfile();
-      return true;
+      return null;
     } catch {
-      setExperienceSaveError("Experience was saved but refresh failed");
-      return false;
+      const refreshError = "Experience was saved but refresh failed";
+      setExperienceSaveError(refreshError);
+      return refreshError;
     } finally {
       setIsSavingExperiences(false);
     }
@@ -361,7 +363,7 @@ export const useProfessionalProfile = () => {
 
   const persistEducationOperations = async (
     operations: PatchEducationHistoryInput["operations"]
-  ) => {
+  ): Promise<string | null> => {
     setEducationSaveError(null);
     setIsSavingEducations(true);
 
@@ -370,15 +372,16 @@ export const useProfessionalProfile = () => {
     if (!result.success) {
       setEducationSaveError(result.message);
       setIsSavingEducations(false);
-      return false;
+      return result.message;
     }
 
     try {
       await refreshProfile();
-      return true;
+      return null;
     } catch {
-      setEducationSaveError("Education was saved but refresh failed");
-      return false;
+      const refreshError = "Education was saved but refresh failed";
+      setEducationSaveError(refreshError);
+      return refreshError;
     } finally {
       setIsSavingEducations(false);
     }
@@ -389,9 +392,9 @@ export const useProfessionalProfile = () => {
       return { ok: true };
     }
 
-    const saved = await persistWorkExperienceOperations(operations);
-    if (!saved) {
-      return { ok: false, message: experienceSaveError ?? "Save failed" };
+    const errorMessage = await persistWorkExperienceOperations(operations);
+    if (errorMessage !== null) {
+      return { ok: false, message: errorMessage || "Save failed" };
     }
 
     return { ok: true };
@@ -402,9 +405,9 @@ export const useProfessionalProfile = () => {
       return { ok: true };
     }
 
-    const saved = await persistEducationOperations(operations);
-    if (!saved) {
-      return { ok: false, message: educationSaveError ?? "Save failed" };
+    const errorMessage = await persistEducationOperations(operations);
+    if (errorMessage !== null) {
+      return { ok: false, message: errorMessage || "Save failed" };
     }
 
     return { ok: true };

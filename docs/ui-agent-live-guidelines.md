@@ -297,3 +297,10 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-11-14 Ateneo live comments)
 - New comments arriving while a topic is open must never be injected silently: show a reveal button at the insertion point (thread end for replies, list end for new top-level comments) plus a header shortcut; highlight revealed items briefly.
 - Polling must pause while the tab is hidden and must not drop visible comments missing from a poll response.
+
+## Testing (2026-11-15)
+- CI (`.github/workflows/ci.yml`) runs on PRs to dev/test/main: lint, `npm run typecheck` (next typegen + tsc), `npm run test:coverage`, build. Use Node 24 locally (`engines` + `engine-strict`).
+- Coverage targets the logic layer (`src/lib/**`, `src/app/**/_lib/**` and listed components); thresholds 90/90/80/90 in `vitest.config.ts`. Pages/JSX are not chased for coverage.
+- `.test.ts` runs on node, `.test.tsx` on jsdom. Mock HTTP with `src/test/fetch-mock.ts` (`mockFetch`, `okData`); never hit the network.
+- Every new API helper gets a row in `src/lib/api/contract.test.ts` (method, path, body). Renaming a backend route means updating both sides (see Backend/UI Compatibility in AGENTS.md).
+- Fix a bug together with a regression test (examples: `ProfileAboutCard.test.tsx` draft seeding, `AteneoTopicDiscussion.test.tsx` polling, `useProfessionalProfile.test.tsx` save error message).
