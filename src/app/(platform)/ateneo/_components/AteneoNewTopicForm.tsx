@@ -10,11 +10,23 @@ import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import { extractUniqueUrlsFromText } from "@/lib/utils/link-preview";
 import { createRenderableImageUrlFromBlob } from "@/lib/utils/image-preview";
+import { createPdfPreview, openLocalFileInNewTab } from "@/lib/utils/pdf-preview";
+import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
 import { getAteneoTopicPublishErrorTranslation } from "@/lib/i18n/ateneo-errors";
+import {
+  TOPIC_DESCRIPTION_MAX_LENGTH,
+  TOPIC_TITLE_MAX_LENGTH,
+  firstInvalidField,
+  mapBackendTopicIssues,
+  normalizeTopicText,
+  validateNewTopic,
+  type NewTopicErrors,
+  type NewTopicField,
+} from "../_lib/new-topic-validation";
 
 const toneOptions = ["SERIO", "MIX", "LIBRE"] as const;
-const TOPIC_TITLE_LIMIT = 100;
-const TOPIC_DESCRIPTION_LIMIT = 1000;
+const TOPIC_TITLE_LIMIT = TOPIC_TITLE_MAX_LENGTH;
+const TOPIC_DESCRIPTION_LIMIT = TOPIC_DESCRIPTION_MAX_LENGTH;
 const MAX_ATTACHMENTS_PER_TOPIC = 5;
 const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -31,7 +43,11 @@ type TopicGroupOption = {
 type TopicAttachmentDraft = {
   file: File;
   kind: "image" | "pdf";
+  /** Image preview, or the first-page thumbnail for PDFs. Always an object URL to revoke. */
   previewUrl?: string;
+  /** PDFs only. */
+  pageCount?: number;
+  previewStatus?: "loading" | "ready" | "failed";
 };
 
 type TopicImagePreviewItem = {
@@ -64,23 +80,28 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   const [attachments, setAttachments] = useState<TopicAttachmentDraft[]>([]);
   const [activePreviewImageIndex, setActivePreviewImageIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<NewTopicErrors>({});
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const descriptionInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const groupSectionRef = useRef<HTMLDivElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const desktopGroupPickerRef = useRef<HTMLDivElement | null>(null);
   const translationRef = useRef(t);
   const attachmentsRef = useRef<TopicAttachmentDraft[]>([]);
+  // PDFs removed while their thumbnail is still rendering, so the late thumbnail is discarded.
+  const removedFilesRef = useRef(new WeakSet<File>());
+  const isUnmountedRef = useRef(false);
   const previewTouchStartXRef = useRef<number | null>(null);
   const previewTouchStartYRef = useRef<number | null>(null);
-  const isTitleTooLong = title.length > TOPIC_TITLE_LIMIT;
-  const isDescriptionTooLong = description.length > TOPIC_DESCRIPTION_LIMIT;
-  const isOverAnyLimit = isTitleTooLong || isDescriptionTooLong;
-  const canPublish =
-    canCreateTopics &&
-    !isSubmitting &&
-    selectedGroupId.trim().length > 0 &&
-    title.trim().length > 0 &&
-    description.trim().length > 0 &&
-    !isOverAnyLimit;
+  const isTitleTooLong = normalizeTopicText(title).length > TOPIC_TITLE_LIMIT;
+  const isDescriptionTooLong = normalizeTopicText(description).length > TOPIC_DESCRIPTION_LIMIT;
+  const isTitleInvalid = isTitleTooLong || Boolean(fieldErrors.title);
+  const isDescriptionInvalid = isDescriptionTooLong || Boolean(fieldErrors.description);
+  const fieldErrorMessage = (field: NewTopicField) => {
+    const error = fieldErrors[field];
+    return error ? t(`newTopic.errors.${error.key}`, error.params) : null;
+  };
   const detectedUrls = extractUniqueUrlsFromText(description, 3);
   const imagePreviewItems = useMemo<TopicImagePreviewItem[]>(() => {
     const nextItems: TopicImagePreviewItem[] = [];
@@ -137,7 +158,9 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   }, [attachments]);
 
   useEffect(() => {
+    isUnmountedRef.current = false;
     return () => {
+      isUnmountedRef.current = true;
       attachmentsRef.current.forEach((attachment) => {
         if (attachment.previewUrl) {
           URL.revokeObjectURL(attachment.previewUrl);
@@ -191,7 +214,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           return { file, kind, previewUrl };
         }
 
-        return { file, kind };
+        return { file, kind, previewStatus: "loading" as const };
       })
     );
 
@@ -211,11 +234,44 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
       });
       return kept;
     });
+
+    nextAttachments.filter((attachment) => attachment.kind === "pdf").forEach((attachment) => {
+      void loadPdfPreview(attachment.file);
+    });
+  };
+
+  // Renders the first page in the background; the card shows the PDF icon meanwhile (or if it fails).
+  const loadPdfPreview = async (file: File) => {
+    let preview: Awaited<ReturnType<typeof createPdfPreview>> | null = null;
+    try {
+      preview = await createPdfPreview(file);
+    } catch (error) {
+      console.warn("ateneo_pdf_preview_failed", { fileName: file.name, error });
+    }
+
+    // The file may have been removed (or the form left) while rendering.
+    if (isUnmountedRef.current || removedFilesRef.current.has(file)) {
+      if (preview) URL.revokeObjectURL(preview.thumbnailUrl);
+      return;
+    }
+
+    setAttachments((current) =>
+      current.map((attachment) =>
+        attachment.file === file
+          ? preview
+            ? { ...attachment, previewUrl: preview.thumbnailUrl, pageCount: preview.pageCount, previewStatus: "ready" }
+            : { ...attachment, previewStatus: "failed" }
+          : attachment
+      )
+    );
   };
 
   const removeAttachmentAt = (indexToRemove: number) => {
     setAttachments((current) => {
       const target = current[indexToRemove];
+      if (target) {
+        removedFilesRef.current.add(target.file);
+      }
       if (target?.previewUrl) {
         URL.revokeObjectURL(target.previewUrl);
       }
@@ -369,7 +425,33 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     };
   }, [isDesktopGroupPickerOpen]);
 
+  const clearFieldError = (field: NewTopicField) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  // Field errors are shown only next to their field (no toast) and focus moves to the first one.
+  // Toasts are reserved for errors that do not belong to a specific input.
+  const reportFieldErrors = (errors: NewTopicErrors) => {
+    setFieldErrors(errors);
+    const firstField = firstInvalidField(errors);
+    if (!firstField) return;
+
+    if (firstField === "title") {
+      titleInputRef.current?.focus();
+    } else if (firstField === "description") {
+      descriptionInputRef.current?.focus();
+    } else {
+      groupSectionRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    }
+  };
+
   const handleGroupChange = (nextGroupId: string) => {
+    clearFieldError("group");
     setSelectedGroupId(nextGroupId);
     const nextGroup = groupOptions.find((group) => group.id === nextGroupId);
     setCanCreateTopics(nextGroupId.length > 0 ? Boolean(nextGroup?.canCreateTopics) : true);
@@ -378,25 +460,20 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+
     const targetGroupId = selectedGroupId.trim();
-    const safeTitle = title.trim();
-    const safeDescription = description.trim();
+    const safeTitle = normalizeTopicText(title);
+    const safeDescription = normalizeTopicText(description);
 
-    if (!targetGroupId) {
-      toast.info(t("newTopic.toasts.chooseGroupBeforePublish"));
+    // First line of defence: same rules as the backend, reported without a round trip.
+    const clientErrors = validateNewTopic({ groupId: targetGroupId, canCreateTopics, title, description });
+    if (firstInvalidField(clientErrors)) {
+      reportFieldErrors(clientErrors);
       return;
     }
 
-    if (!safeTitle || !safeDescription) {
-      toast.info(t("newTopic.toasts.completeBeforePublish"));
-      return;
-    }
-
-    if (isOverAnyLimit) {
-      toast.info(t("newTopic.toasts.respectLimits"));
-      return;
-    }
-
+    setFieldErrors({});
     setIsSubmitting(true);
     try {
       const response = await createAteneoTopic(targetGroupId, {
@@ -422,7 +499,14 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
         attachmentNames: attachments.map((attachment) => attachment.file.name),
         error
       });
-      toast.error(getAteneoTopicPublishErrorTranslation(error));
+
+      // Second line of defence: the backend explains invalid fields in `details`.
+      const backendErrors = mapBackendTopicIssues((error as { details?: unknown } | null)?.details);
+      if (firstInvalidField(backendErrors)) {
+        reportFieldErrors(backendErrors);
+      } else {
+        toast.error(getAteneoTopicPublishErrorTranslation(error));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -540,16 +624,16 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           </h1>
         </div>
 
-        {canCreateTopics ? (
-          <button
-            type="button"
-            disabled={!canPublish}
-            onClick={() => void handleSubmit()}
-            className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:brightness-100"
-          >
-            {isSubmitting ? t("newTopic.publishing") : t("newTopic.publish")}
-          </button>
-        ) : null}
+        {/* Always enabled (except while sending): problems are reported on click, next to each field. */}
+        <button
+          type="button"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+          onClick={() => void handleSubmit()}
+          className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95 disabled:cursor-wait disabled:opacity-70 disabled:hover:brightness-100"
+        >
+          {isSubmitting ? t("newTopic.publishing") : t("newTopic.publish")}
+        </button>
       </div>
 
       {groupOptions.length === 0 ? (
@@ -572,7 +656,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
             : "",
         ].join(" ")}
       >
-        <div className="flex items-center gap-3">
+        <div ref={groupSectionRef} className="flex items-center gap-3">
           <label className="min-w-0 flex-1">
             <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.groupLabel")}</span>
             <div className="space-y-2">
@@ -725,18 +809,35 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           </label>
         </div>
 
+        {fieldErrors.group ? (
+          <p id="new-topic-group-error" role="alert" className="mt-2 text-scale-2 font-semibold text-[var(--danger-500)]">
+            {fieldErrorMessage("group")}
+          </p>
+        ) : null}
+
         <div className="mt-5 space-y-5">
           <label className="block">
             <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.titleLabel")}</span>
             <input
+              ref={titleInputRef}
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                clearFieldError("title");
+                setTitle(event.target.value);
+              }}
               placeholder={t("newTopic.titlePlaceholder")}
+              aria-invalid={isTitleInvalid}
+              aria-describedby={fieldErrors.title ? "new-topic-title-error" : undefined}
               className={[
                 "w-full rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
-                isTitleTooLong ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]" : "border-[var(--line)] focus:border-[var(--brand-700)]",
+                isTitleInvalid ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]" : "border-[var(--line)] focus:border-[var(--brand-700)]",
               ].join(" ")}
             />
+            {fieldErrors.title ? (
+              <p id="new-topic-title-error" role="alert" className="mt-1 text-scale-2 font-semibold text-[var(--danger-500)]">
+                {fieldErrorMessage("title")}
+              </p>
+            ) : null}
             <div
               className={[
                 "mt-1 text-right text-scale-1",
@@ -750,17 +851,28 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           <label className="block">
             <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.descriptionLabel")}</span>
             <textarea
+              ref={descriptionInputRef}
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) => {
+                clearFieldError("description");
+                setDescription(event.target.value);
+              }}
               placeholder={t("newTopic.descriptionPlaceholder")}
               rows={6}
+              aria-invalid={isDescriptionInvalid}
+              aria-describedby={fieldErrors.description ? "new-topic-description-error" : undefined}
               className={[
                 "w-full resize-none rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
-                isDescriptionTooLong
+                isDescriptionInvalid
                   ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]"
                   : "border-[var(--line)] focus:border-[var(--brand-700)]",
               ].join(" ")}
             />
+            {fieldErrors.description ? (
+              <p id="new-topic-description-error" role="alert" className="mt-1 text-scale-2 font-semibold text-[var(--danger-500)]">
+                {fieldErrorMessage("description")}
+              </p>
+            ) : null}
             <div
               className={[
                 "mt-1 text-right text-scale-1",
@@ -809,66 +921,53 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                 </button>
               </div>
 
-              {attachments.length > 0 ? (
+              {attachments.some((attachment) => attachment.kind === "image") ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {attachments.map((attachment, index) => {
-                    if (attachment.kind === "image") {
-                      const previewItem = imagePreviewItems.find((item) => item.attachmentIndex === index);
-                      if (!previewItem) {
-                        return null;
-                      }
+                    if (attachment.kind !== "image") {
+                      return null;
+                    }
 
-                      return (
-                        <div
-                          key={`${attachment.file.name}-${index}`}
-                          className="group relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] text-left transition hover:border-[var(--brand-700)]"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const previewIndex = imagePreviewItems.findIndex((item) => item.attachmentIndex === index);
-                              if (previewIndex >= 0) {
-                                openImagePreviewAt(previewIndex);
-                              }
-                            }}
-                            className="block"
-                            aria-label={t("newTopic.openPreviewAria", { name: attachment.file.name })}
-                          >
-                            <Image
-                              src={previewItem.previewUrl}
-                              alt={t("newTopic.previewAlt", { name: attachment.file.name })}
-                              width={80}
-                              height={80}
-                              unoptimized
-                              className="h-20 w-20 object-cover"
-                            />
-                          </button>
-                          <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-[color:color-mix(in_srgb,var(--navy-900)_58%,transparent)] px-2 py-1 text-scale-1 text-white">
-                            {attachment.file.name}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              removeAttachmentAt(index);
-                            }}
-                            className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_84%,transparent)] text-sm text-[var(--text-primary)] backdrop-blur transition hover:bg-[var(--surface)]"
-                            aria-label={t("newTopic.removeAria", { name: attachment.file.name })}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      );
+                    const previewItem = imagePreviewItems.find((item) => item.attachmentIndex === index);
+                    if (!previewItem) {
+                      return null;
                     }
 
                     return (
-                      <div key={`${attachment.file.name}-${index}`} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 text-[var(--text-primary)]">
-                        <span aria-hidden="true">📄</span>
-                        <span className="max-w-[180px] truncate">{attachment.file.name}</span>
+                      <div
+                        key={`${attachment.file.name}-${index}`}
+                        className="group relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] text-left transition hover:border-[var(--brand-700)]"
+                      >
                         <button
                           type="button"
-                          onClick={() => removeAttachmentAt(index)}
-                          className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
+                          onClick={() => {
+                            const previewIndex = imagePreviewItems.findIndex((item) => item.attachmentIndex === index);
+                            if (previewIndex >= 0) {
+                              openImagePreviewAt(previewIndex);
+                            }
+                          }}
+                          className="block"
+                          aria-label={t("newTopic.openPreviewAria", { name: attachment.file.name })}
+                        >
+                          <Image
+                            src={previewItem.previewUrl}
+                            alt={t("newTopic.previewAlt", { name: attachment.file.name })}
+                            width={80}
+                            height={80}
+                            unoptimized
+                            className="h-20 w-20 object-cover"
+                          />
+                        </button>
+                        <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-[color:color-mix(in_srgb,var(--navy-900)_58%,transparent)] px-2 py-1 text-scale-1 text-white">
+                          {attachment.file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeAttachmentAt(index);
+                          }}
+                          className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_84%,transparent)] text-sm text-[var(--text-primary)] backdrop-blur transition hover:bg-[var(--surface)]"
                           aria-label={t("newTopic.removeAria", { name: attachment.file.name })}
                         >
                           ×
@@ -876,6 +975,28 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
                       </div>
                     );
                   })}
+                </div>
+              ) : null}
+
+              {attachments.some((attachment) => attachment.kind === "pdf") ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {attachments.map((attachment, index) =>
+                    attachment.kind === "pdf" ? (
+                      <PdfAttachmentCard
+                        key={`${attachment.file.name}-${index}`}
+                        fileName={attachment.file.name}
+                        sizeBytes={attachment.file.size}
+                        pageCount={attachment.pageCount}
+                        thumbnailUrl={attachment.previewUrl}
+                        isLoadingThumbnail={attachment.previewStatus === "loading"}
+                        onOpen={() => openLocalFileInNewTab(attachment.file)}
+                        openLabel={t("newTopic.pdf.open")}
+                        pagesLabel={(count) => t("newTopic.pdf.pages", { count })}
+                        onRemove={() => removeAttachmentAt(index)}
+                        removeLabel={t("newTopic.removeAria", { name: attachment.file.name })}
+                      />
+                    ) : null
+                  )}
                 </div>
               ) : null}
 

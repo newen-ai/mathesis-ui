@@ -304,3 +304,13 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - `.test.ts` runs on node, `.test.tsx` on jsdom. Mock HTTP with `src/test/fetch-mock.ts` (`mockFetch`, `okData`); never hit the network.
 - Every new API helper gets a row in `src/lib/api/contract.test.ts` (method, path, body). Renaming a backend route means updating both sides (see Backend/UI Compatibility in AGENTS.md).
 - Fix a bug together with a regression test (examples: `ProfileAboutCard.test.tsx` draft seeding, `AteneoTopicDiscussion.test.tsx` polling, `useProfessionalProfile.test.tsx` save error message).
+
+## Forms: validate on submit (2026-11-16)
+- Submit buttons stay enabled; disable them only while the request is in flight. Do not disable them for incomplete or invalid input.
+- On submit, validate on the client with the same rules as the backend schema (keep limits in a `_lib/*-validation.ts` module that cites the backend schema), then show the message under each invalid field (`aria-invalid`, `role="alert"`) and focus the first one. Do not also toast field errors; toasts are only for errors that do not belong to a specific input (network, permissions, attachments, unknown). Clear a field's error when the user edits it.
+- Backend 400 responses carry the validation issues in `details` (all environments). Map them to the same field errors; fall back to the generic error translation otherwise.
+- Reference implementation: `AteneoNewTopicForm` + `ateneo/_lib/new-topic-validation.ts`.
+
+## Attachments: PDFs (2026-11-16)
+- Render PDFs with `src/components/ui/PdfAttachmentCard.tsx` everywhere (form, topic detail, cards). Do not use emoji icons for files.
+- Thumbnails only for local files before upload (`src/lib/utils/pdf-preview.ts`, PDF.js loaded on demand). Never download published PDFs just to draw a thumbnail.

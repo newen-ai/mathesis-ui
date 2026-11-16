@@ -76,10 +76,22 @@
       "choosePdf": "Elegí un archivo PDF.",
       "maxAttachments": "Máximo 5 adjuntos por tema. Quitá alguno para sumar otro.",
       "preferredGroupUnavailable": "No pudimos cargar el grupo del enlace. Te mostramos tus grupos disponibles.",
-      "chooseGroupBeforePublish": "Elegí un grupo antes de publicar.",
-      "completeBeforePublish": "Completá título y descripción antes de publicar.",
-      "respectLimits": "Respetá los límites: título hasta 100 y descripción hasta 1000 caracteres.",
       "published": "Tema publicado"
+    },
+    "errors": {
+      "groupRequired": "Elegí un grupo para publicar el tema.",
+      "groupAdminsOnly": "En este grupo solo los administradores pueden crear temas. Elegí otro grupo.",
+      "titleRequired": "Escribí un título.",
+      "titleTooShort": "El título necesita al menos {{min}} caracteres.",
+      "titleTooLong": "El título puede tener hasta {{max}} caracteres.",
+      "descriptionRequired": "Escribí una descripción.",
+      "descriptionTooShort": "La descripción necesita al menos {{min}} caracteres.",
+      "descriptionTooLong": "La descripción puede tener hasta {{max}} caracteres."
+    },
+    "pdf": {
+      "open": "Ver PDF",
+      "pages_one": "{{count}} pág.",
+      "pages_other": "{{count}} págs."
     }
   }
 }

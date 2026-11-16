@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
 import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
 import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { getSessionUserId } from "@/lib/api/auth";
@@ -866,18 +867,13 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
             {topic.attachments
               .filter((attachment) => !isImageMimeType(attachment.mimeType))
               .map((attachment) => (
-                <a
+                <PdfAttachmentCard
                   key={attachment.id}
+                  fileName={attachment.fileName}
+                  sizeBytes={attachment.sizeBytes}
                   href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <span aria-hidden="true">📄</span>
-                    <span className="truncate">{attachment.fileName}</span>
-                  </span>
-                </a>
+                  openLabel="Abrir PDF"
+                />
               ))}
           </div>
         ) : null}

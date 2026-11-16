@@ -17,6 +17,12 @@ vi.mock("sonner", () => ({ toast }));
 const api = vi.hoisted(() => ({ listAteneoGroups: vi.fn(), getAteneoGroup: vi.fn(), createAteneoTopic: vi.fn() }));
 vi.mock("@/lib/api/ateneo", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/api/ateneo")>()), ...api }));
 
+const pdfPreview = vi.hoisted(() => ({ createPdfPreview: vi.fn(), openLocalFileInNewTab: vi.fn() }));
+vi.mock("@/lib/utils/pdf-preview", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/utils/pdf-preview")>()),
+  ...pdfPreview
+}));
+
 import { AteneoNewTopicForm } from "./AteneoNewTopicForm";
 
 function group(id: string, name: string, overrides: Record<string, unknown> = {}) {
@@ -27,6 +33,9 @@ beforeEach(() => {
   Object.values(api).forEach((mock) => mock.mockReset());
   Object.values(toast).forEach((mock) => mock.mockReset());
   router.push.mockReset();
+  pdfPreview.createPdfPreview.mockReset();
+  pdfPreview.openLocalFileInNewTab.mockReset();
+  vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:x"), revokeObjectURL: vi.fn() }));
   api.listAteneoGroups.mockResolvedValue({ success: true, message: "OK", data: { tab: "mine", groups: [group("g1", "Lógica")] } });
 });
 
@@ -138,5 +147,52 @@ describe("AteneoNewTopicForm validation on publish", () => {
 
     expect(screen.getByRole("alert")).toHaveTextContent("En este grupo solo los administradores pueden crear temas.");
     expect(api.createAteneoTopic).not.toHaveBeenCalled();
+  });
+
+});
+
+describe("AteneoNewTopicForm PDF attachments", () => {
+  const pdf = () => new File(["%PDF-1.4"], "apunte.pdf", { type: "application/pdf" });
+  const fileInput = () => document.querySelector('input[type="file"][accept="application/pdf"]') as HTMLInputElement;
+
+  it("shows a card with the first-page thumbnail and page count", async () => {
+    pdfPreview.createPdfPreview.mockResolvedValue({ thumbnailUrl: "blob:thumb", pageCount: 12 });
+    const user = await renderForm();
+
+    await user.upload(fileInput(), pdf());
+
+    const card = await screen.findByRole("button", { name: /^apunte\.pdf/ });
+    await waitFor(() => expect(card).toHaveTextContent("12 págs."));
+    expect(card.querySelector("img")).toHaveAttribute("src", "blob:thumb");
+
+    await user.click(card);
+    expect(pdfPreview.openLocalFileInNewTab).toHaveBeenCalledWith(expect.objectContaining({ name: "apunte.pdf" }));
+
+    await user.click(screen.getByRole("button", { name: "Quitar apunte.pdf" }));
+    expect(screen.queryByRole("button", { name: /^apunte\.pdf/ })).not.toBeInTheDocument();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:thumb");
+  });
+
+  it("keeps the PDF icon when the preview fails", async () => {
+    pdfPreview.createPdfPreview.mockRejectedValue(new Error("encrypted"));
+    const user = await renderForm();
+
+    await user.upload(fileInput(), pdf());
+
+    const card = await screen.findByRole("button", { name: /^apunte\.pdf/ });
+    await waitFor(() => expect(card.querySelector("svg")).not.toHaveClass("animate-pulse"));
+    expect(card.querySelector("img")).toBeNull();
+  });
+
+  it("releases the thumbnail when the PDF is removed before it finishes", async () => {
+    let resolvePreview: (value: { thumbnailUrl: string; pageCount: number }) => void = () => undefined;
+    pdfPreview.createPdfPreview.mockReturnValue(new Promise((resolve) => (resolvePreview = resolve)));
+    const user = await renderForm();
+
+    await user.upload(fileInput(), pdf());
+    await user.click(await screen.findByRole("button", { name: "Quitar apunte.pdf" }));
+    resolvePreview({ thumbnailUrl: "blob:late", pageCount: 1 });
+
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:late"));
   });
 });
