@@ -192,6 +192,36 @@ export async function requestVerificationEmail(
 	}
 }
 
+// Resend from /confirm when the link expired: the backend finds the account by the old token and mails
+// the new link to that account's own address.
+export async function requestVerificationEmailByToken(
+	token: string
+): Promise<AuthServiceResponse> {
+	try {
+		const response = await apiRequest("/auth/request-verification/by-token", {
+			method: "POST",
+			body: {
+				token,
+			},
+		});
+
+		return parseServiceResponse(
+			response,
+			"Respuesta invalida del servicio de verificacion de correo."
+		);
+	} catch (error) {
+		return {
+			success: false,
+			message:
+				error instanceof Error &&
+				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
+					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
+					: "No pudimos conectar con el servicio de verificacion de correo.",
+			details: "Error de red o CORS.",
+		};
+	}
+}
+
 export async function verifyEmail(token: string): Promise<AuthServiceResponse> {
 	try {
 		const response = await apiRequest(`/auth/confirm?token=${encodeURIComponent(token)}`);

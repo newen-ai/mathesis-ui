@@ -314,3 +314,8 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Attachments: PDFs (2026-11-16)
 - Render PDFs with `src/components/ui/PdfAttachmentCard.tsx` everywhere (form, topic detail, cards). Do not use emoji icons for files.
 - Thumbnails only for local files before upload (`src/lib/utils/pdf-preview.ts`, PDF.js loaded on demand). Never download published PDFs just to draw a thumbnail.
+
+## Auth: email confirmation errors (2026-11-16)
+- `/confirm` uses semantic theme tokens (`--background`, `--surface`, `--line`, `.sophium-heading-primary`, `.sophium-on-brand`), no hardcoded slate/hex, so it works in dark mode.
+- Expired link (`EMAIL_VERIFICATION_TOKEN_EXPIRED`): title `El enlace venció`, gold full-width `Reenviar correo de verificación` button (same style as `/unverified`), success/rate-limit notices as bordered tinted boxes; the button disappears after a successful resend because the old token is replaced.
+- Invalid link (`EMAIL_VERIFICATION_TOKEN_INVALID`): explanation only, no resend. Every error state shows an outlined `Ir a iniciar sesión` link.
