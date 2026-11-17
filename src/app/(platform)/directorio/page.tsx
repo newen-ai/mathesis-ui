@@ -255,24 +255,26 @@ export default function DirectorioPage() {
           </p>
         </header>
 
-        <section className="mb-7 rounded-[1.5rem] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--brand-200)_45%,var(--surface))] px-5 py-4 shadow-[0_1px_0_rgba(16,24,40,0.02)] sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <h2 className="sophium-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
-                {t("membership.title")}
-              </h2>
-              <p className="mt-2 text-scale-3 text-[var(--text-primary)]">
-                {t("membership.subtitle")}
-              </p>
-            </div>
+        {/* Invitation only for users without the badge: hidden for members ("go") and while the state loads,
+            so members never see it flash in. */}
+        {membershipCtaMode === "request" || membershipCtaMode === "requested" ? (
+          <section className="mb-7 rounded-[1.5rem] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--brand-200)_45%,var(--surface))] px-5 py-4 shadow-[0_1px_0_rgba(16,24,40,0.02)] sm:px-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h2 className="sophium-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
+                  {t("membership.title")}
+                </h2>
+                <p className="mt-2 text-scale-3 text-[var(--text-primary)]">
+                  {t("membership.subtitle")}
+                </p>
+              </div>
 
-            {membershipCtaMode !== "go" ? (
               <button
                 type="button"
                 onClick={() => {
                   void onMembershipAction();
                 }}
-                disabled={membershipCtaMode === "loading" || isMembershipActionPending}
+                disabled={isMembershipActionPending}
                 aria-label={membershipCtaMode === "requested" ? t("membership.ariaCancel") : t("membership.ariaRequest")}
                 className={`inline-flex items-center justify-between gap-3 rounded-xl border px-5 py-3 text-scale-2 font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-70 ${
                   membershipCtaMode === "requested"
@@ -281,23 +283,21 @@ export default function DirectorioPage() {
                 }`}
               >
                 <span>
-                  {membershipCtaMode === "loading"
-                    ? t("membership.loading")
-                    : isMembershipActionPending && membershipCtaMode === "requested"
-                      ? t("membership.cancelling")
-                      : isMembershipActionPending
-                        ? t("membership.sending")
-                        : membershipCtaMode === "requested"
-                          ? t("membership.cancel")
-                          : t("membership.request")}
+                  {isMembershipActionPending && membershipCtaMode === "requested"
+                    ? t("membership.cancelling")
+                    : isMembershipActionPending
+                      ? t("membership.sending")
+                      : membershipCtaMode === "requested"
+                        ? t("membership.cancel")
+                        : t("membership.request")}
                 </span>
                 <span aria-hidden="true" className="text-lg">
                   {membershipCtaMode === "requested" ? "−" : "+"}
                 </span>
               </button>
-            ) : null}
-          </div>
-        </section>
+            </div>
+          </section>
+        ) : null}
 
         <div className="space-y-5">
           {isLoading ? (
