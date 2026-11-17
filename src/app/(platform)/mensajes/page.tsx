@@ -683,6 +683,7 @@ export default function MensajesPage() {
                   ...thread.summary,
                   lastMessageAt: response.data.message.createdAt,
                   lastMessagePreview: response.data.message.content,
+                  lastMessageIsDeleted: false,
                 },
               }
             : thread
@@ -1039,7 +1040,9 @@ export default function MensajesPage() {
               {threads.map((thread) => {
                 const initials = getTwoInitials({ fullName: thread.displayName });
                 const isActive = !isComposerOpen && selectedThreadId === thread.summary.id;
-                const lastPreview = thread.summary.lastMessagePreview || t("fallbacks.noMessagesYet");
+                const lastPreview = thread.summary.lastMessageIsDeleted
+                  ? t("fallbacks.deletedMessage")
+                  : thread.summary.lastMessagePreview || t("fallbacks.noMessagesYet");
 
                 return (
                   <button

@@ -9,6 +9,8 @@ import {
 	type FeedPost,
 } from "@/lib/api/feed";
 import { getTwoInitials } from "@/lib/utils/name";
+import { useTranslation } from "react-i18next";
+import { formatRelativeTime } from "@/lib/utils/relative-time";
 
 type FeedPostCardProps = {
 	post: FeedPost;
@@ -18,25 +20,6 @@ type FeedPostCardProps = {
 	onShowComingSoon?: () => void;
 };
 
-function formatRelativeTime(value: string) {
-	const date = new Date(value);
-	if (Number.isNaN(date.getTime())) return "";
-
-	const diffMs = Date.now() - date.getTime();
-	const diffMinutes = Math.floor(diffMs / 60_000);
-	const diffHours = Math.floor(diffMinutes / 60);
-	const diffDays = Math.floor(diffHours / 24);
-
-	if (diffMinutes < 1) return "ahora";
-	if (diffMinutes < 60) return `hace ${diffMinutes} min`;
-	if (diffHours < 24) return `hace ${diffHours} h`;
-	if (diffDays < 7) return `hace ${diffDays} d`;
-
-	return date.toLocaleDateString("es-AR", {
-		day: "2-digit",
-		month: "short",
-	});
-}
 
 function formatFileSize(sizeBytes: number) {
 	if (sizeBytes < 1024) return `${sizeBytes} B`;
@@ -83,7 +66,8 @@ export function FeedPostCard({
 	);
 
 	const attachmentCount = post.attachments.length;
-	const timeLabel = formatRelativeTime(post.createdAt);
+	const { t, i18n } = useTranslation();
+	const timeLabel = formatRelativeTime(post.createdAt, t, i18n.language);
 	const isReacted = post.currentUserReactionValue !== null;
 
 	const handleToggleReaction = async () => {

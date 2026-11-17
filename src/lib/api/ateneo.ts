@@ -19,8 +19,12 @@ export type AteneoGroup = {
   description: string | null;
   createTopicsMode: "free" | "admins";
   commentsMode: "free" | "admins";
+  // Spanish labels from the backend; prefer memberCount / activityStatus (optional while older
+  // backends are still deployed).
   subtitle: string;
   activity: string;
+  memberCount?: number;
+  activityStatus?: "new" | "active" | "inactive";
   icon: string;
   isOfficial: boolean;
   isMember: boolean;

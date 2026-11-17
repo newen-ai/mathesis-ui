@@ -319,3 +319,10 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - `/confirm` uses semantic theme tokens (`--background`, `--surface`, `--line`, `.sophium-heading-primary`, `.sophium-on-brand`), no hardcoded slate/hex, so it works in dark mode.
 - Expired link (`EMAIL_VERIFICATION_TOKEN_EXPIRED`): title `El enlace venció`, gold full-width `Reenviar correo de verificación` button (same style as `/unverified`), success/rate-limit notices as bordered tinted boxes; the button disappears after a successful resend because the old token is replaced.
 - Invalid link (`EMAIL_VERIFICATION_TOKEN_INVALID`): explanation only, no resend. Every error state shows an outlined `Ir a iniciar sesión` link.
+
+## i18n: backend-generated labels (2026-11-16)
+- Do not render Spanish labels built by the backend. Use the raw fields and localize in the UI:
+  - Relative times: `formatRelativeTime(isoDate, t, i18n.language)` from `src/lib/utils/relative-time.ts` (copy in `common.json` → `relativeTime.*`). In Ateneo use `<AteneoRelativeTime value={createdAt} fallback={timeLabel} />`.
+  - Ateneo group "N miembros · Activo hoy": `<AteneoGroupMeta group={group} />` / `useGroupMetaLabel()` (uses `memberCount` + `activityStatus`, `ateneo.json` → `groupMeta.*`).
+  - Deleted comment placeholder: `ateneo.json` → `discussion.deletedComment`; deleted last chat message: `lastMessageIsDeleted` + `messages.json` → `fallbacks.deletedMessage`.
+- The backend still sends the old labels (`timeLabel`, `subtitle`, `activity`, `lastMessagePreview: "Message deleted"`); keep them only as fallback for an older backend.

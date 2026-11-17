@@ -93,5 +93,17 @@
       "pages_one": "{{count}} pág.",
       "pages_other": "{{count}} págs."
     }
+  },
+  "groupMeta": {
+    "members_one": "{{count}} miembro",
+    "members_other": "{{count}} miembros",
+    "activity": {
+      "new": "Creado recientemente",
+      "active": "Activo hoy",
+      "inactive": "Sin actividad"
+    }
+  },
+  "discussion": {
+    "deletedComment": "Comentario eliminado"
   }
 }

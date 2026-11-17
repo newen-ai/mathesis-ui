@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/ateneo";
 import { AteneoGroupHeaderActions } from "./AteneoGroupHeaderActions";
 import { AteneoTopicCard, type AteneoTopicCardTopic } from "./AteneoTopicCard";
+import { AteneoGroupMeta } from "./AteneoLocalizedLabels";
 
 export type AteneoGroupTopic = AteneoTopicCardTopic & {
   reactions: number;
@@ -50,6 +51,7 @@ function mapTopic(topic: AteneoTopic): AteneoGroupTopic {
     groupLabel: topic.groupLabel,
     authorName: authorName || "Usuario",
     timeLabel: topic.timeLabel,
+    createdAt: topic.createdAt,
     title: topic.title,
     description: topic.description,
     tone: topic.tone,
@@ -159,7 +161,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
               {group.name}
             </h1>
             <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-              {group.subtitle} <span className="mx-1">·</span> {group.activity}
+              <AteneoGroupMeta group={group} />
             </p>
           </div>
         </div>
@@ -214,7 +216,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
                 {group.name}
               </h1>
               <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-                {group.subtitle} <span className="mx-1">·</span> {group.activity}
+                <AteneoGroupMeta group={group} />
               </p>
             </div>
           </div>

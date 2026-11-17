@@ -24,6 +24,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { getSessionUserId } from "@/lib/api/auth";
 import { AteneoKickMemberModal } from "./AteneoKickMemberModal";
 import { AteneoRemovedTopicPreviewModal } from "./AteneoRemovedTopicPreviewModal";
+import { AteneoGroupMeta } from "./AteneoLocalizedLabels";
 
 type AteneoGroupMembersPanelProps = {
   groupId: string;
@@ -351,7 +352,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
               {group.name}
             </h1>
             <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-              {group.subtitle} <span className="mx-1">·</span> {group.activity}
+              <AteneoGroupMeta group={group} />
             </p>
           </div>
         </div>
@@ -400,7 +401,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
             {group.name}
           </h1>
           <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-            {group.subtitle} <span className="mx-1">·</span> {group.activity}
+            <AteneoGroupMeta group={group} />
           </p>
         </div>
       </div>

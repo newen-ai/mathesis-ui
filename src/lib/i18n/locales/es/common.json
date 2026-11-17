@@ -22,5 +22,11 @@
       "connectionFailed": "No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.",
       "publishFailed": "No pudimos publicar el tema. Intentá nuevamente en unos segundos."
     }
+  },
+  "relativeTime": {
+    "now": "ahora",
+    "minutesAgo": "hace {{count}} min",
+    "hoursAgo": "hace {{count}} h",
+    "daysAgo": "hace {{count}} d"
   }
 }

@@ -93,5 +93,17 @@
       "pages_one": "{{count}} page",
       "pages_other": "{{count}} pages"
     }
+  },
+  "groupMeta": {
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "activity": {
+      "new": "Recently created",
+      "active": "Active today",
+      "inactive": "No activity"
+    }
+  },
+  "discussion": {
+    "deletedComment": "Comment deleted"
   }
 }

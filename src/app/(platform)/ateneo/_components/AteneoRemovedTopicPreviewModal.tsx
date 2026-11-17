@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import { type AteneoTopic } from "@/lib/api/ateneo";
+import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
 
 type AteneoRemovedTopicPreviewModalProps = {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export function AteneoRemovedTopicPreviewModal({ isOpen, topic, deletedAt, onClo
             />
             <div className="min-w-0">
               <p className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{authorName}</p>
-              <p className="text-scale-2 text-[var(--text-secondary)]">{topic.timeLabel}</p>
+              <p className="text-scale-2 text-[var(--text-secondary)]"><AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} /></p>
             </div>
           </div>
 

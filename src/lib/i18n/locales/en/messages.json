@@ -17,7 +17,8 @@
     "contact": "Contact",
     "searchResult": "Search result",
     "noMessagesYet": "No messages yet",
-    "chat": "Chat"
+    "chat": "Chat",
+    "deletedMessage": "Message deleted"
   },
   "errors": {
     "groupTitleRequired": "Group title is required.",

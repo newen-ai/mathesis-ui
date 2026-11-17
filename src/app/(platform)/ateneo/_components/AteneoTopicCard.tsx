@@ -16,6 +16,7 @@ import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
 import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
 import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
+import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
 
 export type AteneoTopicCardTopic = {
   id: string;
@@ -23,7 +24,9 @@ export type AteneoTopicCardTopic = {
   authorImageUrl: string | null;
   authorInitial: string;
   authorName: string;
+  // Backend Spanish label; shown only when createdAt is missing.
   timeLabel: string;
+  createdAt?: string;
   title: string;
   description: string;
   tone: string;
@@ -221,14 +224,14 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
               <span>·</span>
               <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span>
               <span>·</span>
-              <span>{topic.timeLabel}</span>
+              <span><AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} /></span>
             </div>
           ) : (
             <p className={metaClassName}>
               <Link href={topicHref} className="sophium-link-accent font-medium hover:underline">
                 {topic.groupLabel}
               </Link>{" "}
-              <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> {topic.timeLabel}
+              <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> <AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} />
             </p>
           )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -34,6 +35,7 @@ import {
 import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
 import { AteneoKickMemberModal } from "./AteneoKickMemberModal";
 import { AteneoContentModerationModal } from "./AteneoContentModerationModal";
+import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
 
 type AteneoTopicDiscussionProps = {
   groupId: string;
@@ -66,9 +68,9 @@ function FlagIcon() {
   );
 }
 
-function fullName(comment: AteneoComment): string {
+function fullName(comment: AteneoComment, deletedLabel: string): string {
   if (comment.isDeletedPlaceholder) {
-    return "Comentario eliminado";
+    return deletedLabel;
   }
 
   return [comment.author.firstName, comment.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
@@ -81,6 +83,8 @@ function mentionFromContent(content: string): string | null {
 
 export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussionProps) {
   const router = useRouter();
+  const { t } = useTranslation("ateneo");
+  const deletedCommentLabel = t("discussion.deletedComment");
   const [group, setGroup] = useState<AteneoGroup | null>(null);
   const [topic, setTopic] = useState<AteneoTopic | null>(null);
   const [topicComments, setTopicComments] = useState<AteneoComment[]>([]);
@@ -837,7 +841,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
             </h2>
           </div>
 
-          <span className="text-scale-2 text-[var(--text-secondary)]">{topic.timeLabel}</span>
+          <span className="text-scale-2 text-[var(--text-secondary)]"><AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} /></span>
         </div>
 
         <h3 className="mt-5 text-[1.3rem] font-semibold leading-snug text-[var(--heading-primary)] sm:text-[1.6rem]">
@@ -976,7 +980,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                         <UserAvatar
                           imageUrl={comment.isDeletedPlaceholder ? null : comment.author.profileImageUrl}
                           initials={comment.isDeletedPlaceholder ? "?" : comment.author.initials}
-                          label={`Foto de perfil de ${fullName(comment)}`}
+                          label={`Foto de perfil de ${fullName(comment, deletedCommentLabel)}`}
                           className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
                           initialsClassName="text-xs font-bold text-[var(--surface)]"
                         />
@@ -984,12 +988,12 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className={`font-semibold ${comment.isDeletedPlaceholder ? "text-[var(--text-secondary)]" : "text-[var(--heading-primary)]"}`}>
-                              {fullName(comment)}
+                              {fullName(comment, deletedCommentLabel)}
                             </p>
-                            <span className="text-scale-1 text-[var(--text-secondary)]">{comment.timeLabel}</span>
+                            <span className="text-scale-1 text-[var(--text-secondary)]"><AteneoRelativeTime value={comment.createdAt} fallback={comment.timeLabel} /></span>
                           </div>
                           <LinkifiedText
-                            text={comment.content}
+                            text={comment.isDeletedPlaceholder ? deletedCommentLabel : comment.content}
                             className={`mt-1 whitespace-pre-wrap text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}
                             linkClassName="sophium-link-accent underline underline-offset-2"
                           />
@@ -1031,7 +1035,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                                 onClick={() => {
                                   setKickTarget({
                                     userId: comment.author.userId,
-                                    name: fullName(comment),
+                                    name: fullName(comment, deletedCommentLabel),
                                     sourceContext: "COMMENT",
                                     sourceCommentId: comment.id
                                   });
@@ -1049,7 +1053,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                                   setModerationTarget({
                                     kind: "comment",
                                     commentId: comment.id,
-                                    authorName: fullName(comment)
+                                    authorName: fullName(comment, deletedCommentLabel)
                                   });
                                 }}
                                 className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
@@ -1068,7 +1072,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                       {canComment ? (
                         <button
                           type="button"
-                          onClick={() => startReplyFor(comment.id, fullName(comment))}
+                          onClick={() => startReplyFor(comment.id, fullName(comment, deletedCommentLabel))}
                           className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
                         >
                           Responder

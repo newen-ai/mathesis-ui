@@ -28,6 +28,7 @@ function mapTopic(topic: AteneoTopic, authorFallback: string): AteneoFeedTopic {
     authorInitial: topic.author.initials,
     authorName: authorName || authorFallback,
     timeLabel: topic.timeLabel,
+    createdAt: topic.createdAt,
     title: topic.title,
     description: topic.description,
     tone: topic.tone,

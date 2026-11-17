@@ -38,6 +38,7 @@ export type ChatSummary = {
   unreadMessagesCount: number;
   lastMessageAt: string | null;
   lastMessagePreview: string | null;
+  lastMessageIsDeleted?: boolean;
 };
 
 export type ChatDetail = {

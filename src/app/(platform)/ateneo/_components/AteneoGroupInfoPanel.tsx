@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getAteneoGroup, joinAteneoGroup, type AteneoGroup } from "@/lib/api/ateneo";
+import { AteneoGroupMeta } from "./AteneoLocalizedLabels";
 
 type AteneoGroupInfoPanelProps = {
   groupId: string;
@@ -96,7 +97,7 @@ export function AteneoGroupInfoPanel({ groupId }: AteneoGroupInfoPanelProps) {
             {group.name}
           </h1>
           <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-            {group.subtitle} <span className="mx-1">·</span> {group.activity}
+            <AteneoGroupMeta group={group} />
           </p>
         </div>
       </div>
