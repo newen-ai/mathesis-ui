@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { AppCard } from "@/components/ui/AppCard";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import {
 	downloadFeedAttachmentFile,
@@ -166,7 +167,9 @@ export function FeedPostCard({
 
 							<div>
 								<div className="flex flex-wrap items-center gap-2">
-									<p className="text-[1.1rem] font-semibold text-[var(--text-primary)]">{authorName}</p>
+									<p className="text-[1.1rem] font-semibold text-[var(--text-primary)]">
+									<UserProfileLink userId={post.authorUserId}>{authorName}</UserProfileLink>
+								</p>
 								</div>
 								{authorMeta ? (
 									<p className="text-sm text-[var(--text-secondary)]">{authorMeta}</p>

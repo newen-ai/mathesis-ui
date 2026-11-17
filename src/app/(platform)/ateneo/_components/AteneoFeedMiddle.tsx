@@ -26,6 +26,7 @@ function mapTopic(topic: AteneoTopic, authorFallback: string): AteneoFeedTopic {
     groupLabel: topic.groupLabel,
     authorImageUrl: topic.author.profileImageUrl,
     authorInitial: topic.author.initials,
+    authorUserId: topic.author.userId,
     authorName: authorName || authorFallback,
     timeLabel: topic.timeLabel,
     createdAt: topic.createdAt,

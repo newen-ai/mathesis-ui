@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,6 +8,7 @@ import {
   createCompaniesMembershipRequest,
   getCompaniesMembershipState,
 } from "@/lib/api/admin";
+import { UserProfileLink, userProfileHref } from "@/components/ui/UserProfileLink";
 import { listVerifiedDirectory, type DirectoryEnterprise } from "@/lib/api/enterprise";
 import { toast } from "sonner";
 import { TopBar } from "../_components/TopBar";
@@ -63,7 +65,9 @@ function DirectoryCard({
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-scale-2 text-[var(--text-secondary)]">
-              <span>{enterprise.founder ?? t("card.fallbackFounder")}</span>
+              <UserProfileLink userId={enterprise.ownerUserId} className="font-medium text-[var(--text-primary)]">
+                {enterprise.founder ?? t("card.fallbackFounder")}
+              </UserProfileLink>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[0.67rem] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
                 {badge}
               </span>
@@ -109,14 +113,16 @@ function DirectoryCard({
             </span>
           </div>
 
-          <button
-            type="button"
-            aria-label={t("card.viewFullProfileAria", { name: enterprise.name })}
-            className="inline-flex items-center gap-2 self-end rounded-full border border-transparent px-2 py-1 text-scale-2 font-semibold text-[var(--brand-700)] transition hover:text-[var(--brand-800)]"
-          >
-            <span>{t("card.viewFullProfile")}</span>
-            <span aria-hidden="true">→</span>
-          </button>
+          {enterprise.ownerUserId ? (
+            <Link
+              href={userProfileHref(enterprise.ownerUserId)}
+              aria-label={t("card.viewFullProfileAria", { name: enterprise.founder ?? enterprise.name })}
+              className="inline-flex items-center gap-2 self-end rounded-full border border-transparent px-2 py-1 text-scale-2 font-semibold text-[var(--brand-700)] transition hover:text-[var(--brand-800)]"
+            >
+              <span>{t("card.viewFullProfile")}</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
         </div>
       </div>
     </article>

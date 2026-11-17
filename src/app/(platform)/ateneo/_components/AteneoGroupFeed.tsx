@@ -48,6 +48,7 @@ function mapTopic(topic: AteneoTopic): AteneoGroupTopic {
     id: topic.id,
     authorImageUrl: topic.author.profileImageUrl,
     authorInitial: topic.author.initials,
+    authorUserId: topic.author.userId,
     groupLabel: topic.groupLabel,
     authorName: authorName || "Usuario",
     timeLabel: topic.timeLabel,

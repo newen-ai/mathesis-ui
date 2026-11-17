@@ -22,6 +22,7 @@ import {
   type AteneoGroupMember
 } from "@/lib/api/ateneo";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
 import { getSessionUserId } from "@/lib/api/auth";
 import { resolveDateLocale } from "@/lib/utils/relative-time";
 import { AteneoKickMemberModal } from "./AteneoKickMemberModal";
@@ -524,7 +525,9 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{fullName}</h2>
+                  <h2 className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">
+                    <UserProfileLink userId={member.userId}>{fullName}</UserProfileLink>
+                  </h2>
                   {member.isOwner ? (
                     <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-2.5 py-0.5 text-scale-1 font-semibold text-[var(--text-secondary)]">
                       {t("membersPanel.badges.owner")}
@@ -641,7 +644,9 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
                     initialsClassName="text-sm font-semibold text-[var(--surface)]"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{expelledName}</p>
+                    <p className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">
+                      <UserProfileLink userId={expulsion.userId}>{expelledName}</UserProfileLink>
+                    </p>
                     <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
                       {t("membersPanel.moderation.kickedBy", { name: kickedByName, date: formatDate(expulsion.kickedAt) })}
                     </p>

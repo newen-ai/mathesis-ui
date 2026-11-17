@@ -9,6 +9,7 @@ import {
   resolveAteneoAttachmentUrl,
   type AteneoTopicAttachment,
 } from "@/lib/api/ateneo";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
@@ -24,6 +25,7 @@ export type AteneoTopicCardTopic = {
   authorImageUrl: string | null;
   authorInitial: string;
   authorName: string;
+  authorUserId?: string;
   // Backend Spanish label; shown only when createdAt is missing.
   timeLabel: string;
   createdAt?: string;
@@ -222,7 +224,9 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
                 </Link>
               </span>
               <span>·</span>
-              <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span>
+              <UserProfileLink userId={topic.authorUserId} className="font-semibold text-[var(--text-primary)]">
+                {topic.authorName}
+              </UserProfileLink>
               <span>·</span>
               <span><AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} /></span>
             </div>
@@ -231,7 +235,11 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
               <Link href={topicHref} className="sophium-link-accent font-medium hover:underline">
                 {topic.groupLabel}
               </Link>{" "}
-              <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> <AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} />
+              <span className="mx-1">·</span>{" "}
+              <UserProfileLink userId={topic.authorUserId} className="font-semibold text-[var(--text-primary)]">
+                {topic.authorName}
+              </UserProfileLink>{" "}
+              <span className="mx-1">·</span> <AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} />
             </p>
           )}
 

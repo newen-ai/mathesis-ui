@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
@@ -837,7 +838,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
           <div className="min-w-0 flex-1">
             <h2 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
-              {topicAuthorName}
+              <UserProfileLink userId={topic.author.userId}>{topicAuthorName}</UserProfileLink>
             </h2>
           </div>
 
@@ -988,7 +989,9 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className={`font-semibold ${comment.isDeletedPlaceholder ? "text-[var(--text-secondary)]" : "text-[var(--heading-primary)]"}`}>
-                              {fullName(comment, deletedCommentLabel)}
+                              <UserProfileLink userId={comment.isDeletedPlaceholder ? null : comment.author.userId}>
+                                {fullName(comment, deletedCommentLabel)}
+                              </UserProfileLink>
                             </p>
                             <span className="text-scale-1 text-[var(--text-secondary)]"><AteneoRelativeTime value={comment.createdAt} fallback={comment.timeLabel} /></span>
                           </div>
