@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   AteneoRemovedComment,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/api/ateneo";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { getSessionUserId } from "@/lib/api/auth";
+import { resolveDateLocale } from "@/lib/utils/relative-time";
 import { AteneoKickMemberModal } from "./AteneoKickMemberModal";
 import { AteneoRemovedTopicPreviewModal } from "./AteneoRemovedTopicPreviewModal";
 import { AteneoGroupMeta } from "./AteneoLocalizedLabels";
@@ -29,6 +31,35 @@ import { AteneoGroupMeta } from "./AteneoLocalizedLabels";
 type AteneoGroupMembersPanelProps = {
   groupId: string;
 };
+
+type PanelTab = "members" | "moderation";
+type ModerationTab = "users" | "topics" | "comments";
+
+type ModerationData = {
+  expulsions: AteneoGroupExpulsion[];
+  removedTopics: AteneoRemovedTopic[];
+  removedComments: AteneoRemovedComment[];
+};
+
+const MEMBERS_PAGE_SIZE = 20;
+const EMPTY_MODERATION: ModerationData = { expulsions: [], removedTopics: [], removedComments: [] };
+
+async function fetchModeration(groupId: string): Promise<ModerationData> {
+  const [expulsionsResponse, removedContentResponse] = await Promise.all([
+    listAteneoGroupExpulsions(groupId),
+    listAteneoRemovedContent(groupId)
+  ]);
+
+  return {
+    expulsions: expulsionsResponse.data.expulsions,
+    removedTopics: removedContentResponse.data.topics,
+    removedComments: removedContentResponse.data.comments
+  };
+}
+
+function displayName(person: { firstName?: string | null; lastName?: string | null }, fallback: string) {
+  return [person.firstName, person.lastName].filter(Boolean).join(" ").trim() || fallback;
+}
 
 function GroupHeaderIcon() {
   return (
@@ -43,13 +74,91 @@ function GroupHeaderIcon() {
   );
 }
 
+function GroupHeader({ group }: { group: AteneoGroup }) {
+  return (
+    <div className="flex min-w-0 items-start gap-3">
+      <GroupHeaderIcon />
+      <div>
+        <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+          {group.name}
+        </h1>
+        <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
+          <AteneoGroupMeta group={group} />
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PanelTabButton({
+  isActive,
+  onSelect,
+  label,
+  count,
+  highlightCount = false
+}: {
+  isActive: boolean;
+  onSelect: () => void;
+  label: string;
+  count: number;
+  highlightCount?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={isActive}
+      onClick={onSelect}
+      className={`-mb-px inline-flex items-center gap-2 border-b-2 px-3 pb-2.5 pt-1 text-scale-3 font-semibold transition ${
+        isActive
+          ? "border-[var(--brand-500)] text-[var(--heading-primary)]"
+          : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+      }`}
+    >
+      {label}
+      <span
+        className={`rounded-full px-2 py-0.5 text-scale-1 font-semibold ${
+          highlightCount && count > 0
+            ? "bg-[color:color-mix(in_srgb,var(--brand-100)_62%,var(--surface))] text-[var(--brand-900)]"
+            : "bg-[var(--surface-2)] text-[var(--text-secondary)]"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+function FilterChip({ isActive, onSelect, children }: { isActive: boolean; onSelect: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={isActive}
+      onClick={onSelect}
+      className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
+        isActive
+          ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
+          : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+const ROW_CLASS_NAME = "flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3";
+const SECONDARY_ACTION_CLASS_NAME =
+  "rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-scale-2 font-semibold text-[var(--brand-700)] hover:bg-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-60";
+
 export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProps) {
-  const [moderationTab, setModerationTab] = useState<"users" | "topics" | "comments">("users");
+  const { t, i18n } = useTranslation("ateneo");
+  const [panelTab, setPanelTab] = useState<PanelTab>("members");
+  const [moderationTab, setModerationTab] = useState<ModerationTab>("users");
   const [group, setGroup] = useState<AteneoGroup | null>(null);
   const [members, setMembers] = useState<AteneoGroupMember[]>([]);
-  const [expulsions, setExpulsions] = useState<AteneoGroupExpulsion[]>([]);
-  const [removedTopics, setRemovedTopics] = useState<AteneoRemovedTopic[]>([]);
-  const [removedComments, setRemovedComments] = useState<AteneoRemovedComment[]>([]);
+  const [membersNextCursor, setMembersNextCursor] = useState<string | null>(null);
+  const [isLoadingMoreMembers, setIsLoadingMoreMembers] = useState(false);
+  const [moderation, setModeration] = useState<ModerationData>(EMPTY_MODERATION);
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
@@ -61,6 +170,10 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
   const [isRestoringCommentId, setIsRestoringCommentId] = useState<string | null>(null);
   const [isLoadingRemovedTopicPreviewId, setIsLoadingRemovedTopicPreviewId] = useState<string | null>(null);
   const [removedTopicPreview, setRemovedTopicPreview] = useState<{ topic: AteneoTopic; deletedAt: string } | null>(null);
+
+  const dateLocale = resolveDateLocale(i18n.language);
+  const formatDate = useCallback((value: string) => new Date(value).toLocaleDateString(dateLocale), [dateLocale]);
+  const userFallback = t("membersPanel.userFallback");
 
   useEffect(() => {
     if (!memberMenuOpenFor) {
@@ -109,43 +222,49 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
     };
   }, []);
 
+  // Group, first page of members and (for admins) moderation lists. Used on mount and after joining.
+  const fetchPanelData = useCallback(async () => {
+    const groupResponse = await getAteneoGroup(groupId);
+    const nextGroup = groupResponse.data.group;
+
+    if (!nextGroup.isMember) {
+      return { group: nextGroup, members: [], nextCursor: null, moderation: EMPTY_MODERATION };
+    }
+
+    const [membersResponse, nextModeration] = await Promise.all([
+      listAteneoGroupMembers(groupId, { limit: MEMBERS_PAGE_SIZE }),
+      nextGroup.isAdmin ? fetchModeration(groupId) : Promise.resolve(EMPTY_MODERATION)
+    ]);
+
+    return {
+      group: nextGroup,
+      members: membersResponse.data.members,
+      nextCursor: membersResponse.data.nextCursor ?? null,
+      moderation: nextModeration
+    };
+  }, [groupId]);
+
+  const applyPanelData = useCallback((data: Awaited<ReturnType<typeof fetchPanelData>>) => {
+    setGroup(data.group);
+    setMembers(data.members);
+    setMembersNextCursor(data.nextCursor);
+    setModeration(data.moderation);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       setIsLoading(true);
       try {
-        const groupResponse = await getAteneoGroup(groupId);
-        if (cancelled) return;
-        setGroup(groupResponse.data.group);
-
-        if (!groupResponse.data.group.isMember) {
-          setMembers([]);
-          setExpulsions([]);
-          setRemovedTopics([]);
-          setRemovedComments([]);
-          return;
-        }
-
-        const [membersResponse, expulsionsResponse, removedContentResponse] = await Promise.all([
-          listAteneoGroupMembers(groupId),
-          groupResponse.data.group.isAdmin ? listAteneoGroupExpulsions(groupId) : Promise.resolve({ data: { expulsions: [] } }),
-          groupResponse.data.group.isAdmin
-            ? listAteneoRemovedContent(groupId)
-            : Promise.resolve({ data: { topics: [] as AteneoRemovedTopic[], comments: [] as AteneoRemovedComment[] } })
-        ]);
-        if (cancelled) return;
-        setMembers(membersResponse.data.members);
-        setExpulsions(expulsionsResponse.data.expulsions);
-        setRemovedTopics(removedContentResponse.data.topics);
-        setRemovedComments(removedContentResponse.data.comments);
+        const data = await fetchPanelData();
+        if (!cancelled) applyPanelData(data);
       } catch {
         if (cancelled) return;
         setGroup(null);
         setMembers([]);
-        setExpulsions([]);
-        setRemovedTopics([]);
-        setRemovedComments([]);
+        setMembersNextCursor(null);
+        setModeration(EMPTY_MODERATION);
       } finally {
         if (!cancelled) {
           setIsLoading(false);
@@ -158,7 +277,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
     return () => {
       cancelled = true;
     };
-  }, [groupId]);
+  }, [applyPanelData, fetchPanelData]);
 
   const onJoin = async () => {
     if (isJoining) return;
@@ -166,25 +285,46 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
     setIsJoining(true);
     try {
       await joinAteneoGroup(groupId);
-      const [groupResponse, membersResponse] = await Promise.all([
-        getAteneoGroup(groupId),
-        listAteneoGroupMembers(groupId)
-      ]);
-      const expulsionsResponse = groupResponse.data.group.isAdmin
-        ? await listAteneoGroupExpulsions(groupId)
-        : { data: { expulsions: [] as AteneoGroupExpulsion[] } };
-      const removedContentResponse = groupResponse.data.group.isAdmin
-        ? await listAteneoRemovedContent(groupId)
-        : { data: { topics: [] as AteneoRemovedTopic[], comments: [] as AteneoRemovedComment[] } };
-      setGroup(groupResponse.data.group);
-      setMembers(membersResponse.data.members);
-      setExpulsions(expulsionsResponse.data.expulsions);
-      setRemovedTopics(removedContentResponse.data.topics);
-      setRemovedComments(removedContentResponse.data.comments);
+      applyPanelData(await fetchPanelData());
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No pudimos unirte al grupo.");
+      toast.error(error instanceof Error ? error.message : t("membersPanel.joinError"));
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const loadMoreMembers = async () => {
+    if (isLoadingMoreMembers || !membersNextCursor) return;
+
+    setIsLoadingMoreMembers(true);
+    try {
+      const response = await listAteneoGroupMembers(groupId, { limit: MEMBERS_PAGE_SIZE, cursor: membersNextCursor });
+      setMembers((current) => {
+        const seen = new Set(current.map((member) => member.userId));
+        return [...current, ...response.data.members.filter((member) => !seen.has(member.userId))];
+      });
+      setMembersNextCursor(response.data.nextCursor ?? null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("membersPanel.loadMoreError"));
+    } finally {
+      setIsLoadingMoreMembers(false);
+    }
+  };
+
+  // After a moderation action: refresh the group (member count), moderation lists, and optionally the
+  // members list from its first page (a readmitted user rejoins, so pagination restarts).
+  const refreshAfterModeration = async ({ reloadMembers }: { reloadMembers: boolean }) => {
+    const [groupResponse, nextModeration, membersResponse] = await Promise.all([
+      getAteneoGroup(groupId),
+      fetchModeration(groupId),
+      reloadMembers ? listAteneoGroupMembers(groupId, { limit: MEMBERS_PAGE_SIZE }) : Promise.resolve(null)
+    ]);
+
+    setGroup(groupResponse.data.group);
+    setModeration(nextModeration);
+    if (membersResponse) {
+      setMembers(membersResponse.data.members);
+      setMembersNextCursor(membersResponse.data.nextCursor ?? null);
     }
   };
 
@@ -221,21 +361,6 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
     return true;
   };
 
-  const refreshMembersAndExpulsions = async () => {
-    const [membersResponse, expulsionsResponse, removedContentResponse] = await Promise.all([
-      listAteneoGroupMembers(groupId),
-      group?.isAdmin ? listAteneoGroupExpulsions(groupId) : Promise.resolve({ data: { expulsions: [] } }),
-      group?.isAdmin
-        ? listAteneoRemovedContent(groupId)
-        : Promise.resolve({ data: { topics: [] as AteneoRemovedTopic[], comments: [] as AteneoRemovedComment[] } })
-    ]);
-
-    setMembers(membersResponse.data.members);
-    setExpulsions(expulsionsResponse.data.expulsions);
-    setRemovedTopics(removedContentResponse.data.topics);
-    setRemovedComments(removedContentResponse.data.comments);
-  };
-
   const handleKickConfirm = async (reason: string | undefined) => {
     if (!kickTarget) {
       return;
@@ -248,12 +373,14 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
         ...(reason ? { reason } : {})
       });
 
-      await refreshMembersAndExpulsions();
+      // Drop the row locally so the pages already loaded stay in place.
+      setMembers((current) => current.filter((member) => member.userId !== kickTarget.userId));
+      await refreshAfterModeration({ reloadMembers: false });
       setKickTarget(null);
       setMemberMenuOpenFor(null);
-      toast.success("Usuario expulsado");
+      toast.success(t("membersPanel.kicked"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No pudimos expulsar al usuario.");
+      toast.error(error instanceof Error ? error.message : t("membersPanel.kickError"));
     } finally {
       setIsKicking(false);
     }
@@ -267,10 +394,10 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
     setIsRestoringUserId(targetUserId);
     try {
       await restoreAteneoGroupMember(groupId, targetUserId);
-      await refreshMembersAndExpulsions();
-      toast.success("Usuario readmitido");
+      await refreshAfterModeration({ reloadMembers: true });
+      toast.success(t("membersPanel.moderation.readmitted"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No pudimos readmitir al usuario.");
+      toast.error(error instanceof Error ? error.message : t("membersPanel.moderation.readmitError"));
     } finally {
       setIsRestoringUserId(null);
     }
@@ -284,10 +411,10 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
     setIsRestoringTopicId(topicId);
     try {
       await moderateRestoreAteneoTopic(groupId, topicId, {});
-      await refreshMembersAndExpulsions();
-      toast.success("Publicación restaurada");
+      await refreshAfterModeration({ reloadMembers: false });
+      toast.success(t("membersPanel.moderation.topicRestored"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No pudimos restaurar la publicación.");
+      toast.error(error instanceof Error ? error.message : t("membersPanel.moderation.restoreTopicError"));
     } finally {
       setIsRestoringTopicId(null);
     }
@@ -301,10 +428,10 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
     setIsRestoringCommentId(commentId);
     try {
       await moderateRestoreAteneoComment(groupId, topicId, commentId, {});
-      await refreshMembersAndExpulsions();
-      toast.success("Comentario restaurado");
+      await refreshAfterModeration({ reloadMembers: false });
+      toast.success(t("membersPanel.moderation.commentRestored"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No pudimos restaurar el comentario.");
+      toast.error(error instanceof Error ? error.message : t("membersPanel.moderation.restoreCommentError"));
     } finally {
       setIsRestoringCommentId(null);
     }
@@ -320,7 +447,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
       const response = await getAteneoRemovedTopicPreview(groupId, topicId);
       setRemovedTopicPreview(response.data);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No pudimos abrir la vista previa de la publicación eliminada.");
+      toast.error(error instanceof Error ? error.message : t("membersPanel.moderation.previewError"));
     } finally {
       setIsLoadingRemovedTopicPreviewId(null);
     }
@@ -329,7 +456,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
   if (isLoading) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
-        <p className="text-scale-3 text-[var(--text-secondary)]">Cargando miembros...</p>
+        <p className="text-scale-3 text-[var(--text-secondary)]">{t("membersPanel.loading")}</p>
       </section>
     );
   }
@@ -337,7 +464,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
   if (!group) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
-        <p className="text-scale-3 text-[var(--text-secondary)]">No pudimos cargar este grupo.</p>
+        <p className="text-scale-3 text-[var(--text-secondary)]">{t("membersPanel.loadError")}</p>
       </section>
     );
   }
@@ -345,30 +472,14 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
   if (!group.isMember) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
-        <div className="flex min-w-0 items-start gap-3">
-          <GroupHeaderIcon />
-          <div>
-            <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
-              {group.name}
-            </h1>
-            <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-              <AteneoGroupMeta group={group} />
-            </p>
-          </div>
-        </div>
+        <GroupHeader group={group} />
 
-        <p className="mt-5 text-scale-3 text-[var(--text-secondary)]">
-          Unite al grupo para ver el listado completo de miembros.
-        </p>
+        <p className="mt-5 text-scale-3 text-[var(--text-secondary)]">{t("membersPanel.joinToSee")}</p>
 
         <div className="mt-5">
           <span
             className="inline-flex"
-            title={
-              group.isJoinBlockedByExpulsion
-                ? "No podés unirte porque fuiste expulsado de este grupo."
-                : undefined
-            }
+            title={group.isJoinBlockedByExpulsion ? t("membersPanel.joinBlockedHint") : undefined}
           >
             <button
               type="button"
@@ -378,44 +489,36 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
               disabled={isJoining || group.isJoinBlockedByExpulsion}
               className="rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-3 font-semibold sophium-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isJoining ? "Uniéndote..." : "Unirse al grupo"}
+              {isJoining ? t("membersPanel.joining") : t("membersPanel.join")}
             </button>
           </span>
         </div>
 
         {group.isJoinBlockedByExpulsion ? (
-          <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">
-            Esta cuenta fue expulsada del grupo y no puede volver a unirse.
-          </p>
+          <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">{t("membersPanel.joinBlocked")}</p>
         ) : null}
       </section>
     );
   }
 
-  return (
-    <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
-      <div className="flex min-w-0 items-start gap-3">
-        <GroupHeaderIcon />
-        <div>
-          <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
-            {group.name}
-          </h1>
-          <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-            <AteneoGroupMeta group={group} />
-          </p>
-        </div>
-      </div>
+  // memberCount comes from the backend since the pagination release; older responses fall back to what is loaded.
+  const totalMembers = group.memberCount ?? members.length;
+  const pendingModerationCount =
+    moderation.expulsions.length + moderation.removedTopics.length + moderation.removedComments.length;
+  const activeTab: PanelTab = group.isAdmin ? panelTab : "members";
 
-      <div className="mt-5 space-y-3">
+  const membersList = (
+    <>
+      <div className="space-y-3">
         {members.map((member) => {
-          const fullName = [member.firstName, member.lastName].filter(Boolean).join(" ").trim() || "Usuario";
+          const fullName = displayName(member, userFallback);
 
           return (
-            <article key={member.userId} className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
+            <article key={member.userId} className={ROW_CLASS_NAME}>
               <UserAvatar
                 imageUrl={member.profileImageUrl}
                 initials={member.initials}
-                label={`Foto de perfil de ${fullName}`}
+                label={t("membersPanel.avatar", { name: fullName })}
                 className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
                 initialsClassName="text-sm font-semibold text-[var(--surface)]"
               />
@@ -424,28 +527,30 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
                   <h2 className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{fullName}</h2>
                   {member.isOwner ? (
                     <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-2.5 py-0.5 text-scale-1 font-semibold text-[var(--text-secondary)]">
-                      OWNER
+                      {t("membersPanel.badges.owner")}
                     </span>
                   ) : null}
                   {member.isAdmin ? (
                     <span className="rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_70%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_62%,var(--surface))] px-2.5 py-0.5 text-scale-1 font-semibold text-[var(--brand-900)]">
-                      ADMIN
+                      {t("membersPanel.badges.admin")}
                     </span>
                   ) : null}
                   {member.isPinned ? (
                     <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-2.5 py-0.5 text-scale-1 font-semibold text-[var(--text-secondary)]">
-                      FIJADO
+                      {t("membersPanel.badges.pinned")}
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">Miembro desde {new Date(member.joinedAt).toLocaleDateString("es-AR")}</p>
+                <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
+                  {t("membersPanel.memberSince", { date: formatDate(member.joinedAt) })}
+                </p>
               </div>
 
               {group.isAdmin ? (
                 <div className="relative shrink-0" data-ateneo-overflow-root="true">
                   <button
                     type="button"
-                    aria-label={`Más opciones para ${fullName}`}
+                    aria-label={t("membersPanel.moreOptions", { name: fullName })}
                     onClick={() => setMemberMenuOpenFor((current) => (current === member.userId ? null : member.userId))}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-lg text-[var(--text-secondary)] hover:bg-[var(--surface)]"
                   >
@@ -458,7 +563,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
                         type="button"
                         onClick={() => {
                           if (!canManageTarget(member.userId)) {
-                            toast.info("No tenés permisos para expulsar a este usuario.");
+                            toast.info(t("membersPanel.kickNotAllowed"));
                             setMemberMenuOpenFor(null);
                             return;
                           }
@@ -468,7 +573,7 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
                         disabled={!canManageTarget(member.userId)}
                         className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Expulsar usuario
+                        {t("membersPanel.kick")}
                       </button>
                     </div>
                   ) : null}
@@ -479,187 +584,219 @@ export function AteneoGroupMembersPanel({ groupId }: AteneoGroupMembersPanelProp
         })}
       </div>
 
-      <p className="mt-4 text-scale-2 text-[var(--text-secondary)]">{members.length} miembros en total.</p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-scale-2 text-[var(--text-secondary)]">
+          {membersNextCursor
+            ? t("membersPanel.showing", { shown: members.length, total: totalMembers })
+            : t("membersPanel.total", { count: totalMembers })}
+        </p>
+        {membersNextCursor ? (
+          <button
+            type="button"
+            onClick={() => {
+              void loadMoreMembers();
+            }}
+            disabled={isLoadingMoreMembers}
+            className={SECONDARY_ACTION_CLASS_NAME}
+          >
+            {isLoadingMoreMembers ? t("membersPanel.loadingMore") : t("membersPanel.loadMore")}
+          </button>
+        ) : null}
+      </div>
+    </>
+  );
+
+  const moderationSection = (
+    <div>
+      <p className="text-scale-2 text-[var(--text-secondary)]">{t("membersPanel.moderation.intro")}</p>
+
+      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label={t("membersPanel.moderation.filtersAria")}>
+        <FilterChip isActive={moderationTab === "users"} onSelect={() => setModerationTab("users")}>
+          {t("membersPanel.moderation.users", { count: moderation.expulsions.length })}
+        </FilterChip>
+        <FilterChip isActive={moderationTab === "topics"} onSelect={() => setModerationTab("topics")}>
+          {t("membersPanel.moderation.topics", { count: moderation.removedTopics.length })}
+        </FilterChip>
+        <FilterChip isActive={moderationTab === "comments"} onSelect={() => setModerationTab("comments")}>
+          {t("membersPanel.moderation.comments", { count: moderation.removedComments.length })}
+        </FilterChip>
+      </div>
+
+      {moderationTab === "users" ? (
+        moderation.expulsions.length === 0 ? (
+          <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">{t("membersPanel.moderation.noUsers")}</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {moderation.expulsions.map((expulsion) => {
+              const expelledName = displayName(expulsion, userFallback);
+              const kickedByName = displayName(expulsion.kickedBy, t("membersPanel.adminFallback"));
+
+              return (
+                <article key={expulsion.userId} className={ROW_CLASS_NAME}>
+                  <UserAvatar
+                    imageUrl={expulsion.profileImageUrl}
+                    initials={expulsion.initials}
+                    label={t("membersPanel.avatar", { name: expelledName })}
+                    className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+                    initialsClassName="text-sm font-semibold text-[var(--surface)]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{expelledName}</p>
+                    <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
+                      {t("membersPanel.moderation.kickedBy", { name: kickedByName, date: formatDate(expulsion.kickedAt) })}
+                    </p>
+                    {expulsion.reason ? (
+                      <p className="mt-1 line-clamp-2 text-scale-2 text-[var(--text-secondary)]">
+                        {t("membersPanel.moderation.reason", { reason: expulsion.reason })}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleRestore(expulsion.userId);
+                    }}
+                    disabled={isRestoringUserId === expulsion.userId}
+                    className={SECONDARY_ACTION_CLASS_NAME}
+                  >
+                    {isRestoringUserId === expulsion.userId
+                      ? t("membersPanel.moderation.readmitting")
+                      : t("membersPanel.moderation.readmit")}
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        )
+      ) : null}
+
+      {moderationTab === "topics" ? (
+        moderation.removedTopics.length === 0 ? (
+          <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">{t("membersPanel.moderation.noTopics")}</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {moderation.removedTopics.map((topic) => {
+              const authorName = displayName(topic.author, userFallback);
+
+              return (
+                <article
+                  key={topic.topicId}
+                  onClick={() => {
+                    void handleOpenRemovedTopicPreview(topic.topicId);
+                  }}
+                  className={`${ROW_CLASS_NAME} cursor-pointer`}
+                >
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void handleOpenRemovedTopicPreview(topic.topicId);
+                    }}
+                    disabled={isLoadingRemovedTopicPreviewId === topic.topicId}
+                    className="min-w-0 flex-1 rounded-xl px-1 py-1 text-left transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <p className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{topic.title}</p>
+                    <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
+                      {t("membersPanel.moderation.topicBy", { name: authorName, date: formatDate(topic.deletedAt) })}
+                    </p>
+                    <p className="mt-1 text-scale-1 text-[var(--text-secondary)]">
+                      {isLoadingRemovedTopicPreviewId === topic.topicId
+                        ? t("membersPanel.moderation.opening")
+                        : t("membersPanel.moderation.clickToView")}
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void handleRestoreTopic(topic.topicId);
+                    }}
+                    disabled={isRestoringTopicId === topic.topicId}
+                    className={SECONDARY_ACTION_CLASS_NAME}
+                  >
+                    {isRestoringTopicId === topic.topicId
+                      ? t("membersPanel.moderation.restoring")
+                      : t("membersPanel.moderation.restoreTopic")}
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        )
+      ) : null}
+
+      {moderationTab === "comments" ? (
+        moderation.removedComments.length === 0 ? (
+          <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">{t("membersPanel.moderation.noComments")}</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {moderation.removedComments.map((comment) => {
+              const authorName = displayName(comment.author, userFallback);
+
+              return (
+                <article key={comment.commentId} className={ROW_CLASS_NAME}>
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 text-scale-3 font-medium text-[var(--heading-primary)]">
+                      {comment.contentPreview || t("membersPanel.moderation.emptyComment")}
+                    </p>
+                    <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
+                      {t("membersPanel.moderation.commentBy", { name: authorName, date: formatDate(comment.deletedAt) })}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleRestoreComment(comment.topicId, comment.commentId);
+                    }}
+                    disabled={isRestoringCommentId === comment.commentId}
+                    className={SECONDARY_ACTION_CLASS_NAME}
+                  >
+                    {isRestoringCommentId === comment.commentId
+                      ? t("membersPanel.moderation.restoring")
+                      : t("membersPanel.moderation.restoreComment")}
+                  </button>
+                </article>
+              );
+            })}
+          </div>
+        )
+      ) : null}
+    </div>
+  );
+
+  return (
+    <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
+      <GroupHeader group={group} />
 
       {group.isAdmin ? (
-        <div className="mt-6">
-          <h3 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
-            Moderación
-          </h3>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setModerationTab("users")}
-              className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
-                moderationTab === "users"
-                  ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
-                  : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
-              }`}
-            >
-              Usuarios ({expulsions.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setModerationTab("topics")}
-              className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
-                moderationTab === "topics"
-                  ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
-                  : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
-              }`}
-            >
-              Temas ({removedTopics.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setModerationTab("comments")}
-              className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
-                moderationTab === "comments"
-                  ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
-                  : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
-              }`}
-            >
-              Comentarios ({removedComments.length})
-            </button>
-          </div>
-
-          {moderationTab === "users" ? (
-            expulsions.length === 0 ? (
-              <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">No hay usuarios expulsados actualmente.</p>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {expulsions.map((expulsion) => {
-                  const expelledName = [expulsion.firstName, expulsion.lastName].filter(Boolean).join(" ").trim() || "Usuario";
-                  const kickedByName = [expulsion.kickedBy.firstName, expulsion.kickedBy.lastName].filter(Boolean).join(" ").trim() || "Admin";
-
-                  return (
-                    <article key={expulsion.userId} className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
-                      <UserAvatar
-                        imageUrl={expulsion.profileImageUrl}
-                        initials={expulsion.initials}
-                        label={`Foto de perfil de ${expelledName}`}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
-                        initialsClassName="text-sm font-semibold text-[var(--surface)]"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{expelledName}</p>
-                        <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
-                          Expulsado por {kickedByName} · {new Date(expulsion.kickedAt).toLocaleDateString("es-AR")}
-                        </p>
-                        {expulsion.reason ? (
-                          <p className="mt-1 line-clamp-2 text-scale-2 text-[var(--text-secondary)]">Motivo: {expulsion.reason}</p>
-                        ) : null}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleRestore(expulsion.userId);
-                        }}
-                        disabled={isRestoringUserId === expulsion.userId}
-                        className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-scale-2 font-semibold text-[var(--brand-700)] hover:bg-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isRestoringUserId === expulsion.userId ? "Readmitiendo..." : "Readmitir"}
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-            )
-          ) : null}
-
-          {moderationTab === "topics" ? (
-            removedTopics.length === 0 ? (
-              <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">No hay publicaciones eliminadas por moderación.</p>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {removedTopics.map((topic) => {
-                  const authorName = [topic.author.firstName, topic.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
-
-                  return (
-                    <article
-                      key={topic.topicId}
-                      onClick={() => {
-                        void handleOpenRemovedTopicPreview(topic.topicId);
-                      }}
-                      className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3"
-                    >
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleOpenRemovedTopicPreview(topic.topicId);
-                        }}
-                        disabled={isLoadingRemovedTopicPreviewId === topic.topicId}
-                        className="min-w-0 flex-1 rounded-xl px-1 py-1 text-left transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <p className="truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{topic.title}</p>
-                        <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
-                          Publicación de {authorName} · {new Date(topic.deletedAt).toLocaleDateString("es-AR")}
-                        </p>
-                        <p className="mt-1 text-scale-1 text-[var(--text-secondary)]">
-                          {isLoadingRemovedTopicPreviewId === topic.topicId ? "Abriendo..." : "Click para ver contenido"}
-                        </p>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void handleRestoreTopic(topic.topicId);
-                        }}
-                        disabled={isRestoringTopicId === topic.topicId}
-                        className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-scale-2 font-semibold text-[var(--brand-700)] hover:bg-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isRestoringTopicId === topic.topicId ? "Restaurando..." : "Restaurar publicación"}
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-            )
-          ) : null}
-
-          {moderationTab === "comments" ? (
-            removedComments.length === 0 ? (
-              <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">No hay comentarios eliminados por moderación.</p>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {removedComments.map((comment) => {
-                  const authorName = [comment.author.firstName, comment.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
-
-                  return (
-                    <article key={comment.commentId} className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-2 text-scale-3 font-medium text-[var(--heading-primary)]">{comment.contentPreview || "Comentario sin contenido"}</p>
-                        <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
-                          Comentario de {authorName} · {new Date(comment.deletedAt).toLocaleDateString("es-AR")}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void handleRestoreComment(comment.topicId, comment.commentId);
-                        }}
-                        disabled={isRestoringCommentId === comment.commentId}
-                        className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-4 py-2 text-scale-2 font-semibold text-[var(--brand-700)] hover:bg-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isRestoringCommentId === comment.commentId ? "Restaurando..." : "Restaurar comentario"}
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-            )
-          ) : null}
+        <div role="tablist" aria-label={t("membersPanel.tabsAria")} className="mt-5 flex gap-1 border-b border-[var(--line)]">
+          <PanelTabButton
+            isActive={activeTab === "members"}
+            onSelect={() => setPanelTab("members")}
+            label={t("membersPanel.tabs.members")}
+            count={totalMembers}
+          />
+          <PanelTabButton
+            isActive={activeTab === "moderation"}
+            onSelect={() => setPanelTab("moderation")}
+            label={t("membersPanel.tabs.moderation")}
+            count={pendingModerationCount}
+            highlightCount
+          />
         </div>
       ) : null}
+
+      <div className="mt-5" role={group.isAdmin ? "tabpanel" : undefined}>
+        {activeTab === "members" ? membersList : moderationSection}
+      </div>
 
       {kickTarget ? (
         <AteneoKickMemberModal
           isOpen
-          userName={[kickTarget.firstName, kickTarget.lastName].filter(Boolean).join(" ").trim() || "Usuario"}
+          userName={displayName(kickTarget, userFallback)}
           isSubmitting={isKicking}
           onClose={() => {
             if (!isKicking) {

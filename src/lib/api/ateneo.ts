@@ -122,6 +122,8 @@ export type UpdateAteneoGroupData = {
 
 export type ListAteneoGroupMembersData = {
   members: AteneoGroupMember[];
+  // Present when a `limit` was sent: userId to pass as `cursor` for the next page, null on the last one.
+  nextCursor?: string | null;
 };
 
 export type ListAteneoGroupExpulsionsData = {
@@ -252,8 +254,18 @@ export async function getAteneoGroup(groupId: string, signal?: AbortSignal) {
   return parseDataResponse<AteneoGroupDetail>(response, "Invalid Ateneo group response");
 }
 
-export async function listAteneoGroupMembers(groupId: string, signal?: AbortSignal) {
-  const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/members`, { signal });
+// Without `limit` the backend returns every member (used where the full map is needed, e.g. kick permissions).
+export async function listAteneoGroupMembers(
+  groupId: string,
+  options: { limit?: number; cursor?: string | null; signal?: AbortSignal } = {}
+) {
+  const query = new URLSearchParams();
+  if (options.limit) query.set("limit", String(options.limit));
+  if (options.cursor) query.set("cursor", options.cursor);
+  const search = query.size > 0 ? `?${query.toString()}` : "";
+  const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/members${search}`, {
+    signal: options.signal
+  });
   return parseDataResponse<ListAteneoGroupMembersData>(response, "Invalid Ateneo group members response");
 }
 

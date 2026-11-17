@@ -28,7 +28,12 @@
   "headerActions": {
     "groupInfo": "View group info",
     "groupMembers": "View group members",
-    "editGroup": "Edit group"
+    "editGroup": "Edit group",
+    "hints": {
+      "groupInfo": "Info",
+      "groupMembers": "Members",
+      "editGroup": "Edit"
+    }
   },
   "newTopic": {
     "title": "New topic",
@@ -105,5 +110,69 @@
   },
   "discussion": {
     "deletedComment": "Comment deleted"
+  },
+  "membersPanel": {
+    "loading": "Loading members...",
+    "loadError": "We couldn't load this group.",
+    "joinToSee": "Join the group to see the full member list.",
+    "joinBlockedHint": "You can't join because you were removed from this group.",
+    "join": "Join group",
+    "joining": "Joining...",
+    "joinBlocked": "This account was removed from the group and can't rejoin.",
+    "joinError": "We couldn't add you to the group.",
+    "tabsAria": "Member sections",
+    "tabs": {
+      "members": "Members",
+      "moderation": "Moderation"
+    },
+    "userFallback": "User",
+    "adminFallback": "Admin",
+    "avatar": "Profile photo of {{name}}",
+    "badges": {
+      "owner": "OWNER",
+      "admin": "ADMIN",
+      "pinned": "PINNED"
+    },
+    "memberSince": "Member since {{date}}",
+    "moreOptions": "More options for {{name}}",
+    "kick": "Remove user",
+    "kickNotAllowed": "You don't have permission to remove this user.",
+    "kicked": "User removed",
+    "kickError": "We couldn't remove the user.",
+    "total_one": "{{count}} member in total.",
+    "total_other": "{{count}} members in total.",
+    "showing": "Showing {{shown}} of {{total}} members.",
+    "loadMore": "Show more members",
+    "loadingMore": "Loading...",
+    "loadMoreError": "We couldn't load more members.",
+    "moderation": {
+      "intro": "Removed users and content taken down by moderation. You can undo any of these actions.",
+      "filtersAria": "Moderation type",
+      "users": "Users ({{count}})",
+      "topics": "Topics ({{count}})",
+      "comments": "Comments ({{count}})",
+      "noUsers": "No users are currently removed.",
+      "kickedBy": "Removed by {{name}} · {{date}}",
+      "reason": "Reason: {{reason}}",
+      "readmit": "Readmit",
+      "readmitting": "Readmitting...",
+      "readmitted": "User readmitted",
+      "readmitError": "We couldn't readmit the user.",
+      "noTopics": "No posts were removed by moderation.",
+      "topicBy": "Post by {{name}} · {{date}}",
+      "opening": "Opening...",
+      "clickToView": "Click to view content",
+      "previewError": "We couldn't open the removed post preview.",
+      "restoring": "Restoring...",
+      "restoreTopic": "Restore post",
+      "topicRestored": "Post restored",
+      "restoreTopicError": "We couldn't restore the post.",
+      "noComments": "No comments were removed by moderation.",
+      "emptyComment": "Comment without content",
+      "commentBy": "Comment by {{name}} · {{date}}",
+      "restoreComment": "Restore comment",
+      "commentRestored": "Comment restored",
+      "restoreCommentError": "We couldn't restore the comment."
+    }
   }
 }

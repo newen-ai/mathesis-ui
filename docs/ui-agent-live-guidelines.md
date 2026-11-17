@@ -326,3 +326,10 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
   - Ateneo group "N miembros · Activo hoy": `<AteneoGroupMeta group={group} />` / `useGroupMetaLabel()` (uses `memberCount` + `activityStatus`, `ateneo.json` → `groupMeta.*`).
   - Deleted comment placeholder: `ateneo.json` → `discussion.deletedComment`; deleted last chat message: `lastMessageIsDeleted` + `messages.json` → `fallbacks.deletedMessage`.
 - The backend still sends the old labels (`timeLabel`, `subtitle`, `activity`, `lastMessagePreview: "Message deleted"`); keep them only as fallback for an older backend.
+
+## Layout, hints and lists (2026-11-17)
+- There is no global footer. Fixed bottom UI on mobile (navbar, chat composer, sheets) anchors to `bottom: 0` + safe area; content padding under the navbar is `calc(4.3rem + env(safe-area-inset-bottom))`. Do not reintroduce the old 1.9rem / 2.5rem / 2.75rem footer offsets.
+- Icon-only buttons get a short hover/focus hint (1-2 words) under them, with the longer label kept as `aria-label`. Pattern: `group relative` on the button, hint span `pointer-events-none absolute top-full mt-2 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100` with surface/line tokens.
+- Lists that can grow (members, etc.) load in pages with a `Ver más` button, using the backend `limit`/`cursor`/`nextCursor` contract; show "Mostrando X de N" while more remain.
+- Admin-only sections next to a regular list go in tabs on the same page (for example Ateneo members: `Miembros` / `Moderación` with a pending-count badge), not below the list.
+

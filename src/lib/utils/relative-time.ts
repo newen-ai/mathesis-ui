@@ -1,7 +1,8 @@
 import type { TFunction } from "i18next";
 
-function resolveDateLocale(language: string) {
-  return language.toLowerCase().startsWith("en") ? "en-US" : "es-AR";
+// Spanish is the app default, so an unset language (tests, before i18n init) falls back to es-AR.
+export function resolveDateLocale(language: string | undefined) {
+  return (language ?? "").toLowerCase().startsWith("en") ? "en-US" : "es-AR";
 }
 
 // "now", "5 min ago", "3 h ago", "2 d ago", then a short date. Copy lives in common.json (relativeTime.*).

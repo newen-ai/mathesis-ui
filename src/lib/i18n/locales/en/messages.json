@@ -82,6 +82,7 @@
     "roleMember": "Member"
   },
   "aria": {
+    "jumpToLatest": "Jump to latest message",
     "backToConversations": "Back to conversations",
     "viewGroupMembers": "View group members",
     "profilePhoto": "Profile photo of {{name}}"

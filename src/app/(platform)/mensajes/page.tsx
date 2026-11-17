@@ -42,6 +42,8 @@ const POLLING_INTERVAL_MS = 10000;
 const GROUP_MEMBER_PREVIEW_MAX_CHARS = 56;
 const GROUP_HEADER_PREVIEW_MAX_CHARS = 84;
 const COMPOSER_MAX_LINES = 10;
+// How many messages must sit below the visible area before the "jump to latest" button shows up.
+const JUMP_TO_LATEST_THRESHOLD = 6;
 
 function resolveDateLocale(language: string) {
   return language.trim().toLowerCase().startsWith("en") ? "en-US" : "es-AR";
@@ -212,6 +214,8 @@ export default function MensajesPage() {
   const mobileDetailHeaderRef = useRef<HTMLElement | null>(null);
   const pendingInitialBottomChatIdRef = useRef<string | null>(null);
   const isNearBottomRef = useRef(true);
+  const messageListRef = useRef<HTMLDivElement | null>(null);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const isInitializingConversationLoadRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
@@ -221,6 +225,38 @@ export default function MensajesPage() {
     }
 
     viewport.scrollTop = viewport.scrollHeight;
+    isNearBottomRef.current = true;
+  }, []);
+
+  // Shows the "jump to latest" button once enough messages sit below the visible area. Walks back from the
+  // newest message and stops at the first visible one, so the cost stays at JUMP_TO_LATEST_THRESHOLD reads.
+  const updateJumpToLatest = useCallback(() => {
+    const viewport = messageViewportRef.current;
+    const list = messageListRef.current;
+    if (!viewport || !list) {
+      setShowJumpToLatest(false);
+      return;
+    }
+
+    const visibleBottom = viewport.getBoundingClientRect().bottom;
+    let hiddenBelow = 0;
+    for (let index = list.children.length - 1; index >= 0 && hiddenBelow < JUMP_TO_LATEST_THRESHOLD; index -= 1) {
+      if (list.children[index].getBoundingClientRect().top < visibleBottom) {
+        break;
+      }
+      hiddenBelow += 1;
+    }
+
+    setShowJumpToLatest(hiddenBelow >= JUMP_TO_LATEST_THRESHOLD);
+  }, []);
+
+  const jumpToLatest = useCallback(() => {
+    const viewport = messageViewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
     isNearBottomRef.current = true;
   }, []);
 
@@ -896,6 +932,7 @@ export default function MensajesPage() {
 
     const onScroll = () => {
       updateNearBottom();
+      updateJumpToLatest();
 
       if (isInitializingConversationLoadRef.current) {
         return;
@@ -909,12 +946,18 @@ export default function MensajesPage() {
     };
 
     updateNearBottom();
+    updateJumpToLatest();
     viewport.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       viewport.removeEventListener("scroll", onScroll);
     };
-  }, [isComposerOpen, isMobileViewport, loadOlderMessages, mobileActivePanel, selectedThread, t]);
+  }, [isComposerOpen, isMobileViewport, loadOlderMessages, mobileActivePanel, selectedThread, t, updateJumpToLatest]);
+
+  // New messages can arrive while the user reads older ones; recheck without waiting for a scroll.
+  useEffect(() => {
+    updateJumpToLatest();
+  }, [selectedMessages, updateJumpToLatest]);
 
   useEffect(() => {
     adjustComposerTextareaHeight(composerTextareaRef.current);
@@ -1306,7 +1349,7 @@ export default function MensajesPage() {
                     <div className="mb-3 text-center text-xs text-[var(--text-soft)]">{t("conversations.loadingOlder")}</div>
                   ) : null}
 
-                  <div className="flex min-h-full flex-col justify-end gap-3">
+                  <div ref={messageListRef} className="flex min-h-full flex-col justify-end gap-3">
                     {selectedMessages.map((message) => {
                       const isMine = message.senderUserId === currentUserId;
                       const showSenderName = selectedThread.detail.type === "GROUP";
@@ -1358,6 +1401,27 @@ export default function MensajesPage() {
                       <p className="text-sm text-[var(--text-secondary)]">{t("conversations.emptyThread")}</p>
                     ) : null}
                   </div>
+
+                  {showJumpToLatest ? (
+                    // Zero-height sticky row: pins to the visible bottom of the scroll area (above the composer
+                    // overlay) without adding scroll height; the button is lifted above it by translate.
+                    <div
+                      className="pointer-events-none sticky flex h-0 justify-center"
+                      style={{ bottom: `${conversationBottomInset + 12}px` }}
+                    >
+                      <button
+                        type="button"
+                        onClick={jumpToLatest}
+                        aria-label={t("aria.jumpToLatest")}
+                        title={t("aria.jumpToLatest")}
+                        className="pointer-events-auto inline-flex h-9 w-9 -translate-y-full items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] shadow-[0_4px_12px_rgba(0,0,0,0.14)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                          <path d="M12 5v13M6 12.5l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </>
             ) : (
@@ -1429,7 +1493,7 @@ export default function MensajesPage() {
             ref={composerFooterRef}
             className={`z-20 border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[0_6px_18px_rgba(0,0,0,0.14)] sm:p-4 md:absolute md:bottom-0 md:left-[330px] md:right-0 md:z-10 md:border-x-0 md:border-b-0 md:shadow-none ${
               mobileActivePanel === "detail"
-                ? "fixed inset-x-0 bottom-[calc(6.2rem+env(safe-area-inset-bottom))] border-x-0"
+                ? "fixed inset-x-0 bottom-[calc(4.3rem+env(safe-area-inset-bottom))] border-x-0"
                 : "hidden md:block"
             }`}
           >
