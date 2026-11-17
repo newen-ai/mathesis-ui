@@ -17,6 +17,7 @@ import {
   AteneoGroupMember,
   downloadAteneoTopicAttachment,
   deleteAteneoTopic,
+  deleteAteneoTopicComment,
   createAteneoTopicComment,
   getAteneoGroup,
   getAteneoTopic,
@@ -106,6 +107,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const [groupMembersByUserId, setGroupMembersByUserId] = useState<Record<string, AteneoGroupMember>>({});
   const [kickTarget, setKickTarget] = useState<{ userId: string; name: string; sourceContext: "TOPIC" | "COMMENT"; sourceCommentId?: string } | null>(null);
   const [isKicking, setIsKicking] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [moderationTarget, setModerationTarget] = useState<{ kind: "topic" | "comment"; commentId?: string; authorName: string } | null>(null);
   const [isModeratingContent, setIsModeratingContent] = useState(false);
 
@@ -611,6 +613,33 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     }
   };
 
+  const handleCommentDelete = async (commentId: string) => {
+    if (!topic || deletingCommentId) {
+      return;
+    }
+
+    const confirmed = window.confirm(t("discussion.deleteCommentConfirm"));
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingCommentId(commentId);
+
+    try {
+      await deleteAteneoTopicComment(groupId, topic.id, commentId);
+      // Full reload: the comment disappears, or becomes a placeholder if it has replies.
+      const commentsResponse = await listAteneoTopicComments(groupId, topic.id);
+      setTopicComments(commentsResponse.data.comments);
+      setTopic((current) => (current ? { ...current, comments: Math.max(0, current.comments - 1) } : current));
+      setReportOpenFor(null);
+      toast.success(t("discussion.commentDeleted"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("discussion.deleteCommentError"));
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
   const handleModerationConfirm = async (reason: string | undefined) => {
     if (!topic || !moderationTarget || isModeratingContent) {
       return;
@@ -1018,19 +1047,36 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
                         {reportOpenFor === comment.id && (
                           <div className="absolute right-0 top-10 z-10 min-w-[120px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                toast.info("Comentario reportado");
-                                setReportOpenFor(null);
-                              }}
-                              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
-                            >
-                              <span className="text-[var(--danger-500)]">
-                                <FlagIcon />
-                              </span>
-                              <span className="text-[var(--danger-500)]">Denunciar</span>
-                            </button>
+                            {/* Own comments can be deleted; reporting yourself makes no sense, so it is hidden. */}
+                            {sessionUserId && comment.author.userId === sessionUserId ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void handleCommentDelete(comment.id);
+                                }}
+                                disabled={deletingCommentId === comment.id}
+                                className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)] disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                <span aria-hidden="true">🗑</span>
+                                <span>
+                                  {deletingCommentId === comment.id ? t("discussion.deletingComment") : t("discussion.deleteComment")}
+                                </span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  toast.info("Comentario reportado");
+                                  setReportOpenFor(null);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                              >
+                                <span className="text-[var(--danger-500)]">
+                                  <FlagIcon />
+                                </span>
+                                <span className="text-[var(--danger-500)]">Denunciar</span>
+                              </button>
+                            )}
 
                             {canKickTarget(comment.author.userId) ? (
                               <button

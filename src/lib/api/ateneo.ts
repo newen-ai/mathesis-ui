@@ -386,6 +386,23 @@ export async function deleteAteneoTopic(groupId: string, topicId: string, signal
   return parseDataResponse<DeleteAteneoTopicData>(response, "Invalid Ateneo topic delete response");
 }
 
+export type DeleteAteneoTopicCommentData = {
+  commentId: string;
+};
+
+// Author-only delete of an own comment. Replies stay, under a "deleted comment" placeholder.
+export async function deleteAteneoTopicComment(groupId: string, topicId: string, commentId: string, signal?: AbortSignal) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "DELETE",
+      signal
+    }
+  );
+
+  return parseDataResponse<DeleteAteneoTopicCommentData>(response, "Invalid Ateneo comment delete response");
+}
+
 export async function moderateRemoveAteneoTopic(
   groupId: string,
   topicId: string,

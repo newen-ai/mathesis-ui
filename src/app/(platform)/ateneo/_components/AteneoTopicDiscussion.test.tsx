@@ -1,3 +1,4 @@
+import "@/lib/i18n";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AteneoComment, AteneoGroup, AteneoTopic } from "@/lib/api/ateneo";
@@ -11,6 +12,7 @@ const api = vi.hoisted(() => ({
   getAteneoTopic: vi.fn(),
   listAteneoTopicComments: vi.fn(),
   listAteneoGroupMembers: vi.fn(),
+  deleteAteneoTopicComment: vi.fn(),
 }));
 
 vi.mock("@/lib/api/ateneo", async (importOriginal) => {
@@ -175,3 +177,33 @@ describe("AteneoTopicDiscussion live comments", () => {
     expect(await screen.findByRole("button", { name: "1 comentario nuevo" })).toBeInTheDocument();
   });
 });
+
+describe("AteneoTopicDiscussion own comments", () => {
+  const mine = { ...comment("c9", "Mi comentario", 9), author: author("me", "Yo") };
+
+  // Comment menus render in thread order: root, its reply, then the user's own comment.
+  function openMenu(position: "first" | "last") {
+    const buttons = screen.getAllByRole("button", { name: "Más opciones para comentario" });
+    fireEvent.click(position === "first" ? buttons[0] : buttons[buttons.length - 1]);
+  }
+
+  it("offers delete only on the user's own comments and reloads after deleting", async () => {
+    api.listAteneoTopicComments.mockResolvedValue(commentsResponse([root, reply, mine]));
+    api.deleteAteneoTopicComment.mockResolvedValue({ success: true, message: "OK", data: { commentId: "c9" } });
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    await renderLoaded();
+
+    openMenu("first");
+    expect(screen.queryByRole("button", { name: /Eliminar comentario/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Denunciar/ })).toBeInTheDocument();
+
+    openMenu("last");
+    api.listAteneoTopicComments.mockResolvedValue(commentsResponse([root, reply]));
+    fireEvent.click(screen.getByRole("button", { name: /Eliminar comentario/ }));
+
+    await waitFor(() => expect(api.deleteAteneoTopicComment).toHaveBeenCalledWith("g1", "t1", "c9"));
+    await waitFor(() => expect(screen.queryByText("Mi comentario")).not.toBeInTheDocument());
+    confirmSpy.mockRestore();
+  });
+});
+

@@ -109,7 +109,12 @@
     }
   },
   "discussion": {
-    "deletedComment": "Comentario eliminado"
+    "deletedComment": "Comentario eliminado",
+    "deleteComment": "Eliminar comentario",
+    "deletingComment": "Eliminando...",
+    "deleteCommentConfirm": "¿Querés eliminar este comentario? Esta acción no se puede deshacer.",
+    "commentDeleted": "Comentario eliminado",
+    "deleteCommentError": "No pudimos eliminar el comentario."
   },
   "membersPanel": {
     "loading": "Cargando miembros...",

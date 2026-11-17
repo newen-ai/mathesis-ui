@@ -109,7 +109,12 @@
     }
   },
   "discussion": {
-    "deletedComment": "Comment deleted"
+    "deletedComment": "Comment deleted",
+    "deleteComment": "Delete comment",
+    "deletingComment": "Deleting...",
+    "deleteCommentConfirm": "Delete this comment? This can't be undone.",
+    "commentDeleted": "Comment deleted",
+    "deleteCommentError": "We couldn't delete the comment."
   },
   "membersPanel": {
     "loading": "Loading members...",
