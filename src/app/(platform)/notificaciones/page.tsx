@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/notifications";
 import { navItems } from "../_lib/constants";
 import { TopBar } from "../_components/TopBar";
+import { formatRelativeTime } from "@/lib/utils/relative-time";
 
 type NotificationLead = {
   kind: "initials" | "symbol";
@@ -34,10 +35,6 @@ const LEAD_TONE_CLASS: Record<NotificationLead["tone"], string> = {
   gray: "bg-[color-mix(in_srgb,var(--surface-2)_88%,var(--surface))] text-[var(--navy-900)]",
   teal: "bg-[color-mix(in_srgb,var(--surface-muted)_65%,var(--surface))] text-[var(--surface)]",
 };
-
-function resolveDateLocale(language: string) {
-  return language.trim().toLowerCase().startsWith("en") ? "en-US" : "es-AR";
-}
 
 function localizeNotificationBody(item: NotificationSummary, t: (key: string, options?: Record<string, unknown>) => string) {
   if (item.messageKey === "postReaction.summary") {
@@ -98,27 +95,6 @@ function localizeNotification(item: NotificationSummary, t: (key: string, option
   };
 }
 
-function formatRelativeTime(value: string | null | undefined, language: string, t: (key: string, options?: Record<string, unknown>) => string) {
-  if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60_000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMinutes < 1) return t("relative.now");
-  if (diffMinutes < 60) return t("relative.minutesAgo", { count: diffMinutes });
-  if (diffHours < 24) return t("relative.hoursAgo", { count: diffHours });
-  if (diffDays < 7) return t("relative.daysAgo", { count: diffDays });
-
-  return date.toLocaleDateString(resolveDateLocale(language), {
-    day: "2-digit",
-    month: "short",
-  });
-}
 
 function NotificationBody({
   item,
@@ -414,7 +390,7 @@ export default function NotificacionesPage() {
                 title={t("sections.unread")}
                 items={unreadNotifications}
                 onMarkAsRead={markAsRead}
-                formatTime={(createdAt) => formatRelativeTime(createdAt, i18n.language, t)}
+                formatTime={(createdAt) => formatRelativeTime(createdAt, t, i18n.language)}
                 headerAction={
                   <button
                     type="button"
@@ -432,7 +408,7 @@ export default function NotificacionesPage() {
                 title={t("sections.read")}
                 items={readNotifications}
                 onMarkAsRead={markAsRead}
-                formatTime={(createdAt) => formatRelativeTime(createdAt, i18n.language, t)}
+                formatTime={(createdAt) => formatRelativeTime(createdAt, t, i18n.language)}
               />
             </div>
 

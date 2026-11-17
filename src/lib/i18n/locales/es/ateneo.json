@@ -28,7 +28,12 @@
   "headerActions": {
     "groupInfo": "Ver info del grupo",
     "groupMembers": "Ver miembros del grupo",
-    "editGroup": "Editar grupo"
+    "editGroup": "Editar grupo",
+    "hints": {
+      "groupInfo": "Info",
+      "groupMembers": "Miembros",
+      "editGroup": "Editar"
+    }
   },
   "newTopic": {
     "title": "Nuevo tema",
@@ -76,10 +81,103 @@
       "choosePdf": "Elegí un archivo PDF.",
       "maxAttachments": "Máximo 5 adjuntos por tema. Quitá alguno para sumar otro.",
       "preferredGroupUnavailable": "No pudimos cargar el grupo del enlace. Te mostramos tus grupos disponibles.",
-      "chooseGroupBeforePublish": "Elegí un grupo antes de publicar.",
-      "completeBeforePublish": "Completá título y descripción antes de publicar.",
-      "respectLimits": "Respetá los límites: título hasta 100 y descripción hasta 1000 caracteres.",
       "published": "Tema publicado"
+    },
+    "errors": {
+      "groupRequired": "Elegí un grupo para publicar el tema.",
+      "groupAdminsOnly": "En este grupo solo los administradores pueden crear temas. Elegí otro grupo.",
+      "titleRequired": "Escribí un título.",
+      "titleTooShort": "El título necesita al menos {{min}} caracteres.",
+      "titleTooLong": "El título puede tener hasta {{max}} caracteres.",
+      "descriptionRequired": "Escribí una descripción.",
+      "descriptionTooShort": "La descripción necesita al menos {{min}} caracteres.",
+      "descriptionTooLong": "La descripción puede tener hasta {{max}} caracteres."
+    },
+    "pdf": {
+      "open": "Ver PDF",
+      "pages_one": "{{count}} pág.",
+      "pages_other": "{{count}} págs."
+    }
+  },
+  "groupMeta": {
+    "members_one": "{{count}} miembro",
+    "members_other": "{{count}} miembros",
+    "activity": {
+      "new": "Creado recientemente",
+      "active": "Activo hoy",
+      "inactive": "Sin actividad"
+    }
+  },
+  "discussion": {
+    "deletedComment": "Comentario eliminado",
+    "deleteComment": "Eliminar comentario",
+    "deletingComment": "Eliminando...",
+    "deleteCommentConfirm": "¿Querés eliminar este comentario? Esta acción no se puede deshacer.",
+    "commentDeleted": "Comentario eliminado",
+    "deleteCommentError": "No pudimos eliminar el comentario."
+  },
+  "membersPanel": {
+    "loading": "Cargando miembros...",
+    "loadError": "No pudimos cargar este grupo.",
+    "joinToSee": "Unite al grupo para ver el listado completo de miembros.",
+    "joinBlockedHint": "No podés unirte porque fuiste expulsado de este grupo.",
+    "join": "Unirse al grupo",
+    "joining": "Uniéndote...",
+    "joinBlocked": "Esta cuenta fue expulsada del grupo y no puede volver a unirse.",
+    "joinError": "No pudimos unirte al grupo.",
+    "tabsAria": "Secciones de miembros",
+    "tabs": {
+      "members": "Miembros",
+      "moderation": "Moderación"
+    },
+    "userFallback": "Usuario",
+    "adminFallback": "Admin",
+    "avatar": "Foto de perfil de {{name}}",
+    "badges": {
+      "owner": "OWNER",
+      "admin": "ADMIN",
+      "pinned": "FIJADO"
+    },
+    "memberSince": "Miembro desde {{date}}",
+    "moreOptions": "Más opciones para {{name}}",
+    "kick": "Expulsar usuario",
+    "kickNotAllowed": "No tenés permisos para expulsar a este usuario.",
+    "kicked": "Usuario expulsado",
+    "kickError": "No pudimos expulsar al usuario.",
+    "total_one": "{{count}} miembro en total.",
+    "total_other": "{{count}} miembros en total.",
+    "showing": "Mostrando {{shown}} de {{total}} miembros.",
+    "loadMore": "Ver más miembros",
+    "loadingMore": "Cargando...",
+    "loadMoreError": "No pudimos cargar más miembros.",
+    "moderation": {
+      "intro": "Usuarios expulsados y contenido eliminado por moderación. Podés revertir cualquiera de estas acciones.",
+      "filtersAria": "Tipo de moderación",
+      "users": "Usuarios ({{count}})",
+      "topics": "Temas ({{count}})",
+      "comments": "Comentarios ({{count}})",
+      "noUsers": "No hay usuarios expulsados actualmente.",
+      "kickedBy": "Expulsado por {{name}} · {{date}}",
+      "reason": "Motivo: {{reason}}",
+      "readmit": "Readmitir",
+      "readmitting": "Readmitiendo...",
+      "readmitted": "Usuario readmitido",
+      "readmitError": "No pudimos readmitir al usuario.",
+      "noTopics": "No hay publicaciones eliminadas por moderación.",
+      "topicBy": "Publicación de {{name}} · {{date}}",
+      "opening": "Abriendo...",
+      "clickToView": "Click para ver contenido",
+      "previewError": "No pudimos abrir la vista previa de la publicación eliminada.",
+      "restoring": "Restaurando...",
+      "restoreTopic": "Restaurar publicación",
+      "topicRestored": "Publicación restaurada",
+      "restoreTopicError": "No pudimos restaurar la publicación.",
+      "noComments": "No hay comentarios eliminados por moderación.",
+      "emptyComment": "Comentario sin contenido",
+      "commentBy": "Comentario de {{name}} · {{date}}",
+      "restoreComment": "Restaurar comentario",
+      "commentRestored": "Comentario restaurado",
+      "restoreCommentError": "No pudimos restaurar el comentario."
     }
   }
 }

@@ -17,7 +17,8 @@
     "contact": "Contact",
     "searchResult": "Search result",
     "noMessagesYet": "No messages yet",
-    "chat": "Chat"
+    "chat": "Chat",
+    "deletedMessage": "Message deleted"
   },
   "errors": {
     "groupTitleRequired": "Group title is required.",
@@ -81,6 +82,7 @@
     "roleMember": "Member"
   },
   "aria": {
+    "jumpToLatest": "Jump to latest message",
     "backToConversations": "Back to conversations",
     "viewGroupMembers": "View group members",
     "profilePhoto": "Profile photo of {{name}}"

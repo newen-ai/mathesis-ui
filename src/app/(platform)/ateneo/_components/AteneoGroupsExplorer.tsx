@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { TopBar } from "../../_components/TopBar";
 import { navItems } from "../../_lib/constants";
 import { listAteneoGroups, type AteneoGroup, type AteneoTabKey } from "@/lib/api/ateneo";
+import { AteneoGroupMeta, useGroupMetaLabel } from "./AteneoLocalizedLabels";
 
 function resolveTab(searchTab: string | null): AteneoTabKey {
   if (searchTab === "admin" || searchTab === "discover" || searchTab === "mine") {
@@ -97,7 +98,7 @@ function GroupCard({
         <div className="min-w-0 flex-1">
           <h3 className="text-scale-4 font-semibold leading-tight text-[var(--heading-primary)] sm:text-scale-5">{group.name}</h3>
           <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
-            {group.subtitle} <span className="mx-1">·</span> {group.activity}
+            <AteneoGroupMeta group={group} />
           </p>
 
           {group.isOfficial ? (
@@ -246,16 +247,19 @@ export function AteneoGroupsExplorer() {
     };
   }, [activeTab]);
 
+  const groupMetaLabel = useGroupMetaLabel();
+
   const filteredGroups = useMemo(() => {
     const query = searchText.trim().toLowerCase();
 
     if (!query) return groups;
 
     return groups.filter((group) => {
-      const haystack = `${group.name} ${group.subtitle} ${group.activity}`.toLowerCase();
+      const { members, activity } = groupMetaLabel(group);
+      const haystack = `${group.name} ${members} ${activity}`.toLowerCase();
       return haystack.includes(query);
     });
-  }, [groups, searchText]);
+  }, [groupMetaLabel, groups, searchText]);
 
   const onAction = () => {
     toast.info(t("explorer.comingSoon"));

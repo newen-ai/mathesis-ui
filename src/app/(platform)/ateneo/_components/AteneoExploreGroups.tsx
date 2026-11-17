@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { listAteneoGroups, type AteneoGroup } from "@/lib/api/ateneo";
+import { AteneoGroupMeta } from "./AteneoLocalizedLabels";
 
 type AteneoExploreGroupsProps = {
   currentGroupId?: string;
@@ -86,7 +87,7 @@ function LeftRailGroupItem({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-scale-3 font-semibold text-[var(--heading-primary)]">{group.name}</span>
         <span className="block truncate text-scale-2 text-[var(--text-secondary)]">
-          {group.subtitle} <span className="mx-1">·</span> {group.activity}
+          <AteneoGroupMeta group={group} />
         </span>
       </span>
 

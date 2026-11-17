@@ -17,7 +17,8 @@
     "contact": "Contacto",
     "searchResult": "Resultado de búsqueda",
     "noMessagesYet": "Sin mensajes por ahora",
-    "chat": "Chat"
+    "chat": "Chat",
+    "deletedMessage": "Mensaje eliminado"
   },
   "errors": {
     "groupTitleRequired": "El título del grupo es obligatorio.",
@@ -81,6 +82,7 @@
     "roleMember": "Miembro"
   },
   "aria": {
+    "jumpToLatest": "Ir al último mensaje",
     "backToConversations": "Volver a conversaciones",
     "viewGroupMembers": "Ver miembros del grupo",
     "profilePhoto": "Foto de perfil de {{name}}"

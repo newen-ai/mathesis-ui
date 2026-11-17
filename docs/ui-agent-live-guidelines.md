@@ -297,3 +297,39 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 ## Current Active UI Directions (2026-11-14 Ateneo live comments)
 - New comments arriving while a topic is open must never be injected silently: show a reveal button at the insertion point (thread end for replies, list end for new top-level comments) plus a header shortcut; highlight revealed items briefly.
 - Polling must pause while the tab is hidden and must not drop visible comments missing from a poll response.
+
+## Testing (2026-11-15)
+- CI (`.github/workflows/ci.yml`) runs on PRs to dev/test/main: lint, `npm run typecheck` (next typegen + tsc), `npm run test:coverage`, build. Use Node 24 locally (`engines` + `engine-strict`).
+- Coverage targets the logic layer (`src/lib/**`, `src/app/**/_lib/**` and listed components); thresholds 90/90/80/90 in `vitest.config.ts`. Pages/JSX are not chased for coverage.
+- `.test.ts` runs on node, `.test.tsx` on jsdom. Mock HTTP with `src/test/fetch-mock.ts` (`mockFetch`, `okData`); never hit the network.
+- Every new API helper gets a row in `src/lib/api/contract.test.ts` (method, path, body). Renaming a backend route means updating both sides (see Backend/UI Compatibility in AGENTS.md).
+- Fix a bug together with a regression test (examples: `ProfileAboutCard.test.tsx` draft seeding, `AteneoTopicDiscussion.test.tsx` polling, `useProfessionalProfile.test.tsx` save error message).
+
+## Forms: validate on submit (2026-11-16)
+- Submit buttons stay enabled; disable them only while the request is in flight. Do not disable them for incomplete or invalid input.
+- On submit, validate on the client with the same rules as the backend schema (keep limits in a `_lib/*-validation.ts` module that cites the backend schema), then show the message under each invalid field (`aria-invalid`, `role="alert"`) and focus the first one. Do not also toast field errors; toasts are only for errors that do not belong to a specific input (network, permissions, attachments, unknown). Clear a field's error when the user edits it.
+- Backend 400 responses carry the validation issues in `details` (all environments). Map them to the same field errors; fall back to the generic error translation otherwise.
+- Reference implementation: `AteneoNewTopicForm` + `ateneo/_lib/new-topic-validation.ts`.
+
+## Attachments: PDFs (2026-11-16)
+- Render PDFs with `src/components/ui/PdfAttachmentCard.tsx` everywhere (form, topic detail, cards). Do not use emoji icons for files.
+- Thumbnails only for local files before upload (`src/lib/utils/pdf-preview.ts`, PDF.js loaded on demand). Never download published PDFs just to draw a thumbnail.
+
+## Auth: email confirmation errors (2026-11-16)
+- `/confirm` uses semantic theme tokens (`--background`, `--surface`, `--line`, `.sophium-heading-primary`, `.sophium-on-brand`), no hardcoded slate/hex, so it works in dark mode.
+- Expired link (`EMAIL_VERIFICATION_TOKEN_EXPIRED`): title `El enlace venció`, gold full-width `Reenviar correo de verificación` button (same style as `/unverified`), success/rate-limit notices as bordered tinted boxes; the button disappears after a successful resend because the old token is replaced.
+- Invalid link (`EMAIL_VERIFICATION_TOKEN_INVALID`): explanation only, no resend. Every error state shows an outlined `Ir a iniciar sesión` link.
+
+## i18n: backend-generated labels (2026-11-16)
+- Do not render Spanish labels built by the backend. Use the raw fields and localize in the UI:
+  - Relative times: `formatRelativeTime(isoDate, t, i18n.language)` from `src/lib/utils/relative-time.ts` (copy in `common.json` → `relativeTime.*`). In Ateneo use `<AteneoRelativeTime value={createdAt} fallback={timeLabel} />`.
+  - Ateneo group "N miembros · Activo hoy": `<AteneoGroupMeta group={group} />` / `useGroupMetaLabel()` (uses `memberCount` + `activityStatus`, `ateneo.json` → `groupMeta.*`).
+  - Deleted comment placeholder: `ateneo.json` → `discussion.deletedComment`; deleted last chat message: `lastMessageIsDeleted` + `messages.json` → `fallbacks.deletedMessage`.
+- The backend still sends the old labels (`timeLabel`, `subtitle`, `activity`, `lastMessagePreview: "Message deleted"`); keep them only as fallback for an older backend.
+
+## Layout, hints and lists (2026-11-17)
+- There is no global footer. Fixed bottom UI on mobile (navbar, chat composer, sheets) anchors to `bottom: 0` + safe area; content padding under the navbar is `calc(4.3rem + env(safe-area-inset-bottom))`. Do not reintroduce the old 1.9rem / 2.5rem / 2.75rem footer offsets.
+- Icon-only buttons get a short hover/focus hint (1-2 words) under them, with the longer label kept as `aria-label`. Pattern: `group relative` on the button, hint span `pointer-events-none absolute top-full mt-2 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100` with surface/line tokens.
+- Lists that can grow (members, etc.) load in pages with a `Ver más` button, using the backend `limit`/`cursor`/`nextCursor` contract; show "Mostrando X de N" while more remain.
+- Admin-only sections next to a regular list go in tabs on the same page (for example Ateneo members: `Miembros` / `Moderación` with a pending-count badge), not below the list.
+

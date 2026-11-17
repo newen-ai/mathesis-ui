@@ -9,12 +9,15 @@ import {
   resolveAteneoAttachmentUrl,
   type AteneoTopicAttachment,
 } from "@/lib/api/ateneo";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
 import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
 import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
+import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
+import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
 
 export type AteneoTopicCardTopic = {
   id: string;
@@ -22,7 +25,10 @@ export type AteneoTopicCardTopic = {
   authorImageUrl: string | null;
   authorInitial: string;
   authorName: string;
+  authorUserId?: string;
+  // Backend Spanish label; shown only when createdAt is missing.
   timeLabel: string;
+  createdAt?: string;
   title: string;
   description: string;
   tone: string;
@@ -218,16 +224,22 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
                 </Link>
               </span>
               <span>·</span>
-              <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span>
+              <UserProfileLink userId={topic.authorUserId} className="font-semibold text-[var(--text-primary)]">
+                {topic.authorName}
+              </UserProfileLink>
               <span>·</span>
-              <span>{topic.timeLabel}</span>
+              <span><AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} /></span>
             </div>
           ) : (
             <p className={metaClassName}>
               <Link href={topicHref} className="sophium-link-accent font-medium hover:underline">
                 {topic.groupLabel}
               </Link>{" "}
-              <span className="mx-1">·</span> <span className="font-semibold text-[var(--text-primary)]">{topic.authorName}</span> <span className="mx-1">·</span> {topic.timeLabel}
+              <span className="mx-1">·</span>{" "}
+              <UserProfileLink userId={topic.authorUserId} className="font-semibold text-[var(--text-primary)]">
+                {topic.authorName}
+              </UserProfileLink>{" "}
+              <span className="mx-1">·</span> <AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} />
             </p>
           )}
 
@@ -264,35 +276,14 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
 
               {topic.attachments
                 .filter((attachment) => !isImageMimeType(attachment.mimeType))
-                .map((attachment) =>
-                variant === "feed" ? (
-                  <div key={attachment.id} className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface-2)]">
-                    <a
-                      href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between gap-3 px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
-                    >
-                      <span className="inline-flex min-w-0 items-center gap-2">
-                        <span aria-hidden="true">📄</span>
-                        <span className="truncate">{attachment.fileName}</span>
-                      </span>
-                      <span className="shrink-0 text-scale-1 text-[var(--text-secondary)]">PDF</span>
-                    </a>
-                  </div>
-                ) : (
-                  <a
+                .map((attachment) => (
+                  <PdfAttachmentCard
                     key={attachment.id}
+                    fileName={attachment.fileName}
+                    sizeBytes={attachment.sizeBytes}
                     href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <span aria-hidden="true">📄</span>
-                      <span className="truncate">{attachment.fileName}</span>
-                    </span>
-                  </a>
+                    openLabel="Abrir PDF"
+                  />
                 ))}
             </div>
           ) : null}

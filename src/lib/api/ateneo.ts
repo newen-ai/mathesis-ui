@@ -19,8 +19,12 @@ export type AteneoGroup = {
   description: string | null;
   createTopicsMode: "free" | "admins";
   commentsMode: "free" | "admins";
+  // Spanish labels from the backend; prefer memberCount / activityStatus (optional while older
+  // backends are still deployed).
   subtitle: string;
   activity: string;
+  memberCount?: number;
+  activityStatus?: "new" | "active" | "inactive";
   icon: string;
   isOfficial: boolean;
   isMember: boolean;
@@ -118,6 +122,8 @@ export type UpdateAteneoGroupData = {
 
 export type ListAteneoGroupMembersData = {
   members: AteneoGroupMember[];
+  // Present when a `limit` was sent: userId to pass as `cursor` for the next page, null on the last one.
+  nextCursor?: string | null;
 };
 
 export type ListAteneoGroupExpulsionsData = {
@@ -248,8 +254,18 @@ export async function getAteneoGroup(groupId: string, signal?: AbortSignal) {
   return parseDataResponse<AteneoGroupDetail>(response, "Invalid Ateneo group response");
 }
 
-export async function listAteneoGroupMembers(groupId: string, signal?: AbortSignal) {
-  const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/members`, { signal });
+// Without `limit` the backend returns every member (used where the full map is needed, e.g. kick permissions).
+export async function listAteneoGroupMembers(
+  groupId: string,
+  options: { limit?: number; cursor?: string | null; signal?: AbortSignal } = {}
+) {
+  const query = new URLSearchParams();
+  if (options.limit) query.set("limit", String(options.limit));
+  if (options.cursor) query.set("cursor", options.cursor);
+  const search = query.size > 0 ? `?${query.toString()}` : "";
+  const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/members${search}`, {
+    signal: options.signal
+  });
   return parseDataResponse<ListAteneoGroupMembersData>(response, "Invalid Ateneo group members response");
 }
 
@@ -368,6 +384,23 @@ export async function deleteAteneoTopic(groupId: string, topicId: string, signal
   );
 
   return parseDataResponse<DeleteAteneoTopicData>(response, "Invalid Ateneo topic delete response");
+}
+
+export type DeleteAteneoTopicCommentData = {
+  commentId: string;
+};
+
+// Author-only delete of an own comment. Replies stay, under a "deleted comment" placeholder.
+export async function deleteAteneoTopicComment(groupId: string, topicId: string, commentId: string, signal?: AbortSignal) {
+  const response = await apiRequest(
+    `/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topicId)}/comments/${encodeURIComponent(commentId)}`,
+    {
+      method: "DELETE",
+      signal
+    }
+  );
+
+  return parseDataResponse<DeleteAteneoTopicCommentData>(response, "Invalid Ateneo comment delete response");
 }
 
 export async function moderateRemoveAteneoTopic(

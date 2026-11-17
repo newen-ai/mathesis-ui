@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,6 +8,7 @@ import {
   createCompaniesMembershipRequest,
   getCompaniesMembershipState,
 } from "@/lib/api/admin";
+import { UserProfileLink, userProfileHref } from "@/components/ui/UserProfileLink";
 import { listVerifiedDirectory, type DirectoryEnterprise } from "@/lib/api/enterprise";
 import { toast } from "sonner";
 import { TopBar } from "../_components/TopBar";
@@ -63,7 +65,9 @@ function DirectoryCard({
             </div>
 
             <div className="mt-2 flex flex-wrap items-center gap-2 text-scale-2 text-[var(--text-secondary)]">
-              <span>{enterprise.founder ?? t("card.fallbackFounder")}</span>
+              <UserProfileLink userId={enterprise.ownerUserId} className="font-medium text-[var(--text-primary)]">
+                {enterprise.founder ?? t("card.fallbackFounder")}
+              </UserProfileLink>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[0.67rem] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
                 {badge}
               </span>
@@ -109,14 +113,16 @@ function DirectoryCard({
             </span>
           </div>
 
-          <button
-            type="button"
-            aria-label={t("card.viewFullProfileAria", { name: enterprise.name })}
-            className="inline-flex items-center gap-2 self-end rounded-full border border-transparent px-2 py-1 text-scale-2 font-semibold text-[var(--brand-700)] transition hover:text-[var(--brand-800)]"
-          >
-            <span>{t("card.viewFullProfile")}</span>
-            <span aria-hidden="true">→</span>
-          </button>
+          {enterprise.ownerUserId ? (
+            <Link
+              href={userProfileHref(enterprise.ownerUserId)}
+              aria-label={t("card.viewFullProfileAria", { name: enterprise.founder ?? enterprise.name })}
+              className="inline-flex items-center gap-2 self-end rounded-full border border-transparent px-2 py-1 text-scale-2 font-semibold text-[var(--brand-700)] transition hover:text-[var(--brand-800)]"
+            >
+              <span>{t("card.viewFullProfile")}</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          ) : null}
         </div>
       </div>
     </article>
@@ -255,24 +261,26 @@ export default function DirectorioPage() {
           </p>
         </header>
 
-        <section className="mb-7 rounded-[1.5rem] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--brand-200)_45%,var(--surface))] px-5 py-4 shadow-[0_1px_0_rgba(16,24,40,0.02)] sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <h2 className="sophium-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
-                {t("membership.title")}
-              </h2>
-              <p className="mt-2 text-scale-3 text-[var(--text-primary)]">
-                {t("membership.subtitle")}
-              </p>
-            </div>
+        {/* Invitation only for users without the badge: hidden for members ("go") and while the state loads,
+            so members never see it flash in. */}
+        {membershipCtaMode === "request" || membershipCtaMode === "requested" ? (
+          <section className="mb-7 rounded-[1.5rem] border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--brand-200)_45%,var(--surface))] px-5 py-4 shadow-[0_1px_0_rgba(16,24,40,0.02)] sm:px-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h2 className="sophium-heading-primary text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--navy-900)]">
+                  {t("membership.title")}
+                </h2>
+                <p className="mt-2 text-scale-3 text-[var(--text-primary)]">
+                  {t("membership.subtitle")}
+                </p>
+              </div>
 
-            {membershipCtaMode !== "go" ? (
               <button
                 type="button"
                 onClick={() => {
                   void onMembershipAction();
                 }}
-                disabled={membershipCtaMode === "loading" || isMembershipActionPending}
+                disabled={isMembershipActionPending}
                 aria-label={membershipCtaMode === "requested" ? t("membership.ariaCancel") : t("membership.ariaRequest")}
                 className={`inline-flex items-center justify-between gap-3 rounded-xl border px-5 py-3 text-scale-2 font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-70 ${
                   membershipCtaMode === "requested"
@@ -281,23 +289,21 @@ export default function DirectorioPage() {
                 }`}
               >
                 <span>
-                  {membershipCtaMode === "loading"
-                    ? t("membership.loading")
-                    : isMembershipActionPending && membershipCtaMode === "requested"
-                      ? t("membership.cancelling")
-                      : isMembershipActionPending
-                        ? t("membership.sending")
-                        : membershipCtaMode === "requested"
-                          ? t("membership.cancel")
-                          : t("membership.request")}
+                  {isMembershipActionPending && membershipCtaMode === "requested"
+                    ? t("membership.cancelling")
+                    : isMembershipActionPending
+                      ? t("membership.sending")
+                      : membershipCtaMode === "requested"
+                        ? t("membership.cancel")
+                        : t("membership.request")}
                 </span>
                 <span aria-hidden="true" className="text-lg">
                   {membershipCtaMode === "requested" ? "−" : "+"}
                 </span>
               </button>
-            ) : null}
-          </div>
-        </section>
+            </div>
+          </section>
+        ) : null}
 
         <div className="space-y-5">
           {isLoading ? (

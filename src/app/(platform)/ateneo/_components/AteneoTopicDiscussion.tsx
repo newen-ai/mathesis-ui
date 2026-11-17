@@ -1,11 +1,14 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
 import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
 import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { getSessionUserId } from "@/lib/api/auth";
@@ -14,6 +17,7 @@ import {
   AteneoGroupMember,
   downloadAteneoTopicAttachment,
   deleteAteneoTopic,
+  deleteAteneoTopicComment,
   createAteneoTopicComment,
   getAteneoGroup,
   getAteneoTopic,
@@ -33,6 +37,7 @@ import {
 import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
 import { AteneoKickMemberModal } from "./AteneoKickMemberModal";
 import { AteneoContentModerationModal } from "./AteneoContentModerationModal";
+import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
 
 type AteneoTopicDiscussionProps = {
   groupId: string;
@@ -65,9 +70,9 @@ function FlagIcon() {
   );
 }
 
-function fullName(comment: AteneoComment): string {
+function fullName(comment: AteneoComment, deletedLabel: string): string {
   if (comment.isDeletedPlaceholder) {
-    return "Comentario eliminado";
+    return deletedLabel;
   }
 
   return [comment.author.firstName, comment.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
@@ -80,6 +85,8 @@ function mentionFromContent(content: string): string | null {
 
 export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussionProps) {
   const router = useRouter();
+  const { t } = useTranslation("ateneo");
+  const deletedCommentLabel = t("discussion.deletedComment");
   const [group, setGroup] = useState<AteneoGroup | null>(null);
   const [topic, setTopic] = useState<AteneoTopic | null>(null);
   const [topicComments, setTopicComments] = useState<AteneoComment[]>([]);
@@ -100,6 +107,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const [groupMembersByUserId, setGroupMembersByUserId] = useState<Record<string, AteneoGroupMember>>({});
   const [kickTarget, setKickTarget] = useState<{ userId: string; name: string; sourceContext: "TOPIC" | "COMMENT"; sourceCommentId?: string } | null>(null);
   const [isKicking, setIsKicking] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [moderationTarget, setModerationTarget] = useState<{ kind: "topic" | "comment"; commentId?: string; authorName: string } | null>(null);
   const [isModeratingContent, setIsModeratingContent] = useState(false);
 
@@ -605,6 +613,33 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     }
   };
 
+  const handleCommentDelete = async (commentId: string) => {
+    if (!topic || deletingCommentId) {
+      return;
+    }
+
+    const confirmed = window.confirm(t("discussion.deleteCommentConfirm"));
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingCommentId(commentId);
+
+    try {
+      await deleteAteneoTopicComment(groupId, topic.id, commentId);
+      // Full reload: the comment disappears, or becomes a placeholder if it has replies.
+      const commentsResponse = await listAteneoTopicComments(groupId, topic.id);
+      setTopicComments(commentsResponse.data.comments);
+      setTopic((current) => (current ? { ...current, comments: Math.max(0, current.comments - 1) } : current));
+      setReportOpenFor(null);
+      toast.success(t("discussion.commentDeleted"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("discussion.deleteCommentError"));
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
   const handleModerationConfirm = async (reason: string | undefined) => {
     if (!topic || !moderationTarget || isModeratingContent) {
       return;
@@ -832,11 +867,11 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
           <div className="min-w-0 flex-1">
             <h2 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
-              {topicAuthorName}
+              <UserProfileLink userId={topic.author.userId}>{topicAuthorName}</UserProfileLink>
             </h2>
           </div>
 
-          <span className="text-scale-2 text-[var(--text-secondary)]">{topic.timeLabel}</span>
+          <span className="text-scale-2 text-[var(--text-secondary)]"><AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} /></span>
         </div>
 
         <h3 className="mt-5 text-[1.3rem] font-semibold leading-snug text-[var(--heading-primary)] sm:text-[1.6rem]">
@@ -866,18 +901,13 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
             {topic.attachments
               .filter((attachment) => !isImageMimeType(attachment.mimeType))
               .map((attachment) => (
-                <a
+                <PdfAttachmentCard
                   key={attachment.id}
+                  fileName={attachment.fileName}
+                  sizeBytes={attachment.sizeBytes}
                   href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 font-medium text-[var(--text-primary)] hover:bg-[var(--surface)]"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <span aria-hidden="true">📄</span>
-                    <span className="truncate">{attachment.fileName}</span>
-                  </span>
-                </a>
+                  openLabel="Abrir PDF"
+                />
               ))}
           </div>
         ) : null}
@@ -980,7 +1010,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                         <UserAvatar
                           imageUrl={comment.isDeletedPlaceholder ? null : comment.author.profileImageUrl}
                           initials={comment.isDeletedPlaceholder ? "?" : comment.author.initials}
-                          label={`Foto de perfil de ${fullName(comment)}`}
+                          label={`Foto de perfil de ${fullName(comment, deletedCommentLabel)}`}
                           className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
                           initialsClassName="text-xs font-bold text-[var(--surface)]"
                         />
@@ -988,12 +1018,14 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className={`font-semibold ${comment.isDeletedPlaceholder ? "text-[var(--text-secondary)]" : "text-[var(--heading-primary)]"}`}>
-                              {fullName(comment)}
+                              <UserProfileLink userId={comment.isDeletedPlaceholder ? null : comment.author.userId}>
+                                {fullName(comment, deletedCommentLabel)}
+                              </UserProfileLink>
                             </p>
-                            <span className="text-scale-1 text-[var(--text-secondary)]">{comment.timeLabel}</span>
+                            <span className="text-scale-1 text-[var(--text-secondary)]"><AteneoRelativeTime value={comment.createdAt} fallback={comment.timeLabel} /></span>
                           </div>
                           <LinkifiedText
-                            text={comment.content}
+                            text={comment.isDeletedPlaceholder ? deletedCommentLabel : comment.content}
                             className={`mt-1 whitespace-pre-wrap text-scale-3 leading-7 ${comment.isDeletedPlaceholder ? "italic text-[var(--text-secondary)]" : "text-[var(--text-primary)]"}`}
                             linkClassName="sophium-link-accent underline underline-offset-2"
                           />
@@ -1015,19 +1047,36 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
                         {reportOpenFor === comment.id && (
                           <div className="absolute right-0 top-10 z-10 min-w-[120px] rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-sm">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                toast.info("Comentario reportado");
-                                setReportOpenFor(null);
-                              }}
-                              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
-                            >
-                              <span className="text-[var(--danger-500)]">
-                                <FlagIcon />
-                              </span>
-                              <span className="text-[var(--danger-500)]">Denunciar</span>
-                            </button>
+                            {/* Own comments can be deleted; reporting yourself makes no sense, so it is hidden. */}
+                            {sessionUserId && comment.author.userId === sessionUserId ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void handleCommentDelete(comment.id);
+                                }}
+                                disabled={deletingCommentId === comment.id}
+                                className="flex w-full items-center gap-2 whitespace-nowrap rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)] disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                <span aria-hidden="true">🗑</span>
+                                <span>
+                                  {deletingCommentId === comment.id ? t("discussion.deletingComment") : t("discussion.deleteComment")}
+                                </span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  toast.info("Comentario reportado");
+                                  setReportOpenFor(null);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                              >
+                                <span className="text-[var(--danger-500)]">
+                                  <FlagIcon />
+                                </span>
+                                <span className="text-[var(--danger-500)]">Denunciar</span>
+                              </button>
+                            )}
 
                             {canKickTarget(comment.author.userId) ? (
                               <button
@@ -1035,7 +1084,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                                 onClick={() => {
                                   setKickTarget({
                                     userId: comment.author.userId,
-                                    name: fullName(comment),
+                                    name: fullName(comment, deletedCommentLabel),
                                     sourceContext: "COMMENT",
                                     sourceCommentId: comment.id
                                   });
@@ -1053,7 +1102,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                                   setModerationTarget({
                                     kind: "comment",
                                     commentId: comment.id,
-                                    authorName: fullName(comment)
+                                    authorName: fullName(comment, deletedCommentLabel)
                                   });
                                 }}
                                 className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
@@ -1072,7 +1121,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                       {canComment ? (
                         <button
                           type="button"
-                          onClick={() => startReplyFor(comment.id, fullName(comment))}
+                          onClick={() => startReplyFor(comment.id, fullName(comment, deletedCommentLabel))}
                           className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)]"
                         >
                           Responder

@@ -22,5 +22,11 @@
       "connectionFailed": "We could not connect to the server. Check your connection and try again.",
       "publishFailed": "We could not publish the topic. Please try again in a few seconds."
     }
+  },
+  "relativeTime": {
+    "now": "now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}} h ago",
+    "daysAgo": "{{count}} d ago"
   }
 }

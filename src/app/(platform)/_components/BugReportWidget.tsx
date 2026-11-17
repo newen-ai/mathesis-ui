@@ -74,8 +74,8 @@ function getCornerOffsets() {
     left: isDesktop ? 24 : 16,
     right: isDesktop ? 24 : 16,
     top: isDesktop ? 96 : 80,
-    // Keep mobile floating button above the signed-in bottom footer.
-    bottom: isDesktop ? 72 : 124,
+    // Keep mobile floating button above the signed-in bottom navbar.
+    bottom: isDesktop ? 72 : 94,
   };
 }
 

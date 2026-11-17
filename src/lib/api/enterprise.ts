@@ -22,6 +22,8 @@ export type DirectoryEnterprise = {
   website: string | null;
   description: string | null;
   founder: string | null;
+  // Owner's user id for the profile link; optional so an older backend response still parses.
+  ownerUserId?: string | null;
   location: string | null;
   badgeSlug: string;
   createdAt: string;

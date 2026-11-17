@@ -16,9 +16,8 @@ type OverlayItem = {
   isSelected?: boolean;
 };
 
-const POWERED_BY_OFFSET = "1.9rem";
 const FOOTER_MENU_HEIGHT = "4.4rem";
-const SHEET_BOTTOM = `calc(${POWERED_BY_OFFSET} + max(env(safe-area-inset-bottom), 0.35rem) + ${FOOTER_MENU_HEIGHT})`;
+const SHEET_BOTTOM = `calc(max(env(safe-area-inset-bottom), 0.35rem) + ${FOOTER_MENU_HEIGHT})`;
 
 const nexumOverlayItems: OverlayItem[] = [
   {
@@ -301,7 +300,7 @@ export function MobilePlatformFooter() {
 
       <nav
         className="fixed inset-x-0 z-[120] min-h-[4.4rem] border-b border-t border-[var(--line)] bg-[var(--surface)] px-2 pt-2 md:hidden"
-        style={{ bottom: POWERED_BY_OFFSET, paddingBottom: "max(env(safe-area-inset-bottom), 0.35rem)" }}
+        style={{ bottom: 0, paddingBottom: "max(env(safe-area-inset-bottom), 0.35rem)" }}
         aria-label="Navegación inferior"
       >
         <ul className="grid grid-cols-5 items-end gap-1 px-1 text-center">

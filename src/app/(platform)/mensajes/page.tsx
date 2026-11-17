@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
 import { ModulePage } from "../_components/ModulePage";
 import { getMyProfileIdentity, searchProfiles } from "@/lib/api/profile";
 import { getTwoInitials } from "@/lib/utils/name";
@@ -27,6 +28,8 @@ type Thread = {
   displayName: string;
   roleLine: string;
   profileImageUrl: string | null;
+  // The other participant in a direct chat (used to link the header name to their profile); null for groups.
+  otherUserId: string | null;
 };
 
 type ContactOption = {
@@ -42,6 +45,8 @@ const POLLING_INTERVAL_MS = 10000;
 const GROUP_MEMBER_PREVIEW_MAX_CHARS = 56;
 const GROUP_HEADER_PREVIEW_MAX_CHARS = 84;
 const COMPOSER_MAX_LINES = 10;
+// How many messages must sit below the visible area before the "jump to latest" button shows up.
+const JUMP_TO_LATEST_THRESHOLD = 6;
 
 function resolveDateLocale(language: string) {
   return language.trim().toLowerCase().startsWith("en") ? "en-US" : "es-AR";
@@ -143,6 +148,7 @@ function deriveThreadPresentation(
       displayName: detail.title?.trim() || t("fallbacks.untitledGroup"),
       roleLine: groupMembersSummary.previewText,
       profileImageUrl: null,
+      otherUserId: null,
     };
   }
 
@@ -154,6 +160,7 @@ function deriveThreadPresentation(
     displayName: otherMember ? formatFullName(otherMember.user, t) : t("fallbacks.directChat"),
     roleLine: otherMember ? formatRoleLine(otherMember.user, t) : t("fallbacks.contact"),
     profileImageUrl: otherMember?.user.profileImageUrl ?? null,
+    otherUserId: otherMember?.user.userId ?? null,
   };
 }
 
@@ -176,9 +183,23 @@ function mergeAndSortMessages(existing: ChatMessageSummary[], incoming: ChatMess
 
 export default function MensajesPage() {
   const { t, i18n } = useTranslation("messages");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserIdState] = useState<string | null>(null);
   const [threads, setThreads] = useState<Thread[]>([]);
-  const [selectedThreadId, setSelectedThreadId] = useState("");
+  const [selectedThreadId, setSelectedThreadIdState] = useState("");
+  // Mirrors of the state above, read by async loaders so they always see the latest values without being
+  // recreated on every selection (recreating them re-ran the bootstrap effect and caused a selection ping-pong).
+  const selectedThreadIdRef = useRef("");
+  const currentUserIdRef = useRef<string | null>(null);
+  // Increases on every refreshThreads call; only the newest call may apply its result.
+  const refreshThreadsSeqRef = useRef(0);
+  const setSelectedThreadId = useCallback((chatId: string) => {
+    selectedThreadIdRef.current = chatId;
+    setSelectedThreadIdState(chatId);
+  }, []);
+  const setCurrentUserId = useCallback((userId: string | null) => {
+    currentUserIdRef.current = userId;
+    setCurrentUserIdState(userId);
+  }, []);
   const [draftMessage, setDraftMessage] = useState("");
   const [isLoadingThreads, setIsLoadingThreads] = useState(true);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -212,6 +233,8 @@ export default function MensajesPage() {
   const mobileDetailHeaderRef = useRef<HTMLElement | null>(null);
   const pendingInitialBottomChatIdRef = useRef<string | null>(null);
   const isNearBottomRef = useRef(true);
+  const messageListRef = useRef<HTMLDivElement | null>(null);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const isInitializingConversationLoadRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
@@ -221,6 +244,38 @@ export default function MensajesPage() {
     }
 
     viewport.scrollTop = viewport.scrollHeight;
+    isNearBottomRef.current = true;
+  }, []);
+
+  // Shows the "jump to latest" button once enough messages sit below the visible area. Walks back from the
+  // newest message and stops at the first visible one, so the cost stays at JUMP_TO_LATEST_THRESHOLD reads.
+  const updateJumpToLatest = useCallback(() => {
+    const viewport = messageViewportRef.current;
+    const list = messageListRef.current;
+    if (!viewport || !list) {
+      setShowJumpToLatest(false);
+      return;
+    }
+
+    const visibleBottom = viewport.getBoundingClientRect().bottom;
+    let hiddenBelow = 0;
+    for (let index = list.children.length - 1; index >= 0 && hiddenBelow < JUMP_TO_LATEST_THRESHOLD; index -= 1) {
+      if (list.children[index].getBoundingClientRect().top < visibleBottom) {
+        break;
+      }
+      hiddenBelow += 1;
+    }
+
+    setShowJumpToLatest(hiddenBelow >= JUMP_TO_LATEST_THRESHOLD);
+  }, []);
+
+  const jumpToLatest = useCallback(() => {
+    const viewport = messageViewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
     isNearBottomRef.current = true;
   }, []);
 
@@ -345,6 +400,8 @@ export default function MensajesPage() {
 
   const refreshThreads = useCallback(
     async (preferredChatId?: string, viewerUserId?: string | null) => {
+      const seq = ++refreshThreadsSeqRef.current;
+      const selectionAtStart = selectedThreadIdRef.current;
       const listResponse = await listMyChats(CHAT_LIST_LIMIT);
       const summaries = listResponse.data.chats;
 
@@ -366,32 +423,46 @@ export default function MensajesPage() {
           deriveThreadPresentation(
             summary,
             detailResult.value.data,
-            viewerUserId ?? currentUserId,
+            viewerUserId ?? currentUserIdRef.current,
             t
           )
         );
       }
 
+      // A newer refresh started while this one was in flight: its result wins, this one is dropped.
+      if (seq !== refreshThreadsSeqRef.current) {
+        return selectedThreadIdRef.current;
+      }
+
       setThreads(nextThreads);
+
+      const currentSelection = selectedThreadIdRef.current;
+      const exists = (chatId: string) => nextThreads.some((thread) => thread.summary.id === chatId);
+      // If the user picked another chat while the list was loading, keep their choice over preferredChatId.
+      const userChangedSelection = currentSelection !== selectionAtStart;
 
       let nextSelected = "";
 
-      if (preferredChatId && nextThreads.some((thread) => thread.summary.id === preferredChatId)) {
+      if (userChangedSelection && currentSelection) {
+        nextSelected = currentSelection;
+      } else if (preferredChatId && exists(preferredChatId)) {
         nextSelected = preferredChatId;
-      } else if (selectedThreadId && nextThreads.some((thread) => thread.summary.id === selectedThreadId)) {
-        nextSelected = selectedThreadId;
+      } else if (currentSelection && exists(currentSelection)) {
+        nextSelected = currentSelection;
       } else {
         nextSelected = nextThreads[0]?.summary.id ?? "";
       }
 
-      if (nextSelected) {
-        pendingInitialBottomChatIdRef.current = nextSelected;
+      if (nextSelected !== currentSelection) {
+        if (nextSelected) {
+          pendingInitialBottomChatIdRef.current = nextSelected;
+        }
+        setSelectedThreadId(nextSelected);
       }
-      setSelectedThreadId(nextSelected);
 
       return nextSelected;
     },
-    [currentUserId, selectedThreadId, t]
+    [setSelectedThreadId, t]
   );
 
   const loadLatestMessages = useCallback(async (chatId: string, markAsRead = false) => {
@@ -417,7 +488,8 @@ export default function MensajesPage() {
         [chatId]: messagesResponse.data.nextCursor,
       }));
 
-      if (markAsRead || isNearBottomRef.current) {
+      // A slow response for a chat the user already left must not scroll the one now on screen.
+      if ((markAsRead || isNearBottomRef.current) && chatId === selectedThreadIdRef.current) {
         requestAnimationFrame(() => {
           scrollToBottom();
         });
@@ -521,7 +593,7 @@ export default function MensajesPage() {
         setIsSending(false);
       }
     },
-    [loadLatestMessages, recipientUserIds, refreshThreads, t]
+    [loadLatestMessages, recipientUserIds, refreshThreads, setSelectedThreadId, t]
   );
 
   const runGroupCreationOnly = useCallback(
@@ -560,7 +632,7 @@ export default function MensajesPage() {
         setIsSending(false);
       }
     },
-    [loadLatestMessages, recipientUserIds, refreshThreads, t]
+    [loadLatestMessages, recipientUserIds, refreshThreads, setSelectedThreadId, t]
   );
 
   const onConfirmChatCreation = useCallback(async () => {
@@ -603,7 +675,7 @@ export default function MensajesPage() {
 
     setGroupTitleError(null);
     setIsTitleModalOpen(true);
-  }, [isComposerOpen, isSending, loadLatestMessages, recipientUserIds, refreshThreads, t]);
+  }, [isComposerOpen, isSending, loadLatestMessages, recipientUserIds, refreshThreads, setSelectedThreadId, t]);
 
   const onSend = useCallback(async () => {
     const trimmedMessage = draftMessage.trim();
@@ -683,6 +755,7 @@ export default function MensajesPage() {
                   ...thread.summary,
                   lastMessageAt: response.data.message.createdAt,
                   lastMessagePreview: response.data.message.content,
+                  lastMessageIsDeleted: false,
                 },
               }
             : thread
@@ -707,6 +780,7 @@ export default function MensajesPage() {
     scrollToBottom,
     selectedThreadBlockedReason,
     selectedThreadId,
+    setSelectedThreadId,
     t,
   ]);
 
@@ -745,7 +819,7 @@ export default function MensajesPage() {
     return () => {
       cancelled = true;
     };
-  }, [loadLatestMessages, refreshThreads, t]);
+  }, [loadLatestMessages, refreshThreads, setCurrentUserId, t]);
 
   useEffect(() => {
     if (!selectedThreadId || isComposerOpen) return;
@@ -895,6 +969,7 @@ export default function MensajesPage() {
 
     const onScroll = () => {
       updateNearBottom();
+      updateJumpToLatest();
 
       if (isInitializingConversationLoadRef.current) {
         return;
@@ -908,12 +983,18 @@ export default function MensajesPage() {
     };
 
     updateNearBottom();
+    updateJumpToLatest();
     viewport.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       viewport.removeEventListener("scroll", onScroll);
     };
-  }, [isComposerOpen, isMobileViewport, loadOlderMessages, mobileActivePanel, selectedThread, t]);
+  }, [isComposerOpen, isMobileViewport, loadOlderMessages, mobileActivePanel, selectedThread, t, updateJumpToLatest]);
+
+  // New messages can arrive while the user reads older ones; recheck without waiting for a scroll.
+  useEffect(() => {
+    updateJumpToLatest();
+  }, [selectedMessages, updateJumpToLatest]);
 
   useEffect(() => {
     adjustComposerTextareaHeight(composerTextareaRef.current);
@@ -1039,7 +1120,9 @@ export default function MensajesPage() {
               {threads.map((thread) => {
                 const initials = getTwoInitials({ fullName: thread.displayName });
                 const isActive = !isComposerOpen && selectedThreadId === thread.summary.id;
-                const lastPreview = thread.summary.lastMessagePreview || t("fallbacks.noMessagesYet");
+                const lastPreview = thread.summary.lastMessageIsDeleted
+                  ? t("fallbacks.deletedMessage")
+                  : thread.summary.lastMessagePreview || t("fallbacks.noMessagesYet");
 
                 return (
                   <button
@@ -1283,7 +1366,9 @@ export default function MensajesPage() {
                         ←
                       </button>
                       <div className="min-w-0">
-                        <p className="truncate text-2xl font-semibold text-[var(--text-primary)]">{selectedThread.displayName}</p>
+                        <p className="truncate text-2xl font-semibold text-[var(--text-primary)]">
+                          <UserProfileLink userId={selectedThread.otherUserId}>{selectedThread.displayName}</UserProfileLink>
+                        </p>
                         <p className="truncate text-sm text-[var(--text-secondary)]">{selectedThread.roleLine}</p>
                       </div>
                     </div>
@@ -1303,7 +1388,7 @@ export default function MensajesPage() {
                     <div className="mb-3 text-center text-xs text-[var(--text-soft)]">{t("conversations.loadingOlder")}</div>
                   ) : null}
 
-                  <div className="flex min-h-full flex-col justify-end gap-3">
+                  <div ref={messageListRef} className="flex min-h-full flex-col justify-end gap-3">
                     {selectedMessages.map((message) => {
                       const isMine = message.senderUserId === currentUserId;
                       const showSenderName = selectedThread.detail.type === "GROUP";
@@ -1334,7 +1419,7 @@ export default function MensajesPage() {
                                   isMine ? "text-white/85" : "text-[var(--text-secondary)]"
                                 }`}
                               >
-                                {senderName}
+                                <UserProfileLink userId={isMine ? null : message.senderUserId}>{senderName}</UserProfileLink>
                               </p>
                             ) : null}
                             <p>{message.isDeleted ? t("conversations.deletedMessage") : message.content}</p>
@@ -1355,6 +1440,27 @@ export default function MensajesPage() {
                       <p className="text-sm text-[var(--text-secondary)]">{t("conversations.emptyThread")}</p>
                     ) : null}
                   </div>
+
+                  {showJumpToLatest ? (
+                    // Zero-height sticky row: pins to the visible bottom of the scroll area (above the composer
+                    // overlay) without adding scroll height; the button is lifted above it by translate.
+                    <div
+                      className="pointer-events-none sticky flex h-0 justify-center"
+                      style={{ bottom: `${conversationBottomInset + 12}px` }}
+                    >
+                      <button
+                        type="button"
+                        onClick={jumpToLatest}
+                        aria-label={t("aria.jumpToLatest")}
+                        title={t("aria.jumpToLatest")}
+                        className="pointer-events-auto inline-flex h-9 w-9 -translate-y-full items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] shadow-[0_4px_12px_rgba(0,0,0,0.14)] transition hover:border-[var(--line-strong)] hover:text-[var(--text-primary)]"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+                          <path d="M12 5v13M6 12.5l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </>
             ) : (
@@ -1414,7 +1520,9 @@ export default function MensajesPage() {
                     ←
                   </button>
                   <div className="min-w-0">
-                    <p className="truncate text-[0.9375rem] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
+                    <p className="truncate text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+                      <UserProfileLink userId={selectedThread?.otherUserId}>{selectedThread?.displayName ?? t("fallbacks.chat")}</UserProfileLink>
+                    </p>
                     <p className="truncate text-[0.625rem] text-[var(--text-secondary)]">{selectedThread?.roleLine ?? ""}</p>
                   </div>
                 </div>
@@ -1426,7 +1534,7 @@ export default function MensajesPage() {
             ref={composerFooterRef}
             className={`z-20 border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[0_6px_18px_rgba(0,0,0,0.14)] sm:p-4 md:absolute md:bottom-0 md:left-[330px] md:right-0 md:z-10 md:border-x-0 md:border-b-0 md:shadow-none ${
               mobileActivePanel === "detail"
-                ? "fixed inset-x-0 bottom-[calc(6.2rem+env(safe-area-inset-bottom))] border-x-0"
+                ? "fixed inset-x-0 bottom-[calc(4.3rem+env(safe-area-inset-bottom))] border-x-0"
                 : "hidden md:block"
             }`}
           >
@@ -1585,7 +1693,11 @@ export default function MensajesPage() {
                         initialsClassName="text-xs font-bold text-[var(--brand-300)]"
                       />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{memberName}</p>
+                        <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                          <UserProfileLink userId={member.user.userId === currentUserId ? null : member.user.userId}>
+                            {memberName}
+                          </UserProfileLink>
+                        </p>
                         <p className="truncate text-xs text-[var(--text-secondary)]">{memberRole}</p>
                       </div>
                     </div>
