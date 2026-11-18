@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "@kenrou/shared-ui": "file:vendor/kenrou-shared-ui.tgz",
+    "@sentry/nextjs": "^11.14.0",
+    "@vercel/speed-insights": "^2.1.0",
     "heic2any": "^0.0.4",
     "i18next": "^26.4.0",
     "next": "16.2.4",

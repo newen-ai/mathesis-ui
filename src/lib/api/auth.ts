@@ -3,6 +3,7 @@ import {
 	ApiServiceResponse as AuthServiceResponse,
 	parseServiceResponse,
 } from "@/lib/api/client";
+import { traceUiAction } from "@/lib/observability/spans";
 
 export type SessionRole = "user" | "admin";
 
@@ -108,6 +109,12 @@ export async function register(
 }
 
 export async function login(
+	input: LoginInput
+): Promise<AuthServiceResponse> {
+	return traceUiAction("ui.login", () => requestLogin(input));
+}
+
+async function requestLogin(
 	input: LoginInput
 ): Promise<AuthServiceResponse> {
 	try {

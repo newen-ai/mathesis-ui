@@ -1,4 +1,5 @@
 import { apiRequest, getApiBaseUrl, parseDataResponse } from "@/lib/api/client";
+import { traceUiAction } from "@/lib/observability/spans";
 
 export type AteneoTabKey = "mine" | "discover" | "admin";
 export type AteneoTone = "LIBRE" | "SERIO" | "MIX";
@@ -444,6 +445,14 @@ export async function createAteneoTopic(
   payload: { title: string; description: string; tone: AteneoTone; attachments?: File[] },
   signal?: AbortSignal
 ) {
+  return traceUiAction("ui.topic.publish", () => requestCreateAteneoTopic(groupId, payload, signal));
+}
+
+async function requestCreateAteneoTopic(
+  groupId: string,
+  payload: { title: string; description: string; tone: AteneoTone; attachments?: File[] },
+  signal?: AbortSignal
+) {
   const formData = new FormData();
 
   formData.set("title", payload.title);
@@ -512,6 +521,15 @@ export async function listAteneoTopicComments(groupId: string, topicId: string, 
 }
 
 export async function createAteneoTopicComment(
+  groupId: string,
+  topicId: string,
+  payload: { content: string; parentCommentId?: string; mentionUserId?: string },
+  signal?: AbortSignal
+) {
+  return traceUiAction("ui.comment.publish", () => requestCreateAteneoTopicComment(groupId, topicId, payload, signal));
+}
+
+async function requestCreateAteneoTopicComment(
   groupId: string,
   topicId: string,
   payload: { content: string; parentCommentId?: string; mentionUserId?: string },
