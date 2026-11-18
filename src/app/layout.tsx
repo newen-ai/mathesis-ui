@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Sora, Spectral } from "next/font/google";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { AuthLanguageSwitcher } from "@/components/auth/AuthLanguageSwitcher";
@@ -55,6 +56,8 @@ export default async function RootLayout({
         <AuthLanguageSwitcher />
         <BugReportWidget />
         <AppToaster />
+        {/* Real-user Core Web Vitals in Vercel > Speed Insights. Inert outside Vercel deployments. */}
+        <SpeedInsights />
       </body>
     </html>
   );

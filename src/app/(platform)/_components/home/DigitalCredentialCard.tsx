@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import QRCode from "react-qr-code";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
 import { BRAND_LOGO_SRC, MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
+import { traceUiAction } from "@/lib/observability/spans";
 
 const CREDENTIAL_TTL_MS = 5 * 60 * 1000;
 
@@ -70,13 +71,15 @@ export function DigitalCredentialCard() {
 
     const fetchVerificationToken = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}/profile/me/credential/verification-token`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
+        const response = await traceUiAction("ui.credential.generate", () =>
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? ""}/profile/me/credential/verification-token`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json"
+            }
+          })
+        );
 
         if (!response.ok) {
           return;
