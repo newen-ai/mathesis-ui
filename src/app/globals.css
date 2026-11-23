@@ -2,6 +2,14 @@
 /* Tailwind skips node_modules: scan the shared login package so its classes get generated. */
 @source "../../node_modules/@kenrou/shared-ui/src";
 
+/* Tailwind v4 preflight resets buttons to cursor: default; restore the pointer on every enabled button. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
 :root {
   --background: #f4f3f1;
   --foreground: #1f242a;
@@ -211,7 +219,6 @@ html {
 }
 
 .sophium-nav-avatar {
-  cursor: pointer;
   transition: box-shadow 150ms ease, border-color 150ms ease, filter 150ms ease;
 }
 
