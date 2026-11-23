@@ -195,7 +195,7 @@ describe("admin API", () => {
     await expect(admin.getCompaniesMembers()).rejects.toThrow("Insufficient permissions");
 
     mockFetch({ status: 502, rawBody: "gateway" });
-    await expect(admin.getWhitelistedEmails()).rejects.toThrow("Respuesta invalida de emails whitelistados");
+    await expect(admin.getWhitelistedEmails()).rejects.toThrow("Respuesta inválida de emails whitelistados");
   });
 
   it("reads the companies membership state", async () => {

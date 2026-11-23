@@ -55,7 +55,7 @@
     }
   },
   "profileView": {
-    "headlineFallback": "Completa tu titular profesional",
+    "headlineFallback": "Completá tu titular profesional",
     "errors": {
       "blockUser": "No pudimos bloquear a este usuario.",
       "saveImage": "No se pudo guardar la imagen",

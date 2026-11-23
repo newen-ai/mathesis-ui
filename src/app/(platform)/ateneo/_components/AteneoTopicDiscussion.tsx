@@ -522,7 +522,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     const value = (replyDraft[commentId] ?? "").trim();
 
     if (!value) {
-      toast.info("Escribe tu comentario antes de publicar.");
+      toast.info("Escribí tu comentario antes de publicar.");
       return;
     }
 
@@ -977,7 +977,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                 }))
               }
               rows={3}
-              placeholder="Escribe tu comentario…"
+              placeholder="Escribí tu comentario…"
               className="w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-scale-3 text-[var(--text-primary)] outline-none ring-0 placeholder:text-[var(--text-secondary)]"
             />
             <div className="mt-3 flex justify-end">

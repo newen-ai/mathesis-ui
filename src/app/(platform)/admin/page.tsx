@@ -50,7 +50,7 @@ const whitelistViewButtons: Array<{ value: WhitelistViewMode; label: string; des
   {
     value: "pending-users",
     label: "Usuarios pendientes",
-    description: "Registrados pero aun no whitelistados",
+    description: "Registrados pero aún no whitelistados",
   },
   {
     value: "whitelisted-emails",
@@ -302,7 +302,7 @@ export default function AdminPage() {
 
   return (
     <ModulePage
-      title="Panel de administracion"
+      title="Panel de administración"
       subtitle={`Acceso de administrador${role ? ` · ${role}` : ""}. Gestiona la whitelist y el equipo de Sophium Empresarios.`}
       subtitleClassName="mt-1 text-sm text-[var(--text-primary)]"
     >

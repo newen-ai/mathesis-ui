@@ -12,7 +12,7 @@ export default function RedPage() {
           Sugerencias de conexion
         </h2>
         <p className="mt-2 text-sm text-slate-600">
-          Proximamente: recomendaciones de perfiles en base a experiencia y afinidad profesional.
+          Próximamente: recomendaciones de perfiles en base a experiencia y afinidad profesional.
         </p>
       </AppCard>
 

@@ -69,7 +69,7 @@ export function SessionGate({ children }: SessionGateProps) {
       <div className="sophium-shell flex min-h-screen items-center justify-center px-4">
         <div className="sophium-card w-full max-w-md p-6 text-center">
           <p className="font-display text-2xl font-semibold text-slate-900">
-            Verificando sesion
+            Verificando sesión
           </p>
           <p className="mt-2 text-sm text-slate-600">
             Estamos validando tu acceso seguro a Sophium.
@@ -87,7 +87,7 @@ export function SessionGate({ children }: SessionGateProps) {
     <>
       {sessionState === "unknown" ? (
         <div className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50/95 px-4 py-1 text-center text-xs font-medium text-amber-700 backdrop-blur-sm">
-          Reconectando sesion...
+          Reconectando sesión...
         </div>
       ) : null}
       {children}

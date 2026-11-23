@@ -45,7 +45,7 @@ describe("auth service calls", () => {
     ["register", () => register({ firstName: "a", lastName: "b", email: "c", password: "d" }), "No pudimos conectar con el servicio de registro."],
     ["login", () => login({ email: "c", password: "d" }), "No pudimos conectar con el servicio de login."],
     ["requestPasswordReset", () => requestPasswordReset({ email: "c" }), "No pudimos conectar con el servicio de recuperación."],
-    ["requestVerificationEmail", () => requestVerificationEmail({ email: "c" }), "No pudimos conectar con el servicio de verificacion de correo."],
+    ["requestVerificationEmail", () => requestVerificationEmail({ email: "c" }), "No pudimos conectar con el servicio de verificación de correo."],
     ["verifyEmail", () => verifyEmail("t"), "No pudimos confirmar tu correo."],
     ["resetPassword", () => resetPassword({ token: "t", newPassword: "n" }), "No pudimos restablecer tu contraseña."],
     ["changePassword", () => changePassword({ currentPassword: "a", newPassword: "b" }), "No pudimos cambiar tu contraseña."],
@@ -71,7 +71,7 @@ describe("auth service calls", () => {
   it("explains non-ok logout and onboarding responses without a JSON body", async () => {
     mockFetch({ status: 500, rawBody: "boom" });
 
-    expect((await logout()).message).toBe("No pudimos cerrar la sesion en el servidor.");
+    expect((await logout()).message).toBe("No pudimos cerrar la sesión en el servidor.");
     expect((await completeWelcomeOnboarding()).message).toBe("No pudimos completar la bienvenida en el servidor.");
   });
 });

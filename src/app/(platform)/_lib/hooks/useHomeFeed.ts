@@ -142,7 +142,7 @@ export const useHomeFeed = () => {
 			if (!trimmedContent && pdfFiles.length === 0) {
 				return {
 					ok: false,
-					message: "Escribe un texto o adjunta al menos un PDF.",
+					message: "Escribí un texto o adjuntá al menos un PDF.",
 				};
 			}
 

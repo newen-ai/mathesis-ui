@@ -44,7 +44,7 @@ export default function ContactPage() {
     const nextErrors: ValidationErrors = {};
 
     if (!category) {
-      nextErrors.category = "Selecciona un motivo.";
+      nextErrors.category = "Seleccioná un motivo.";
     }
 
     if (!details.trim()) {
@@ -69,7 +69,7 @@ export default function ContactPage() {
       setDidSucceed(true);
     } else {
       setErrors({
-        details: response.message || "Error al enviar el mensaje. Intenta de nuevo."
+        details: response.message || "Error al enviar el mensaje. Intentá de nuevo."
       });
     }
   };
