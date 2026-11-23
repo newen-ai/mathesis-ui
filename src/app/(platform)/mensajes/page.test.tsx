@@ -118,3 +118,55 @@ describe("MensajesPage conversation switching", () => {
     expect(chatApi.listMyChats).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("MensajesPage history pagination", () => {
+  function message(id: string, minute: number) {
+    return {
+      id,
+      chatId: "a",
+      senderUserId: "u-a",
+      sender: { userId: "u-a", firstName: "Ana", lastName: "Test", currentJobTitle: null, currentCompany: null },
+      content: `Mensaje ${id}`,
+      isDeleted: false,
+      editedAt: null,
+      createdAt: `2026-11-01T12:${String(minute).padStart(2, "0")}:00.000Z`,
+    };
+  }
+
+  it("requests the older page once even when scroll events fire in a burst at the top", async () => {
+    let releaseOlderPage: (value: unknown) => void = () => {};
+    chatApi.readChatMessages.mockImplementation(async (_chatId: string, options: { cursor?: string } = {}) => {
+      if (options.cursor) {
+        return new Promise((resolve) => {
+          releaseOlderPage = resolve;
+        });
+      }
+      // Newest first, like the backend; more history behind cursor "m1".
+      return { data: { messages: [message("m3", 3), message("m2", 2), message("m1", 1)], nextCursor: "m1" } };
+    });
+
+    render(<MensajesPage />);
+    await advance(LIST_DELAY_MS + 50);
+    fireEvent.click((await screen.findAllByText("Ana Test"))[0].closest("button")!);
+    await screen.findByText("Mensaje m3");
+    // The page ignores scroll for 700 ms while it settles a newly opened conversation at the bottom.
+    await advance(1000);
+
+    const viewport = document.querySelector<HTMLElement>('[class*="overflow-anchor"]')!;
+    expect(viewport).not.toBeNull();
+    viewport.scrollTop = 0;
+    for (let index = 0; index < 3; index += 1) {
+      fireEvent.scroll(viewport);
+    }
+
+    const olderCalls = () =>
+      chatApi.readChatMessages.mock.calls.filter(([, options]) => (options as { cursor?: string } | undefined)?.cursor);
+    expect(olderCalls()).toHaveLength(1);
+    expect(olderCalls()[0][1]).toMatchObject({ cursor: "m1" });
+
+    await act(async () => {
+      releaseOlderPage({ data: { messages: [message("m0", 0)], nextCursor: null } });
+    });
+    expect(await screen.findByText("Mensaje m0")).toBeInTheDocument();
+  });
+});

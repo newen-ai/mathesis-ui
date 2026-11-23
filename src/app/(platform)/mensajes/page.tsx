@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -228,6 +228,14 @@ export default function MensajesPage() {
   const [isSending, setIsSending] = useState(false);
 
   const messageViewportRef = useRef<HTMLDivElement | null>(null);
+  // Chats with an older-page request in flight. A ref, not state: scroll events fire faster than
+  // re-renders, and a state guard let several requests go out with the same cursor.
+  const loadingOlderChatIdsRef = useRef<Set<string>>(new Set());
+  // The message at the top of the view, and its distance to the viewport top, taken right before
+  // prepending older messages. Restored on every commit until the load finishes (messages land
+  // first, then the "loading older" banner disappears), so the view does not jump. Browser scroll
+  // anchoring is disabled on the viewport: it is missing in Safari and skipped at scrollTop 0.
+  const pendingScrollAnchorRef = useRef<{ chatId: string; messageId: string; offsetTop: number } | null>(null);
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const composerFooterRef = useRef<HTMLElement | null>(null);
   const mobileDetailHeaderRef = useRef<HTMLElement | null>(null);
@@ -519,13 +527,36 @@ export default function MensajesPage() {
     }
   }, [scrollToBottom]);
 
-  const loadOlderMessages = useCallback(async (chatId: string) => {
-    const nextCursor = nextCursorByChatId[chatId];
-
-    if (!nextCursor || loadingOlderByChatId[chatId]) {
+  // Keeps the anchored message in place (before paint) while older messages are prepended.
+  useLayoutEffect(() => {
+    const pending = pendingScrollAnchorRef.current;
+    const viewport = messageViewportRef.current;
+    if (!pending || !viewport) return;
+    if (pending.chatId !== selectedThreadIdRef.current) {
+      pendingScrollAnchorRef.current = null;
       return;
     }
 
+    const anchorRow = Array.from(viewport.querySelectorAll<HTMLElement>("[data-message-id]")).find(
+      (row) => row.dataset.messageId === pending.messageId
+    );
+    if (anchorRow) {
+      const currentOffset = anchorRow.getBoundingClientRect().top - viewport.getBoundingClientRect().top;
+      viewport.scrollTop += currentOffset - pending.offsetTop;
+    }
+    if (!loadingOlderByChatId[pending.chatId]) {
+      pendingScrollAnchorRef.current = null;
+    }
+  }, [messagesByChatId, loadingOlderByChatId]);
+
+  const loadOlderMessages = useCallback(async (chatId: string) => {
+    const nextCursor = nextCursorByChatId[chatId];
+
+    if (!nextCursor || loadingOlderChatIdsRef.current.has(chatId)) {
+      return;
+    }
+
+    loadingOlderChatIdsRef.current.add(chatId);
     setLoadingOlderByChatId((current) => ({
       ...current,
       [chatId]: true,
@@ -539,6 +570,20 @@ export default function MensajesPage() {
 
       const olderAscending = [...response.data.messages].reverse();
 
+      const viewport = messageViewportRef.current;
+      if (viewport && chatId === selectedThreadIdRef.current && olderAscending.length > 0) {
+        const viewportTop = viewport.getBoundingClientRect().top;
+        const rows = viewport.querySelectorAll<HTMLElement>("[data-message-id]");
+        const anchorRow = Array.from(rows).find((row) => row.getBoundingClientRect().bottom > viewportTop) ?? rows[0];
+        if (anchorRow?.dataset.messageId) {
+          pendingScrollAnchorRef.current = {
+            chatId,
+            messageId: anchorRow.dataset.messageId,
+            offsetTop: anchorRow.getBoundingClientRect().top - viewportTop,
+          };
+        }
+      }
+
       setMessagesByChatId((current) => ({
         ...current,
         [chatId]: mergeAndSortMessages(olderAscending, current[chatId] ?? []),
@@ -549,12 +594,13 @@ export default function MensajesPage() {
         [chatId]: response.data.nextCursor,
       }));
     } finally {
+      loadingOlderChatIdsRef.current.delete(chatId);
       setLoadingOlderByChatId((current) => ({
         ...current,
         [chatId]: false,
       }));
     }
-  }, [loadingOlderByChatId, nextCursorByChatId]);
+  }, [nextCursorByChatId]);
 
   const runGroupCreationAndSend = useCallback(
     async (title: string, initialMessage: string) => {
@@ -1377,7 +1423,7 @@ export default function MensajesPage() {
 
                 <div
                   ref={messageViewportRef}
-                  className="flex-1 overflow-y-auto px-5 md:min-h-0"
+                  className="flex-1 overflow-y-auto px-5 [overflow-anchor:none] md:min-h-0"
                   style={{
                     paddingTop: "10px",
                     paddingBottom: `${conversationBottomInset}px`,
@@ -1404,6 +1450,7 @@ export default function MensajesPage() {
                       return (
                         <div
                           key={message.id}
+                          data-message-id={message.id}
                           className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                         >
                           <div
