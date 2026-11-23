@@ -619,7 +619,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           >
             <span aria-hidden="true">&lt;</span>
           </button>
-          <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+          <h1 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
             {t("newTopic.title")}
           </h1>
         </div>
@@ -1046,7 +1046,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           />
           <section className="relative z-[141] w-full max-w-[28rem] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_20px_50px_color-mix(in_srgb,var(--navy-900)_26%,transparent)]">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+              <h2 className="font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
                 {t("newTopic.chooseGroupTitle")}
               </h2>
               <button

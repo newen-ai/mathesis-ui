@@ -66,7 +66,7 @@ function EnterpriseCard({
 
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="text-scale-4 sophium-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
+              <h2 className="text-scale-4 sophium-heading-primary font-display font-semibold">
                 {enterprise.name}
               </h2>
             </div>
@@ -153,7 +153,7 @@ export default function MyEnterprisesPage() {
         <section className="min-w-0 border-r-0 lg:border-r lg:border-[var(--line)] lg:pr-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-scale-5 sophium-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
+              <h1 className="text-scale-5 sophium-heading-primary font-display font-semibold">
                 {t("list.title")}
               </h1>
               <p className="text-scale-3 mt-4 max-w-[890px] text-[var(--text-secondary)]">
@@ -197,7 +197,7 @@ export default function MyEnterprisesPage() {
 
         <aside className="mt-6 space-y-4 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
-            <h2 className="text-scale-4 sophium-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
+            <h2 className="text-scale-4 sophium-heading-primary font-display font-semibold">
               {t("list.aside.directoryTitle")}
             </h2>
             <p className="text-scale-3 mt-4 text-[var(--text-primary)]">
@@ -212,7 +212,7 @@ export default function MyEnterprisesPage() {
           </div>
 
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
-            <h2 className="text-scale-4 sophium-heading-primary font-[family-name:var(--font-spectral)] font-semibold">
+            <h2 className="text-scale-4 sophium-heading-primary font-display font-semibold">
               {t("list.aside.whoCanEditTitle")}
             </h2>
             <p className="text-scale-3 mt-4 text-[var(--text-primary)]">

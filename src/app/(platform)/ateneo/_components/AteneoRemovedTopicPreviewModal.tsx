@@ -51,7 +51,7 @@ export function AteneoRemovedTopicPreviewModal({ isOpen, topic, deletedAt, onClo
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+            <h3 className="font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
               Publicación eliminada
             </h3>
             <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">

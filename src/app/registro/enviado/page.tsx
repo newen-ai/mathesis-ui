@@ -16,7 +16,7 @@ export default function RegistroEnviadoPage() {
         <p className="text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[var(--text-secondary)]">
           {t("registerSent.eyebrow")}
         </p>
-        <h1 className="mt-4 font-[family-name:var(--font-spectral)] text-3xl font-bold leading-tight text-[var(--text-primary)]">
+        <h1 className="mt-4 font-display text-3xl font-bold leading-tight text-[var(--text-primary)]">
           {t("registerSent.title")}
         </h1>
         <p className="mt-4 text-sm leading-6 text-[var(--text-secondary)]">

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Tailwind skips node_modules: scan the shared login package so its classes get generated. */
+@source "../../node_modules/@kenrou/shared-ui/src";
 
 :root {
   --background: #f4f3f1;
@@ -68,6 +70,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sora);
+  /* Headings/display text. Body text inherits Sora; use `font-display` for titles, never ad-hoc families. */
+  --font-display: var(--font-spectral), Georgia, serif;
 }
 
 body {

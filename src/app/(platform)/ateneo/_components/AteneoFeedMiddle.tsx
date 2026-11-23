@@ -93,7 +93,7 @@ export function AteneoFeedMiddle() {
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">{t("feed.title")}</h1>
+            <h1 className="font-display text-scale-5 font-semibold leading-tight text-[var(--heading-primary)]">{t("feed.title")}</h1>
             <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">{t("feed.subtitle")}</p>
           </div>
 

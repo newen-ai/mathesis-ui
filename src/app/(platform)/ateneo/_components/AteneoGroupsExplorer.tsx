@@ -162,7 +162,7 @@ function SearchAndHeader({ activeTab, onTabChange, searchText, onSearchTextChang
     <div className="space-y-5">
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="mt-1 font-[family-name:var(--font-spectral)] text-[2.2rem] font-semibold leading-tight text-[var(--heading-primary)] sm:mt-0 sm:text-[2.5rem]">
+          <h1 className="mt-1 font-display text-scale-5 font-semibold leading-tight text-[var(--heading-primary)] sm:mt-0">
             {t("explorer.headerTitle")}
           </h1>
           <p className="text-scale-3 text-[var(--text-secondary)]">{t("explorer.breadcrumb")}</p>

@@ -195,7 +195,7 @@ export function TopBarDesktop({
         {desktopDropdownOpen === "profile" ? (
           <aside className="absolute right-0 top-[calc(100%+0.5rem)] z-[80] h-fit max-h-[calc(100dvh-6.85rem)] w-[min(90vw,23.4rem)] overflow-y-auto rounded-[1.2rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_22px_50px_rgba(0,0,0,0.18)]">
             <div className="border-b border-[var(--line)] px-5 py-4">
-              <p className="font-[family-name:var(--font-spectral)] text-[var(--menu-profile-name-size)] font-semibold leading-[1.05] sophium-heading-primary">
+              <p className="font-display text-[var(--menu-profile-name-size)] font-semibold leading-[1.05] sophium-heading-primary">
                 {isLoadingUserName
                   ? t("topbar:common.loading", { defaultValue: "Cargando..." })
                   : userName || t("topbar:profile.myProfile", { defaultValue: "Mi perfil" })}

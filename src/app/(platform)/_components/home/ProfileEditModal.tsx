@@ -70,7 +70,7 @@ export function ProfileEditModal({
           {headerStart}
           <h3
             id={titleId}
-            className="min-w-0 flex-1 truncate font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]"
+            className="min-w-0 flex-1 truncate font-display text-scale-4 font-semibold text-[var(--heading-primary)]"
           >
             {title}
           </h3>

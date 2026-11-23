@@ -1502,7 +1502,7 @@ export default function MensajesPage() {
                   >
                     <p className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{selectedThread?.displayName ?? t("fallbacks.chat")}</p>
                     <p
-                      className="truncate text-[0.625rem] text-[var(--text-secondary)]"
+                      className="truncate text-scale-1 text-[var(--text-secondary)]"
                       title={selectedThreadGroupMembersSummary?.fullText ?? undefined}
                     >
                       {selectedThreadGroupMembersSummary?.previewText ?? t("fallbacks.noMembers")}
@@ -1523,7 +1523,7 @@ export default function MensajesPage() {
                     <p className="truncate text-[0.9375rem] font-semibold text-[var(--text-primary)]">
                       <UserProfileLink userId={selectedThread?.otherUserId}>{selectedThread?.displayName ?? t("fallbacks.chat")}</UserProfileLink>
                     </p>
-                    <p className="truncate text-[0.625rem] text-[var(--text-secondary)]">{selectedThread?.roleLine ?? ""}</p>
+                    <p className="truncate text-scale-1 text-[var(--text-secondary)]">{selectedThread?.roleLine ?? ""}</p>
                   </div>
                 </div>
               )}

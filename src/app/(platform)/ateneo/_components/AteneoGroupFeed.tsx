@@ -158,7 +158,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
         <div className="flex min-w-0 items-start gap-3">
           <GroupHeaderIcon />
           <div>
-            <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+            <h1 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
               {group.name}
             </h1>
             <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
@@ -213,7 +213,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
           <div className="flex min-w-0 items-start gap-3">
             <GroupHeaderIcon />
             <div>
-              <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+              <h1 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
                 {group.name}
               </h1>
               <p className="mt-1 text-scale-3 text-[var(--text-secondary)]">
@@ -239,7 +239,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
       </section>
 
       <section className="mt-4">
-        <h2 className="px-1 font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+        <h2 className="px-1 font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
           Temas más populares
         </h2>
 

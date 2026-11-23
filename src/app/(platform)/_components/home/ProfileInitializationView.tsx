@@ -60,7 +60,7 @@ export function ProfileInitializationView({
       <main className="mx-auto flex w-full max-w-4xl items-start px-4 py-6 sm:px-6 lg:px-8">
         <AppCard className="w-full p-5 sm:p-7">
           <div className="space-y-1">
-            <h1 className="font-[family-name:var(--font-spectral)] text-3xl font-semibold text-[var(--text-primary)]">
+            <h1 className="font-display text-scale-5 font-semibold text-[var(--text-primary)]">
               {t("initialization.title")}
             </h1>
             <p className="text-sm text-[var(--text-secondary)]">

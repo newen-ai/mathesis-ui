@@ -217,14 +217,14 @@ export function DigitalCredentialCard() {
             <div className="absolute inset-0 overflow-hidden rounded-[1.7rem] border border-[rgba(255,255,255,0.12)] bg-[var(--navy-800)] text-[var(--text-primary)] [backface-visibility:hidden]">
               <div className="flex h-full flex-col p-6">
                 <div className="flex items-center gap-3 text-[var(--brand-100)]">
-                  <span className="font-[family-name:var(--font-spectral)] text-[1.7rem] leading-none text-[#d4af66]">∫</span>
-                  <span className="font-[family-name:var(--font-spectral)] text-[1.05rem] font-medium text-white">
+                  <span className="font-display text-[1.7rem] leading-none text-[#d4af66]">∫</span>
+                  <span className="font-display text-[1.05rem] font-medium text-white">
                     Sophium
                   </span>
                 </div>
 
                 <div className="mt-6 flex-1">
-                  <h1 className="font-[family-name:var(--font-spectral)] text-[2.2rem] font-semibold leading-[1.08] text-white">
+                  <h1 className="font-display text-[2.2rem] font-semibold leading-[1.08] text-white">
                     {fullName}
                   </h1>
 
@@ -279,8 +279,8 @@ export function DigitalCredentialCard() {
               ) : (
                 <div className="flex h-full flex-col p-5">
                   <div className="flex items-center gap-2 pb-1 text-[var(--brand-200)]">
-                    <span className="font-[family-name:var(--font-spectral)] text-[1.6rem] leading-none text-[var(--brand-500)]">∫</span>
-                    <span className="font-[family-name:var(--font-spectral)] text-[1.1rem] font-medium text-white">
+                    <span className="font-display text-[1.6rem] leading-none text-[var(--brand-500)]">∫</span>
+                    <span className="font-display text-[1.1rem] font-medium text-white">
                       {t("credential.badgesTitle")}
                     </span>
                   </div>

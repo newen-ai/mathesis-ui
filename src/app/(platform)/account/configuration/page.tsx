@@ -597,7 +597,7 @@ export default function ConfigurationPage() {
       <main className="mx-auto flex min-h-[calc(100dvh-5rem)] w-full max-w-[1320px] flex-col lg:px-8 lg:py-8">
         <div className="lg:hidden">
           <div className="border-b border-[var(--line)] bg-[var(--surface)] px-6 py-5">
-            <h1 className="font-[family-name:var(--font-spectral)] text-[2.2rem] font-semibold leading-none text-[var(--text-primary)]">
+            <h1 className="font-display text-scale-5 font-semibold leading-none text-[var(--text-primary)]">
               {t("settings:title", { defaultValue: "Configuración" })}
             </h1>
           </div>
@@ -626,7 +626,7 @@ export default function ConfigurationPage() {
 
         <div className="hidden overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] shadow-[0_18px_40px_rgba(0,0,0,0.08)] lg:block">
           <div className="px-8 pb-5 pt-7">
-            <h1 className="font-[family-name:var(--font-spectral)] text-[2.45rem] font-semibold leading-none text-[var(--text-primary)]">
+            <h1 className="font-display text-scale-5 font-semibold leading-none text-[var(--text-primary)]">
               {t("settings:title", { defaultValue: "Configuración" })}
             </h1>
           </div>
@@ -660,7 +660,7 @@ export default function ConfigurationPage() {
 
             <section className="px-8 py-6">
               <div className="border-b border-[var(--line)] pb-4">
-                <h2 className="font-[family-name:var(--font-spectral)] text-[2rem] font-semibold leading-none text-[var(--text-primary)]">
+                <h2 className="font-display text-scale-4 font-semibold leading-none text-[var(--text-primary)]">
                   {activePanel.label}
                 </h2>
               </div>

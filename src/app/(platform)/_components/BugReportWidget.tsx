@@ -583,7 +583,7 @@ export function BugReportWidget() {
                 </p>
                 <h2
                   id="bug-report-title"
-                  className="mt-1 font-[family-name:var(--font-spectral)] text-scale-5 font-semibold sophium-heading-primary"
+                  className="mt-1 font-display text-scale-5 font-semibold sophium-heading-primary"
                 >
                   Contanos qué falló
                 </h2>

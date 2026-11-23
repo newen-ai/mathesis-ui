@@ -23,7 +23,7 @@ export function LeftSidebar({
           <span className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-slate-800 text-lg font-bold text-white">
             {initials || "M"}
           </span>
-          <h1 className="mt-2 font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
+          <h1 className="mt-2 font-display text-xl font-semibold text-slate-900">
             {userDisplayName}
           </h1>
           {puesto || empresaActual ? (

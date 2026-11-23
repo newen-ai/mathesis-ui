@@ -8,7 +8,7 @@ export default function RedPage() {
       subtitle="Gestiona conexiones estrategicas entre miembros de Mensa Argentina."
     >
       <AppCard className="p-5">
-        <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
+        <h2 className="font-display text-xl font-semibold text-slate-900">
           Sugerencias de conexion
         </h2>
         <p className="mt-2 text-sm text-slate-600">
@@ -17,7 +17,7 @@ export default function RedPage() {
       </AppCard>
 
       <AppCard className="p-5">
-        <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
+        <h2 className="font-display text-xl font-semibold text-slate-900">
           Frase de comunidad
         </h2>
         <p className="mt-2 text-sm text-slate-600">
