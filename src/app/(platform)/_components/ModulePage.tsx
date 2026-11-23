@@ -36,7 +36,7 @@ export function ModulePage({
       <main className={mainClassName}>
         {!hideHeader ? (
           <AppCard className="p-5 sm:p-6">
-            <h1 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-slate-900 sm:text-3xl">
+            <h1 className="font-display text-scale-5 font-semibold text-slate-900">
               {title}
             </h1>
             <p className={subtitleClassName ?? "mt-1 text-sm text-slate-600"}>{subtitle}</p>

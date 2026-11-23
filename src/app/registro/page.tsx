@@ -169,7 +169,7 @@ export default function RegistroPage() {
         onClose={() => setPopupInfo(null)}
       />
 
-      <main className="flex h-dvh flex-col bg-[#FAF8F5] font-[family-name:Arial] lg:bg-white">
+      <main className="flex h-dvh flex-col bg-[#FAF8F5] lg:bg-white">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           {/* Navy: header en mobile / columna de marca a pantalla completa en desktop */}
           <div className="bg-[#0A2540] px-4 py-3 lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:px-12 lg:py-12">
@@ -185,7 +185,7 @@ export default function RegistroPage() {
                 decoding="async"
                 className="h-8 w-8"
               />
-              <span className="font-[family-name:Georgia] text-lg font-bold tracking-[0.1em] text-[#FAF8F5]">
+              <span className="font-display text-lg font-bold tracking-[0.1em] text-[#FAF8F5]">
                 Sophium
               </span>
             </div>
@@ -212,7 +212,7 @@ export default function RegistroPage() {
               </div>
               {step === 1 ? (
                 <>
-                  <div className="mt-3 font-[family-name:Georgia] text-2xl font-bold leading-snug text-[#FAF8F5]">
+                  <div className="mt-3 font-display text-2xl font-bold leading-snug text-[#FAF8F5]">
                     {t("register.desktopIntroTitle")}
                   </div>
                   <div className="mt-4 text-sm leading-relaxed text-[#FAF8F5]/70 lg:mx-auto lg:max-w-xs">
@@ -221,7 +221,7 @@ export default function RegistroPage() {
                 </>
               ) : (
                 <>
-                  <div className="mt-3 font-[family-name:Georgia] text-2xl font-bold leading-snug text-[#FAF8F5]">
+                  <div className="mt-3 font-display text-2xl font-bold leading-snug text-[#FAF8F5]">
                     {t("register.welcomeTitle")}
                   </div>
                   <div className="mt-4 flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#C9A84C]">
@@ -248,7 +248,7 @@ export default function RegistroPage() {
 
             {/* Mobile: título + barra de progreso */}
             <div className="lg:hidden">
-              <div className="font-[family-name:Georgia] text-lg font-bold text-[#FAF8F5]">
+              <div className="font-display text-lg font-bold text-[#FAF8F5]">
                 {stepTitle}
               </div>
               <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-white/15">
@@ -304,7 +304,7 @@ export default function RegistroPage() {
             <div className="lg:mx-auto lg:max-w-[440px]">
               {/* Desktop: encabezado del formulario */}
               <div className="mb-5 hidden lg:block">
-                <div className="font-[family-name:Georgia] text-2xl font-bold text-[#0A2540]">
+                <div className="font-display text-2xl font-bold text-[#0A2540]">
                   {formHeading}
                 </div>
                 <div className="mt-1 text-sm text-[#666666]">{formSub}</div>

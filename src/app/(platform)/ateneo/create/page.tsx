@@ -253,7 +253,7 @@ export default function AteneoCreateGroupPage() {
               </svg>
             </Link>
 
-            <h1 className="font-[family-name:var(--font-spectral)] text-[1.7rem] font-semibold leading-tight text-[var(--heading-primary)]">
+            <h1 className="font-display text-scale-5 font-semibold leading-tight text-[var(--heading-primary)]">
               Nuevo grupo
             </h1>
           </div>

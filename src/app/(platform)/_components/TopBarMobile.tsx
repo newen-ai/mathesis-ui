@@ -202,7 +202,7 @@ export function TopBarMobile({
                 initialsClassName="text-2xl font-semibold text-[var(--brand-500)]"
               />
               <div className="min-w-0">
-                <p className="truncate font-[family-name:var(--font-spectral)] text-scale-5 font-semibold leading-tight sophium-heading-primary">
+                <p className="truncate font-display text-scale-5 font-semibold leading-tight sophium-heading-primary">
                   {isLoadingUserName
                     ? t("topbar:common.loading", { defaultValue: "Cargando..." })
                     : userName || t("topbar:profile.myProfile", { defaultValue: "Mi perfil" })}
@@ -238,7 +238,7 @@ export function TopBarMobile({
 
         <div className="space-y-3 px-3 py-3 pb-8">
           <section>
-            <h3 className="px-1 font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+            <h3 className="px-1 font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
               {t("topbar:mobile.nexum.title", { defaultValue: "Nexum · tu red profesional" })}
             </h3>
 
@@ -354,7 +354,7 @@ export function TopBarMobile({
           </section>
 
           <section>
-            <h3 className="px-1 font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+            <h3 className="px-1 font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
               {t("topbar:mobile.agora.title", { defaultValue: "Agora · tu espacio social" })}
             </h3>
 
@@ -464,7 +464,7 @@ export function TopBarMobile({
           </section>
 
           <section>
-            <h3 className="px-1 font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+            <h3 className="px-1 font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
               {t("topbar:mobile.sophium.title", { defaultValue: "Sophium" })}
             </h3>
 

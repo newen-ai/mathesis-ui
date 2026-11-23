@@ -136,7 +136,7 @@ function ResetPasswordContent() {
             >
               {t("resetPassword.back")}
             </Link>
-            <h1 className="mt-3 font-[family-name:Georgia] text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
+            <h1 className="mt-3 font-display text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
               {t("resetPassword.title")}
             </h1>
             <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
@@ -166,16 +166,16 @@ function ResetPasswordContent() {
                 decoding="async"
                 className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
               />
-              <p className="mt-2 font-[family-name:Georgia] text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
+              <p className="mt-2 font-display text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
                 Sophium
               </p>
             </div>
 
             <div className="relative z-10 mt-10 lg:mt-0">
-              <h1 className="mt-4 font-[family-name:Georgia] text-[1.35rem] font-bold leading-tight text-[#FAF8F5]">
+              <h1 className="mt-4 font-display text-[1.35rem] font-bold leading-tight text-[#FAF8F5]">
                 {t("resetPassword.title")}
               </h1>
-              <p className="mx-auto mt-4 max-w-[370px] font-[family-name:Georgia] text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
+              <p className="mx-auto mt-4 max-w-[370px] font-display text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
                 {t("resetPassword.subtitle")}
               </p>
             </div>
@@ -197,7 +197,7 @@ function ResetPasswordContent() {
               {didSucceed ? (
                 <div className="flex flex-col gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-5">
                   <h2
-                    className="font-[family-name:Georgia] text-[1.35rem] font-bold"
+                    className="font-display text-[1.35rem] font-bold"
                     style={{ color: "var(--text-primary)" }}
                   >
                     {t("resetPassword.successTitle")}

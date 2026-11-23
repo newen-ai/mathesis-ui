@@ -296,7 +296,7 @@ export function EducationCard({
 
       <div className="mt-2 border-t border-[var(--line)] pt-2">
         {listItems.length === 0 ? (
-          <p className="text-[0.7rem] text-[var(--text-secondary)]">{t("education.empty")}</p>
+          <p className="text-scale-2 text-[var(--text-secondary)]">{t("education.empty")}</p>
         ) : (
           <>
             <ul>
@@ -305,17 +305,17 @@ export function EducationCard({
                   key={item.id}
                   className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
                 >
-                  <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)] [overflow-wrap:anywhere]">{item.titulo}</p>
-                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)] [overflow-wrap:anywhere]">
+                  <p className="text-scale-3 font-bold leading-tight text-[var(--text-primary)] [overflow-wrap:anywhere]">{item.titulo}</p>
+                  <p className="mt-[0.1rem] text-scale-2 text-[var(--text-soft)] [overflow-wrap:anywhere]">
                     {item.institucion} · {toDateLabel(item.fechaComienzo, i18n.language)} - {item.estudiandoActualmente ? t("common.current") : toDateLabel(item.fechaFinalizacion, i18n.language)}
                   </p>
                   {item.campoEstudio ? (
-                    <p className="mt-1 text-[0.64rem] text-[var(--text-secondary)] [overflow-wrap:anywhere]">{item.campoEstudio}</p>
+                    <p className="mt-1 text-scale-2 text-[var(--text-secondary)] [overflow-wrap:anywhere]">{item.campoEstudio}</p>
                   ) : null}
                   <ProfileCollapsibleText
                     text={item.descripcion}
                     lines={3}
-                    className="mt-2 text-[0.64rem] leading-[1.5] text-[var(--text-secondary)]"
+                    className="mt-2 text-scale-2 leading-[1.5] text-[var(--text-secondary)]"
                   />
                 </li>
               ))}
@@ -447,8 +447,8 @@ export function EducationCard({
                       className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3 last:border-b-0"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.titulo}</p>
-                        <p className="mt-[0.1rem] truncate text-[0.62rem] text-[var(--text-soft)]">
+                        <p className="truncate text-scale-3 font-bold leading-tight text-[var(--text-primary)]">{item.titulo}</p>
+                        <p className="mt-[0.1rem] truncate text-scale-2 text-[var(--text-soft)]">
                           {item.institucion} · {toDateLabel(item.fechaComienzo, i18n.language)} - {item.estudiandoActualmente ? t("common.current") : toDateLabel(item.fechaFinalizacion, i18n.language)}
                         </p>
                       </div>
@@ -477,7 +477,7 @@ export function EducationCard({
                   ))}
                 </ul>
               ) : (
-                <p className="mt-4 text-[0.7rem] text-[var(--text-secondary)]">{t("education.empty")}</p>
+                <p className="mt-4 text-scale-2 text-[var(--text-secondary)]">{t("education.empty")}</p>
               )}
 
               <ProfileModalError message={draftError} tone="warning" />

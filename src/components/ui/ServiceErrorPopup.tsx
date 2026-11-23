@@ -43,7 +43,7 @@ export function ServiceErrorPopup({
       <div className="w-full max-w-lg rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl sm:p-6">
         <h2
           id="service-error-title"
-          className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-rose-700"
+          className="font-display text-2xl font-semibold text-rose-700"
         >
           {title}
         </h2>

@@ -263,7 +263,7 @@ export function AteneoExploreGroups({ currentGroupId, feedActive = false }: Aten
     <div className="flex w-full max-w-[330px] flex-col gap-4 px-4 py-4 lg:h-full lg:px-0 lg:pr-4">
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_1px_1px_color-mix(in_srgb,var(--navy-900)_7%,transparent)]">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-[family-name:var(--font-spectral)] text-[1.6rem] font-semibold leading-tight text-[var(--heading-primary)]">Ateneo</h2>
+          <h2 className="font-display text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]">Ateneo</h2>
 
           <Link
             href="/ateneo/create"

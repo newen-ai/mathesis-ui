@@ -343,7 +343,7 @@ export default function NotificacionesPage() {
       <TopBar navItems={navItems} />
       <main className="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
         <div className="px-1 pb-4">
-          <h1 className="text-scale-5 font-[family-name:var(--font-spectral)] font-semibold text-[var(--heading-primary)]">
+          <h1 className="text-scale-5 font-display font-semibold text-[var(--heading-primary)]">
             {t("title")}
           </h1>
         </div>
@@ -366,7 +366,7 @@ export default function NotificacionesPage() {
 
             <aside className="hidden h-full border-l border-[var(--line)] pl-8 lg:block">
               <AppCard className="p-4">
-                <h2 className="text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--heading-primary)]">
+                <h2 className="text-scale-4 font-display font-semibold text-[var(--heading-primary)]">
                   {t("quickLinks.title")}
                 </h2>
                 <div className="mt-3 divide-y divide-[var(--line)]">
@@ -414,7 +414,7 @@ export default function NotificacionesPage() {
 
             <aside className="hidden h-full border-l border-[var(--line)] pl-8 lg:block">
               <AppCard className="p-4">
-                <h2 className="text-scale-4 font-[family-name:var(--font-spectral)] font-semibold text-[var(--heading-primary)]">
+                <h2 className="text-scale-4 font-display font-semibold text-[var(--heading-primary)]">
                   {t("quickLinks.title")}
                 </h2>
                 <div className="mt-3 divide-y divide-[var(--line)]">

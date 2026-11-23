@@ -83,7 +83,7 @@ export default function WhitelistAccessPage() {
     <main className="min-h-screen bg-[#F4EFE8] px-4 py-10">
       <div className="mx-auto w-full max-w-2xl rounded-2xl border border-[#DCCFBF] bg-[#FFFCF8] p-6 shadow-sm md:p-10">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8D6E3E]">{t("whitelist.eyebrow")}</p>
-        <h1 className="mt-2 font-[family-name:Georgia] text-3xl font-bold text-[#1D2A3A]">
+        <h1 className="mt-2 font-display text-3xl font-bold text-[#1D2A3A]">
           {t("whitelist.title")}
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-[#4A5565]">

@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
           >
             {t("forgotPassword.back")}
           </Link>
-          <h1 className="mt-3 font-[family-name:Georgia] text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
+          <h1 className="mt-3 font-display text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
             {t("forgotPassword.mobileTitle")}
           </h1>
           <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
@@ -115,17 +115,17 @@ export default function ForgotPasswordPage() {
               decoding="async"
               className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
             />
-            <p className="mt-2 font-[family-name:Georgia] text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
+            <p className="mt-2 font-display text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
               Sophium
             </p>
           </div>
 
           <div className="relative z-10 mt-10 lg:mt-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">{t("forgotPassword.desktopEyebrow")}</p>
-            <h1 className="mt-4 font-[family-name:Georgia] text-[2.2rem] font-bold leading-tight text-[#FAF8F5] lg:max-w-[350px] lg:text-[3.15rem] lg:leading-[1.08]">
+            <h1 className="mt-4 font-display text-[2.2rem] font-bold leading-tight text-[#FAF8F5] lg:max-w-[350px] lg:text-[3.15rem] lg:leading-[1.08]">
               {t("forgotPassword.desktopTitle")}
             </h1>
-            <p className="mx-auto mt-4 max-w-[370px] font-[family-name:Georgia] text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
+            <p className="mx-auto mt-4 max-w-[370px] font-display text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
               {t("forgotPassword.desktopDescription")}
             </p>
           </div>
@@ -140,7 +140,7 @@ export default function ForgotPasswordPage() {
           <div className="w-full lg:mx-auto lg:max-w-[440px]">
             <div className="mt-0 lg:mt-0">
               <h2
-                className="hidden font-[family-name:Georgia] text-[1.35rem] font-bold text-[#0A2540] lg:block"
+                className="hidden font-display text-[1.35rem] font-bold text-[#0A2540] lg:block"
                 style={{ color: "var(--text-primary)" }}
               >
                 {t("forgotPassword.formTitle")}

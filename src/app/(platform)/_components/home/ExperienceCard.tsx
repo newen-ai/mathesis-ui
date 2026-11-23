@@ -291,7 +291,7 @@ export function ExperienceCard({
 
       <div className="mt-2 border-t border-[var(--line)] pt-2">
         {listItems.length === 0 ? (
-          <p className="text-[0.7rem] text-[var(--text-secondary)]">{t("experience.empty")}</p>
+          <p className="text-scale-2 text-[var(--text-secondary)]">{t("experience.empty")}</p>
         ) : (
           <>
             <ul>
@@ -300,15 +300,15 @@ export function ExperienceCard({
                   key={item.id}
                   className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
                 >
-                  <p className="text-[0.72rem] font-bold leading-tight text-[var(--text-primary)] [overflow-wrap:anywhere]">{item.puestoTrabajo}</p>
-                  <p className="mt-[0.1rem] text-[0.62rem] text-[var(--text-soft)] [overflow-wrap:anywhere]">
+                  <p className="text-scale-3 font-bold leading-tight text-[var(--text-primary)] [overflow-wrap:anywhere]">{item.puestoTrabajo}</p>
+                  <p className="mt-[0.1rem] text-scale-2 text-[var(--text-soft)] [overflow-wrap:anywhere]">
                     {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
                     {defaultLocation?.trim() ? ` · ${defaultLocation.trim()}` : ""}
                   </p>
                   <ProfileCollapsibleText
                     text={item.descripcion}
                     lines={3}
-                    className="mt-2 text-[0.64rem] leading-[1.5] text-[var(--text-secondary)]"
+                    className="mt-2 text-scale-2 leading-[1.5] text-[var(--text-secondary)]"
                   />
                 </li>
               ))}
@@ -431,8 +431,8 @@ export function ExperienceCard({
                       className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3 last:border-b-0"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-[0.72rem] font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
-                        <p className="mt-[0.1rem] truncate text-[0.62rem] text-[var(--text-soft)]">
+                        <p className="truncate text-scale-3 font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
+                        <p className="mt-[0.1rem] truncate text-scale-2 text-[var(--text-soft)]">
                           {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
                         </p>
                       </div>
@@ -461,7 +461,7 @@ export function ExperienceCard({
                   ))}
                 </ul>
               ) : (
-                <p className="mt-4 text-[0.7rem] text-[var(--text-secondary)]">{t("experience.empty")}</p>
+                <p className="mt-4 text-scale-2 text-[var(--text-secondary)]">{t("experience.empty")}</p>
               )}
 
               <ProfileModalError message={draftError} tone="warning" />

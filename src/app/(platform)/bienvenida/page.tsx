@@ -97,7 +97,7 @@ export default function BienvenidaPage() {
 
           <div className="flex items-center gap-2.5">
             <span className="text-[1.65rem] font-semibold text-[var(--brand-500)]">∫</span>
-            <span className="font-[family-name:var(--font-spectral)] text-[1.65rem] font-semibold tracking-[0.03em] text-white">
+            <span className="font-display text-[1.65rem] font-semibold tracking-[0.03em] text-white">
               Sophium
             </span>
           </div>
@@ -106,10 +106,10 @@ export default function BienvenidaPage() {
             <p className="text-[0.76rem] font-semibold uppercase tracking-[0.2em] text-[var(--brand-300)]">
               Ya sos parte
             </p>
-            <h1 className="font-[family-name:var(--font-spectral)] text-[2.05rem] font-semibold leading-[0.98] text-white lg:text-[2.45rem]">
+            <h1 className="font-display text-[2.05rem] font-semibold leading-[0.98] text-white lg:text-[2.45rem]">
               Bienvenido a Sophium.
             </h1>
-            <p className="max-w-[20rem] font-[family-name:var(--font-spectral)] text-[0.9rem] italic leading-[1.35] text-white/78 lg:text-[1rem]">
+            <p className="max-w-[20rem] font-display text-[0.9rem] italic leading-[1.35] text-white/78 lg:text-[1rem]">
               Ya sos parte de la primera comunidad intelectual verificada para mentes excepcionales.
             </p>
           </div>
@@ -129,7 +129,7 @@ export default function BienvenidaPage() {
         <section className="flex flex-col justify-center px-5 py-5 sm:px-7 lg:px-10 lg:py-6">
           <div className="mx-auto w-full max-w-[45rem] space-y-3">
             <header className="space-y-2">
-              <h2 className="font-[family-name:var(--font-spectral)] text-[1.8rem] font-semibold leading-[1.04] text-[var(--heading-primary)] lg:text-[2.2rem]">
+              <h2 className="font-display text-[1.8rem] font-semibold leading-[1.04] text-[var(--heading-primary)] lg:text-[2.2rem]">
                 Esto es lo que te espera
               </h2>
             </header>
@@ -145,7 +145,7 @@ export default function BienvenidaPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-4">
-                      <h3 className="font-[family-name:var(--font-spectral)] text-[0.95rem] font-semibold leading-[1.08] text-[var(--heading-primary)]">
+                      <h3 className="font-display text-[0.95rem] font-semibold leading-[1.08] text-[var(--heading-primary)]">
                         {feature.title}
                       </h3>
                       {feature.badge ? (

@@ -164,7 +164,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-dvh items-center justify-center bg-white font-[family-name:Arial]">
+        <main className="flex min-h-dvh items-center justify-center bg-white">
           <p className="text-center text-sm text-[#666666]">...</p>
         </main>
       }

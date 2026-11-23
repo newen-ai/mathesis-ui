@@ -25,7 +25,7 @@ export function RightSidebar({
   return (
     <aside className="sophium-fade-up hidden space-y-4 lg:sticky lg:top-24 lg:block">
       <AppCard className="p-6">
-        <h3 className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-[var(--navy-900)]">
+        <h3 className="font-display text-2xl font-semibold text-[var(--navy-900)]">
           ∫ Sophium
         </h3>
         <p className="mt-4 text-lg leading-snug text-[var(--text-primary)]">

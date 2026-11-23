@@ -307,7 +307,7 @@ export default function AdminPage() {
       subtitleClassName="mt-1 text-sm text-[var(--text-primary)]"
     >
       <AppCard className="p-5">
-        <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
+        <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
           Accesos rapidos
         </h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -356,7 +356,7 @@ export default function AdminPage() {
 
       {activeTab === "whitelist" ? (
         <AppCard className="p-5">
-          <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
+          <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
             {activeWhitelistView === "requests"
               ? "Solicitudes de acceso"
               : activeWhitelistView === "pending-users"
@@ -465,7 +465,7 @@ export default function AdminPage() {
         <AppCard className="p-5">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
+              <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
                 Administradores de Sophium Empresarios
               </h2>
               <p className="mt-1 text-sm text-[var(--text-primary)]">
@@ -527,7 +527,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-2xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
+              <h3 className="font-display text-xl font-semibold text-[var(--text-primary)]">
                 Agregar administrador de Sophium Empresarios
               </h3>
               <button

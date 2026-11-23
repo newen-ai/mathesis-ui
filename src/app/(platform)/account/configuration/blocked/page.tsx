@@ -129,7 +129,7 @@ export default function BlockedUsersPage() {
                 <path d="m14.5 5.5-7 6.5 7 6.5" />
               </svg>
             </button>
-            <h1 className="font-[family-name:var(--font-spectral)] text-[1.75rem] font-semibold leading-none text-[var(--navy-900)]">
+            <h1 className="font-display text-scale-5 font-semibold leading-none text-[var(--navy-900)]">
               Bloqueados
             </h1>
           </div>
@@ -194,7 +194,7 @@ export default function BlockedUsersPage() {
 
         <aside className="mt-6 lg:mt-0">
           <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-5 py-4">
-            <h2 className="font-[family-name:var(--font-spectral)] text-[2rem] font-semibold leading-tight text-[var(--navy-900)]">
+            <h2 className="font-display text-scale-4 font-semibold leading-tight text-[var(--navy-900)]">
               Qué NO puede hacer un contacto bloqueado
             </h2>
             <p className="mt-4 text-[1.06rem] leading-relaxed text-[var(--text-primary)]">

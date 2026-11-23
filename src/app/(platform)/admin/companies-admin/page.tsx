@@ -139,7 +139,7 @@ export default function CompaniesAdminPage() {
           <p className="text-sm text-[var(--text-secondary)]">Verificando permisos...</p>
         ) : deniedReason === "forbidden" ? (
           <>
-            <p className="font-[family-name:var(--font-spectral)] text-2xl font-semibold text-[var(--text-primary)]">
+            <p className="font-display text-2xl font-semibold text-[var(--text-primary)]">
               Acceso denegado
             </p>
             <p className="mt-2 max-w-sm text-sm text-[var(--text-secondary)]">
@@ -170,7 +170,7 @@ export default function CompaniesAdminPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--brand-500)]">
               Acciones rápidas
             </p>
-            <h2 className="mt-2 font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">Panel de revisión</h2>
+            <h2 className="mt-2 font-display text-xl font-semibold text-[var(--text-primary)]">Panel de revisión</h2>
           </div>
           <span className="inline-flex rounded-full border border-[var(--navy-700)] bg-[var(--navy-900)] px-3 py-1.5 text-sm font-semibold text-white">
             Pendientes: {pendingRequests.length} · Aprobados: {approvedMembers.length}
@@ -200,7 +200,7 @@ export default function CompaniesAdminPage() {
 
       {activeTab === "pending" ? (
         <AppCard className="p-5">
-          <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
+          <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
             Solicitudes pendientes
           </h2>
 
@@ -262,7 +262,7 @@ export default function CompaniesAdminPage() {
 
       {activeTab === "approved" ? (
         <AppCard className="p-5">
-          <h2 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--text-primary)]">
+          <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
             Usuarios aprobados
           </h2>
 

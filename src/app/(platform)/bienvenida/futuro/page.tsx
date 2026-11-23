@@ -124,7 +124,7 @@ function FeatureCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <h2 className="font-[family-name:var(--font-spectral)] text-[0.95rem] font-semibold leading-[1.08] text-[var(--heading-primary)]">
+            <h2 className="font-display text-[0.95rem] font-semibold leading-[1.08] text-[var(--heading-primary)]">
               {title}
             </h2>
             {badge ? (
@@ -149,7 +149,7 @@ export default function BienvenidaFuturoPage() {
         <section className="welcome-future-hero flex items-center justify-center bg-[var(--navy-900)] px-6 py-10 text-center text-white lg:px-10 lg:py-12">
           <div className="mx-auto w-full max-w-4xl">
             <div className="mx-auto flex h-10 w-10 items-center justify-center text-[1.65rem] text-[var(--brand-500)]">∫</div>
-            <h1 className="mt-4 font-[family-name:var(--font-spectral)] text-[2.05rem] font-semibold leading-[0.98] text-white lg:text-[2.45rem]">
+            <h1 className="mt-4 font-display text-[2.05rem] font-semibold leading-[0.98] text-white lg:text-[2.45rem]">
               Lo mejor todavía no llegó
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-[0.9rem] leading-[1.35] text-white/82 lg:text-[1rem]">
@@ -169,7 +169,7 @@ export default function BienvenidaFuturoPage() {
             ))}
 
             <section className="px-4 pt-2 text-center">
-              <p className="mx-auto max-w-3xl font-[family-name:var(--font-spectral)] text-[0.98rem] italic leading-[1.35] text-[var(--text-secondary)] lg:text-[1.08rem]">
+              <p className="mx-auto max-w-3xl font-display text-[0.98rem] italic leading-[1.35] text-[var(--text-secondary)] lg:text-[1.08rem]">
                 Sumá sugerencias en el Feed: lo que se viene, en parte, lo decidís vos.
               </p>
             </section>

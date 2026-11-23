@@ -31,7 +31,7 @@ export function AteneoKickMemberModal({
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--surface)_34%,black)] px-4">
       <div className="w-full max-w-[34rem] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-xl sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+          <h2 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
             Expulsar usuario
           </h2>
           <button

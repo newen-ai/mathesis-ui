@@ -76,7 +76,7 @@ export default function ContactPage() {
 
   const form = didSucceed ? (
     <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-6">
-      <h2 className="font-[family-name:var(--font-spectral)] text-[1.6rem] font-semibold text-[var(--text-primary)]">
+      <h2 className="font-display text-scale-4 font-semibold text-[var(--text-primary)]">
         Mensaje enviado
       </h2>
       <p className="mt-2 text-[0.97rem] leading-relaxed text-[var(--text-secondary)]">
@@ -162,7 +162,7 @@ export default function ContactPage() {
             <path d="m14.5 5.5-7 6.5 7 6.5" />
           </svg>
         </button>
-        <h1 className="font-[family-name:var(--font-spectral)] text-[1.75rem] font-semibold leading-none text-[var(--navy-900)]">
+        <h1 className="font-display text-scale-5 font-semibold leading-none text-[var(--navy-900)]">
           Contactar a Sophium
         </h1>
       </div>
@@ -199,7 +199,7 @@ export default function ContactPage() {
               decoding="async"
               className="h-9 w-9"
             />
-            <p className="font-[family-name:Georgia] text-xl font-bold tracking-[0.06em] text-[var(--navy-900)]">
+            <p className="font-display text-xl font-bold tracking-[0.06em] text-[var(--navy-900)]">
               Sophium
             </p>
           </div>
@@ -208,10 +208,10 @@ export default function ContactPage() {
             <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-[var(--navy-800)]">
               Estamos para ayudarte
             </p>
-            <h2 className="mt-3 font-[family-name:Georgia] text-[2rem] font-bold leading-tight text-[var(--navy-900)]">
+            <h2 className="mt-3 font-display text-[2rem] font-bold leading-tight text-[var(--navy-900)]">
               ¿Necesitás algo? Escribinos.
             </h2>
-            <p className="mt-4 font-[family-name:Georgia] text-[0.95rem] italic text-[var(--navy-800)]">
+            <p className="mt-4 font-display text-[0.95rem] italic text-[var(--navy-800)]">
               El equipo de Sophium lo recibe y te responde por acá mismo, a tu Mensajería.
             </p>
           </div>
@@ -222,7 +222,7 @@ export default function ContactPage() {
         {/* Right form panel */}
         <div className="flex flex-1 flex-col justify-center bg-[var(--surface)] px-14 py-14">
           <div className="mx-auto w-full max-w-[520px]">
-            <h1 className="font-[family-name:var(--font-spectral)] text-[2.2rem] font-semibold leading-none text-[var(--navy-900)]">
+            <h1 className="font-display text-scale-5 font-semibold leading-none text-[var(--navy-900)]">
               Contactar a Sophium
             </h1>
             <div className="mt-7">

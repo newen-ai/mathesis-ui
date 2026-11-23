@@ -676,7 +676,7 @@ export function ProfileView() {
         <TopBar navItems={navItems} />
         <main className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
           <section className="sophium-card px-6 py-10 text-center sm:px-8">
-            <h1 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+            <h1 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
               {t("profileView.unavailable.title")}
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-scale-3 text-[var(--text-secondary)]">
@@ -774,7 +774,7 @@ export function ProfileView() {
 
             <div className="mt-10 flex flex-wrap items-end justify-between gap-2 sm:mt-14 sm:gap-3">
               <div>
-                <h1 className="font-[family-name:var(--font-spectral)] text-[1.05rem] font-semibold leading-tight text-[var(--navy-900)] sm:text-[1.3rem]">
+                <h1 className="font-display text-scale-4 font-semibold leading-tight text-[var(--navy-900)] sm:text-scale-5">
                   {userDisplayName}
                 </h1>
                 {badges.length > 0 ? (
@@ -782,7 +782,7 @@ export function ProfileView() {
                     {badges.map((slug, index) => (
                       <div
                         key={`${slug}-${index}`}
-                        className="inline-flex items-center gap-1 rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-[0.55rem] py-[0.22rem] text-[0.56rem] font-semibold text-[var(--brand-700)]"
+                        className="inline-flex items-center gap-1 rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-[0.55rem] py-[0.22rem] text-scale-1 font-semibold text-[var(--brand-700)]"
                       >
                         {isMensaArgentinaBadge(slug) ? (
                           <span
@@ -800,7 +800,7 @@ export function ProfileView() {
                     ))}
                   </div>
                 ) : null}
-                <p className="mt-1.5 text-[0.72rem] text-[var(--text-primary)] sm:mt-2 sm:text-[0.85rem]">{headline}</p>
+                <p className="mt-1.5 text-scale-2 text-[var(--text-primary)] sm:mt-2 sm:text-scale-3">{headline}</p>
               </div>
 
               {canEditProfile ? (
@@ -812,7 +812,7 @@ export function ProfileView() {
                       onStartSectionEdit("basicInfo");
                     }}
                     disabled={isProfileLoading}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-3 py-[0.34rem] text-scale-1 font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem]"
                   >
                     <span aria-hidden="true">✎</span>
                     {t("profileView.actions.editProfile")}
@@ -827,7 +827,7 @@ export function ProfileView() {
                       router.push(`/perfil?userId=${encodeURIComponent(currentUserId)}`);
                     }}
                     disabled={!currentUserId}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-scale-1 font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem]"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -856,7 +856,7 @@ export function ProfileView() {
                 <button
                   type="button"
                   onClick={() => router.push("/perfil")}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-[0.62rem] font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] sm:gap-2 sm:px-4 sm:py-[0.38rem] sm:text-[0.65rem]"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-scale-1 font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] sm:gap-2 sm:px-4 sm:py-[0.38rem]"
                 >
                   <span aria-hidden="true">✎</span>
                   {t("profileView.actions.backToEditMode")}
@@ -994,7 +994,7 @@ export function ProfileView() {
       {bannerEditor ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3">
           <div className="w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl">
-            <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--navy-900)]">
+            <h3 className="font-display text-scale-4 font-semibold text-[var(--navy-900)]">
               {t("profileView.bannerEditor.title")}
             </h3>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
@@ -1084,7 +1084,7 @@ export function ProfileView() {
       {avatarEditor ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3">
           <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
-            <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-[var(--navy-900)]">
+            <h3 className="font-display text-scale-4 font-semibold text-[var(--navy-900)]">
               {t("profileView.avatarEditor.title")}
             </h3>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
@@ -1191,7 +1191,7 @@ export function ProfileView() {
           }}
         >
           <div className="w-full max-w-xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-2xl sm:p-6">
-            <h3 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+            <h3 className="font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
               {t("profileView.blockModal.title")}
             </h3>
             <p className="mt-2 text-scale-3 leading-relaxed text-[var(--text-secondary)]">

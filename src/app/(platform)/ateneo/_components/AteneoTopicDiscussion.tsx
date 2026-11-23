@@ -866,7 +866,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           />
 
           <div className="min-w-0 flex-1">
-            <h2 className="font-[family-name:var(--font-spectral)] text-scale-5 font-semibold text-[var(--heading-primary)]">
+            <h2 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
               <UserProfileLink userId={topic.author.userId}>{topicAuthorName}</UserProfileLink>
             </h2>
           </div>
@@ -955,7 +955,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
 
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
         <div className="flex items-center justify-between gap-2">
-          <h4 className="font-[family-name:var(--font-spectral)] text-scale-4 font-semibold text-[var(--heading-primary)]">
+          <h4 className="font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
             Comentarios
           </h4>
           {pendingCommentsCount > 0 ? (

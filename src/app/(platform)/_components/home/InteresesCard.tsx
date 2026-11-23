@@ -309,7 +309,7 @@ export function InteresesCard({
           />
         </>
       ) : (
-        <p className="mt-3 text-[0.7rem] leading-[1.55] text-[var(--text-secondary)]">
+        <p className="mt-3 text-scale-2 leading-[1.55] text-[var(--text-secondary)]">
           {t("interests.empty")}
         </p>
       )}
@@ -455,10 +455,10 @@ export function InteresesCard({
               </button>
             </div>
 
-            <p className="text-[0.65rem] text-[var(--text-soft)]">
+            <p className="text-scale-1 text-[var(--text-soft)]">
                 {t("interests.helpTypeToSuggest")}
             </p>
-            <p className="text-[0.65rem] text-[var(--text-soft)]">
+            <p className="text-scale-1 text-[var(--text-soft)]">
                 {t("interests.helpDragToReorder")}
             </p>
 
@@ -486,7 +486,7 @@ export function InteresesCard({
                       setDraggedInterest(null);
                       setDragOverInterest(null);
                     }}
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-[0.32rem] text-[0.64rem] font-semibold text-[var(--brand-700)] ${
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-[0.32rem] text-scale-1 font-semibold text-[var(--brand-700)] ${
                       draggedInterest === interest
                         ? "cursor-grabbing border-[var(--brand-500)] bg-[var(--brand-100)]"
                         : "cursor-grab border-[var(--line-strong)] bg-[var(--brand-50)]"
@@ -509,7 +509,7 @@ export function InteresesCard({
                 ))}
               </div>
             ) : (
-              <p className="text-[0.7rem] text-[var(--text-secondary)]">
+              <p className="text-scale-2 text-[var(--text-secondary)]">
                 {t("interests.empty")}
               </p>
             )}

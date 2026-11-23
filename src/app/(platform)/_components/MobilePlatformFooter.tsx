@@ -99,7 +99,7 @@ function OverlayRow({
         <span className="mt-0.5 block text-[0.68rem] leading-tight text-[var(--text-secondary)]">{item.description}</span>
       </span>
       {item.disabled ? (
-        <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.5rem] font-semibold tracking-[0.08em] text-[var(--brand-700)]">
+        <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.6rem] font-semibold tracking-[0.08em] text-[var(--brand-700)]">
           PRÓXIMAMENTE
         </span>
       ) : item.isSelected ? (
@@ -286,7 +286,7 @@ export function MobilePlatformFooter() {
             style={{ bottom: SHEET_BOTTOM }}
             aria-label={`${overlayConfig.title} menú`}
           >
-            <h2 className="px-1 font-[family-name:var(--font-spectral)] text-scale-3 font-semibold leading-none text-[var(--heading-primary)]">
+            <h2 className="px-1 font-display text-scale-3 font-semibold leading-none text-[var(--heading-primary)]">
               {overlayConfig.title}
             </h2>
             <div className="mt-2.5 space-y-2">

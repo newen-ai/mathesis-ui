@@ -63,7 +63,7 @@ export function ProfileCollapsibleText({ text, lines = 3, className = "" }: Prof
           type="button"
           onClick={() => setIsExpanded((current) => !current)}
           aria-expanded={isExpanded}
-          className="mt-1 text-[0.62rem] font-bold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
+          className="mt-1 text-scale-2 font-bold text-[var(--brand-700)] hover:text-[var(--brand-900)]"
         >
           {isExpanded ? t("collapsible.less") : t("collapsible.more")}
         </button>
@@ -91,7 +91,7 @@ export function ProfileShowAllToggle({ hiddenCount, isShowingAll, onToggle }: Pr
       type="button"
       onClick={onToggle}
       aria-expanded={isShowingAll}
-      className="mt-2 w-full rounded-lg py-1.5 text-center text-[0.64rem] font-bold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] hover:text-[var(--brand-900)]"
+      className="mt-2 w-full rounded-lg py-1.5 text-center text-scale-2 font-bold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] hover:text-[var(--brand-900)]"
     >
       {isShowingAll ? t("collapsible.showLess") : t("collapsible.showAll", { count: hiddenCount })}
     </button>

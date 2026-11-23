@@ -60,15 +60,15 @@ export function ProfileAboutCard({
 
       <div className="mt-3">
         {isLoading ? (
-          <p className="text-[0.68rem] text-[var(--text-secondary)]">{t("profileForm.loading")}</p>
+          <p className="text-scale-2 text-[var(--text-secondary)]">{t("profileForm.loading")}</p>
         ) : profile.about.trim() ? (
           <ProfileCollapsibleText
             text={profile.about}
             lines={4}
-            className="text-[0.7rem] leading-[1.55] text-[var(--text-primary)]"
+            className="text-scale-3 leading-[1.55] text-[var(--text-primary)]"
           />
         ) : (
-          <p className="text-[0.7rem] leading-[1.55] text-[var(--text-secondary)]">
+          <p className="text-scale-2 leading-[1.55] text-[var(--text-secondary)]">
             {t("profileForm.emptyAbout")}
           </p>
         )}
