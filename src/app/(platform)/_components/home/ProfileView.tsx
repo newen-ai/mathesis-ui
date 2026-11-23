@@ -208,7 +208,6 @@ export function ProfileView() {
     currentUserId,
     canEditProfile,
     isViewingOwnProfileAsMember,
-    profileCompletion,
     isProfileLoading,
     isSavingProfile,
     profileSaveError,
@@ -1170,7 +1169,7 @@ export function ProfileView() {
       {canEditProfile && activeEditSection === "basicInfo" ? (
         <ProfileBasicInfoModal
           profile={profile}
-          profileCompletion={profileCompletion}
+          completionCounts={{ experiences: sortedExperiences.length, educations: sortedEducations.length }}
           isSaving={isSavingProfile}
           saveError={profileSaveError}
           onSave={onSaveProfile}
