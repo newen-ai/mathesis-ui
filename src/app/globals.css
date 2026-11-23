@@ -200,6 +200,37 @@ html {
   color: var(--brand-700);
 }
 
+/* Logo link and profile avatar in the top bar: same hover feedback as .sophium-nav-item. */
+.sophium-nav-logo {
+  border-radius: 0.95rem;
+  transition: background-color 150ms ease;
+}
+
+.sophium-nav-logo:hover {
+  background: color-mix(in srgb, var(--brand-100) 70%, var(--surface));
+}
+
+.sophium-nav-avatar {
+  cursor: pointer;
+  transition: box-shadow 150ms ease, border-color 150ms ease, filter 150ms ease;
+}
+
+.sophium-nav-avatar:hover,
+.sophium-nav-avatar.is-active {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-300) 55%, transparent);
+}
+
+.sophium-nav-avatar:hover {
+  filter: brightness(1.08);
+}
+
+.sophium-nav-logo:focus-visible,
+.sophium-nav-avatar:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
 .sophium-nav-icon {
   display: inline-flex;
   align-items: center;
