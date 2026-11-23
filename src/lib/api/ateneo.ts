@@ -223,6 +223,24 @@ export type ListAteneoTopicCommentsData = {
   comments: AteneoComment[];
 };
 
+const ATENEO_GROUPS_CHANGED_EVENT = "sophium:ateneo-groups-changed";
+
+/**
+ * Announces that group membership or group data changed (join, kick, restore, create, edit), so
+ * views that list groups, such as the left rail with member counts, can refetch. Emitted by
+ * the API functions themselves, so every caller triggers it.
+ */
+export function emitAteneoGroupsChanged() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(ATENEO_GROUPS_CHANGED_EVENT));
+}
+
+export function onAteneoGroupsChanged(handler: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener(ATENEO_GROUPS_CHANGED_EVENT, handler);
+  return () => window.removeEventListener(ATENEO_GROUPS_CHANGED_EVENT, handler);
+}
+
 export async function listAteneoGroups(tab: AteneoTabKey, limit = 20, signal?: AbortSignal) {
   const query = new URLSearchParams({ tab, limit: String(limit) });
   const response = await apiRequest(`/ateneo/groups?${query.toString()}`, { signal });
@@ -247,7 +265,9 @@ export async function createAteneoGroup(
     signal
   });
 
-  return parseDataResponse<CreateAteneoGroupData>(response, "Invalid Ateneo group create response");
+  const result = await parseDataResponse<CreateAteneoGroupData>(response, "Invalid Ateneo group create response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function getAteneoGroup(groupId: string, signal?: AbortSignal) {
@@ -300,7 +320,9 @@ export async function kickAteneoGroupMember(
     }
   );
 
-  return parseDataResponse<KickAteneoGroupMemberData>(response, "Invalid Ateneo kick-member response");
+  const result = await parseDataResponse<KickAteneoGroupMemberData>(response, "Invalid Ateneo kick-member response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function restoreAteneoGroupMember(groupId: string, targetUserId: string, signal?: AbortSignal) {
@@ -312,7 +334,9 @@ export async function restoreAteneoGroupMember(groupId: string, targetUserId: st
     }
   );
 
-  return parseDataResponse<RestoreAteneoGroupMemberData>(response, "Invalid Ateneo restore-member response");
+  const result = await parseDataResponse<RestoreAteneoGroupMemberData>(response, "Invalid Ateneo restore-member response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function updateAteneoGroup(
@@ -334,7 +358,9 @@ export async function updateAteneoGroup(
     signal
   });
 
-  return parseDataResponse<UpdateAteneoGroupData>(response, "Invalid Ateneo group update response");
+  const result = await parseDataResponse<UpdateAteneoGroupData>(response, "Invalid Ateneo group update response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function joinAteneoGroup(groupId: string, signal?: AbortSignal) {
@@ -343,7 +369,9 @@ export async function joinAteneoGroup(groupId: string, signal?: AbortSignal) {
     signal
   });
 
-  return parseDataResponse<{ group: AteneoGroup }>(response, "Invalid Ateneo group join response");
+  const result = await parseDataResponse<{ group: AteneoGroup }>(response, "Invalid Ateneo group join response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function listAteneoFeed(limit = 20, signal?: AbortSignal) {

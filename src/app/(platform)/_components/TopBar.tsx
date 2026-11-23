@@ -18,7 +18,7 @@ import {
   listNotifications,
   onNotificationsUnreadCountUpdated,
 } from "@/lib/api/notifications";
-import { listAteneoGroups, type AteneoGroup } from "@/lib/api/ateneo";
+import { listAteneoGroups, onAteneoGroupsChanged, type AteneoGroup } from "@/lib/api/ateneo";
 import {
   ProfileHttpError,
   type BadgeOutput,
@@ -322,13 +322,16 @@ export function TopBar({ navItems }: TopBarProps) {
     let isMounted = true;
     const controller = new AbortController();
 
+    let latestRequestId = 0;
+
     const loadMobileAteneoGroups = async () => {
+      const requestId = ++latestRequestId;
       const [adminResult, mineResult] = await Promise.allSettled([
         listAteneoGroups("admin", 6, controller.signal),
         listAteneoGroups("mine", 8, controller.signal),
       ]);
 
-      if (!isMounted || controller.signal.aborted) {
+      if (!isMounted || controller.signal.aborted || requestId !== latestRequestId) {
         return;
       }
 
@@ -345,10 +348,13 @@ export function TopBar({ navItems }: TopBarProps) {
     };
 
     void loadMobileAteneoGroups();
+    // Joining or creating a group must show up in the mobile drawer's group lists right away.
+    const unsubscribe = onAteneoGroupsChanged(() => void loadMobileAteneoGroups());
 
     return () => {
       isMounted = false;
       controller.abort();
+      unsubscribe();
     };
   }, []);
 
