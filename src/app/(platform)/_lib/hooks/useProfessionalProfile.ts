@@ -25,6 +25,7 @@ import {
   WorkExperienceOperation,
 } from "@/lib/api/profile";
 import { getTwoInitials } from "@/lib/utils/name";
+import { computeProfileCompletion } from "../profileCompletion";
 
 type ProfessionalProfileState = {
   profile: Profile;
@@ -300,25 +301,14 @@ export const useProfessionalProfile = () => {
     });
   }, [state.educations]);
 
-  const profileCompletion = useMemo(() => {
-    const totalFields = 12;
-    const completed = [
-      profile.nombre,
-      profile.apellido,
-      profile.fechaNacimiento,
-      profile.nacionalidad,
-      profile.puesto,
-      profile.empresaActual,
-      profile.about,
-      profile.locationCountry,
-      profile.locationCity,
-      profile.locationPostalCode,
-      profile.imagenPerfilUrl,
-      profile.imagenBannerUrl,
-    ].filter((item) => Boolean(item.trim())).length;
-
-    return Math.round((completed / totalFields) * 100);
-  }, [profile]);
+  const profileCompletion = useMemo(
+    () =>
+      computeProfileCompletion(profile, {
+        experiences: state.experiences.length,
+        educations: state.educations.length,
+      }),
+    [profile, state.experiences.length, state.educations.length]
+  );
 
   const userDisplayName =
     profile.nombre || profile.apellido

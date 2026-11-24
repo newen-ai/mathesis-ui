@@ -5,7 +5,8 @@
     "subtitle": "All your groups, mixed together",
     "newTopic": "+ New topic",
     "loading": "Loading feed...",
-    "empty": "There are no topics to show."
+    "empty": "There are no topics to show.",
+    "discoveryBadge": "Suggested group"
   },
   "explorer": {
     "tabs": {

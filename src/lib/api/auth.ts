@@ -93,7 +93,7 @@ export async function register(
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de registro."
+			"Respuesta inválida del servicio de registro."
 		);
 	} catch (error) {
 		return {
@@ -128,7 +128,7 @@ async function requestLogin(
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de login."
+			"Respuesta inválida del servicio de login."
 		);
 	} catch (error) {
 		return {
@@ -156,7 +156,7 @@ export async function requestPasswordReset(
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de recuperación."
+			"Respuesta inválida del servicio de recuperación."
 		);
 	} catch (error) {
 		return {
@@ -184,7 +184,7 @@ export async function requestVerificationEmail(
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de verificacion de correo."
+			"Respuesta inválida del servicio de verificación de correo."
 		);
 	} catch (error) {
 		return {
@@ -193,7 +193,7 @@ export async function requestVerificationEmail(
 				error instanceof Error &&
 				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
 					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
-					: "No pudimos conectar con el servicio de verificacion de correo.",
+					: "No pudimos conectar con el servicio de verificación de correo.",
 			details: "Error de red o CORS.",
 		};
 	}
@@ -214,7 +214,7 @@ export async function requestVerificationEmailByToken(
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de verificacion de correo."
+			"Respuesta inválida del servicio de verificación de correo."
 		);
 	} catch (error) {
 		return {
@@ -223,7 +223,7 @@ export async function requestVerificationEmailByToken(
 				error instanceof Error &&
 				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
 					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
-					: "No pudimos conectar con el servicio de verificacion de correo.",
+					: "No pudimos conectar con el servicio de verificación de correo.",
 			details: "Error de red o CORS.",
 		};
 	}
@@ -235,7 +235,7 @@ export async function verifyEmail(token: string): Promise<AuthServiceResponse> {
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de confirmacion."
+			"Respuesta inválida del servicio de confirmación."
 		);
 	} catch (error) {
 		return {
@@ -264,7 +264,7 @@ export async function resetPassword(
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de restablecimiento."
+			"Respuesta inválida del servicio de restablecimiento."
 		);
 	} catch (error) {
 		return {
@@ -293,7 +293,7 @@ export async function changePassword(
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de cambio de contraseña."
+			"Respuesta inválida del servicio de cambio de contraseña."
 		);
 	} catch (error) {
 		return {
@@ -450,8 +450,8 @@ export async function logout(): Promise<AuthServiceResponse> {
 		return parseServiceResponse(
 			response,
 			response.ok
-				? "Respuesta invalida del servicio de logout."
-				: "No pudimos cerrar la sesion en el servidor."
+				? "Respuesta inválida del servicio de logout."
+				: "No pudimos cerrar la sesión en el servidor."
 		);
 	} catch (error) {
 		return {
@@ -477,7 +477,7 @@ export async function requestWhitelistAccess(message?: string): Promise<AuthServ
 
 		return parseServiceResponse(
 			response,
-			"Respuesta invalida del servicio de solicitud de whitelist."
+			"Respuesta inválida del servicio de solicitud de whitelist."
 		);
 	} catch (error) {
 		return {

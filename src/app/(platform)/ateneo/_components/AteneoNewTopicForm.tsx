@@ -600,6 +600,21 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
     setActivePreviewImageIndex(nextPreviewIndex);
   };
 
+  // Rendered twice: in the header for quick posters and below the form, where most people look
+  // after filling it in. Always enabled (except while sending): problems are reported on click,
+  // next to each field.
+  const renderPublishButton = (extraClassName = "") => (
+    <button
+      type="button"
+      disabled={isSubmitting}
+      aria-busy={isSubmitting}
+      onClick={() => void handleSubmit()}
+      className={`rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95 disabled:cursor-wait disabled:opacity-70 disabled:hover:brightness-100 ${extraClassName}`}
+    >
+      {isSubmitting ? t("newTopic.publishing") : t("newTopic.publish")}
+    </button>
+  );
+
   return (
     <div className="space-y-4">
       <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/heic,image/heif" multiple className="hidden" onChange={(event) => {
@@ -624,16 +639,7 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
           </h1>
         </div>
 
-        {/* Always enabled (except while sending): problems are reported on click, next to each field. */}
-        <button
-          type="button"
-          disabled={isSubmitting}
-          aria-busy={isSubmitting}
-          onClick={() => void handleSubmit()}
-          className="rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95 disabled:cursor-wait disabled:opacity-70 disabled:hover:brightness-100"
-        >
-          {isSubmitting ? t("newTopic.publishing") : t("newTopic.publish")}
-        </button>
+        {renderPublishButton()}
       </div>
 
       {groupOptions.length === 0 ? (
@@ -1034,6 +1040,10 @@ export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="flex justify-end">
+        {renderPublishButton("w-full sm:w-auto sm:px-8")}
       </div>
 
       {isGroupPickerOpen ? (

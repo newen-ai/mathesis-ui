@@ -18,7 +18,7 @@ import {
   listNotifications,
   onNotificationsUnreadCountUpdated,
 } from "@/lib/api/notifications";
-import { listAteneoGroups, type AteneoGroup } from "@/lib/api/ateneo";
+import { listAteneoGroups, onAteneoGroupsChanged, type AteneoGroup } from "@/lib/api/ateneo";
 import {
   ProfileHttpError,
   type BadgeOutput,
@@ -322,13 +322,16 @@ export function TopBar({ navItems }: TopBarProps) {
     let isMounted = true;
     const controller = new AbortController();
 
+    let latestRequestId = 0;
+
     const loadMobileAteneoGroups = async () => {
+      const requestId = ++latestRequestId;
       const [adminResult, mineResult] = await Promise.allSettled([
         listAteneoGroups("admin", 6, controller.signal),
         listAteneoGroups("mine", 8, controller.signal),
       ]);
 
-      if (!isMounted || controller.signal.aborted) {
+      if (!isMounted || controller.signal.aborted || requestId !== latestRequestId) {
         return;
       }
 
@@ -345,10 +348,13 @@ export function TopBar({ navItems }: TopBarProps) {
     };
 
     void loadMobileAteneoGroups();
+    // Joining or creating a group must show up in the mobile drawer's group lists right away.
+    const unsubscribe = onAteneoGroupsChanged(() => void loadMobileAteneoGroups());
 
     return () => {
       isMounted = false;
       controller.abort();
+      unsubscribe();
     };
   }, []);
 
@@ -537,7 +543,7 @@ export function TopBar({ navItems }: TopBarProps) {
     <>
       <header className="sophium-topbar fixed left-0 right-0 top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
       <div className="flex h-16 w-full items-center gap-3 px-4 md:h-[5.5rem] md:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2 rounded-md px-1 py-1 transition hover:bg-[var(--surface-2)]/70">
+        <Link href="/" className="sophium-nav-logo flex shrink-0 items-center gap-2 px-2 py-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={BRAND_LOGO_SRC}

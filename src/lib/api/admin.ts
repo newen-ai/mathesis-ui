@@ -53,7 +53,7 @@ async function fetchAdminList<T>(path: string, invalidMessage: string, signal?: 
 export async function getWhitelistedEmails(signal?: AbortSignal): Promise<WhitelistedEmailRow[]> {
   return fetchAdminList<WhitelistedEmailRow>(
     "/admin/whitelist/emails",
-    "Respuesta invalida de emails whitelistados",
+    "Respuesta inválida de emails whitelistados",
     signal
   );
 }
@@ -65,7 +65,7 @@ export async function getWhitelistUsers(
   const query = new URLSearchParams({ status });
   return fetchAdminList<WhitelistUserRow>(
     `/admin/whitelist/users?${query.toString()}`,
-    "Respuesta invalida de usuarios de whitelist",
+    "Respuesta inválida de usuarios de whitelist",
     signal
   );
 }
@@ -74,7 +74,7 @@ export async function getWhitelistRequests(signal?: AbortSignal): Promise<Whitel
   const query = new URLSearchParams({ status: "PENDING" });
   return fetchAdminList<WhitelistRequestRow>(
     `/admin/whitelist/requests?${query.toString()}`,
-    "Respuesta invalida de solicitudes de whitelist",
+    "Respuesta inválida de solicitudes de whitelist",
     signal
   );
 }
@@ -85,7 +85,7 @@ export async function approveWhitelistRequest(requestId: string, reason?: string
     body: reason ? { reason } : {},
   });
 
-  return parseServiceResponse(response, "Respuesta invalida al aprobar solicitud");
+  return parseServiceResponse(response, "Respuesta inválida al aprobar solicitud");
 }
 
 // ── Companies admin ───────────────────────────────────────────────────────────

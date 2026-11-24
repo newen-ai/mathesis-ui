@@ -47,7 +47,9 @@ async function renderForm(groupId = "g1", groupName = "Lógica") {
   return user;
 }
 
-const publishButton = () => screen.getByRole("button", { name: "Publicar" });
+// The publish button is rendered twice (header and below the form); [0] is the header one.
+const publishButtons = () => screen.getAllByRole("button", { name: "Publicar" });
+const publishButton = () => publishButtons()[0];
 const titleInput = () => screen.getByPlaceholderText(/título/i);
 const descriptionInput = () => screen.getByRole("textbox", { name: /descripción/i });
 
@@ -102,6 +104,19 @@ describe("AteneoNewTopicForm validation on publish", () => {
 
     await waitFor(() => expect(router.push).toHaveBeenCalledWith("/ateneo/groups/g1/topics/t9"));
     expect(api.createAteneoTopic).toHaveBeenCalledWith("g1", expect.objectContaining({ title: "Tema válido", description: "Una descripción suficiente" }));
+  });
+
+  it("offers the publish button both above and below the form, and the bottom one publishes too", async () => {
+    api.createAteneoTopic.mockResolvedValue({ success: true, message: "OK", data: { topic: { id: "t10" } } });
+    const user = await renderForm();
+    expect(publishButtons()).toHaveLength(2);
+
+    await user.type(titleInput(), "Tema desde abajo");
+    await user.type(descriptionInput(), "Una descripción suficiente");
+    await user.click(publishButtons()[1]);
+
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/ateneo/groups/g1/topics/t10"));
+    expect(api.createAteneoTopic).toHaveBeenCalledTimes(1);
   });
 
   it("shows backend validation errors next to the right field", async () => {

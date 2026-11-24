@@ -129,7 +129,24 @@
       "postalCode": "Postal code",
       "about": "About (max. 800)"
     },
-    "emptyAbout": "You have not added a professional description yet."
+    "emptyAbout": "You have not added a professional description yet.",
+    "errors": {
+      "birthDate": {
+        "future": "Date of birth cannot be in the future.",
+        "tooOld": "Date of birth must be 1900 or later.",
+        "incomplete": "Enter the full date as dd/mm/yyyy.",
+        "invalid": "That date does not exist."
+      }
+    },
+    "placeholders": {
+      "nationality": "Select a country",
+      "birthDate": "dd/mm/yyyy"
+    },
+    "actions": {
+      "openCalendar": "Open calendar",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    }
   },
   "experience": {
     "title": "Experience",

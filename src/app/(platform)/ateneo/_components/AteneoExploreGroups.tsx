@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { listAteneoGroups, type AteneoGroup } from "@/lib/api/ateneo";
+import { useEffect, useRef, useState } from "react";
+import { listAteneoGroups, onAteneoGroupsChanged, type AteneoGroup } from "@/lib/api/ateneo";
 import { AteneoGroupMeta } from "./AteneoLocalizedLabels";
 
 type AteneoExploreGroupsProps = {
@@ -217,10 +217,16 @@ export function AteneoExploreGroups({ currentGroupId, feedActive = false }: Aten
     discover: []
   });
 
+  // Increments per request: only the latest response is applied, so a slow first load cannot
+  // overwrite a refresh triggered by joining a group.
+  const latestRequestRef = useRef(0);
+
   useEffect(() => {
-    let cancelled = false;
+    let unmounted = false;
 
     const load = async () => {
+      const requestId = ++latestRequestRef.current;
+      const isStale = () => unmounted || requestId !== latestRequestRef.current;
       try {
         const [admin, mine, discover] = await Promise.all([
           listAteneoGroups("admin", 50),
@@ -228,7 +234,7 @@ export function AteneoExploreGroups({ currentGroupId, feedActive = false }: Aten
           listAteneoGroups("discover", 50)
         ]);
 
-        if (cancelled) return;
+        if (isStale()) return;
 
         setGroupsBySection({
           admin: admin.data.groups,
@@ -236,19 +242,18 @@ export function AteneoExploreGroups({ currentGroupId, feedActive = false }: Aten
           discover: discover.data.groups
         });
       } catch {
-        if (cancelled) return;
-        setGroupsBySection({
-          admin: [],
-          mine: [],
-          discover: []
-        });
+        // Keep what is already shown: a failed refresh should not empty the rail
+        // (the initial state is already empty).
       }
     };
 
     void load();
+    // Join / kick / restore / create / edit anywhere in Ateneo: refetch counts and sections.
+    const unsubscribe = onAteneoGroupsChanged(() => void load());
 
     return () => {
-      cancelled = true;
+      unmounted = true;
+      unsubscribe();
     };
   }, []);
 

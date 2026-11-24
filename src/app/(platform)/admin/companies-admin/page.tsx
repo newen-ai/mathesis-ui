@@ -161,7 +161,7 @@ export default function CompaniesAdminPage() {
   return (
     <ModulePage
       title="Sophium Empresarios"
-      subtitle="Dashboard del administrador de Sophium Empresarios. Revisa solicitudes y confirma acceso a la badge."
+      subtitle="Dashboard del administrador de Sophium Empresarios. Revisá solicitudes y confirmá acceso a la badge."
       subtitleClassName="mt-1 text-sm text-[var(--text-primary)]"
     >
       <AppCard className="p-5">

@@ -20,6 +20,7 @@ import {
   deleteAteneoTopicComment,
   createAteneoTopicComment,
   getAteneoGroup,
+  joinAteneoGroup,
   getAteneoTopic,
   isImageMimeType,
   kickAteneoGroupMember,
@@ -275,7 +276,24 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const canDeleteTopic = Boolean(topic && sessionUserId && topic.author.userId === sessionUserId);
   const canModerateTopic = Boolean(topic && group?.isAdmin && sessionUserId && topic.author.userId !== sessionUserId);
   const topicAuthorName = [topic?.author.firstName, topic?.author.lastName].filter(Boolean).join(" ").trim() || "Usuario";
-  const canComment = group?.commentsMode !== "admins" || Boolean(group?.isAdmin);
+  // Every group is readable; commenting and valuing need membership (the backend answers 403 otherwise).
+  const isGroupMember = Boolean(group?.isMember);
+  const canComment = isGroupMember && (group?.commentsMode !== "admins" || Boolean(group?.isAdmin));
+  const [isJoiningGroup, setIsJoiningGroup] = useState(false);
+  const joinGroupFromTopic = async () => {
+    if (isJoiningGroup) return;
+    setIsJoiningGroup(true);
+    try {
+      await joinAteneoGroup(groupId);
+      const groupRes = await getAteneoGroup(groupId);
+      setGroup(groupRes.data.group);
+      toast.success(`Te uniste a ${groupRes.data.group.name}.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No pudimos unirte al grupo.");
+    } finally {
+      setIsJoiningGroup(false);
+    }
+  };
   const isModerator = Boolean(group?.isAdmin);
   const valuedComments = useMemo(
     () =>
@@ -522,7 +540,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
     const value = (replyDraft[commentId] ?? "").trim();
 
     if (!value) {
-      toast.info("Escribe tu comentario antes de publicar.");
+      toast.info("Escribí tu comentario antes de publicar.");
       return;
     }
 
@@ -938,19 +956,38 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
             </button>
           ) : null}
 
-          <button
-            type="button"
-            onClick={toggleTopicValue}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
-              isPostValued
-                ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
-                : "border-[var(--line)] bg-[var(--surface-2)] text-[var(--brand-700)]"
-            }`}
-          >
-            <span aria-hidden="true">▲</span>
-            <span>{isPostValued ? "Valorado" : "Valorar"}</span>
-          </button>
+          {isGroupMember ? (
+            <button
+              type="button"
+              onClick={toggleTopicValue}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
+                isPostValued
+                  ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
+                  : "border-[var(--line)] bg-[var(--surface-2)] text-[var(--brand-700)]"
+              }`}
+            >
+              <span aria-hidden="true">▲</span>
+              <span>{isPostValued ? "Valorado" : "Valorar"}</span>
+            </button>
+          ) : null}
         </div>
+
+        {group && !isGroupMember ? (
+          <div className="mt-5 flex flex-col gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-scale-2 text-[var(--text-secondary)]">
+              Este tema es de <span className="font-semibold text-[var(--text-primary)]">{group.name}</span>, un grupo al
+              que todavía no pertenecés. Unite para comentar y valorar.
+            </p>
+            <button
+              type="button"
+              onClick={() => void joinGroupFromTopic()}
+              disabled={isJoiningGroup || group.isJoinBlockedByExpulsion}
+              className="shrink-0 rounded-full bg-[var(--brand-500)] px-5 py-2 text-scale-2 font-semibold sophium-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isJoiningGroup ? "Uniéndote..." : "Unirme al grupo"}
+            </button>
+          </div>
+        ) : null}
       </article>
 
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5">
@@ -977,7 +1014,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                 }))
               }
               rows={3}
-              placeholder="Escribe tu comentario…"
+              placeholder="Escribí tu comentario…"
               className="w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-scale-3 text-[var(--text-primary)] outline-none ring-0 placeholder:text-[var(--text-secondary)]"
             />
             <div className="mt-3 flex justify-end">
@@ -1128,17 +1165,19 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                         </button>
                       ) : null}
 
-                      <button
-                        type="button"
-                        onClick={() => toggleCommentValue(comment.id)}
-                        className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
-                          valuedComments[comment.id]
-                            ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
-                            : "border-[var(--line)] bg-[var(--surface)] text-[var(--brand-700)]"
-                        }`}
-                      >
-                        {valuedComments[comment.id] ? "Valorado" : "Valorar"}
-                      </button>
+                      {isGroupMember ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleCommentValue(comment.id)}
+                          className={`rounded-full border px-3 py-1.5 text-scale-2 font-semibold ${
+                            valuedComments[comment.id]
+                              ? "border-[var(--brand-700)] bg-[var(--brand-700)] text-[var(--surface)]"
+                              : "border-[var(--line)] bg-[var(--surface)] text-[var(--brand-700)]"
+                          }`}
+                        >
+                          {valuedComments[comment.id] ? "Valorado" : "Valorar"}
+                        </button>
+                      ) : null}
                     </div>
                   ) : null}
 

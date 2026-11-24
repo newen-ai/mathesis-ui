@@ -2,6 +2,14 @@
 /* Tailwind skips node_modules: scan the shared login package so its classes get generated. */
 @source "../../node_modules/@kenrou/shared-ui/src";
 
+/* Tailwind v4 preflight resets buttons to cursor: default; restore the pointer on every enabled button. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
 :root {
   --background: #f4f3f1;
   --foreground: #1f242a;
@@ -200,6 +208,36 @@ html {
   color: var(--brand-700);
 }
 
+/* Logo link and profile avatar in the top bar: same hover feedback as .sophium-nav-item. */
+.sophium-nav-logo {
+  border-radius: 0.95rem;
+  transition: background-color 150ms ease;
+}
+
+.sophium-nav-logo:hover {
+  background: color-mix(in srgb, var(--brand-100) 70%, var(--surface));
+}
+
+.sophium-nav-avatar {
+  transition: box-shadow 150ms ease, border-color 150ms ease, filter 150ms ease;
+}
+
+.sophium-nav-avatar:hover,
+.sophium-nav-avatar.is-active {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-300) 55%, transparent);
+}
+
+.sophium-nav-avatar:hover {
+  filter: brightness(1.08);
+}
+
+.sophium-nav-logo:focus-visible,
+.sophium-nav-avatar:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
 .sophium-nav-icon {
   display: inline-flex;
   align-items: center;
@@ -263,6 +301,71 @@ html {
   font-size: 0.92rem;
   color: var(--text-primary);
   transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+/* Custom select trigger (nationality, birth date calendar): looks like .sophium-field inputs. */
+.sophium-select-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background-color: var(--surface);
+  padding: 0.64rem 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.sophium-select-trigger:focus-visible,
+.sophium-select-trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--brand-700);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
+}
+
+.sophium-select-popup {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background-color: var(--surface);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+  color: var(--text-primary);
+}
+
+.sophium-calendar-select {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background-color: var(--surface);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sophium-calendar-select:focus {
+  outline: none;
+  border-color: var(--brand-700);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
+}
+
+.sophium-select-option {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.92rem;
+}
+
+.sophium-select-option[data-active] {
+  background: color-mix(in srgb, var(--brand-100) 70%, var(--surface));
+}
+
+.sophium-select-option[aria-selected="true"] {
+  font-weight: 600;
+  color: var(--brand-700);
 }
 
 .sophium-field textarea:focus,

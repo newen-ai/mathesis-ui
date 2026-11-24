@@ -180,7 +180,10 @@ export function TopBarDesktop({
           onClick={() =>
             setDesktopDropdownOpen((current) => (current === "profile" ? null : "profile"))
           }
-          className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)]"
+          className={`sophium-nav-avatar flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-[var(--line-strong)] bg-[var(--navy-900)] ${
+            desktopDropdownOpen === "profile" ? "is-active" : ""
+          }`}
+          aria-expanded={desktopDropdownOpen === "profile"}
           aria-label={t("topbar:profile.openMenu", { defaultValue: "Abrir menú de perfil" })}
         >
           <UserAvatar

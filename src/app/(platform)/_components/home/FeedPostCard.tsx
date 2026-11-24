@@ -133,7 +133,7 @@ export function FeedPostCard({
 						? error.code === "UNAUTHORIZED"
 							? "Tu sesión expiró. Inicia sesión nuevamente."
 							: error.code === "NOT_FOUND"
-								? "No se encontró el archivo o no tienes permisos para verlo."
+								? "No se encontró el archivo o no tenés permisos para verlo."
 								: "No pudimos descargar este PDF."
 						: "No pudimos descargar este PDF.";
 
@@ -330,7 +330,7 @@ export function FeedPostCard({
 				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 px-4" role="dialog" aria-modal="true">
 					<div className="w-full max-w-sm rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-2xl">
 						<h3 className="text-lg font-semibold text-[var(--text-primary)]">Eliminar publicación</h3>
-						<p className="mt-2 text-sm text-[var(--text-secondary)]">¿Seguro que quieres eliminar esta publicación?</p>
+						<p className="mt-2 text-sm text-[var(--text-secondary)]">¿Seguro que querés eliminar esta publicación?</p>
 
 						<div className="mt-4 flex justify-end gap-2">
 							<button

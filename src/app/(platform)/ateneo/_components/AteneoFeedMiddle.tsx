@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  listAteneoFeed,
+  listAteneoFeedForView,
   listAteneoGroups,
   type AteneoTopic,
   type AteneoTopicAttachment
@@ -37,7 +37,8 @@ function mapTopic(topic: AteneoTopic, authorFallback: string): AteneoFeedTopic {
     reactions: topic.reactions,
     comments: topic.comments,
     isRecommended: topic.isRecommended,
-    attachments: topic.attachments
+    attachments: topic.attachments,
+    isFromOtherGroup: topic.viewerIsGroupMember === false
   };
 }
 
@@ -58,7 +59,7 @@ export function AteneoFeedMiddle() {
     const load = async () => {
       setIsLoading(true);
       try {
-        const [feedResponse, mineResponse] = await Promise.all([listAteneoFeed(), listAteneoGroups("mine", 1)]);
+        const [feedResponse, mineResponse] = await Promise.all([listAteneoFeedForView(), listAteneoGroups("mine", 1)]);
         if (cancelled) return;
         setTopics(
           feedResponse.data.topics.map((topic) =>

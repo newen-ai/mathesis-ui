@@ -83,7 +83,9 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
         setGroup(groupRes.data.group);
         setRules(groupRes.data.rules);
 
-        if (!groupRes.data.group.isMember) {
+        // Non-members can read the group's topics (only joining is needed to participate); users
+        // expelled from the group cannot, and the backend answers 404 for them.
+        if (!groupRes.data.group.isMember && groupRes.data.group.isJoinBlockedByExpulsion) {
           setTopics([]);
           return;
         }
@@ -147,6 +149,26 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
     );
   }
 
+  const topicsSection =
+    topics.length > 0 ? (
+      <section className="mt-4">
+        <h2 className="px-1 font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
+          Temas más populares
+        </h2>
+
+        <div className="mt-3 space-y-3">
+          {topics.map((topic) => (
+            <AteneoTopicCard
+              key={topic.id}
+              topic={topic}
+              topicHref={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
+              variant="group"
+            />
+          ))}
+        </div>
+      </section>
+    ) : null;
+
   if (!group.isMember) {
     const joinBlockedByExpulsion = group.isJoinBlockedByExpulsion;
     const joinDisabledTooltip = joinBlockedByExpulsion
@@ -154,6 +176,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
       : undefined;
 
     return (
+      <>
       <section className={GROUP_HEADER_CLASS_NAME}>
         <div className="flex min-w-0 items-start gap-3">
           <GroupHeaderIcon />
@@ -199,8 +222,14 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
           <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">
             Esta cuenta fue expulsada del grupo y no puede volver a unirse.
           </p>
-        ) : null}
+        ) : (
+          <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">
+            Podés leer los temas del grupo. Para publicar, comentar o valorar, unite.
+          </p>
+        )}
       </section>
+      {topicsSection}
+      </>
     );
   }
 
@@ -238,22 +267,7 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
 
       </section>
 
-      <section className="mt-4">
-        <h2 className="px-1 font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
-          Temas más populares
-        </h2>
-
-        <div className="mt-3 space-y-3">
-          {topics.map((topic) => (
-            <AteneoTopicCard
-              key={topic.id}
-              topic={topic}
-              topicHref={`/ateneo/groups/${encodeURIComponent(groupId)}/topics/${encodeURIComponent(topic.id)}`}
-              variant="group"
-            />
-          ))}
-        </div>
-      </section>
+      {topicsSection}
     </>
   );
 }

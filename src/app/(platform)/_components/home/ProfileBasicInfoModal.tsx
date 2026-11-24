@@ -1,4 +1,13 @@
 import { useState } from "react";
+import {
+  getBirthDateFieldError,
+  shouldShowBirthDateError,
+  type BirthDateFieldStatus,
+} from "../../_lib/birthDate";
+import { resolveCountryCode } from "../../_lib/countries";
+import { BirthDateField } from "./BirthDateField";
+import { NationalitySelect } from "./NationalitySelect";
+import { computeProfileCompletion } from "../../_lib/profileCompletion";
 import { useTranslation } from "react-i18next";
 import type { Profile } from "../../_lib/types";
 import {
@@ -23,7 +32,8 @@ type BasicInfoField =
 
 type ProfileBasicInfoModalProps = {
   profile: Profile;
-  profileCompletion: number;
+  /** Loaded experience/education counts, so the completion bar can update live with the draft. */
+  completionCounts: { experiences: number; educations: number };
   isSaving: boolean;
   saveError: string | null;
   onSave: (profile: Profile) => Promise<{ ok: boolean; message?: string }>;
@@ -36,7 +46,7 @@ type ProfileBasicInfoModalProps = {
  */
 export function ProfileBasicInfoModal({
   profile,
-  profileCompletion,
+  completionCounts,
   isSaving,
   saveError,
   onSave,
@@ -47,7 +57,8 @@ export function ProfileBasicInfoModal({
     nombre: profile.nombre,
     apellido: profile.apellido,
     fechaNacimiento: profile.fechaNacimiento,
-    nacionalidad: profile.nacionalidad,
+    // Old free-text values that name a country become its code; anything else is kept as is.
+    nacionalidad: resolveCountryCode(profile.nacionalidad) ?? profile.nacionalidad,
     puesto: profile.puesto,
     empresaActual: profile.empresaActual,
     locationCountry: profile.locationCountry,
@@ -56,11 +67,18 @@ export function ProfileBasicInfoModal({
   }));
 
 
+  const profileCompletion = computeProfileCompletion({ ...profile, ...draft }, completionCounts);
+  const [birthDateStatus, setBirthDateStatus] = useState<BirthDateFieldStatus>("complete");
+  const [isBirthDateTouched, setIsBirthDateTouched] = useState(false);
+  const birthDateError = getBirthDateFieldError(draft.fechaNacimiento, birthDateStatus);
+  const showBirthDateError = shouldShowBirthDateError(birthDateError, isBirthDateTouched);
+
   const onFieldChange = (name: BasicInfoField, value: string) => {
     setDraft((current) => ({ ...current, [name]: value }));
   };
 
   const onSubmitSave = async () => {
+    if (birthDateError) return;
     const result = await onSave({ ...profile, ...draft });
     if (result.ok) {
       onClose();
@@ -77,7 +95,7 @@ export function ProfileBasicInfoModal({
           <ProfileModalSecondaryButton onClick={onClose} disabled={isSaving}>
             {t("common.cancel")}
           </ProfileModalSecondaryButton>
-          <ProfileModalPrimaryButton onClick={onSubmitSave} disabled={isSaving}>
+          <ProfileModalPrimaryButton onClick={onSubmitSave} disabled={isSaving || Boolean(birthDateError)}>
             {isSaving ? t("common.saving") : t("common.save")}
           </ProfileModalPrimaryButton>
         </>
@@ -111,19 +129,28 @@ export function ProfileBasicInfoModal({
             onChange={(event) => onFieldChange("apellido", event.target.value)}
           />
         </label>
-        <label className="sophium-field">
-          {t("profileForm.fields.birthDate")}
-          <input
-            type="date"
+        <div className="sophium-field" role="group" aria-labelledby="profile-birth-date-label">
+          <span id="profile-birth-date-label">{t("profileForm.fields.birthDate")}</span>
+          <BirthDateField
             value={draft.fechaNacimiento}
-            onChange={(event) => onFieldChange("fechaNacimiento", event.target.value)}
+            labelledBy="profile-birth-date-label"
+            onBlur={() => setIsBirthDateTouched(true)}
+            onChange={(value, status) => {
+              setBirthDateStatus(status);
+              onFieldChange("fechaNacimiento", value);
+            }}
           />
-        </label>
+          {showBirthDateError && birthDateError ? (
+            <span className="text-xs font-semibold text-[var(--danger-500)]">
+              {t(`profileForm.errors.birthDate.${birthDateError}`)}
+            </span>
+          ) : null}
+        </div>
         <label className="sophium-field">
           {t("profileForm.fields.nationality")}
-          <input
+          <NationalitySelect
             value={draft.nacionalidad}
-            onChange={(event) => onFieldChange("nacionalidad", event.target.value)}
+            onChange={(code) => onFieldChange("nacionalidad", code)}
           />
         </label>
         <label className="sophium-field sm:col-span-2">

@@ -117,7 +117,7 @@ export function ComposerCard({
 
 		const trimmed = content.trim();
 		if (!trimmed && pdfFiles.length === 0 && imageFiles.length === 0) {
-			setError("Escribe algo o adjunta al menos un PDF o una imagen.");
+			setError("Escribí algo o adjuntá al menos un PDF o una imagen.");
 			return;
 		}
 

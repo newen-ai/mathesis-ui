@@ -4,6 +4,13 @@ import { AppCard } from "@/components/ui/AppCard";
 import { navItems } from "../../_lib/constants";
 import type { Profile } from "../../_lib/types";
 import { TopBar } from "../TopBar";
+import {
+  getBirthDateFieldError,
+  shouldShowBirthDateError,
+  type BirthDateFieldStatus,
+} from "../../_lib/birthDate";
+import { BirthDateField } from "./BirthDateField";
+import { NationalitySelect } from "./NationalitySelect";
 
 type ProfileInitializationViewProps = {
   isSaving: boolean;
@@ -37,9 +44,13 @@ export function ProfileInitializationView({
   const { t } = useTranslation("profile");
   const [formState, setFormState] = useState<Profile>(emptyProfileState);
 
+  const [birthDateStatus, setBirthDateStatus] = useState<BirthDateFieldStatus>("complete");
+  const [isBirthDateTouched, setIsBirthDateTouched] = useState(false);
+  const birthDateError = getBirthDateFieldError(formState.fechaNacimiento, birthDateStatus);
+  const showBirthDateError = shouldShowBirthDateError(birthDateError, isBirthDateTouched);
   const canSubmit = useMemo(() => {
-    return Boolean(formState.nombre.trim() && formState.apellido.trim());
-  }, [formState.apellido, formState.nombre]);
+    return Boolean(formState.nombre.trim() && formState.apellido.trim()) && !birthDateError;
+  }, [formState.apellido, formState.nombre, birthDateError]);
 
   const onFormChange = (name: Exclude<keyof Profile, "intereses">, value: string) => {
     setFormState((current) => ({
@@ -85,21 +96,28 @@ export function ProfileInitializationView({
                 required
               />
             </label>
-            <label className="sophium-field">
-              {t("initialization.fields.birthDate")}
-              <input
-                type="date"
+            <div className="sophium-field" role="group" aria-labelledby="init-birth-date-label">
+              <span id="init-birth-date-label">{t("initialization.fields.birthDate")}</span>
+              <BirthDateField
                 value={formState.fechaNacimiento}
-                onChange={(event) =>
-                  onFormChange("fechaNacimiento", event.target.value)
-                }
+                labelledBy="init-birth-date-label"
+                onBlur={() => setIsBirthDateTouched(true)}
+                onChange={(value, status) => {
+                  setBirthDateStatus(status);
+                  onFormChange("fechaNacimiento", value);
+                }}
               />
-            </label>
+              {showBirthDateError && birthDateError ? (
+                <span className="text-xs font-semibold text-[var(--danger-500)]">
+                  {t(`profileForm.errors.birthDate.${birthDateError}`)}
+                </span>
+              ) : null}
+            </div>
             <label className="sophium-field">
               {t("initialization.fields.nationality")}
-              <input
+              <NationalitySelect
                 value={formState.nacionalidad}
-                onChange={(event) => onFormChange("nacionalidad", event.target.value)}
+                onChange={(code) => onFormChange("nacionalidad", code)}
               />
             </label>
             <label className="sophium-field sm:col-span-2">

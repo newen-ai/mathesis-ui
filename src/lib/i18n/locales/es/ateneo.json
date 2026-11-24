@@ -5,7 +5,8 @@
     "subtitle": "Todos tus grupos, mezclados",
     "newTopic": "+ Nuevo tema",
     "loading": "Cargando feed...",
-    "empty": "No hay temas para mostrar."
+    "empty": "No hay temas para mostrar.",
+    "discoveryBadge": "Grupo sugerido"
   },
   "explorer": {
     "tabs": {

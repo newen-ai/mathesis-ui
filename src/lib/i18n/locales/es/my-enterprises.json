@@ -1,40 +1,40 @@
 {
   "list": {
     "title": "Mis empresas",
-    "subtitle": "Estas son las empresas que gestionas en Sophium. Solo el Admin puede editar o eliminar una ficha. El Admin es quien la genero en Sophium.",
+    "subtitle": "Estas son las empresas que gestionás en Sophium. Solo el Admin puede editar o eliminar una ficha. El Admin es quien la generó en Sophium.",
     "createNew": "+ Crear nueva empresa",
     "loading": "Cargando empresas...",
-    "empty": "Todavia no tienes empresas creadas.",
+    "empty": "Todavía no tenés empresas creadas.",
     "errors": {
       "delete": "No pudimos eliminar la empresa."
     },
     "card": {
-      "noDescription": "Sin descripcion cargada.",
+      "noDescription": "Sin descripción cargada.",
       "edit": "Editar",
       "deleteAria": "Eliminar {{name}}",
-      "confirmDelete": "Seguro que quieres eliminar la empresa \"{{name}}\"?"
+      "confirmDelete": "¿Seguro que querés eliminar la empresa \"{{name}}\"?"
     },
     "aside": {
       "directoryTitle": "Directorio de Sophium Empresarios",
-      "directoryBody": "Tus empresas aprobadas ya son visibles ahi para el resto de la comunidad.",
-      "viewDirectory": "Ver directorio ->",
-      "whoCanEditTitle": "Quien puede editar?",
-      "whoCanEditBody": "Solo el Admin que genero la ficha en Sophium. Los demas cofundadores la ven pero no la editan."
+      "directoryBody": "Tus empresas aprobadas ya son visibles ahí para el resto de la comunidad.",
+      "viewDirectory": "Ver directorio →",
+      "whoCanEditTitle": "¿Quién puede editar?",
+      "whoCanEditBody": "Solo el Admin que generó la ficha en Sophium. Los demás cofundadores la ven pero no la editan."
     }
   },
   "create": {
     "title": "Solicitar Sophium Empresarios",
-    "subtitle": "Contanos sobre tu empresa. Tu solicitud la revisa el equipo de Sophium Empresarios y te avisamos por notificacion.",
+    "subtitle": "Contanos sobre tu empresa. Tu solicitud la revisa el equipo de Sophium Empresarios y te avisamos por notificación.",
     "fields": {
       "companyName": "Nombre de la empresa",
       "role": "Tu rol",
       "website": "Sitio web",
-      "description": "Descripcion breve"
+      "description": "Descripción breve"
     },
     "placeholders": {
       "role": "Ej: CEO y fundador",
       "website": "www.tuempresa.com",
-      "description": "A que se dedica tu empresa?"
+      "description": "¿A qué se dedica tu empresa?"
     },
     "submit": {
       "idle": "Crear empresa",
@@ -46,12 +46,12 @@
       "create": "No pudimos crear la empresa.",
       "service": "No pudimos conectar con el servicio de empresas."
     },
-    "back": "<- Volver",
+    "back": "← Volver",
     "aside": {
-      "whatIsTitle": "Que es Sophium Empresarios?",
-      "whatIsBody": "Membresia adicional para Miembros con empresa propia o startup. Suma acceso a un directorio de empresas verificadas y a un Feed exclusivo de networking entre empresarios Mensa.",
-      "howItWorksTitle": "Como funciona",
-      "howItWorksBody": "Tu solicitud la revisa el equipo de Sophium Empresarios y te avisamos por notificacion cuando quede aprobada."
+      "whatIsTitle": "¿Qué es Sophium Empresarios?",
+      "whatIsBody": "Membresía adicional para Miembros con empresa propia o startup. Suma acceso a un directorio de empresas verificadas y a un Feed exclusivo de networking entre empresarios Mensa.",
+      "howItWorksTitle": "Cómo funciona",
+      "howItWorksBody": "Tu solicitud la revisa el equipo de Sophium Empresarios y te avisamos por notificación cuando quede aprobada."
     }
   },
   "edit": {
@@ -61,7 +61,7 @@
       "companyName": "Nombre de la empresa",
       "role": "Tu rol",
       "website": "Sitio web",
-      "description": "Descripcion breve"
+      "description": "Descripción breve"
     },
     "submit": {
       "idle": "Guardar cambios",
@@ -73,10 +73,10 @@
       "save": "No pudimos guardar los cambios.",
       "service": "No pudimos conectar con el servicio de empresas."
     },
-    "back": "<- Volver a Mis empresas",
+    "back": "← Volver a Mis empresas",
     "aside": {
       "title": "Actualizar empresa",
-      "body": "Ajusta el nombre, el rol y los datos basicos de tu ficha para mantener la informacion actualizada."
+      "body": "Ajustá el nombre, el rol y los datos básicos de tu ficha para mantener la información actualizada."
     }
   }
 }

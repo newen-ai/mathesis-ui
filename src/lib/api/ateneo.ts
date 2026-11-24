@@ -84,6 +84,8 @@ export type AteneoTopic = {
   updatedAt: string;
   currentUserReactionValue: AteneoReactionValue | null;
   attachments: AteneoTopicAttachment[];
+  /** False for topics of groups the viewer has not joined: readable, but joining is needed to participate. */
+  viewerIsGroupMember?: boolean;
 };
 
 export type AteneoTopicAttachment = {
@@ -223,6 +225,25 @@ export type ListAteneoTopicCommentsData = {
   comments: AteneoComment[];
 };
 
+const ATENEO_GROUPS_CHANGED_EVENT = "sophium:ateneo-groups-changed";
+
+/**
+ * Announces that group membership or group data changed (join, kick, restore, create, edit), so
+ * views that list groups, such as the left rail with member counts, can refetch. Emitted by
+ * the API functions themselves, so every caller triggers it.
+ */
+export function emitAteneoGroupsChanged() {
+  invalidateAteneoFeedViewCache();
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(ATENEO_GROUPS_CHANGED_EVENT));
+}
+
+export function onAteneoGroupsChanged(handler: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener(ATENEO_GROUPS_CHANGED_EVENT, handler);
+  return () => window.removeEventListener(ATENEO_GROUPS_CHANGED_EVENT, handler);
+}
+
 export async function listAteneoGroups(tab: AteneoTabKey, limit = 20, signal?: AbortSignal) {
   const query = new URLSearchParams({ tab, limit: String(limit) });
   const response = await apiRequest(`/ateneo/groups?${query.toString()}`, { signal });
@@ -247,7 +268,9 @@ export async function createAteneoGroup(
     signal
   });
 
-  return parseDataResponse<CreateAteneoGroupData>(response, "Invalid Ateneo group create response");
+  const result = await parseDataResponse<CreateAteneoGroupData>(response, "Invalid Ateneo group create response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function getAteneoGroup(groupId: string, signal?: AbortSignal) {
@@ -300,7 +323,9 @@ export async function kickAteneoGroupMember(
     }
   );
 
-  return parseDataResponse<KickAteneoGroupMemberData>(response, "Invalid Ateneo kick-member response");
+  const result = await parseDataResponse<KickAteneoGroupMemberData>(response, "Invalid Ateneo kick-member response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function restoreAteneoGroupMember(groupId: string, targetUserId: string, signal?: AbortSignal) {
@@ -312,7 +337,9 @@ export async function restoreAteneoGroupMember(groupId: string, targetUserId: st
     }
   );
 
-  return parseDataResponse<RestoreAteneoGroupMemberData>(response, "Invalid Ateneo restore-member response");
+  const result = await parseDataResponse<RestoreAteneoGroupMemberData>(response, "Invalid Ateneo restore-member response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function updateAteneoGroup(
@@ -334,7 +361,9 @@ export async function updateAteneoGroup(
     signal
   });
 
-  return parseDataResponse<UpdateAteneoGroupData>(response, "Invalid Ateneo group update response");
+  const result = await parseDataResponse<UpdateAteneoGroupData>(response, "Invalid Ateneo group update response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function joinAteneoGroup(groupId: string, signal?: AbortSignal) {
@@ -343,13 +372,38 @@ export async function joinAteneoGroup(groupId: string, signal?: AbortSignal) {
     signal
   });
 
-  return parseDataResponse<{ group: AteneoGroup }>(response, "Invalid Ateneo group join response");
+  const result = await parseDataResponse<{ group: AteneoGroup }>(response, "Invalid Ateneo group join response");
+  emitAteneoGroupsChanged();
+  return result;
 }
 
 export async function listAteneoFeed(limit = 20, signal?: AbortSignal) {
   const query = new URLSearchParams({ limit: String(limit) });
   const response = await apiRequest(`/ateneo/feed?${query.toString()}`, { signal });
   return parseDataResponse<ListAteneoFeedData>(response, "Invalid Ateneo feed response");
+}
+
+/** How long the feed view reuses its last response during in-app navigation. */
+const FEED_VIEW_CACHE_TTL_MS = 3 * 60 * 1000;
+let feedViewCache: { expiresAt: number; limit: number; data: Awaited<ReturnType<typeof listAteneoFeed>> } | null = null;
+
+/**
+ * Feed for the Ateneo home view. The backend reshuffles the feed on every request, which is what
+ * makes reloads varied, but going back from a topic should show the same feed, so the last response
+ * is reused for a few minutes. It lives in memory: a full page reload starts fresh. Creating or
+ * deleting a topic and joining a group invalidate it.
+ */
+export async function listAteneoFeedForView(limit = 20) {
+  if (feedViewCache && feedViewCache.limit === limit && feedViewCache.expiresAt > Date.now()) {
+    return feedViewCache.data;
+  }
+  const data = await listAteneoFeed(limit);
+  feedViewCache = { expiresAt: Date.now() + FEED_VIEW_CACHE_TTL_MS, limit, data };
+  return data;
+}
+
+export function invalidateAteneoFeedViewCache() {
+  feedViewCache = null;
 }
 
 export async function listAteneoTopics(groupId: string, limit = 20, signal?: AbortSignal) {
@@ -384,7 +438,9 @@ export async function deleteAteneoTopic(groupId: string, topicId: string, signal
     }
   );
 
-  return parseDataResponse<DeleteAteneoTopicData>(response, "Invalid Ateneo topic delete response");
+  const result = await parseDataResponse<DeleteAteneoTopicData>(response, "Invalid Ateneo topic delete response");
+  invalidateAteneoFeedViewCache();
+  return result;
 }
 
 export type DeleteAteneoTopicCommentData = {
@@ -469,7 +525,9 @@ async function requestCreateAteneoTopic(
     signal
   });
 
-  return parseDataResponse<CreateAteneoTopicData>(response, "Invalid Ateneo topic create response");
+  const result = await parseDataResponse<CreateAteneoTopicData>(response, "Invalid Ateneo topic create response");
+  invalidateAteneoFeedViewCache();
+  return result;
 }
 
 function parseFileNameFromContentDisposition(value: string | null) {

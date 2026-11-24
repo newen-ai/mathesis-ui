@@ -80,8 +80,9 @@ describe("useProfessionalProfile", () => {
     expect(result.current.userDisplayName).toBe("Ana Paz");
     expect(result.current.canEditProfile).toBe(true);
     expect(result.current.isViewingOwnProfileAsMember).toBe(false);
-    // 7 of 12 fields filled: nombre, apellido, fecha, nacionalidad, puesto, about, ciudad.
-    expect(result.current.profileCompletion).toBe(Math.round((7 / 12) * 100));
+    // 8 of 12 checks: name, headline, birth date, nationality, about, experience, education, interests.
+    // Missing: photo, banner, current company, full location (country + city).
+    expect(result.current.profileCompletion).toBe(Math.round((8 / 12) * 100));
   });
 
   it("sorts experiences and educations newest first and flags current ones", async () => {
