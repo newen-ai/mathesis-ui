@@ -17,6 +17,7 @@ import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
 import { AteneoImageMosaic } from "./AteneoImageMosaic";
 import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
 import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
+import { useTranslation } from "react-i18next";
 import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
 
 export type AteneoTopicCardTopic = {
@@ -36,6 +37,8 @@ export type AteneoTopicCardTopic = {
   comments: number;
   attachments: AteneoTopicAttachment[];
   isRecommended?: boolean;
+  /** From a group the viewer has not joined (feed discovery). */
+  isFromOtherGroup?: boolean;
 };
 
 type AteneoTopicCardVariant = "feed" | "group";
@@ -49,6 +52,7 @@ type AteneoTopicCardProps = {
 
 export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadge = false }: AteneoTopicCardProps) {
   const router = useRouter();
+  const { t } = useTranslation("ateneo");
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
   const [imagePreviewUrlById, setImagePreviewUrlById] = useState<Record<string, string>>({});
   const previewUrlsRef = useRef<string[]>([]);
@@ -223,6 +227,11 @@ export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadg
                   {topic.groupLabel}
                 </Link>
               </span>
+              {topic.isFromOtherGroup ? (
+                <span className="rounded-full bg-[var(--brand-50)] px-2 py-0.5 text-scale-1 font-semibold text-[var(--brand-700)]">
+                  {t("feed.discoveryBadge")}
+                </span>
+              ) : null}
               <span>·</span>
               <UserProfileLink userId={topic.authorUserId} className="font-semibold text-[var(--text-primary)]">
                 {topic.authorName}

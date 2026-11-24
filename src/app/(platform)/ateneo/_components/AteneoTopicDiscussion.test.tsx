@@ -13,6 +13,7 @@ const api = vi.hoisted(() => ({
   listAteneoTopicComments: vi.fn(),
   listAteneoGroupMembers: vi.fn(),
   deleteAteneoTopicComment: vi.fn(),
+  joinAteneoGroup: vi.fn(),
 }));
 
 vi.mock("@/lib/api/ateneo", async (importOriginal) => {
@@ -42,7 +43,7 @@ function comment(id: string, content: string, minute: number, parentCommentId: s
   };
 }
 
-const group = { id: "g1", name: "Lógica", isAdmin: false, commentsMode: "free", createTopicsMode: "free" } as AteneoGroup;
+const group = { id: "g1", name: "Lógica", isMember: true, isAdmin: false, commentsMode: "free", createTopicsMode: "free" } as AteneoGroup;
 const topic = {
   id: "t1",
   groupId: "g1",
@@ -207,3 +208,31 @@ describe("AteneoTopicDiscussion own comments", () => {
   });
 });
 
+
+describe("AteneoTopicDiscussion for non-members", () => {
+  const outsiderGroup = { ...group, isMember: false, isJoinBlockedByExpulsion: false } as AteneoGroup;
+
+  it("lets non-members read, hides participation and offers to join", async () => {
+    api.getAteneoGroup.mockResolvedValue({ success: true, message: "OK", data: { group: outsiderGroup, rules: [] } });
+    await renderLoaded();
+
+    expect(screen.getByText("Descripción del tema")).toBeInTheDocument();
+    expect(screen.getByText(/un grupo al que todavía no pertenecés/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Comentar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Valorar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Responder" })).not.toBeInTheDocument();
+  });
+
+  it("enables participation right after joining from the topic", async () => {
+    api.getAteneoGroup.mockResolvedValueOnce({ success: true, message: "OK", data: { group: outsiderGroup, rules: [] } });
+    api.joinAteneoGroup.mockResolvedValue({ success: true, message: "OK", data: { group } });
+    api.getAteneoGroup.mockResolvedValue({ success: true, message: "OK", data: { group, rules: [] } });
+    await renderLoaded();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unirme al grupo" }));
+
+    expect(await screen.findByRole("button", { name: "Comentar" })).toBeInTheDocument();
+    expect(api.joinAteneoGroup).toHaveBeenCalledWith("g1");
+    expect(screen.queryByText(/un grupo al que todavía no pertenecés/)).not.toBeInTheDocument();
+  });
+});
