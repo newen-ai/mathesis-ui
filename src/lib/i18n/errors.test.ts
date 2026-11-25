@@ -10,6 +10,7 @@ vi.mock("@/lib/i18n", () => ({
 import {
   extractAuthErrorCode,
   getAuthErrorTranslation,
+  getRateLimitMessage,
   normalizeAuthErrorCode,
   normalizeMessageKey,
 } from "./auth-errors";
@@ -40,6 +41,18 @@ describe("auth-errors helpers", () => {
   it("falls back to default auth message", () => {
     const translated = getAuthErrorTranslation("some unknown message", "fallback");
     expect(translated.startsWith("auth:default")).toBe(true);
+  });
+});
+
+describe("rate limit message", () => {
+  it("translates RATE_LIMITED with the wait rounded up to minutes", () => {
+    expect(getRateLimitMessage({ code: "RATE_LIMITED", retryAfterSeconds: 61 })).toBe("auth:rateLimited");
+    expect(getAuthErrorTranslation({ code: "RATE_LIMITED", retryAfterSeconds: 30 })).toBe("auth:rateLimited");
+  });
+
+  it("returns null for any other error", () => {
+    expect(getRateLimitMessage({ code: "EMAIL_NOT_VERIFIED" })).toBeNull();
+    expect(getRateLimitMessage(undefined)).toBeNull();
   });
 });
 

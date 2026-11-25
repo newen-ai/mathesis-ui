@@ -60,6 +60,18 @@ export function extractAuthErrorCode(details?: unknown): string | undefined {
   return undefined;
 }
 
+// "Too many attempts" from the backend's auth rate limits (429, code RATE_LIMITED), with the wait in minutes.
+// Returns null for any other error so each page keeps its own message.
+export function getRateLimitMessage(details?: unknown): string | null {
+  if (extractAuthErrorCode(details) !== "RATE_LIMITED") {
+    return null;
+  }
+
+  const seconds = Number((details as { retryAfterSeconds?: unknown }).retryAfterSeconds);
+  const minutes = Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds / 60) : 1;
+  return i18next.t("auth:rateLimited", { count: minutes });
+}
+
 export function getAuthErrorTranslation(
   codeOrMessage?: string | unknown,
   fallback = i18next.t("auth:default", { defaultValue: "No pudimos iniciar sesión." })
@@ -68,6 +80,11 @@ export function getAuthErrorTranslation(
     typeof codeOrMessage === "string"
       ? normalizeAuthErrorCode(codeOrMessage)
       : extractAuthErrorCode(codeOrMessage);
+
+  const rateLimited = getRateLimitMessage(codeOrMessage);
+  if (rateLimited) {
+    return rateLimited;
+  }
 
   if (code && authErrorCodeToKey[code]) {
     return i18next.t(authErrorCodeToKey[code], { defaultValue: fallback });

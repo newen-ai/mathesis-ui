@@ -9,6 +9,7 @@ import { normalizeEmailInput } from "@/lib/utils/email";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { requestPasswordReset } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
+import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
 
 type ValidationErrors = {
   email?: string;
@@ -53,7 +54,7 @@ export default function ForgotPasswordPage() {
     if (!result.success) {
       setPopupInfo({
         title: t("common.serviceErrorTitle"),
-        message: result.message,
+        message: getRateLimitMessage(result.details) ?? result.message,
         details: formatApiErrorDetails(result.details, result.status),
       });
       setIsSubmitting(false);

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { register } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
+import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
@@ -136,10 +137,11 @@ export default function RegistroPage() {
     });
 
     if (!result.success) {
-      setErrors({ general: result.message });
+      const message = getRateLimitMessage(result.details) ?? result.message;
+      setErrors({ general: message });
       setPopupInfo({
         title: t("common.serviceErrorTitle"),
-        message: result.message,
+        message,
         details: formatApiErrorDetails(result.details, result.status),
       });
       setIsSubmitting(false);
