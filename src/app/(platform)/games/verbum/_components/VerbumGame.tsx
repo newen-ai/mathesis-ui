@@ -448,7 +448,7 @@ export function VerbumGame({ date }: { date: string | null }) {
               maxAttempts={state.puzzle.maxAttempts}
               guesses={state.play.guesses}
               input={input}
-              revealRow={revealRow}
+              revealRow={isRevealing ? revealRow : null}
               winRow={winRow}
               shakeKey={shakeKey}
             />

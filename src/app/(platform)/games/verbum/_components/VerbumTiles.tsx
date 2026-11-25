@@ -67,10 +67,9 @@ export function VerbumBoard({ length, maxAttempts, guesses, input, revealRow, wi
                   backgroundColor: color,
                   borderColor: color,
                   color: "var(--verbum-on-tile)",
+                  // The flip and the win bounce never overlap: the bounce starts once the reveal is over.
                   ...(isRevealing ? { animationDelay: `${delay}ms` } : {}),
-                  ...(isWinning
-                    ? { animationDelay: `${verbumRevealDurationMs(length) + columnIndex * 90}ms` }
-                    : {})
+                  ...(isWinning && !isRevealing ? { animationDelay: `${columnIndex * 90}ms` } : {})
                 } as CSSProperties;
 
                 return (
