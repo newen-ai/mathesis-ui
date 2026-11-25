@@ -38,7 +38,8 @@
       "absent": "La letra no está en la palabra.",
       "accents": "Las tildes no cuentan y la Ñ es una letra más.",
       "daily": "Hay una palabra nueva cada día a las 00:00 (hora de Argentina). Con el calendario podés jugar los días anteriores.",
-      "time": "El reloj empieza cuando abrís el desafío y se detiene con tu último intento. Si lo dejás y volvés más tarde, sigue contando."
+      "time": "El reloj empieza cuando abrís el desafío y se detiene con tu último intento. Si lo dejás y volvés más tarde, sigue contando.",
+      "editing": "Tocá cualquier casilla para escribir ahí. Con el teclado: ← y → para moverte, Backspace borra y vuelve una casilla, y _ deja la casilla vacía y avanza."
     },
     "errors": {
       "notAWord": "No está en la lista de palabras.",
@@ -97,7 +98,9 @@
         "CORRECT": "en su lugar",
         "PRESENT": "está en otro lugar",
         "ABSENT": "no está"
-      }
+      },
+      "slot": "Casilla {{position}}: {{letter}}",
+      "emptySlot": "vacía"
     },
     "time": {
       "label": "Tiempo de juego",

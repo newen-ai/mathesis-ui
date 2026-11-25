@@ -27,8 +27,8 @@ import {
 import { VerbumClock } from "./VerbumClock";
 import { VerbumDialog } from "./VerbumDialog";
 import { VerbumCalendarContent, VerbumHelpContent, VerbumStatsContent } from "./VerbumPanels";
-import { VerbumBoard, VerbumKeyboard, verbumRevealDurationMs } from "./VerbumTiles";
-import { initialVerbumPlayState, isVerbumFinished, verbumPlayReducer } from "./verbumPlayReducer";
+import { VerbumBoard, VerbumKeyboard, verbumRevealDurationMs, verbumWinBounceDurationMs } from "./VerbumTiles";
+import { initialVerbumPlayState, isVerbumFinished, verbumGuessFromSlots, verbumPlayReducer } from "./verbumPlayReducer";
 import { useEndExpiredSession, useVerbumRequest } from "./useVerbumRequest";
 
 const HELP_SEEN_STORAGE_KEY = "sophium-verbum-help-seen";
@@ -36,7 +36,7 @@ const MESSAGE_DURATION_MS = 1800;
 // Pause between the end of the last flip and scrolling the result panel into view.
 const RESULT_SCROLL_DELAY_MS = 450;
 
-type DialogKind = "help" | "stats" | "calendar";
+type DialogKind = "help" | "stats" | "calendar" | "win";
 
 const subscribeToNothing = () => () => undefined;
 
@@ -80,14 +80,14 @@ function Countdown({ target, onReached }: { target: string; onReached: () => voi
   );
 }
 
-function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload: () => void }) {
+// WhatsApp, native share sheet (when the device has one) and copy. Used in the result panel and the win modal.
+function VerbumShareActions({ state }: { state: VerbumPuzzleState }) {
   const { t } = useTranslation("games");
   const canNativeShare = useSyncExternalStore(
     subscribeToNothing,
     () => typeof navigator.share === "function",
     () => false
   );
-  const solution = state.solution;
 
   const shareText = useMemo(() => {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
@@ -111,6 +111,78 @@ function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload:
     }
   };
 
+  return (
+    <div className="flex flex-wrap justify-center gap-2">
+      <a
+        href={buildWhatsAppShareUrl(shareText)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold"
+        style={{ backgroundColor: "var(--verbum-correct)", color: "var(--verbum-on-tile)" }}
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+          <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z" />
+        </svg>
+        {t("verbum.result.shareWhatsApp")}
+      </a>
+      {canNativeShare ? (
+        <button
+          type="button"
+          onClick={() => void onNativeShare()}
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-500)] px-4 py-2.5 text-sm font-semibold text-[var(--on-brand)]"
+        >
+          {t("verbum.result.share")}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        onClick={() => void onCopy()}
+        className="inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
+      >
+        {t("verbum.result.copy")}
+      </button>
+    </div>
+  );
+}
+
+// Attempts, time and the answer.
+function VerbumResultSummary({ state, word }: { state: VerbumPuzzleState; word: string }) {
+  const { t } = useTranslation("games");
+  const won = state.play.status === "WON";
+
+  return (
+    <div className="text-center">
+      <p className="text-scale-2 text-[var(--text-secondary)]">
+        {won ? t("verbum.result.wonSubtitle", { count: state.play.attemptsUsed }) : t("verbum.result.lostSubtitle")}
+      </p>
+      {typeof state.play.elapsedMs === "number" ? (
+        <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
+          {t("verbum.time.result", { time: formatVerbumDuration(state.play.elapsedMs) })}
+        </p>
+      ) : null}
+      <p className="mt-3 font-display text-[2rem] font-bold tracking-[0.2em] text-[var(--heading-primary)]">{word}</p>
+    </div>
+  );
+}
+
+// Shown in a modal right after a win, so sharing is one tap away.
+function VerbumWinShare({ state }: { state: VerbumPuzzleState }) {
+  if (!state.solution) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-5">
+      <VerbumResultSummary state={state} word={state.solution.word} />
+      <VerbumShareActions state={state} />
+    </div>
+  );
+}
+
+function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload: () => void }) {
+  const { t } = useTranslation("games");
+  const solution = state.solution;
+
   if (!solution) {
     return null;
   }
@@ -119,19 +191,11 @@ function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload:
 
   return (
     <AppCard className="mx-auto w-full max-w-xl p-5 sm:p-6">
-      <div className="text-center">
-        <h2 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
-          {won ? t("verbum.result.wonTitle") : t("verbum.result.lostTitle")}
-        </h2>
-        <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
-          {won ? t("verbum.result.wonSubtitle", { count: state.play.attemptsUsed }) : t("verbum.result.lostSubtitle")}
-        </p>
-        {typeof state.play.elapsedMs === "number" ? (
-          <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
-            {t("verbum.time.result", { time: formatVerbumDuration(state.play.elapsedMs) })}
-          </p>
-        ) : null}
-        <p className="mt-3 font-display text-[2rem] font-bold tracking-[0.2em] text-[var(--heading-primary)]">{solution.word}</p>
+      <h2 className="text-center font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
+        {won ? t("verbum.result.wonTitle") : t("verbum.result.lostTitle")}
+      </h2>
+      <div className="mt-1">
+        <VerbumResultSummary state={state} word={solution.word} />
       </div>
 
       <div className="mt-4 rounded-2xl bg-[var(--surface-2)] p-4">
@@ -150,35 +214,8 @@ function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload:
         ) : null}
       </div>
 
-      <div className="mt-4 flex flex-wrap justify-center gap-2">
-        <a
-          href={buildWhatsAppShareUrl(shareText)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold"
-          style={{ backgroundColor: "var(--verbum-correct)", color: "var(--verbum-on-tile)" }}
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
-            <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.2c0-.1-.2-.2-.4-.3Z" />
-          </svg>
-          {t("verbum.result.shareWhatsApp")}
-        </a>
-        {canNativeShare ? (
-          <button
-            type="button"
-            onClick={() => void onNativeShare()}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-500)] px-4 py-2.5 text-sm font-semibold text-[var(--on-brand)]"
-          >
-            {t("verbum.result.share")}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => void onCopy()}
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] hover:bg-[var(--surface-2)]"
-        >
-          {t("verbum.result.copy")}
-        </button>
+      <div className="mt-4">
+        <VerbumShareActions state={state} />
       </div>
 
       <div className="mt-4 border-t border-[var(--line)] pt-3 text-center">
@@ -263,20 +300,24 @@ export function VerbumGame({ date }: { date: string | null }) {
     if (!state) return;
 
     const length = state.puzzle.length;
-    if (Array.from(play.input).length < length) {
+    const guess = verbumGuessFromSlots(play.slots);
+    if (!guess) {
       showMessage(t("verbum.errors.wrongLength", { count: length }));
       return;
     }
 
     dispatch({ type: "submitStarted" });
     try {
-      const response = await submitVerbumGuess(state.puzzle.date, play.input);
+      const response = await submitVerbumGuess(state.puzzle.date, guess);
       const next = response.data;
       setState(next);
       dispatch({ type: "revealStarted", next });
       schedule(() => {
         dispatch({ type: "revealEnded", next });
-        if (isVerbumFinished(next)) {
+        if (next.play.status === "WON") {
+          // Let the win bounce finish, then offer to share.
+          schedule(() => setDialog("win"), verbumWinBounceDurationMs(length));
+        } else if (isVerbumFinished(next)) {
           schedule(
             () => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
             RESULT_SCROLL_DELAY_MS
@@ -311,10 +352,14 @@ export function VerbumGame({ date }: { date: string | null }) {
       void submit();
     } else if (key === "BACKSPACE") {
       dispatch({ type: "erased" });
+    } else if (key === "SKIP") {
+      dispatch({ type: "skipped" });
+    } else if (key === "LEFT" || key === "RIGHT") {
+      dispatch({ type: "moved", delta: key === "LEFT" ? -1 : 1 });
     } else {
       const letter = normalizeVerbumInput(key);
       if (letter.length === 1) {
-        dispatch({ type: "typed", letter, maxLength: state.puzzle.length });
+        dispatch({ type: "typed", letter });
       }
     }
   };
@@ -330,6 +375,12 @@ export function VerbumGame({ date }: { date: string | null }) {
     } else if (event.key === "Backspace") {
       event.preventDefault();
       handleKey("BACKSPACE");
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      handleKey(event.key === "ArrowLeft" ? "LEFT" : "RIGHT");
+    } else if (event.key === "_") {
+      event.preventDefault();
+      handleKey("SKIP");
     } else if (event.key.length === 1 && /\p{L}/u.test(event.key)) {
       handleKey(event.key);
     }
@@ -420,7 +471,9 @@ export function VerbumGame({ date }: { date: string | null }) {
               length={state.puzzle.length}
               maxAttempts={state.puzzle.maxAttempts}
               guesses={state.play.guesses}
-              input={play.input}
+              slots={play.slots}
+              cursor={play.cursor}
+              onSelectTile={isLocked ? undefined : (index) => dispatch({ type: "selected", index })}
               revealRow={play.revealRow}
               winRow={play.winRow}
               shakeKey={shakeKey}
@@ -451,6 +504,11 @@ export function VerbumGame({ date }: { date: string | null }) {
       {dialog === "stats" ? (
         <VerbumDialog title={t("verbum.stats.title")} closeLabel={t("verbum.actions.close")} onClose={closeDialog}>
           <VerbumStatsContent highlightAttempts={state?.play.status === "WON" ? state.play.attemptsUsed : null} />
+        </VerbumDialog>
+      ) : null}
+      {dialog === "win" && state?.play.status === "WON" ? (
+        <VerbumDialog title={t("verbum.result.wonTitle")} closeLabel={t("verbum.actions.close")} onClose={closeDialog}>
+          <VerbumWinShare state={state} />
         </VerbumDialog>
       ) : null}
       {dialog === "calendar" ? (

@@ -38,7 +38,8 @@
       "absent": "The letter is not in the word.",
       "accents": "Accents don't count and Ñ is a letter of its own.",
       "daily": "There is a new word every day at 00:00 (Argentina time). Use the calendar to play past days.",
-      "time": "The clock starts when you open the puzzle and stops with your last guess. If you leave and come back later, it keeps counting."
+      "time": "The clock starts when you open the puzzle and stops with your last guess. If you leave and come back later, it keeps counting.",
+      "editing": "Tap any tile to type there. On a keyboard: ← and → move, Backspace clears and steps back, and _ clears the tile and moves on."
     },
     "errors": {
       "notAWord": "Not in the word list.",
@@ -97,7 +98,9 @@
         "CORRECT": "in the right spot",
         "PRESENT": "in another spot",
         "ABSENT": "not in the word"
-      }
+      },
+      "slot": "Tile {{position}}: {{letter}}",
+      "emptySlot": "empty"
     },
     "time": {
       "label": "Game time",
