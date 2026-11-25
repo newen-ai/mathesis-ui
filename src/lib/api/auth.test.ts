@@ -23,6 +23,11 @@ describe("auth service calls", () => {
     ["register", () => register({ firstName: "Ana", lastName: "Paz", email: "a@x.com", password: "P4ss!" }), "POST", "/auth/register", { firstName: "Ana", lastName: "Paz", email: "a@x.com", password: "P4ss!" }],
     ["login", () => login({ email: "a@x.com", password: "P4ss!" }), "POST", "/auth/login", { email: "a@x.com", password: "P4ss!" }],
     ["requestPasswordReset", () => requestPasswordReset({ email: "a@x.com" }), "POST", "/auth/request-reset", { email: "a@x.com" }],
+    // Turnstile token: sent only when there is one.
+    ["register (captcha)", () => register({ firstName: "Ana", lastName: "Paz", email: "a@x.com", password: "P4ss!", captchaToken: "tok" }), "POST", "/auth/register", { firstName: "Ana", lastName: "Paz", email: "a@x.com", password: "P4ss!", captchaToken: "tok" }],
+    ["login (captcha)", () => login({ email: "a@x.com", password: "P4ss!", captchaToken: "tok" }), "POST", "/auth/login", { email: "a@x.com", password: "P4ss!", captchaToken: "tok" }],
+    ["login (no captcha token)", () => login({ email: "a@x.com", password: "P4ss!", captchaToken: null }), "POST", "/auth/login", { email: "a@x.com", password: "P4ss!" }],
+    ["requestPasswordReset (captcha)", () => requestPasswordReset({ email: "a@x.com", captchaToken: "tok" }), "POST", "/auth/request-reset", { email: "a@x.com", captchaToken: "tok" }],
     ["requestVerificationEmail", () => requestVerificationEmail({ email: "a@x.com" }), "POST", "/auth/request-verification", { email: "a@x.com" }],
     ["verifyEmail", () => verifyEmail("a b&c"), "GET", "/auth/confirm?token=a%20b%26c", undefined],
     ["resetPassword", () => resetPassword({ token: "t", newPassword: "N3w!" }), "POST", "/auth/confirm-reset", { token: "t", newPassword: "N3w!" }],

@@ -7,21 +7,30 @@ import { traceUiAction } from "@/lib/observability/spans";
 
 export type SessionRole = "user" | "admin";
 
-type RegisterInput = {
+// Cloudflare Turnstile token, sent only when the widget produced one (CAPTCHA off = never sent).
+type CaptchaInput = {
+	captchaToken?: string | null;
+};
+
+type RegisterInput = CaptchaInput & {
 	firstName: string;
 	lastName: string;
 	email: string;
 	password: string;
 };
 
-type LoginInput = {
+type LoginInput = CaptchaInput & {
 	email: string;
 	password: string;
 };
 
-type RequestPasswordResetInput = {
+type RequestPasswordResetInput = CaptchaInput & {
 	email: string;
 };
+
+function captchaBody(input: CaptchaInput): { captchaToken?: string } {
+	return input.captchaToken ? { captchaToken: input.captchaToken } : {};
+}
 
 type RequestVerificationEmailInput = {
 	email: string;
@@ -88,6 +97,7 @@ export async function register(
 				lastName: input.lastName,
 				email: input.email,
 				password: input.password,
+				...captchaBody(input),
 			},
 		});
 
@@ -123,6 +133,7 @@ async function requestLogin(
 			body: {
 				email: input.email,
 				password: input.password,
+				...captchaBody(input),
 			},
 		});
 
@@ -151,6 +162,7 @@ export async function requestPasswordReset(
 			method: "POST",
 			body: {
 				email: input.email,
+				...captchaBody(input),
 			},
 		});
 

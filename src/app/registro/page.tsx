@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { register } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
-import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
+import { getCaptchaErrorMessage, getRateLimitMessage } from "@/lib/i18n/auth-errors";
+import { useTurnstile } from "@/components/auth/TurnstileWidget";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
@@ -23,6 +24,7 @@ type ValidationErrors = {
   password?: string;
   confirmPassword?: string;
   terms?: string;
+  captcha?: string;
   general?: string;
 };
 
@@ -48,6 +50,7 @@ export default function RegistroPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const captcha = useTurnstile("flex justify-center");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -123,6 +126,10 @@ export default function RegistroPage() {
       nextErrors.terms = t("register.errors.termsRequired");
     }
 
+    if (captcha.enabled && !captcha.token) {
+      nextErrors.captcha = t("captchaRequired");
+    }
+
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -134,10 +141,13 @@ export default function RegistroPage() {
       lastName: lastName.trim(),
       email: normalizedEmail,
       password,
+      captchaToken: captcha.token,
     });
+    // Turnstile tokens are single-use.
+    captcha.reset();
 
     if (!result.success) {
-      const message = getRateLimitMessage(result.details) ?? result.message;
+      const message = getRateLimitMessage(result.details) ?? getCaptchaErrorMessage(result.details) ?? result.message;
       setErrors({ general: message });
       setPopupInfo({
         title: t("common.serviceErrorTitle"),
@@ -543,6 +553,11 @@ export default function RegistroPage() {
                   </label>
                   {errors.terms ? (
                     <p className="text-xs font-medium text-red-700">{errors.terms}</p>
+                  ) : null}
+
+                  {captcha.widget}
+                  {errors.captcha ? (
+                    <p className="text-center text-xs font-medium text-red-700">{errors.captcha}</p>
                   ) : null}
 
                   {errors.general ? (

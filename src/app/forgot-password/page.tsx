@@ -9,10 +9,12 @@ import { normalizeEmailInput } from "@/lib/utils/email";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { requestPasswordReset } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
-import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
+import { getCaptchaErrorMessage, getRateLimitMessage } from "@/lib/i18n/auth-errors";
+import { useTurnstile } from "@/components/auth/TurnstileWidget";
 
 type ValidationErrors = {
   email?: string;
+  captcha?: string;
 };
 
 function isValidEmail(email: string) {
@@ -25,6 +27,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const captcha = useTurnstile("flex justify-center");
   const [popupInfo, setPopupInfo] = useState<{
     title: string;
     message: string;
@@ -41,6 +44,10 @@ export default function ForgotPasswordPage() {
       nextErrors.email = t("forgotPassword.errors.emailInvalid");
     }
 
+    if (captcha.enabled && !captcha.token) {
+      nextErrors.captcha = t("captchaRequired");
+    }
+
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0) {
@@ -49,12 +56,14 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
 
-    const result = await requestPasswordReset({ email: trimmedEmail });
+    const result = await requestPasswordReset({ email: trimmedEmail, captchaToken: captcha.token });
+    // Turnstile tokens are single-use.
+    captcha.reset();
 
     if (!result.success) {
       setPopupInfo({
         title: t("common.serviceErrorTitle"),
-        message: getRateLimitMessage(result.details) ?? result.message,
+        message: getRateLimitMessage(result.details) ?? getCaptchaErrorMessage(result.details) ?? result.message,
         details: formatApiErrorDetails(result.details, result.status),
       });
       setIsSubmitting(false);
@@ -182,6 +191,11 @@ export default function ForgotPasswordPage() {
                   </p>
                 ) : null}
               </div>
+
+              {captcha.widget}
+              {errors.captcha ? (
+                <p className="text-center text-sm font-medium text-red-600">{errors.captcha}</p>
+              ) : null}
 
               <button
                 type="submit"
