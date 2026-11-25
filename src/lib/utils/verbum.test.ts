@@ -5,6 +5,7 @@ import {
   buildVerbumShareText,
   buildWhatsAppShareUrl,
   formatCountdown,
+  formatVerbumDuration,
   formatVerbumDate,
   isVerbumDateKey,
   normalizeVerbumInput,
@@ -54,6 +55,19 @@ describe("verbum utils", () => {
     );
     expect(text).not.toContain("ROBOT");
     expect(buildVerbumShareText(stateWith("LOST"), "u").split("\n")[0]).toContain("X/6");
+  });
+
+  it("adds the game time to the share text when the backend sends it", () => {
+    const timed = { ...stateWith("WON"), play: { ...stateWith("WON").play, elapsedMs: 155_000 } };
+    expect(buildVerbumShareText(timed, "u").split("\n")[0]).toBe("Verbum #1 · 24/11/2026 · 2/6 · ⏱️ 2:35");
+  });
+
+  it("formats game times", () => {
+    expect(formatVerbumDuration(0)).toBe("0:00");
+    expect(formatVerbumDuration(155_900)).toBe("2:35");
+    expect(formatVerbumDuration(3_755_000)).toBe("1:02:35");
+    expect(formatVerbumDuration(26 * 3_600_000)).toBe("26:00:00");
+    expect(formatVerbumDuration(-1)).toBe("0:00");
   });
 
   it("encodes the WhatsApp link", () => {

@@ -20,9 +20,11 @@ import {
   buildWhatsAppShareUrl,
   formatCountdown,
   formatVerbumDate,
+  formatVerbumDuration,
   normalizeVerbumInput,
   verbumPuzzlePath
 } from "@/lib/utils/verbum";
+import { VerbumClock } from "./VerbumClock";
 import { VerbumDialog } from "./VerbumDialog";
 import { VerbumCalendarContent, VerbumHelpContent, VerbumStatsContent } from "./VerbumPanels";
 import { VerbumBoard, VerbumKeyboard, verbumRevealDurationMs } from "./VerbumTiles";
@@ -124,6 +126,11 @@ function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload:
         <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
           {won ? t("verbum.result.wonSubtitle", { count: state.play.attemptsUsed }) : t("verbum.result.lostSubtitle")}
         </p>
+        {typeof state.play.elapsedMs === "number" ? (
+          <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
+            {t("verbum.time.result", { time: formatVerbumDuration(state.play.elapsedMs) })}
+          </p>
+        ) : null}
         <p className="mt-3 font-display text-[2rem] font-bold tracking-[0.2em] text-[var(--heading-primary)]">{solution.word}</p>
       </div>
 
@@ -346,6 +353,9 @@ export function VerbumGame({ date }: { date: string | null }) {
           {state ? (
             <p className="flex flex-wrap items-center gap-2 text-scale-2 text-[var(--text-secondary)]">
               {t("verbum.puzzleLabel", { number: state.puzzle.number, date: formatVerbumDate(state.puzzle.date) })}
+              {typeof state.play.elapsedMs === "number" ? (
+                <VerbumClock key={state.play.elapsedMs} elapsedMs={state.play.elapsedMs} running={!isFinished} />
+              ) : null}
               {!state.puzzle.isToday ? (
                 <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.08em] text-[var(--brand-700)]">
                   {t("verbum.archiveBadge")}

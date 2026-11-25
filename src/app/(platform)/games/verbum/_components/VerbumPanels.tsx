@@ -47,6 +47,7 @@ export function VerbumHelpContent() {
         <p className="text-[var(--text-secondary)]">{t("verbum.help.absent")}</p>
       </div>
       <p>{t("verbum.help.accents")}</p>
+      <p>{t("verbum.help.time")}</p>
       <p className="border-t border-[var(--line)] pt-3 text-[var(--text-secondary)]">{t("verbum.help.daily")}</p>
     </div>
   );

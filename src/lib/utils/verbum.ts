@@ -23,10 +23,20 @@ export function formatVerbumDate(dateKey: string): string {
   return `${day}/${month}/${year}`;
 }
 
+// Game time: "2:35" under an hour, "1:02:35" beyond (hours keep counting past 24).
+export function formatVerbumDuration(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}` : `${minutes}:${seconds}`;
+}
+
 // Text shared to WhatsApp and other apps: colors only, never the letters.
 export function buildVerbumShareText(state: VerbumPuzzleState, url: string): string {
   const score = state.play.status === "WON" ? String(state.play.attemptsUsed) : "X";
-  const header = `Verbum #${state.puzzle.number} · ${formatVerbumDate(state.puzzle.date)} · ${score}/${state.puzzle.maxAttempts}`;
+  const time = typeof state.play.elapsedMs === "number" ? ` · ⏱️ ${formatVerbumDuration(state.play.elapsedMs)}` : "";
+  const header = `Verbum #${state.puzzle.number} · ${formatVerbumDate(state.puzzle.date)} · ${score}/${state.puzzle.maxAttempts}${time}`;
   const grid = state.play.guesses.map((guess) => guess.letters.map((letter) => SHARE_SQUARES[letter.state]).join(""));
   return [header, ...grid, url].join("\n");
 }

@@ -37,7 +37,8 @@
       "present": "La letra está en la palabra, pero en otro lugar.",
       "absent": "La letra no está en la palabra.",
       "accents": "Las tildes no cuentan y la Ñ es una letra más.",
-      "daily": "Hay una palabra nueva cada día a las 00:00 (hora de Argentina). Con el calendario podés jugar los días anteriores."
+      "daily": "Hay una palabra nueva cada día a las 00:00 (hora de Argentina). Con el calendario podés jugar los días anteriores.",
+      "time": "El reloj empieza cuando abrís el desafío y se detiene con tu último intento. Si lo dejás y volvés más tarde, sigue contando."
     },
     "errors": {
       "notAWord": "No está en la lista de palabras.",
@@ -97,6 +98,11 @@
         "PRESENT": "está en otro lugar",
         "ABSENT": "no está"
       }
+    },
+    "time": {
+      "label": "Tiempo de juego",
+      "aria": "Tiempo de juego: {{time}}",
+      "result": "Tiempo: {{time}}"
     }
   }
 }

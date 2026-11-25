@@ -21,6 +21,9 @@ export type VerbumPuzzleState = {
     attemptsUsed: number;
     guesses: Array<{ word: string; letters: VerbumEvaluatedLetter[] }>;
     finishedOnPuzzleDay: boolean;
+    // Wall-clock ms since the puzzle was opened: final once the game is over, running until then.
+    // Optional: older backends do not send it.
+    elapsedMs?: number | null;
   };
   solution: {
     word: string;
