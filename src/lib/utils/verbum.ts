@@ -6,6 +6,17 @@ const SHARE_SQUARES: Record<VerbumLetterState, string> = {
   ABSENT: "⬛"
 };
 
+// Routes of the game. Today's puzzle lives at the root; past days at /games/verbum/YYYY-MM-DD/.
+export const VERBUM_HOME_PATH = "/games/verbum/";
+
+export function verbumPuzzlePath(dateKey: string, todayKey?: string): string {
+  return dateKey === todayKey ? VERBUM_HOME_PATH : `${VERBUM_HOME_PATH}${dateKey}/`;
+}
+
+export function isVerbumDateKey(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
 // "2026-11-24" -> "24/11/2026" (the date is already an Argentina calendar day; no time zone math).
 export function formatVerbumDate(dateKey: string): string {
   const [year, month, day] = dateKey.split("-");
@@ -43,7 +54,8 @@ export function buildVerbumKeyboardStates(state: VerbumPuzzleState | null): Map<
   return result;
 }
 
-// Same rule as the backend: uppercase, accents dropped, Ñ kept.
+// Mirrors normalizeVerbumWord in the backend engine (uppercase, accents dropped, Ñ kept). The test cases in
+// verbum.test.ts mirror the backend's verbum-engine.test.ts: change both together.
 export function normalizeVerbumInput(raw: string): string {
   return raw
     .toUpperCase()

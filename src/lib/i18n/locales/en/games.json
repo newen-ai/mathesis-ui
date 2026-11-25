@@ -87,6 +87,16 @@
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
       "weekdays": "M,T,W,T,F,S,S"
+    },
+    "a11y": {
+      "board": "Verbum board",
+      "keyboard": "Keyboard",
+      "tile": "{{letter}}, {{state}}",
+      "states": {
+        "CORRECT": "in the right spot",
+        "PRESENT": "in another spot",
+        "ABSENT": "not in the word"
+      }
     }
   }
 }

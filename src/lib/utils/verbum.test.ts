@@ -6,7 +6,9 @@ import {
   buildWhatsAppShareUrl,
   formatCountdown,
   formatVerbumDate,
-  normalizeVerbumInput
+  isVerbumDateKey,
+  normalizeVerbumInput,
+  verbumPuzzlePath
 } from "@/lib/utils/verbum";
 
 function stateWith(status: VerbumPuzzleState["play"]["status"]): VerbumPuzzleState {
@@ -65,9 +67,22 @@ describe("verbum utils", () => {
     expect(buildVerbumKeyboardStates(null).size).toBe(0);
   });
 
+  // Same cases as "normalizes accents but keeps Ñ" in the backend's verbum-engine.test.ts.
   it("normalizes typed input like the backend", () => {
+    expect(normalizeVerbumInput(" átomo ")).toBe("ATOMO");
     expect(normalizeVerbumInput("Diseño")).toBe("DISEÑO");
+    expect(normalizeVerbumInput("pingüino")).toBe("PINGUINO");
+    expect(normalizeVerbumInput("SEÑAL")).toBe("SEÑAL");
+    // UI only: anything that is not a letter is dropped while typing.
     expect(normalizeVerbumInput("átomo 1")).toBe("ATOMO");
+  });
+
+  it("builds game routes and validates day keys", () => {
+    expect(verbumPuzzlePath("2026-11-24", "2026-11-24")).toBe("/games/verbum/");
+    expect(verbumPuzzlePath("2026-11-20", "2026-11-24")).toBe("/games/verbum/2026-11-20/");
+    expect(verbumPuzzlePath("2026-11-20")).toBe("/games/verbum/2026-11-20/");
+    expect(isVerbumDateKey("2026-11-24")).toBe(true);
+    expect(isVerbumDateKey("24/11/2026")).toBe(false);
   });
 
   it("formats dates and countdowns", () => {

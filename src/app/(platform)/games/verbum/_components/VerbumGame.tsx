@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useEffectEvent, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { logout } from "@/lib/api/auth";
+import { AppCard } from "@/components/ui/AppCard";
 import {
   getVerbumErrorCode,
   getVerbumPuzzle,
@@ -15,27 +14,29 @@ import {
 } from "@/lib/api/verbum";
 import { withBasePath } from "@/lib/assets";
 import {
+  VERBUM_HOME_PATH,
   buildVerbumKeyboardStates,
   buildVerbumShareText,
   buildWhatsAppShareUrl,
   formatCountdown,
   formatVerbumDate,
-  normalizeVerbumInput
+  normalizeVerbumInput,
+  verbumPuzzlePath
 } from "@/lib/utils/verbum";
 import { VerbumDialog } from "./VerbumDialog";
 import { VerbumCalendarContent, VerbumHelpContent, VerbumStatsContent } from "./VerbumPanels";
 import { VerbumBoard, VerbumKeyboard, verbumRevealDurationMs } from "./VerbumTiles";
+import { initialVerbumPlayState, isVerbumFinished, verbumPlayReducer } from "./verbumPlayReducer";
+import { useEndExpiredSession, useVerbumRequest } from "./useVerbumRequest";
 
 const HELP_SEEN_STORAGE_KEY = "sophium-verbum-help-seen";
 const MESSAGE_DURATION_MS = 1800;
+// Pause between the end of the last flip and scrolling the result panel into view.
+const RESULT_SCROLL_DELAY_MS = 450;
 
 type DialogKind = "help" | "stats" | "calendar";
 
 const subscribeToNothing = () => () => undefined;
-
-function isFinished(state: VerbumPuzzleState | null): boolean {
-  return state?.play.status === "WON" || state?.play.status === "LOST";
-}
 
 function HeaderButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -88,7 +89,7 @@ function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload:
 
   const shareText = useMemo(() => {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
-    return buildVerbumShareText(state, `${origin}${withBasePath(`/games/verbum/${state.puzzle.date}/`)}`);
+    return buildVerbumShareText(state, `${origin}${withBasePath(verbumPuzzlePath(state.puzzle.date))}`);
   }, [state]);
 
   const onCopy = async () => {
@@ -115,7 +116,7 @@ function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload:
   const won = state.play.status === "WON";
 
   return (
-    <section className="mx-auto w-full max-w-xl rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-sm sm:p-6">
+    <AppCard className="mx-auto w-full max-w-xl p-5 sm:p-6">
       <div className="text-center">
         <h2 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
           {won ? t("verbum.result.wonTitle") : t("verbum.result.lostTitle")}
@@ -181,77 +182,52 @@ function VerbumResult({ state, onReload }: { state: VerbumPuzzleState; onReload:
             {!state.play.finishedOnPuzzleDay ? (
               <p className="text-xs text-[var(--text-secondary)]">{t("verbum.result.archiveNote")}</p>
             ) : null}
-            <Link href="/games/verbum/" className="text-scale-2 font-semibold text-[var(--link-accent)] hover:underline">
+            <Link href={VERBUM_HOME_PATH} className="text-scale-2 font-semibold text-[var(--link-accent)] hover:underline">
               {t("verbum.backToToday")} →
             </Link>
           </div>
         )}
       </div>
-    </section>
+    </AppCard>
   );
 }
 
 export function VerbumGame({ date }: { date: string | null }) {
   const { t } = useTranslation("games");
-  const [state, setState] = useState<VerbumPuzzleState | null>(null);
-  const [loadErrorCode, setLoadErrorCode] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reloadToken, setReloadToken] = useState(0);
-  const [input, setInput] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [revealRow, setRevealRow] = useState<number | null>(null);
-  const [isRevealing, setIsRevealing] = useState(false);
-  const [keyboardSource, setKeyboardSource] = useState<VerbumPuzzleState | null>(null);
+  const [play, dispatch] = useReducer(verbumPlayReducer, initialVerbumPlayState);
+  const {
+    data: state,
+    setData: setState,
+    errorCode: loadErrorCode,
+    isLoading,
+    reload
+  } = useVerbumRequest(date ?? "today", async (signal) => {
+    const response = await getVerbumPuzzle(date, signal);
+    dispatch({ type: "loaded", puzzle: response.data });
+    return response.data;
+  });
   const [shakeKey, setShakeKey] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogKind | null>(null);
+  const timers = useRef(new Set<number>());
   const messageTimer = useRef<number | null>(null);
-  const revealTimer = useRef<number | null>(null);
   const resultRef = useRef<HTMLDivElement | null>(null);
-  const router = useRouter();
+  const endExpiredSession = useEndExpiredSession();
 
-  // The access token has no refresh flow: once it expires every request returns 401. Same handling as the
-  // top bar: clear the session and send the user to log in (their guesses are already saved server-side).
-  const endExpiredSession = async () => {
-    toast(t("verbum.errors.sessionExpired"));
-    await logout();
-    router.replace("/login");
-    router.refresh();
-  };
-  const onLoadSessionExpired = useEffectEvent(() => {
-    void endExpiredSession();
-  });
+  // Every timeout goes through here so none fires after the page is gone.
+  const schedule = useCallback((callback: () => void, delayMs: number) => {
+    const id = window.setTimeout(() => {
+      timers.current.delete(id);
+      callback();
+    }, delayMs);
+    timers.current.add(id);
+    return id;
+  }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    const load = async () => {
-      setIsLoading(true);
-      setLoadErrorCode(null);
-      try {
-        const response = await getVerbumPuzzle(date, controller.signal);
-        setState(response.data);
-        setKeyboardSource(response.data);
-        setInput("");
-        setRevealRow(null);
-        setIsRevealing(false);
-      } catch (error) {
-        if (controller.signal.aborted) {
-          return;
-        }
-        if (isVerbumSessionExpired(error)) {
-          onLoadSessionExpired();
-          return;
-        }
-        setLoadErrorCode(getVerbumErrorCode(error) ?? "LOAD_FAILED");
-      }
-      setIsLoading(false);
-    };
-
-    void load();
-
-    return () => controller.abort();
-  }, [date, reloadToken]);
+    const pending = timers.current;
+    return () => pending.forEach((id) => window.clearTimeout(id));
+  }, []);
 
   useEffect(() => {
     // First visit: show how to play once. Deferred so the first paint matches the server render.
@@ -264,51 +240,44 @@ export function VerbumGame({ date }: { date: string | null }) {
     return () => window.clearTimeout(timer);
   }, []);
 
-  useEffect(
-    () => () => {
+  const showMessage = useCallback(
+    (text: string, shake = true) => {
+      setMessage(text);
+      if (shake) {
+        setShakeKey((value) => value + 1);
+      }
       if (messageTimer.current) window.clearTimeout(messageTimer.current);
-      if (revealTimer.current) window.clearTimeout(revealTimer.current);
+      messageTimer.current = schedule(() => setMessage(null), MESSAGE_DURATION_MS);
     },
-    []
+    [schedule]
   );
-
-  const showMessage = useCallback((text: string, shake = true) => {
-    setMessage(text);
-    if (shake) {
-      setShakeKey((value) => value + 1);
-    }
-    if (messageTimer.current) window.clearTimeout(messageTimer.current);
-    messageTimer.current = window.setTimeout(() => setMessage(null), MESSAGE_DURATION_MS);
-  }, []);
-
-  const reload = useCallback(() => setReloadToken((value) => value + 1), []);
 
   const submit = async () => {
     if (!state) return;
 
     const length = state.puzzle.length;
-    if (Array.from(input).length < length) {
+    if (Array.from(play.input).length < length) {
       showMessage(t("verbum.errors.wrongLength", { count: length }));
       return;
     }
 
-    setIsSubmitting(true);
+    dispatch({ type: "submitStarted" });
     try {
-      const response = await submitVerbumGuess(state.puzzle.date, input);
+      const response = await submitVerbumGuess(state.puzzle.date, play.input);
       const next = response.data;
       setState(next);
-      setInput("");
-      setRevealRow(next.play.guesses.length - 1);
-      setIsRevealing(true);
-      if (revealTimer.current) window.clearTimeout(revealTimer.current);
-      revealTimer.current = window.setTimeout(() => {
-        setIsRevealing(false);
-        setKeyboardSource(next);
-        if (isFinished(next)) {
-          window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 450);
+      dispatch({ type: "revealStarted", next });
+      schedule(() => {
+        dispatch({ type: "revealEnded", next });
+        if (isVerbumFinished(next)) {
+          schedule(
+            () => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+            RESULT_SCROLL_DELAY_MS
+          );
         }
       }, verbumRevealDurationMs(length));
     } catch (error) {
+      dispatch({ type: "submitFailed" });
       const code = getVerbumErrorCode(error);
       if (isVerbumSessionExpired(error)) {
         void endExpiredSession();
@@ -322,29 +291,24 @@ export function VerbumGame({ date }: { date: string | null }) {
       } else {
         showMessage(t("verbum.errors.submit"), false);
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const isLocked = !state || isFinished(state) || isSubmitting || isRevealing;
+  const isFinished = isVerbumFinished(state);
+  const isLocked = !state || isFinished || play.phase !== "idle";
 
   const handleKey = (key: string) => {
-    if (isLocked || !state) return;
+    if (isLocked) return;
 
     if (key === "ENTER") {
       void submit();
-      return;
-    }
-
-    if (key === "BACKSPACE") {
-      setInput((value) => Array.from(value).slice(0, -1).join(""));
-      return;
-    }
-
-    const letter = normalizeVerbumInput(key);
-    if (letter.length === 1) {
-      setInput((value) => (Array.from(value).length < state.puzzle.length ? value + letter : value));
+    } else if (key === "BACKSPACE") {
+      dispatch({ type: "erased" });
+    } else {
+      const letter = normalizeVerbumInput(key);
+      if (letter.length === 1) {
+        dispatch({ type: "typed", letter, maxLength: state.puzzle.length });
+      }
     }
   };
 
@@ -370,9 +334,8 @@ export function VerbumGame({ date }: { date: string | null }) {
     return () => window.removeEventListener("keydown", listener);
   }, []);
 
-  const keyStates = useMemo(() => buildVerbumKeyboardStates(keyboardSource), [keyboardSource]);
+  const keyStates = useMemo(() => buildVerbumKeyboardStates(play.keyboardSource), [play.keyboardSource]);
   const closeDialog = useCallback(() => setDialog(null), []);
-  const winRow = state?.play.status === "WON" && revealRow !== null ? state.play.guesses.length - 1 : null;
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
@@ -416,13 +379,13 @@ export function VerbumGame({ date }: { date: string | null }) {
       {isLoading && !state ? (
         <p className="py-16 text-center text-scale-2 text-[var(--text-secondary)]">{t("verbum.loading")}</p>
       ) : loadErrorCode ? (
-        <div className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6 text-center">
+        <AppCard className="p-6 text-center">
           <p className="text-scale-2 text-[var(--text-primary)]">
             {loadErrorCode === "VERBUM_PUZZLE_NOT_AVAILABLE" ? t("verbum.errors.notAvailable") : t("verbum.errors.load")}
           </p>
           <div className="mt-3 flex justify-center gap-4">
             {loadErrorCode === "VERBUM_PUZZLE_NOT_AVAILABLE" ? (
-              <Link href="/games/verbum/" className="font-semibold text-[var(--link-accent)] hover:underline">
+              <Link href={VERBUM_HOME_PATH} className="font-semibold text-[var(--link-accent)] hover:underline">
                 {t("verbum.backToToday")} →
               </Link>
             ) : (
@@ -431,7 +394,7 @@ export function VerbumGame({ date }: { date: string | null }) {
               </button>
             )}
           </div>
-        </div>
+        </AppCard>
       ) : state ? (
         <>
           <div className="relative">
@@ -447,14 +410,14 @@ export function VerbumGame({ date }: { date: string | null }) {
               length={state.puzzle.length}
               maxAttempts={state.puzzle.maxAttempts}
               guesses={state.play.guesses}
-              input={input}
-              revealRow={isRevealing ? revealRow : null}
-              winRow={winRow}
+              input={play.input}
+              revealRow={play.revealRow}
+              winRow={play.winRow}
               shakeKey={shakeKey}
             />
           </div>
 
-          {isFinished(state) && !isRevealing ? (
+          {isFinished && play.phase !== "revealing" ? (
             <div ref={resultRef}>
               <VerbumResult state={state} onReload={reload} />
             </div>
