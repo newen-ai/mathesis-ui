@@ -5,8 +5,11 @@ import {
   buildVerbumShareText,
   buildWhatsAppShareUrl,
   formatCountdown,
+  formatVerbumDuration,
   formatVerbumDate,
-  normalizeVerbumInput
+  isVerbumDateKey,
+  normalizeVerbumInput,
+  verbumPuzzlePath
 } from "@/lib/utils/verbum";
 
 function stateWith(status: VerbumPuzzleState["play"]["status"]): VerbumPuzzleState {
@@ -54,6 +57,19 @@ describe("verbum utils", () => {
     expect(buildVerbumShareText(stateWith("LOST"), "u").split("\n")[0]).toContain("X/6");
   });
 
+  it("adds the game time to the share text when the backend sends it", () => {
+    const timed = { ...stateWith("WON"), play: { ...stateWith("WON").play, elapsedMs: 155_000 } };
+    expect(buildVerbumShareText(timed, "u").split("\n")[0]).toBe("Verbum #1 · 24/11/2026 · 2/6 · ⏱️ 2:35");
+  });
+
+  it("formats game times", () => {
+    expect(formatVerbumDuration(0)).toBe("0:00");
+    expect(formatVerbumDuration(155_900)).toBe("2:35");
+    expect(formatVerbumDuration(3_755_000)).toBe("1:02:35");
+    expect(formatVerbumDuration(26 * 3_600_000)).toBe("26:00:00");
+    expect(formatVerbumDuration(-1)).toBe("0:00");
+  });
+
   it("encodes the WhatsApp link", () => {
     expect(buildWhatsAppShareUrl("a b\n🟩")).toBe("https://api.whatsapp.com/send?text=a%20b%0A%F0%9F%9F%A9");
   });
@@ -65,9 +81,22 @@ describe("verbum utils", () => {
     expect(buildVerbumKeyboardStates(null).size).toBe(0);
   });
 
+  // Same cases as "normalizes accents but keeps Ñ" in the backend's verbum-engine.test.ts.
   it("normalizes typed input like the backend", () => {
+    expect(normalizeVerbumInput(" átomo ")).toBe("ATOMO");
     expect(normalizeVerbumInput("Diseño")).toBe("DISEÑO");
+    expect(normalizeVerbumInput("pingüino")).toBe("PINGUINO");
+    expect(normalizeVerbumInput("SEÑAL")).toBe("SEÑAL");
+    // UI only: anything that is not a letter is dropped while typing.
     expect(normalizeVerbumInput("átomo 1")).toBe("ATOMO");
+  });
+
+  it("builds game routes and validates day keys", () => {
+    expect(verbumPuzzlePath("2026-11-24", "2026-11-24")).toBe("/games/verbum/");
+    expect(verbumPuzzlePath("2026-11-20", "2026-11-24")).toBe("/games/verbum/2026-11-20/");
+    expect(verbumPuzzlePath("2026-11-20")).toBe("/games/verbum/2026-11-20/");
+    expect(isVerbumDateKey("2026-11-24")).toBe(true);
+    expect(isVerbumDateKey("24/11/2026")).toBe(false);
   });
 
   it("formats dates and countdowns", () => {

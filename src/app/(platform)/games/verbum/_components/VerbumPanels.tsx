@@ -1,17 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  getVerbumCalendar,
-  getVerbumStats,
-  type VerbumCalendar,
-  type VerbumCalendarDay,
-  type VerbumLetterState,
-  type VerbumStats
-} from "@/lib/api/verbum";
+import { getVerbumCalendar, getVerbumStats, type VerbumLetterState, type VerbumPlayStatus } from "@/lib/api/verbum";
+import { isVerbumDateKey, verbumPuzzlePath } from "@/lib/utils/verbum";
 import { verbumStateColor } from "./VerbumTiles";
+import { useVerbumRequest } from "./useVerbumRequest";
 
 function ExampleRow({ word, highlight, state }: { word: string; highlight: number; state: VerbumLetterState }) {
   return (
@@ -52,6 +47,8 @@ export function VerbumHelpContent() {
         <p className="text-[var(--text-secondary)]">{t("verbum.help.absent")}</p>
       </div>
       <p>{t("verbum.help.accents")}</p>
+      <p>{t("verbum.help.editing")}</p>
+      <p>{t("verbum.help.time")}</p>
       <p className="border-t border-[var(--line)] pt-3 text-[var(--text-secondary)]">{t("verbum.help.daily")}</p>
     </div>
   );
@@ -59,22 +56,9 @@ export function VerbumHelpContent() {
 
 export function VerbumStatsContent({ highlightAttempts }: { highlightAttempts: number | null }) {
   const { t } = useTranslation("games");
-  const [stats, setStats] = useState<VerbumStats | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data: stats, errorCode } = useVerbumRequest("stats", async (signal) => (await getVerbumStats(signal)).data.stats);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    getVerbumStats(controller.signal)
-      .then((response) => setStats(response.data.stats))
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setFailed(true);
-        }
-      });
-    return () => controller.abort();
-  }, []);
-
-  if (failed) {
+  if (errorCode) {
     return <p className="text-scale-2 text-[var(--danger-500)]">{t("verbum.stats.load")}</p>;
   }
 
@@ -152,12 +136,13 @@ function dateKeyOf(year: number, month: number, day: number): string {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function dayStyle(day: VerbumCalendarDay | undefined) {
-  if (!day) {
+// Days outside the playable range (before launch, after today) have no status.
+function dayStyle(status: VerbumPlayStatus | undefined) {
+  if (!status) {
     return { className: "text-[var(--text-soft)] opacity-50", style: undefined };
   }
 
-  switch (day.status) {
+  switch (status) {
     case "WON":
       return { className: "font-semibold", style: { backgroundColor: "var(--verbum-correct)", color: "var(--verbum-on-tile)" } };
     case "LOST":
@@ -171,30 +156,17 @@ function dayStyle(day: VerbumCalendarDay | undefined) {
 
 export function VerbumCalendarContent({ currentDate, onNavigate }: { currentDate: string; onNavigate: () => void }) {
   const { t, i18n } = useTranslation("games");
-  const [calendar, setCalendar] = useState<VerbumCalendar | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data: calendar, errorCode } = useVerbumRequest("calendar", async (signal) => (await getVerbumCalendar(signal)).data);
   const [chosenMonth, setChosenMonth] = useState<MonthKey | null>(() =>
-    /^\d{4}-\d{2}-\d{2}$/.test(currentDate) ? monthOf(currentDate) : null
+    isVerbumDateKey(currentDate) ? monthOf(currentDate) : null
   );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getVerbumCalendar(controller.signal)
-      .then((response) => setCalendar(response.data))
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setFailed(true);
-        }
-      });
-    return () => controller.abort();
-  }, []);
 
   const dayByDate = useMemo(
     () => new Map((calendar?.days ?? []).map((day) => [day.date, day])),
     [calendar]
   );
 
-  if (failed) {
+  if (errorCode) {
     return <p className="text-scale-2 text-[var(--danger-500)]">{t("verbum.calendar.load")}</p>;
   }
 
@@ -216,11 +188,11 @@ export function VerbumCalendarContent({ currentDate, onNavigate }: { currentDate
   const canGoBack = compareMonths(visibleMonth, firstMonth) > 0;
   const canGoForward = compareMonths(visibleMonth, lastMonth) < 0;
 
-  const legend: Array<{ label: string; day: VerbumCalendarDay["status"] }> = [
-    { label: t("verbum.calendar.won"), day: "WON" },
-    { label: t("verbum.calendar.lost"), day: "LOST" },
-    { label: t("verbum.calendar.inProgress"), day: "IN_PROGRESS" },
-    { label: t("verbum.calendar.notStarted"), day: "NOT_STARTED" }
+  const legend: Array<{ label: string; status: VerbumPlayStatus }> = [
+    { label: t("verbum.calendar.won"), status: "WON" },
+    { label: t("verbum.calendar.lost"), status: "LOST" },
+    { label: t("verbum.calendar.inProgress"), status: "IN_PROGRESS" },
+    { label: t("verbum.calendar.notStarted"), status: "NOT_STARTED" }
   ];
 
   return (
@@ -261,7 +233,7 @@ export function VerbumCalendarContent({ currentDate, onNavigate }: { currentDate
         {Array.from({ length: daysInMonth }, (_, index) => {
           const dateKey = dateKeyOf(visibleMonth.year, visibleMonth.month, index + 1);
           const day = dayByDate.get(dateKey);
-          const { className, style } = dayStyle(day);
+          const { className, style } = dayStyle(day?.status);
           const isCurrent = dateKey === currentDate;
           const cellClass = `flex aspect-square items-center justify-center rounded-lg ${className} ${
             isCurrent ? "ring-2 ring-[var(--brand-500)] ring-offset-1 ring-offset-[var(--surface)]" : ""
@@ -275,10 +247,8 @@ export function VerbumCalendarContent({ currentDate, onNavigate }: { currentDate
             );
           }
 
-          const href = dateKey === calendar.today ? "/games/verbum/" : `/games/verbum/${dateKey}/`;
-
           return (
-            <Link key={dateKey} href={href} onClick={onNavigate} className={cellClass} style={style} title={`#${day.number}`}>
+            <Link key={dateKey} href={verbumPuzzlePath(dateKey, calendar.today)} onClick={onNavigate} className={cellClass} style={style} title={`#${day.number}`}>
               {index + 1}
             </Link>
           );
@@ -287,9 +257,9 @@ export function VerbumCalendarContent({ currentDate, onNavigate }: { currentDate
 
       <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-[var(--line)] pt-3 text-xs text-[var(--text-secondary)]">
         {legend.map((item) => {
-          const { className, style } = dayStyle({ date: "", number: 0, attemptsUsed: 0, finishedOnPuzzleDay: false, status: item.day });
+          const { className, style } = dayStyle(item.status);
           return (
-            <span key={item.day} className="flex items-center gap-1.5">
+            <span key={item.status} className="flex items-center gap-1.5">
               <span className={`inline-block h-3.5 w-3.5 rounded ${className}`} style={style} />
               {item.label}
             </span>

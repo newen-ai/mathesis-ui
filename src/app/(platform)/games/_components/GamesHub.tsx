@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getVerbumPuzzle, type VerbumPlayStatus } from "@/lib/api/verbum";
+import { getVerbumCalendar, type VerbumPlayStatus } from "@/lib/api/verbum";
+import { VERBUM_HOME_PATH } from "@/lib/utils/verbum";
+import { useVerbumRequest } from "../verbum/_components/useVerbumRequest";
 
 const STATUS_KEYS: Record<VerbumPlayStatus, string> = {
   WON: "hub.verbum.statusWon",
@@ -14,15 +15,11 @@ const STATUS_KEYS: Record<VerbumPlayStatus, string> = {
 
 export function GamesHub() {
   const { t } = useTranslation("games");
-  const [todayStatus, setTodayStatus] = useState<VerbumPlayStatus | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getVerbumPuzzle(null, controller.signal)
-      .then((response) => setTodayStatus(response.data.play.status))
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, []);
+  // The calendar is a read-only summary: unlike loading the puzzle, it never assigns today's word.
+  const { data: todayStatus } = useVerbumRequest("hub", async (signal) => {
+    const { data } = await getVerbumCalendar(signal);
+    return data.days.find((day) => day.date === data.today)?.status ?? "NOT_STARTED";
+  });
 
   return (
     <div className="space-y-5">
@@ -33,8 +30,8 @@ export function GamesHub() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Link
-          href="/games/verbum/"
-          className="group flex flex-col rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-sm transition-colors hover:border-[var(--brand-500)]"
+          href={VERBUM_HOME_PATH}
+          className="sophium-card group flex flex-col p-5 transition-colors hover:border-[var(--brand-500)]!"
         >
           <div className="flex items-center gap-1" aria-hidden="true">
             {["V", "E", "R", "B", "U", "M"].map((letter, index) => (

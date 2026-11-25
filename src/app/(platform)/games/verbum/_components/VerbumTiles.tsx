@@ -1,10 +1,13 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import type { VerbumEvaluatedLetter, VerbumLetterState } from "@/lib/api/verbum";
 
 export const VERBUM_FLIP_STEP_MS = 300;
 export const VERBUM_FLIP_DURATION_MS = 500;
+// Stagger between tiles of the win bounce.
+const VERBUM_WIN_STEP_MS = 90;
 
 export function verbumStateColor(state: VerbumLetterState): string {
   switch (state) {
@@ -17,6 +20,11 @@ export function verbumStateColor(state: VerbumLetterState): string {
   }
 }
 
+// The win bounce runs after the reveal: one stagger per tile plus the bounce itself (verbum-tile-win, 0.6s).
+export function verbumWinBounceDurationMs(length: number): number {
+  return (length - 1) * VERBUM_WIN_STEP_MS + 600;
+}
+
 export function verbumRevealDurationMs(length: number): number {
   return (length - 1) * VERBUM_FLIP_STEP_MS + VERBUM_FLIP_DURATION_MS;
 }
@@ -25,7 +33,11 @@ type VerbumBoardProps = {
   length: number;
   maxAttempts: number;
   guesses: Array<{ word: string; letters: VerbumEvaluatedLetter[] }>;
-  input: string;
+  // Letters of the row being typed ("" for empty tiles) and the selected tile.
+  slots: string[];
+  cursor: number;
+  // Set while the player can edit the row: tiles become buttons that select themselves.
+  onSelectTile?: (index: number) => void;
   revealRow: number | null;
   winRow: number | null;
   shakeKey: number;
@@ -34,15 +46,15 @@ type VerbumBoardProps = {
 const tileBase =
   "flex aspect-square items-center justify-center rounded-lg border-2 font-display font-bold uppercase leading-none select-none text-[clamp(1.05rem,5.2vw,1.85rem)]";
 
-export function VerbumBoard({ length, maxAttempts, guesses, input, revealRow, winRow, shakeKey }: VerbumBoardProps) {
-  const inputLetters = Array.from(input);
+export function VerbumBoard({ length, maxAttempts, guesses, slots, cursor, onSelectTile, revealRow, winRow, shakeKey }: VerbumBoardProps) {
+  const { t } = useTranslation("games");
 
   return (
     <div
       className="mx-auto grid w-full gap-1.5"
       style={{ maxWidth: `${length * 3.6}rem` }}
       role="grid"
-      aria-label="Verbum"
+      aria-label={t("verbum.a11y.board")}
     >
       {Array.from({ length: maxAttempts }, (_, rowIndex) => {
         const guess = guesses[rowIndex];
@@ -67,17 +79,16 @@ export function VerbumBoard({ length, maxAttempts, guesses, input, revealRow, wi
                   backgroundColor: color,
                   borderColor: color,
                   color: "var(--verbum-on-tile)",
+                  // The flip and the win bounce never overlap: the bounce starts once the reveal is over.
                   ...(isRevealing ? { animationDelay: `${delay}ms` } : {}),
-                  ...(isWinning
-                    ? { animationDelay: `${verbumRevealDurationMs(length) + columnIndex * 90}ms` }
-                    : {})
+                  ...(isWinning && !isRevealing ? { animationDelay: `${columnIndex * VERBUM_WIN_STEP_MS}ms` } : {})
                 } as CSSProperties;
 
                 return (
                   <div
                     key={columnIndex}
                     role="gridcell"
-                    aria-label={`${letter.letter} ${letter.state.toLowerCase()}`}
+                    aria-label={t("verbum.a11y.tile", { letter: letter.letter, state: t(`verbum.a11y.states.${letter.state}`) })}
                     className={`${tileBase} ${isRevealing ? "verbum-tile-reveal" : ""} ${isWinning && !isRevealing ? "verbum-tile-win" : ""}`}
                     style={style}
                   >
@@ -86,16 +97,34 @@ export function VerbumBoard({ length, maxAttempts, guesses, input, revealRow, wi
                 );
               }
 
-              const typed = isCurrentRow ? inputLetters[columnIndex] : undefined;
+              const typed = isCurrentRow ? slots[columnIndex] || undefined : undefined;
+              const isSelected = isCurrentRow && onSelectTile !== undefined && columnIndex === cursor;
+              const className = `${tileBase} bg-[var(--surface)] text-[var(--text-primary)] ${
+                isSelected
+                  ? "border-[var(--brand-500)] ring-2 ring-[var(--brand-500)] ring-offset-1 ring-offset-[var(--surface)]"
+                  : typed
+                    ? "border-[var(--text-secondary)]"
+                    : "border-[var(--line-strong)]"
+              } ${typed ? "verbum-tile-pop" : ""}`;
+
+              if (isCurrentRow && onSelectTile) {
+                return (
+                  <button
+                    key={typed ? `${columnIndex}-${typed}` : columnIndex}
+                    type="button"
+                    role="gridcell"
+                    aria-selected={isSelected}
+                    aria-label={t("verbum.a11y.slot", { position: columnIndex + 1, letter: typed ?? t("verbum.a11y.emptySlot") })}
+                    onClick={() => onSelectTile(columnIndex)}
+                    className={`${className} cursor-pointer`}
+                  >
+                    {typed ?? ""}
+                  </button>
+                );
+              }
 
               return (
-                <div
-                  key={typed ? `${columnIndex}-${typed}` : columnIndex}
-                  role="gridcell"
-                  className={`${tileBase} bg-[var(--surface)] text-[var(--text-primary)] ${
-                    typed ? "verbum-tile-pop border-[var(--text-secondary)]" : "border-[var(--line-strong)]"
-                  }`}
-                >
+                <div key={typed ? `${columnIndex}-${typed}` : columnIndex} role="gridcell" className={className}>
                   {typed ?? ""}
                 </div>
               );
@@ -122,8 +151,10 @@ type VerbumKeyboardProps = {
 };
 
 export function VerbumKeyboard({ keyStates, disabled, enterLabel, deleteLabel, onKey }: VerbumKeyboardProps) {
+  const { t } = useTranslation("games");
+
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-1.5 select-none" aria-label="Teclado">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-1.5 select-none" aria-label={t("verbum.a11y.keyboard")}>
       {KEY_ROWS.map((row, rowIndex) => (
         <div key={rowIndex} className="flex gap-1">
           {row.map((key) => {

@@ -12,6 +12,7 @@ import * as enterprise from "./enterprise";
 import * as feed from "./feed";
 import * as notifications from "./notifications";
 import * as profile from "./profile";
+import * as verbum from "./verbum";
 
 // Ids with reserved characters prove every path segment is URL-encoded.
 const G = "g/1";
@@ -146,6 +147,12 @@ const cases: ContractCase[] = [
   ["searchInterestSuggestions", () => profile.searchInterestSuggestions(" lógica "), "GET", `/profile/interests/suggestions?text=${encodeURIComponent("lógica")}`],
   ["getMyPreferences", () => profile.getMyPreferences(), "GET", "/profile/me/preferences"],
   ["updateMyPreferences", () => profile.updateMyPreferences("dark"), "PATCH", "/profile/me/preferences", { themePreference: "dark" }],
+  // Verbum
+  ["getVerbumPuzzle (today)", () => verbum.getVerbumPuzzle(null), "GET", "/games/verbum/today"],
+  ["getVerbumPuzzle (day)", () => verbum.getVerbumPuzzle(G), "GET", `/games/verbum/puzzles/${eG}`],
+  ["submitVerbumGuess", () => verbum.submitVerbumGuess(G, "ROBOT"), "POST", `/games/verbum/puzzles/${eG}/guesses`, { guess: "ROBOT" }],
+  ["getVerbumCalendar", () => verbum.getVerbumCalendar(), "GET", "/games/verbum/calendar"],
+  ["getVerbumStats", () => verbum.getVerbumStats(), "GET", "/games/verbum/stats"],
 ];
 
 describe("API contract with the backend", () => {

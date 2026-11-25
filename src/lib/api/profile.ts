@@ -47,6 +47,11 @@ export type ProfileOutput = {
   educationHistory: EducationHistoryOutput[];
 };
 
+// Another member's profile as the backend returns it: birth date, nationality and postal code are only sent
+// to the owner (/profile/me).
+type PrivateProfileField = "dateOfBirth" | "nationality" | "locationPostalCode";
+export type PublicProfileOutput = Omit<ProfileOutput, PrivateProfileField> & { [Field in PrivateProfileField]?: never };
+
 export type InterestSuggestionOutput = {
   value: string;
 };
@@ -425,7 +430,7 @@ export async function getMyProfile(signal?: AbortSignal): Promise<ProfileOutput>
 export async function getProfileByUserId(
   userId: string,
   signal?: AbortSignal
-): Promise<ProfileOutput> {
+): Promise<PublicProfileOutput> {
   const response = await apiRequest(`/profile/${encodeURIComponent(userId)}`, {
     signal,
   });
@@ -458,7 +463,23 @@ export async function getProfileByUserId(
     "Invalid profile response"
   );
 
-  return extractProfileFromEnvelope(payload.data);
+  // Keep only the public fields even if a backend still sends more: the rest belongs to the owner.
+  const profile = extractProfileFromEnvelope(payload.data);
+  return {
+    firstName: profile.firstName,
+    lastName: profile.lastName,
+    currentJobTitle: profile.currentJobTitle,
+    currentCompany: profile.currentCompany,
+    about: profile.about,
+    locationCountry: profile.locationCountry,
+    locationCity: profile.locationCity,
+    interests: profile.interests,
+    profileImageUrl: profile.profileImageUrl,
+    profileBannerImageUrl: profile.profileBannerImageUrl,
+    badges: profile.badges,
+    employmentHistory: profile.employmentHistory,
+    educationHistory: profile.educationHistory
+  };
 }
 
 export async function saveMyProfile(

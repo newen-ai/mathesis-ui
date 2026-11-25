@@ -9,6 +9,7 @@ import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
 import { resetPassword } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
+import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
 import { evaluatePasswordStrength } from "@/lib/utils/password";
 
 type ValidationErrors = {
@@ -102,7 +103,7 @@ function ResetPasswordContent() {
     if (!result.success) {
       setPopupInfo({
         title: t("common.serviceErrorTitle"),
-        message: result.message,
+        message: getRateLimitMessage(result.details) ?? result.message,
         details: formatApiErrorDetails(result.details, result.status),
       });
       setIsSubmitting(false);

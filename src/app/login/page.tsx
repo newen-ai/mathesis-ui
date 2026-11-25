@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { SharedBrandedLoginScreen } from "@kenrou/shared-ui";
@@ -12,7 +12,8 @@ import {
 } from "@/lib/auth/login-redirect";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { BRAND_LOGO_SRC } from "@/lib/assets";
-import { extractAuthErrorCode, getAuthErrorTranslation } from "@/lib/i18n/auth-errors";
+import { extractAuthErrorCode, getAuthErrorTranslation, isCaptchaError } from "@/lib/i18n/auth-errors";
+import { useTurnstile } from "@/components/auth/TurnstileWidget";
 import { normalizeEmailInput } from "@/lib/utils/email";
 
 function resolveLoginErrorMessage(
@@ -54,6 +55,11 @@ function LoginPageContent() {
 
   useRedirectIfAuthenticated(nextPath);
 
+  // The backend asks for the CAPTCHA only after a few failed attempts (CAPTCHA_REQUIRED); from then on the
+  // widget stays under the password field and every attempt sends a fresh token.
+  const [isCaptchaRequired, setIsCaptchaRequired] = useState(false);
+  const captcha = useTurnstile("mt-3 flex justify-center");
+
   const renderPasswordField = ({
     id,
     value,
@@ -73,26 +79,29 @@ function LoginPageContent() {
     hasError?: boolean;
     ariaDescribedBy?: string;
   }) => (
-    <PasswordInput
-      id={id}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className={className}
-      placeholder={placeholder}
-      autoComplete={autoComplete}
-      aria-invalid={hasError}
-      aria-describedby={ariaDescribedBy}
-      labels={{
-        show: t("login.showPassword"),
-        hide: t("login.hidePassword"),
-      }}
-      ariaLabels={{
-        show: t("login.showPasswordAria"),
-        hide: t("login.hidePasswordAria"),
-      }}
-      togglePaddingClassName="pr-16"
-      toggleClassName="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#7A6435] hover:underline"
-    />
+    <>
+      <PasswordInput
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={className}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        aria-invalid={hasError}
+        aria-describedby={ariaDescribedBy}
+        labels={{
+          show: t("login.showPassword"),
+          hide: t("login.hidePassword"),
+        }}
+        ariaLabels={{
+          show: t("login.showPasswordAria"),
+          hide: t("login.hidePasswordAria"),
+        }}
+        togglePaddingClassName="pr-16"
+        toggleClassName="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#7A6435] hover:underline"
+      />
+      {isCaptchaRequired ? captcha.widget : null}
+    </>
   );
 
   return (
@@ -109,9 +118,20 @@ function LoginPageContent() {
       formProps={{
         initialEmail,
         normalizeEmail: normalizeEmailInput,
-        login: (input) => login({ email: input.email, password: input.password }),
+        login: (input) =>
+          login({
+            email: input.email,
+            password: input.password,
+            captchaToken: isCaptchaRequired ? captcha.token : null,
+          }),
         onFailure: ({ result, input }) => {
           const authErrorCode = extractAuthErrorCode(result.details);
+
+          if (isCaptchaRequired || isCaptchaError(result.details)) {
+            // Show the widget (if it was not there yet) and get a fresh token for the next attempt.
+            setIsCaptchaRequired(true);
+            captcha.reset();
+          }
 
           if (authErrorCode === "EMAIL_NOT_VERIFIED") {
             router.replace(`/unverified?email=${encodeURIComponent(input.email)}`);
