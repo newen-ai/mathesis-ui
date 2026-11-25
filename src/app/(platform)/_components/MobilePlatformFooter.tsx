@@ -53,7 +53,7 @@ const agoraOverlayItems: OverlayItem[] = [
     label: "Acertijos",
     description: "Retos y juegos de ingenio de la comunidad",
     icon: "puzzle",
-    disabled: true,
+    href: "/games",
   },
   {
     label: "Affinitas",

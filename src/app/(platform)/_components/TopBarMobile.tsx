@@ -446,7 +446,7 @@ export function TopBarMobile({
                 ) : null}
               </article>
 
-              <article className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 opacity-70 shadow-[0_1px_2px_color-mix(in_srgb,var(--navy-900)_9%,transparent)]">
+              <Link href="/games" onClick={closeMobileDrawer} className="block overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 hover:bg-[var(--surface-2)] shadow-[0_1px_2px_color-mix(in_srgb,var(--navy-900)_9%,transparent)]">
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--brand-100)_62%,var(--surface))] text-[var(--navy-900)]">
@@ -457,9 +457,9 @@ export function TopBarMobile({
                       <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.agora.riddles.subtitle", { defaultValue: "Retos y juegos de ingenio de la comunidad" })}</span>
                     </span>
                   </span>
-                  <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.6rem] font-semibold tracking-[0.08em] text-[var(--brand-700)]">{t("topbar:common.comingSoon", { defaultValue: "PRÓXIMAMENTE" })}</span>
+                  <span className="text-[var(--brand-700)]" aria-hidden="true">→</span>
                 </div>
-              </article>
+              </Link>
             </div>
           </section>
 

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function DiscoverSophium() {
   return (
     <>
@@ -9,13 +11,13 @@ export function DiscoverSophium() {
             <path d="M9 4h4a2 2 0 1 1 4 0h3v5a2 2 0 1 1 0 4v5h-5a2 2 0 1 1-4 0H6v-5a2 2 0 1 1 0-4V4h3a2 2 0 1 1 0 4" />
           </svg>
         </div>
-        <h3 className="mt-3 text-[1.45rem] font-semibold leading-tight text-[var(--heading-primary)]">Desafío Diario</h3>
+        <h3 className="mt-3 text-[1.45rem] font-semibold leading-tight text-[var(--heading-primary)]">Verbum · Desafío Diario</h3>
         <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
-          Un acertijo nuevo cada día. Sumá puntos y compará tu racha con la comunidad.
+          Una palabra nueva cada día, igual para toda la comunidad. Adiviná y sumá a tu racha.
         </p>
-        <button type="button" disabled className="mt-4 text-scale-2 font-semibold text-[var(--brand-800)] opacity-85">
+        <Link href="/games/verbum" className="mt-4 inline-block text-scale-2 font-semibold text-[var(--brand-800)] hover:underline">
           Jugá el desafío de hoy →
-        </button>
+        </Link>
       </section>
 
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
