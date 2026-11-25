@@ -20,6 +20,7 @@ import {
   PatchWorkExperiencesInput,
   ProfileHttpError,
   ProfileOutput,
+  PublicProfileOutput,
   saveMyProfile,
   SaveProfileInput,
   WorkExperienceOperation,
@@ -49,7 +50,8 @@ function normalizeDateInputValue(value: Date | string | null | undefined) {
   return value.length >= 10 ? value.slice(0, 10) : value;
 }
 
-function mapProfileOutputToProfile(source: ProfileOutput): Profile {
+// Works for both the own profile and another member's (PublicProfileOutput lacks the private fields).
+function mapProfileOutputToProfile(source: ProfileOutput | PublicProfileOutput): Profile {
   return {
     nombre: source.firstName ?? "",
     apellido: source.lastName ?? "",

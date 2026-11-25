@@ -20,6 +20,22 @@ describe("profile API", () => {
     await expect(profile.getProfileByUserId("u2")).resolves.toEqual(profileOutput);
   });
 
+  it("keeps only public fields of another member's profile", async () => {
+    mockFetch(
+      okData({
+        id: "u2",
+        email: "otra@x.com",
+        profile: { ...profileOutput, locationCity: "Rosario", dateOfBirth: "1990-05-17", nationality: "AR", locationPostalCode: "S2000" }
+      })
+    );
+    const other = await profile.getProfileByUserId("u2");
+    expect(other).toMatchObject({ firstName: "Ana", locationCity: "Rosario" });
+    for (const field of ["dateOfBirth", "nationality", "locationPostalCode"]) {
+      expect(other).not.toHaveProperty(field);
+    }
+    expect(JSON.stringify(other)).not.toMatch(/1990|S2000|otra@x\.com|"AR"/);
+  });
+
   it("reports an empty profile source on 404 or a null profile", async () => {
     mockFetch({ status: 404, body: {} });
     const notFound = await profile.getMyProfile().catch((error: unknown) => error);
