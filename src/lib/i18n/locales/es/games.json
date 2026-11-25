@@ -1,0 +1,92 @@
+{
+  "hub": {
+    "title": "Juegos",
+    "subtitle": "Desafíos de ingenio para toda la comunidad.",
+    "play": "Jugar",
+    "comingSoon": "Más juegos próximamente.",
+    "verbum": {
+      "title": "Verbum",
+      "description": "Adiviná la palabra del día en 6 intentos. Una palabra nueva cada día a las 00:00.",
+      "statusWon": "Hoy: resuelto",
+      "statusLost": "Hoy: no salió",
+      "statusInProgress": "Hoy: en curso",
+      "statusNotStarted": "Hoy: sin jugar"
+    }
+  },
+  "verbum": {
+    "title": "Verbum",
+    "tagline": "La palabra del día",
+    "puzzleLabel": "#{{number}} · {{date}}",
+    "archiveBadge": "Día anterior",
+    "backToToday": "Ir al desafío de hoy",
+    "loading": "Cargando el desafío…",
+    "actions": {
+      "help": "Cómo jugar",
+      "calendar": "Calendario",
+      "stats": "Estadísticas",
+      "close": "Cerrar"
+    },
+    "keyboard": {
+      "enter": "Enviar",
+      "delete": "Borrar"
+    },
+    "help": {
+      "title": "Cómo jugar",
+      "intro": "Adiviná la palabra en 6 intentos. Cada intento tiene que ser una palabra válida con la cantidad de letras indicada.",
+      "correct": "La letra está en la palabra y en ese lugar.",
+      "present": "La letra está en la palabra, pero en otro lugar.",
+      "absent": "La letra no está en la palabra.",
+      "accents": "Las tildes no cuentan y la Ñ es una letra más.",
+      "daily": "Hay una palabra nueva cada día a las 00:00 (hora de Argentina). Con el calendario podés jugar los días anteriores."
+    },
+    "errors": {
+      "notAWord": "No está en la lista de palabras.",
+      "wrongLength": "La palabra tiene {{count}} letras.",
+      "alreadyFinished": "Este desafío ya terminó.",
+      "notAvailable": "Ese día no tiene un desafío disponible.",
+      "load": "No pudimos cargar el desafío.",
+      "submit": "No pudimos enviar tu intento. Probá de nuevo.",
+      "sessionExpired": "Tu sesión expiró. Volvé a ingresar para seguir jugando; tus intentos quedaron guardados.",
+      "retry": "Reintentar"
+    },
+    "result": {
+      "wonTitle": "¡Lo lograste!",
+      "wonSubtitle_one": "Adivinaste en {{count}} intento.",
+      "wonSubtitle_other": "Adivinaste en {{count}} intentos.",
+      "lostTitle": "Esta vez no salió",
+      "lostSubtitle": "La palabra era",
+      "whyTitle": "¿Por qué esta palabra?",
+      "readMore": "Leer más",
+      "share": "Compartir",
+      "shareWhatsApp": "WhatsApp",
+      "copy": "Copiar resultado",
+      "copied": "Resultado copiado.",
+      "copyFailed": "No pudimos copiar el resultado.",
+      "newAvailable": "¡Ya está el nuevo Verbum! Jugar →",
+      "nextIn": "Próximo Verbum en",
+      "archiveNote": "Jugado desde el calendario: no suma a la racha."
+    },
+    "stats": {
+      "title": "Estadísticas",
+      "played": "Jugadas",
+      "winRate": "% Victorias",
+      "currentStreak": "Racha actual",
+      "maxStreak": "Mejor racha",
+      "distribution": "Distribución de intentos",
+      "streakNote": "La racha cuenta solo los desafíos resueltos el mismo día.",
+      "load": "No pudimos cargar tus estadísticas."
+    },
+    "calendar": {
+      "title": "Calendario",
+      "subtitle": "Jugá los desafíos de días anteriores.",
+      "won": "Resuelto",
+      "lost": "No salió",
+      "inProgress": "En curso",
+      "notStarted": "Sin jugar",
+      "load": "No pudimos cargar el calendario.",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "weekdays": "L,M,M,J,V,S,D"
+    }
+  }
+}

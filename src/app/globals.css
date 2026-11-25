@@ -40,6 +40,11 @@
   --on-brand: #1f2329;
   --link-accent: var(--brand-700);
   --link-accent-hover: var(--brand-900);
+  /* Verbum (daily word game) tiles and keys. Text on top of them uses --verbum-on-tile. */
+  --verbum-correct: #3f8a5a;
+  --verbum-present: #c39a2e;
+  --verbum-absent: #7a8593;
+  --verbum-on-tile: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -72,6 +77,10 @@
   --on-brand: #1b2330;
   --link-accent: var(--brand-800);
   --link-accent-hover: #f0dc96;
+  --verbum-correct: #4c9a68;
+  --verbum-present: #b8912c;
+  --verbum-absent: #3b4f65;
+  --verbum-on-tile: #ffffff;
 }
 
 @theme inline {
@@ -507,4 +516,76 @@ html {
 .sophium-profile-stack .sophium-field select {
   font-size: 0.68rem;
   padding: 0.5rem 0.62rem;
+}
+
+/* Verbum (daily word game) animations. Tiles reveal their color halfway through the flip. */
+@keyframes verbum-flip {
+  0% {
+    transform: rotateX(0deg);
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border-color: var(--line-strong);
+  }
+  49% {
+    transform: rotateX(90deg);
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border-color: var(--line-strong);
+  }
+  50% {
+    transform: rotateX(90deg);
+    background-color: var(--verbum-tile-bg);
+    color: var(--verbum-on-tile);
+    border-color: var(--verbum-tile-bg);
+  }
+  100% {
+    transform: rotateX(0deg);
+    background-color: var(--verbum-tile-bg);
+    color: var(--verbum-on-tile);
+    border-color: var(--verbum-tile-bg);
+  }
+}
+
+@keyframes verbum-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes verbum-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes verbum-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-14px); }
+  60% { transform: translateY(-6px); }
+}
+
+.verbum-tile-reveal {
+  animation: verbum-flip 0.5s ease-in-out both;
+}
+
+.verbum-tile-pop {
+  animation: verbum-pop 0.12s ease-out;
+}
+
+.verbum-row-shake {
+  animation: verbum-shake 0.4s ease-in-out;
+}
+
+.verbum-tile-win {
+  animation: verbum-bounce 0.6s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verbum-tile-reveal,
+  .verbum-tile-pop,
+  .verbum-row-shake,
+  .verbum-tile-win {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
 }

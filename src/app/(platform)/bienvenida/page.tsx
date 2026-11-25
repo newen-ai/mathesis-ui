@@ -1,6 +1,13 @@
 import Link from "next/link";
 
-const currentFeatures = [
+type WelcomeFeature = {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  badge?: string;
+};
+
+const currentFeatures: WelcomeFeature[] = [
   {
     title: "Agora",
     description: "Compartí ideas y descubrí lo que piensa la comunidad.",
@@ -68,8 +75,7 @@ const currentFeatures = [
   },
   {
     title: "Desafío diario",
-    description: "Un acertijo nuevo cada día, igual para toda la comunidad.",
-    badge: "PRONTO",
+    description: "Una palabra nueva cada día, igual para toda la comunidad.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M12 4v4" />

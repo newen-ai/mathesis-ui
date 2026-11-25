@@ -22,6 +22,8 @@ import esAteneo from "@/lib/i18n/locales/es/ateneo.json";
 import enAteneo from "@/lib/i18n/locales/en/ateneo.json";
 import esProfile from "@/lib/i18n/locales/es/profile.json";
 import enProfile from "@/lib/i18n/locales/en/profile.json";
+import esGames from "@/lib/i18n/locales/es/games.json";
+import enGames from "@/lib/i18n/locales/en/games.json";
 
 const LANGUAGE_STORAGE_KEY = "sophium-ui-language";
 
@@ -51,6 +53,7 @@ const resources = {
     myEnterprises: esMyEnterprises,
     ateneo: esAteneo,
     profile: esProfile,
+    games: esGames,
   },
   "es-AR": {
     auth: esAuth,
@@ -64,6 +67,7 @@ const resources = {
     myEnterprises: esMyEnterprises,
     ateneo: esAteneo,
     profile: esProfile,
+    games: esGames,
   },
   en: {
     auth: enAuth,
@@ -77,6 +81,7 @@ const resources = {
     myEnterprises: enMyEnterprises,
     ateneo: enAteneo,
     profile: enProfile,
+    games: enGames,
   },
 } as const;
 
@@ -86,7 +91,7 @@ if (!i18next.isInitialized) {
     lng: resolveInitialLanguage(),
     fallbackLng: "es",
     supportedLngs: ["es", "es-AR", "en"],
-    ns: ["common", "auth", "ui", "settings", "topbar", "notifications", "messages", "directory", "myEnterprises", "ateneo", "profile"],
+    ns: ["common", "auth", "ui", "settings", "topbar", "notifications", "messages", "directory", "myEnterprises", "ateneo", "profile", "games"],
     defaultNS: "common",
     interpolation: {
       escapeValue: false,

@@ -1,0 +1,92 @@
+{
+  "hub": {
+    "title": "Games",
+    "subtitle": "Brain teasers for the whole community.",
+    "play": "Play",
+    "comingSoon": "More games coming soon.",
+    "verbum": {
+      "title": "Verbum",
+      "description": "Guess the word of the day in 6 tries. A new word every day at 00:00.",
+      "statusWon": "Today: solved",
+      "statusLost": "Today: missed",
+      "statusInProgress": "Today: in progress",
+      "statusNotStarted": "Today: not played"
+    }
+  },
+  "verbum": {
+    "title": "Verbum",
+    "tagline": "The word of the day",
+    "puzzleLabel": "#{{number}} · {{date}}",
+    "archiveBadge": "Past day",
+    "backToToday": "Go to today's puzzle",
+    "loading": "Loading the puzzle…",
+    "actions": {
+      "help": "How to play",
+      "calendar": "Calendar",
+      "stats": "Statistics",
+      "close": "Close"
+    },
+    "keyboard": {
+      "enter": "Enter",
+      "delete": "Delete"
+    },
+    "help": {
+      "title": "How to play",
+      "intro": "Guess the word in 6 tries. Each guess must be a valid Spanish word with the number of letters shown.",
+      "correct": "The letter is in the word and in the right spot.",
+      "present": "The letter is in the word but in another spot.",
+      "absent": "The letter is not in the word.",
+      "accents": "Accents don't count and Ñ is a letter of its own.",
+      "daily": "There is a new word every day at 00:00 (Argentina time). Use the calendar to play past days."
+    },
+    "errors": {
+      "notAWord": "Not in the word list.",
+      "wrongLength": "The word has {{count}} letters.",
+      "alreadyFinished": "This puzzle is already over.",
+      "notAvailable": "There is no puzzle for that day.",
+      "load": "We couldn't load the puzzle.",
+      "submit": "We couldn't send your guess. Please try again.",
+      "sessionExpired": "Your session expired. Log in again to keep playing; your guesses are saved.",
+      "retry": "Retry"
+    },
+    "result": {
+      "wonTitle": "You got it!",
+      "wonSubtitle_one": "Solved in {{count}} try.",
+      "wonSubtitle_other": "Solved in {{count}} tries.",
+      "lostTitle": "Not this time",
+      "lostSubtitle": "The word was",
+      "whyTitle": "Why this word?",
+      "readMore": "Read more",
+      "share": "Share",
+      "shareWhatsApp": "WhatsApp",
+      "copy": "Copy result",
+      "copied": "Result copied.",
+      "copyFailed": "We couldn't copy the result.",
+      "newAvailable": "The new Verbum is ready! Play →",
+      "nextIn": "Next Verbum in",
+      "archiveNote": "Played from the calendar: it doesn't count for the streak."
+    },
+    "stats": {
+      "title": "Statistics",
+      "played": "Played",
+      "winRate": "Win %",
+      "currentStreak": "Current streak",
+      "maxStreak": "Best streak",
+      "distribution": "Guess distribution",
+      "streakNote": "The streak only counts puzzles solved on their own day.",
+      "load": "We couldn't load your statistics."
+    },
+    "calendar": {
+      "title": "Calendar",
+      "subtitle": "Play the puzzles of past days.",
+      "won": "Solved",
+      "lost": "Missed",
+      "inProgress": "In progress",
+      "notStarted": "Not played",
+      "load": "We couldn't load the calendar.",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "weekdays": "M,T,W,T,F,S,S"
+    }
+  }
+}

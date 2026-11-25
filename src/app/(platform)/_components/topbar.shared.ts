@@ -76,7 +76,7 @@ const desktopNexumMenuItems: TopBarMenuItem[] = [
 
 const desktopAgoraMenuItems: TopBarMenuItem[] = [
   { label: "Ateneo", labelKey: "topbar:agora.ateneo", href: "/ateneo", icon: "groups" },
-  { label: "Acertijos", labelKey: "topbar:agora.riddles", icon: "puzzle", disabledText: "PRÓXIMAMENTE", disabledTextKey: "topbar:common.comingSoon" },
+  { label: "Acertijos", labelKey: "topbar:agora.riddles", href: "/games", icon: "puzzle" },
   { label: "Afinitas", labelKey: "topbar:agora.affinitas", icon: "users-soft", disabledText: "PRÓXIMAMENTE", disabledTextKey: "topbar:common.comingSoon" },
   {
     label: "Buscar Usuarios (avanzada)",
