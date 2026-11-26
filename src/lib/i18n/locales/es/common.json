@@ -28,5 +28,37 @@
     "minutesAgo": "hace {{count}} min",
     "hoursAgo": "hace {{count}} h",
     "daysAgo": "hace {{count}} d"
+  },
+  "report": {
+    "title": {
+      "profile": "Denunciar perfil",
+      "feedPost": "Denunciar publicación",
+      "ateneoTopic": "Denunciar tema",
+      "ateneoComment": "Denunciar comentario"
+    },
+    "description": "Contanos qué pasa. El equipo de Sophium revisa cada denuncia y la persona denunciada no sabe quién la hizo.",
+    "reasonLabel": "Motivo",
+    "reasonPlaceholder": "Seleccioná un motivo",
+    "reasons": {
+      "SPAM": "Spam o publicidad",
+      "HARASSMENT": "Acoso o insultos",
+      "INAPPROPRIATE": "Contenido inapropiado",
+      "IMPERSONATION": "Suplantación de identidad",
+      "OTHER": "Otro"
+    },
+    "detailsLabel": "Detalle (opcional)",
+    "detailsLabelRequired": "Detalle",
+    "detailsPlaceholder": "¿Qué estás denunciando y por qué?",
+    "detailsRequired": "Contanos el motivo para que podamos revisarlo.",
+    "cancel": "Cancelar",
+    "submit": "Enviar denuncia",
+    "submitting": "Enviando...",
+    "toasts": {
+      "sent": "Recibimos tu denuncia. Gracias por avisarnos.",
+      "alreadyReported": "Ya lo denunciaste. Lo estamos revisando.",
+      "notFound": "Este contenido ya no está disponible.",
+      "rateLimited": "Enviaste muchas denuncias seguidas. Probá de nuevo más tarde.",
+      "error": "No pudimos enviar la denuncia. Intentá de nuevo."
+    }
   }
 }

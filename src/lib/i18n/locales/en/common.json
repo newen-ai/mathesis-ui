@@ -28,5 +28,37 @@
     "minutesAgo": "{{count}} min ago",
     "hoursAgo": "{{count}} h ago",
     "daysAgo": "{{count}} d ago"
+  },
+  "report": {
+    "title": {
+      "profile": "Report profile",
+      "feedPost": "Report post",
+      "ateneoTopic": "Report topic",
+      "ateneoComment": "Report comment"
+    },
+    "description": "Tell us what is going on. The Sophium team reviews every report, and the reported person does not learn who made it.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasons": {
+      "SPAM": "Spam or advertising",
+      "HARASSMENT": "Harassment or insults",
+      "INAPPROPRIATE": "Inappropriate content",
+      "IMPERSONATION": "Impersonation",
+      "OTHER": "Other"
+    },
+    "detailsLabel": "Details (optional)",
+    "detailsLabelRequired": "Details",
+    "detailsPlaceholder": "What are you reporting and why?",
+    "detailsRequired": "Tell us the reason so we can review it.",
+    "cancel": "Cancel",
+    "submit": "Send report",
+    "submitting": "Sending...",
+    "toasts": {
+      "sent": "We received your report. Thanks for letting us know.",
+      "alreadyReported": "You already reported this. We are reviewing it.",
+      "notFound": "This content is no longer available.",
+      "rateLimited": "You sent many reports in a row. Try again later.",
+      "error": "We could not send the report. Try again."
+    }
   }
 }

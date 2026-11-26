@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { ReportDialog, type ReportTarget } from "@/app/(platform)/_components/ReportDialog";
 import { toast } from "sonner";
 import {
   navItems,
@@ -179,6 +180,7 @@ function buildHeadline(puesto: string, empresa: string, city: string, fallback: 
 
 export function ProfileView() {
   const { t } = useTranslation("profile");
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const router = useRouter();
   const bannerInputRef = useRef<HTMLInputElement | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -899,7 +901,9 @@ export function ProfileView() {
                         type="button"
                         onClick={() => {
                           setIsHeaderActionsOpen(false);
-                          toast.info(t("profileView.toasts.comingSoon"));
+                          if (activeProfileId) {
+                            setReportTarget({ type: "PROFILE", id: activeProfileId });
+                          }
                         }}
                         className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[0.96rem] font-semibold text-[var(--danger-500)] transition hover:bg-[var(--surface-2)]"
                       >
@@ -1179,6 +1183,8 @@ export function ProfileView() {
           }}
         />
       ) : null}
+
+      <ReportDialog target={reportTarget} onClose={() => setReportTarget(null)} />
 
       {isBlockModalOpen ? (
         <div

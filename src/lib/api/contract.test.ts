@@ -12,6 +12,7 @@ import * as enterprise from "./enterprise";
 import * as feed from "./feed";
 import * as notifications from "./notifications";
 import * as profile from "./profile";
+import * as report from "./report";
 import * as verbum from "./verbum";
 
 // Ids with reserved characters prove every path segment is URL-encoded.
@@ -95,6 +96,21 @@ const cases: ContractCase[] = [
   ["blockUser with note", () => block.blockUser(U, "molesto"), "POST", `/blocks/${eU}`, { reasonNote: "molesto" }],
   ["blockUser without note", () => block.blockUser(U), "POST", `/blocks/${eU}`, {}],
   ["unblockUser", () => block.unblockUser(U), "DELETE", `/blocks/${eU}`],
+  // Content reports
+  [
+    "createContentReport with details",
+    () => report.createContentReport({ targetType: "ATENEO_COMMENT", targetId: C, reason: "OTHER", details: "  insulta  " }),
+    "POST",
+    "/reports",
+    { targetType: "ATENEO_COMMENT", targetId: C, reason: "OTHER", details: "insulta" }
+  ],
+  [
+    "createContentReport without details",
+    () => report.createContentReport({ targetType: "PROFILE", targetId: U, reason: "SPAM", details: "   " }),
+    "POST",
+    "/reports",
+    { targetType: "PROFILE", targetId: U, reason: "SPAM" }
+  ],
   // Enterprises
   ["listMyEnterprises", () => enterprise.listMyEnterprises(), "GET", "/enterprises/my"],
   ["listVerifiedDirectory", () => enterprise.listVerifiedDirectory(), "GET", "/enterprises/directory"],
