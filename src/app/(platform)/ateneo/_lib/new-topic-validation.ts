@@ -1,6 +1,6 @@
 /**
  * Client-side validation for the new topic form. Limits mirror the backend schema
- * (mathesis-backend src/modules/ateneo/ateneo.schemas.ts `createAteneoTopicSchema`), which stays the source of truth.
+ * (sophium-backend src/modules/ateneo/ateneo.schemas.ts `createAteneoTopicSchema`), which stays the source of truth.
  */
 export const TOPIC_TITLE_MIN_LENGTH = 3;
 export const TOPIC_TITLE_MAX_LENGTH = 100;

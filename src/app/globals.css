@@ -11,31 +11,64 @@
 }
 
 :root {
+  /* Palette from the brand manual (v3). Light: Blanco Puro cards, Crema (#FAF8F5) secondary surfaces,
+     Grafito text, Oro Oscuro for gold text on light backgrounds (Oro Sophium is never text on light). */
   --background: #f4f3f1;
-  --foreground: #1f242a;
+  --foreground: #1a1a1a;
   --surface: #ffffff;
-  --surface-2: #f8f6f3;
+  --surface-2: #faf8f5;
   --surface-muted: #f2eee7;
-  --line: #e5ddd1;
+  /* Modals and popovers. Same as --surface in light mode; one step lighter in dark mode. */
+  --surface-elevated: #ffffff;
+  --line: #e4dfd6;
   --line-strong: #d7c9b0;
-  --text-primary: #20242a;
-  --text-secondary: #656b73;
-  --text-soft: #7e848c;
+  /* Card border: neutral in light mode, subtle gold in dark mode (manual: "borde dorado 40%"). */
+  --card-line: var(--line);
+  --text-primary: #1a1a1a;
+  --text-secondary: #50565e;
+  /* Gris Medio (brand manual): notes and metadata. Lightest text that still passes WCAG AA on every surface. */
+  --text-soft: #666666;
   --brand-50: #f6efe1;
   --brand-100: #f0e4cb;
   --brand-300: #d8ba6d;
-  --brand-500: #c7a748;
-  --brand-700: #8f7230;
-  --brand-800: #795f26;
-  --brand-900: #5d4717;
-  --navy-700: #203e61;
-  --navy-800: #183451;
-  --navy-900: #112b45;
+  --brand-500: #c9a84c;
+  --brand-700: #7a6435;
+  --brand-800: #65532c;
+  --brand-900: #4d3f22;
+  /* Navy scale shared with Newen. 50/100 are the "cold" alternative to Crema for neutral boxes. */
+  --navy-50: #f0f5f9;
+  --navy-100: #d6e4ef;
+  --navy-300: #7a9cbd;
+  --navy-500: #2c5478;
+  --navy-700: #163757;
+  --navy-800: #10304d;
+  --navy-900: #0a2540;
+  /* Section colors (one per universe): identity only, never success/error/pending. Text on top:
+     white on Sophium and Agora, Grafito on Nexum. */
+  --section-sophium: #0a2540;
+  --section-sophium-soft: #d6e4ef;
+  --section-nexum: #c9a84c;
+  --section-nexum-soft: #f5efdf;
+  --section-agora: #6e2c3b;
+  --section-agora-soft: #e5d9dc;
+  --section-b2b: #666666;
   --post-body-bg: #ffffff;
-  --post-file-bg: #f8f6f3;
-  --post-file-preview-bg: #203e61;
-  --accent-overlay: rgba(17, 43, 69, 0.52);
-  --danger-500: #d9534f;
+  --post-file-bg: #faf8f5;
+  --post-file-preview-bg: #163757;
+  --accent-overlay: rgba(10, 37, 64, 0.52);
+  /* Status colors (brand manual "Semáforo de Uso"): danger = Terracota (reports, bans, errors), pending =
+     Ámbar Oscuro (in review), success = Verde Salvia (approved). Never used to identify a section. */
+  --danger-500: #a6432e;
+  --danger-soft: #f8ece9;
+  --danger-line: #e6c3bb;
+  --on-danger: #ffffff;
+  --pending-500: #9c5f1f;
+  --pending-soft: #f8f0e6;
+  --pending-line: #e6cfb2;
+  --success-500: #3f6b4f;
+  --success-soft: #ebf2ed;
+  --success-line: #bfd3c5;
+  --on-success: #ffffff;
   --heading-primary: var(--navy-900);
   --on-brand: #1f2329;
   --link-accent: var(--brand-700);
@@ -48,31 +81,59 @@
 }
 
 [data-theme="dark"] {
-  --background: #10263f;
+  /* Brand manual dark mode: Navy background, card #33506B and elevated #4D6E8C (hierarchy by lighter
+     surfaces, never by shadow), with a subtle gold border on cards. */
+  --background: #0a2540;
   --foreground: #e9edf2;
-  --surface: #4a6078;
-  --surface-2: #415770;
-  --surface-muted: #1a3551;
-  --line: #6e7f92;
-  --line-strong: #8b9bad;
+  --surface: #33506b;
+  --surface-2: #2a4660;
+  --surface-muted: #163757;
+  --surface-elevated: #4d6e8c;
+  --line: #56718c;
+  --line-strong: #7a9cbd;
+  --card-line: color-mix(in srgb, #c9a84c 40%, transparent);
   --text-primary: #f2f5f8;
-  --text-secondary: #c2ccd7;
-  --text-soft: #a8b7c7;
+  /* Both pass WCAG AA on --surface and --surface-2. */
+  --text-secondary: #c8d2dc;
+  --text-soft: #b9c6d3;
   --brand-50: #243d58;
   --brand-100: #2e4a67;
   --brand-300: #d6b54c;
-  --brand-500: #cda93f;
-  --brand-700: #d6b54c;
-  --brand-800: #e1c672;
-  --brand-900: #ecdca7;
-  --navy-700: #1a3b5d;
-  --navy-800: #132f4c;
-  --navy-900: #0f273f;
-  --post-body-bg: #2b435b;
-  --post-file-bg: #476887;
+  --brand-500: #c9a84c;
+  /* Gold text on dark cards: lighter than Oro Sophium so it passes AA on #33506B. */
+  --brand-700: #e1c672;
+  --brand-800: #ecd590;
+  --brand-900: #f3e6bd;
+  --navy-50: #163757;
+  --navy-100: #1d4060;
+  --navy-300: #7a9cbd;
+  --navy-500: #2c5478;
+  --navy-700: #163757;
+  --navy-800: #10304d;
+  --navy-900: #0a2540;
+  /* Manual: Sophium's base equals the dark background, so flat Sophium surfaces use Navy 300 here. */
+  --section-sophium: #7a9cbd;
+  --section-sophium-soft: #163757;
+  --section-nexum: #c9a84c;
+  --section-nexum-soft: #3a3a2c;
+  --section-agora: #af8b93;
+  --section-agora-soft: #3d2a33;
+  --section-b2b: #c8c8c8;
+  --post-body-bg: #2a4660;
+  --post-file-bg: #4d6e8c;
   --post-file-preview-bg: #5f81a4;
   --accent-overlay: rgba(10, 23, 38, 0.6);
-  --danger-500: #ff9ea1;
+  --danger-500: #ffcbbf;
+  --danger-soft: #4a3036;
+  --danger-line: #8a5a52;
+  --on-danger: #10263f;
+  --pending-500: #f8d6a8;
+  --pending-soft: #45392c;
+  --pending-line: #8a6d48;
+  --success-500: #b5e3c4;
+  --success-soft: #2c4439;
+  --success-line: #5f8a6f;
+  --on-success: #10263f;
   --heading-primary: var(--text-primary);
   --on-brand: #1b2330;
   --link-accent: var(--brand-800);
@@ -86,15 +147,15 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sora);
-  /* Headings/display text. Body text inherits Sora; use `font-display` for titles, never ad-hoc families. */
-  --font-display: var(--font-spectral), Georgia, serif;
+  --font-sans: var(--font-inter);
+  /* Headings/display text (brand manual: Georgia). Body text inherits Inter; use `font-display` for titles, never ad-hoc families. */
+  --font-display: Georgia, "Times New Roman", serif;
 }
 
 body {
   background: var(--background);
   color: var(--text-primary);
-  font-family: var(--font-sora), "Segoe UI", sans-serif;
+  font-family: var(--font-inter), "Segoe UI", sans-serif;
 }
 
 html:has([data-welcome-scroll-lock]),
@@ -184,7 +245,7 @@ html {
 }
 
 .sophium-card {
-  border: 1px solid var(--line);
+  border: 1px solid var(--card-line);
   border-radius: 1rem;
   background: var(--surface);
   box-shadow: 0 1px 1px color-mix(in srgb, var(--navy-900) 7%, transparent);

@@ -1,5 +1,5 @@
 // Strips sensitive data before anything is sent to Sentry. Same rules as the backend
-// (mathesis-backend/src/common/observability/scrub.ts): no emails, no credential/reset tokens,
+// (sophium-backend/src/common/observability/scrub.ts): no emails, no credential/reset tokens,
 // no auth headers or cookies, no request bodies (post/comment content) and no user identity.
 
 const FILTERED = "[Filtered]";

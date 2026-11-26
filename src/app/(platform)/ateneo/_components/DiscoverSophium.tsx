@@ -3,7 +3,7 @@ import Link from "next/link";
 export function DiscoverSophium() {
   return (
     <>
-      <h2 className="pt-1 text-scale-2 font-bold tracking-[0.08em] text-[var(--text-secondary)]">DESCUBRÍ SOPHIUM</h2>
+      <h2 className="pt-1 text-scale-2 font-bold tracking-[0.08em] text-[var(--text-secondary)]">Descubrí Sophium</h2>
 
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--brand-100)_68%,var(--surface))] text-[var(--brand-800)]">

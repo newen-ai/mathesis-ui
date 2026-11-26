@@ -31,6 +31,6 @@
   "states": {
     "loadingEnterprises": "Loading companies...",
     "loadError": "We couldn't load the directory right now.",
-    "empty": "There are no verified companies in the directory yet."
+    "empty": "Verified companies will show up here."
   }
 }

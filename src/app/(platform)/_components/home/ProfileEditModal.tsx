@@ -148,8 +148,8 @@ export function ProfileModalError({ message, tone = "error" }: { message: string
     <p
       className={`mt-4 rounded-lg border px-3 py-2 text-xs font-semibold ${
         tone === "error"
-          ? "border-red-200 bg-red-50 text-red-700"
-          : "border-amber-200 bg-amber-50 text-amber-800"
+          ? "border-[var(--danger-line)] bg-[var(--danger-soft)] text-[var(--danger-500)]"
+          : "border-[var(--pending-line)] bg-[var(--pending-soft)] text-[var(--pending-500)]"
       }`}
     >
       {message}

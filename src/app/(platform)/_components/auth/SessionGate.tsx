@@ -86,7 +86,7 @@ export function SessionGate({ children }: SessionGateProps) {
   return (
     <>
       {sessionState === "unknown" ? (
-        <div className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50/95 px-4 py-1 text-center text-xs font-medium text-amber-700 backdrop-blur-sm">
+        <div className="sticky top-0 z-50 border-b border-[var(--pending-line)] bg-[var(--pending-soft)] px-4 py-1 text-center text-xs font-medium text-[var(--pending-500)] backdrop-blur-sm">
           Reconectando sesión...
         </div>
       ) : null}

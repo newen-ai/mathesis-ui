@@ -4,7 +4,7 @@
     "subtitle": "Estas son las empresas que gestionás en Sophium. Solo el Admin puede editar o eliminar una ficha. El Admin es quien la generó en Sophium.",
     "createNew": "+ Crear nueva empresa",
     "loading": "Cargando empresas...",
-    "empty": "Todavía no tenés empresas creadas.",
+    "empty": "Creá tu primera empresa.",
     "errors": {
       "delete": "No pudimos eliminar la empresa."
     },

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 
 type WelcomeFeature = {
   title: string;
@@ -101,12 +102,7 @@ export default function BienvenidaPage() {
           <div className="pointer-events-none absolute right-[-4rem] top-[-4rem] h-52 w-52 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full border border-white/10" />
 
-          <div className="flex items-center gap-2.5">
-            <span className="text-[1.65rem] font-semibold text-[var(--brand-500)]">∫</span>
-            <span className="font-display text-[1.65rem] font-semibold tracking-[0.03em] text-white">
-              Sophium
-            </span>
-          </div>
+          <BrandLockup className="h-11" />
 
           <div className="max-w-[26rem] space-y-3 py-8 lg:py-0">
             <p className="text-[0.76rem] font-semibold uppercase tracking-[0.2em] text-[var(--brand-300)]">

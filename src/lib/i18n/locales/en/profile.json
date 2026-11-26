@@ -127,7 +127,7 @@
       "postalCode": "Postal code",
       "about": "About (max. 800)"
     },
-    "emptyAbout": "You have not added a professional description yet.",
+    "emptyAbout": "Tell us in a few lines what you do.",
     "errors": {
       "birthDate": {
         "future": "Date of birth cannot be in the future.",
@@ -149,7 +149,7 @@
   "experience": {
     "title": "Experience",
     "add": "+ Add experience",
-    "empty": "You have not added work experience yet.",
+    "empty": "Add your first work experience.",
     "new": "New experience",
     "editTitle": "Edit experience",
     "update": "Update experience",
@@ -181,7 +181,7 @@
   "education": {
     "title": "Academic education",
     "add": "+ Add education",
-    "empty": "You have not added academic education yet.",
+    "empty": "Add your academic education.",
     "new": "New education",
     "editTitle": "Edit education",
     "update": "Update education",
@@ -216,13 +216,13 @@
     "add": "Add",
     "save": "Save",
     "discard": "Discard",
-    "empty": "You have not added interests yet.",
+    "empty": "Add your interests to connect with like-minded Members.",
     "suggestionTag": "suggestion",
     "inputPlaceholder": "Add interest",
     "helpTypeToSuggest": "Type at least 3 characters to see suggestions.",
     "helpDragToReorder": "Drag and drop interests to reorder them.",
     "loadingSuggestions": "Searching suggestions...",
-    "noSuggestions": "No suggestions for this text.",
+    "noSuggestions": "Try another word.",
     "errors": {
       "invalid": "Enter a valid interest before adding it.",
       "duplicate": "That interest has already been added."

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 import { maskEmailForDisplay, resolveEmailParam } from "@/lib/utils/email";
 
 export default function ForgotPasswordSentPage() {
@@ -45,19 +45,7 @@ export default function ForgotPasswordSentPage() {
           />
 
           <div className="relative z-10 flex flex-col items-center lg:flex-row lg:items-center lg:gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={BRAND_LOGO_SRC}
-              alt={t("common.brandLogoAlt")}
-              width={40}
-              height={40}
-              loading="eager"
-              decoding="async"
-              className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
-            />
-            <p className="mt-2 font-display text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
-              Sophium
-            </p>
+            <BrandLockup className="mx-auto h-14 lg:mx-0 lg:h-11" />
           </div>
 
           <div className="relative z-10 mt-10 lg:mt-0">

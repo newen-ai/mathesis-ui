@@ -40,10 +40,10 @@ export function ServiceErrorPopup({
       aria-modal="true"
       aria-labelledby="service-error-title"
     >
-      <div className="w-full max-w-lg rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl sm:p-6">
+      <div className="w-full max-w-lg rounded-2xl border border-[var(--danger-line)] bg-white p-5 shadow-2xl sm:p-6">
         <h2
           id="service-error-title"
-          className="font-display text-2xl font-semibold text-rose-700"
+          className="font-display text-2xl font-semibold text-[var(--danger-500)]"
         >
           {title}
         </h2>

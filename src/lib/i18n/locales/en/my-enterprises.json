@@ -4,7 +4,7 @@
     "subtitle": "These are the companies you manage in Sophium. Only the Admin can edit or delete a record. The Admin is the user who created it in Sophium.",
     "createNew": "+ Create new company",
     "loading": "Loading companies...",
-    "empty": "You do not have any companies yet.",
+    "empty": "Create your first company.",
     "errors": {
       "delete": "We could not delete the company."
     },

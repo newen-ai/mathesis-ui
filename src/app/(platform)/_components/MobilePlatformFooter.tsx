@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandSymbol } from "@/components/ui/BrandSymbol";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -170,7 +172,12 @@ function FooterAction({
       ].join(" ")}
     >
       <span className="mb-1.5 flex h-7 w-7 items-center justify-center">
-        <TopBarNavIcon icon={icon} className="h-6 w-6" />
+        {icon === "nexum" || icon === "agora" ? (
+          // Section symbols from the brand manual: silver at rest, gold while the section is open.
+          <BrandSymbol name={icon} finish={active ? "gold" : "silver"} className="h-6" />
+        ) : (
+          <TopBarNavIcon icon={icon} className="h-6 w-6" />
+        )}
       </span>
       <span className="whitespace-nowrap text-scale-1 leading-none">{label}</span>
     </button>
@@ -186,6 +193,7 @@ export function MobilePlatformFooter() {
   const overlayConfig = useMemo(() => {
     if (openOverlay === "nexum") {
       return {
+        key: "nexum" as const,
         title: "Nexum",
         items: nexumOverlayItems,
       };
@@ -193,6 +201,7 @@ export function MobilePlatformFooter() {
 
     if (openOverlay === "agora") {
       return {
+        key: "agora" as const,
         title: "Agora",
         items: agoraOverlayItems,
       };
@@ -282,11 +291,13 @@ export function MobilePlatformFooter() {
           />
 
           <section
-            className="absolute inset-x-0 rounded-t-[1.6rem] border-t-4 border-[var(--brand-500)] bg-[var(--surface)] px-3 pb-3 pt-3"
-            style={{ bottom: SHEET_BOTTOM }}
+            className="absolute inset-x-0 rounded-t-[1.6rem] border-t-4 bg-[var(--surface)] px-3 pb-3 pt-3"
+            // Section color (brand manual): Nexum gold, Agora bordó. Identity only, next to the section name.
+            style={{ bottom: SHEET_BOTTOM, borderTopColor: `var(--section-${overlayConfig.key})` }}
             aria-label={`${overlayConfig.title} menú`}
           >
-            <h2 className="px-1 font-display text-scale-3 font-semibold leading-none text-[var(--heading-primary)]">
+            <h2 className="flex items-center gap-2 px-1 font-display text-scale-3 font-semibold leading-none text-[var(--heading-primary)]">
+              <BrandSymbol name={overlayConfig.key} className="h-5" />
               {overlayConfig.title}
             </h2>
             <div className="mt-2.5 space-y-2">

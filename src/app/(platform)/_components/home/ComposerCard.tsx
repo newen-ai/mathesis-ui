@@ -258,14 +258,14 @@ export function ComposerCard({
 										</figure>
 									))}
 								</div>
-								<p className="text-xs text-amber-700">
+								<p className="text-xs text-[var(--pending-500)]">
 									Las imágenes todavía no se publican en el backend; quedan como borrador visual.
 								</p>
 							</div>
 						) : null}
 
 						{error ? (
-							<p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+							<p className="mt-3 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-medium text-[var(--danger-500)]">
 								{error}
 							</p>
 						) : null}

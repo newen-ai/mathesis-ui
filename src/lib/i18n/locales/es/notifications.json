@@ -15,7 +15,7 @@
   },
   "states": {
     "loading": "Cargando notificaciones…",
-    "empty": "No tenés notificaciones."
+    "empty": "Estás al día."
   },
   "errors": {
     "load": "No pudimos cargar tus notificaciones.",

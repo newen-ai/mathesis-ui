@@ -6,6 +6,7 @@ import QRCode from "react-qr-code";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
 import { BRAND_LOGO_SRC, MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
 import { traceUiAction } from "@/lib/observability/spans";
+import { BrandSymbol } from "@/components/ui/BrandSymbol";
 
 const CREDENTIAL_TTL_MS = 5 * 60 * 1000;
 
@@ -215,7 +216,7 @@ export function DigitalCredentialCard() {
             <div className="absolute inset-0 overflow-hidden rounded-[1.7rem] border border-[rgba(255,255,255,0.12)] bg-[var(--navy-800)] text-[var(--text-primary)] [backface-visibility:hidden]">
               <div className="flex h-full flex-col p-6">
                 <div className="flex items-center gap-3 text-[var(--brand-100)]">
-                  <span className="font-display text-[1.7rem] leading-none text-[#d4af66]">∫</span>
+                  <BrandSymbol name="sophium" className="h-7" />
                   <span className="font-display text-[1.05rem] font-medium text-white">
                     Sophium
                   </span>
@@ -279,7 +280,7 @@ export function DigitalCredentialCard() {
               ) : (
                 <div className="flex h-full flex-col p-5">
                   <div className="flex items-center gap-2 pb-1 text-[var(--brand-200)]">
-                    <span className="font-display text-[1.6rem] leading-none text-[var(--brand-500)]">∫</span>
+                    <BrandSymbol name="sophium" className="h-6" />
                     <span className="font-display text-[1.1rem] font-medium text-white">
                       {t("credential.badgesTitle")}
                     </span>

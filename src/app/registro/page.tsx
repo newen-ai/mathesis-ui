@@ -11,7 +11,7 @@ import { useTurnstile } from "@/components/auth/TurnstileWidget";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
-import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 import { normalizeEmailInput } from "@/lib/utils/email";
 import { HOME_PATH } from "@/lib/routes";
 
@@ -183,19 +183,7 @@ export default function RegistroPage() {
           <div className="bg-[#0A2540] px-4 py-3 lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:px-12 lg:py-12">
             {/* Desktop: logo */}
             <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                  src={BRAND_LOGO_SRC}
-                alt={t("common.brandLogoAlt")}
-                width={32}
-                height={32}
-                loading="eager"
-                decoding="async"
-                className="h-8 w-8"
-              />
-              <span className="font-display text-lg font-bold tracking-[0.1em] text-[#FAF8F5]">
-                Sophium
-              </span>
+              <BrandLockup className="h-11" />
             </div>
 
             {/* Mobile: flecha + eyebrow */}
@@ -337,7 +325,7 @@ export default function RegistroPage() {
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.dni ? (
-                      <p className="text-xs font-medium text-red-700">{errors.dni}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.dni}</p>
                     ) : null}
                   </div>
 
@@ -356,7 +344,7 @@ export default function RegistroPage() {
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.email ? (
-                      <p className="text-xs font-medium text-red-700">{errors.email}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.email}</p>
                     ) : null}
                   </div>
 
@@ -370,7 +358,7 @@ export default function RegistroPage() {
                     {t("register.adultLabel")}
                   </label>
                   {errors.adult ? (
-                    <p className="text-xs font-medium text-red-700">{errors.adult}</p>
+                    <p className="text-xs font-medium text-[var(--danger-500)]">{errors.adult}</p>
                   ) : null}
 
                   <button
@@ -439,7 +427,7 @@ export default function RegistroPage() {
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.firstName ? (
-                      <p id="first-name-error" className="text-xs font-medium text-red-700">
+                      <p id="first-name-error" className="text-xs font-medium text-[var(--danger-500)]">
                         {errors.firstName}
                       </p>
                     ) : null}
@@ -460,7 +448,7 @@ export default function RegistroPage() {
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.lastName ? (
-                      <p id="last-name-error" className="text-xs font-medium text-red-700">
+                      <p id="last-name-error" className="text-xs font-medium text-[var(--danger-500)]">
                         {errors.lastName}
                       </p>
                     ) : null}
@@ -483,7 +471,7 @@ export default function RegistroPage() {
                       {t("register.passwordHelp")}
                     </p>
                     {errors.password ? (
-                      <p className="text-xs font-medium text-red-700">{errors.password}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.password}</p>
                     ) : null}
                   </div>
 
@@ -501,7 +489,7 @@ export default function RegistroPage() {
                       className="w-full rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.confirmPassword ? (
-                      <p className="text-xs font-medium text-red-700">{errors.confirmPassword}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.confirmPassword}</p>
                     ) : null}
                   </div>
 
@@ -525,16 +513,16 @@ export default function RegistroPage() {
                     </span>
                   </label>
                   {errors.terms ? (
-                    <p className="text-xs font-medium text-red-700">{errors.terms}</p>
+                    <p className="text-xs font-medium text-[var(--danger-500)]">{errors.terms}</p>
                   ) : null}
 
                   {captcha.widget}
                   {errors.captcha ? (
-                    <p className="text-center text-xs font-medium text-red-700">{errors.captcha}</p>
+                    <p className="text-center text-xs font-medium text-[var(--danger-500)]">{errors.captcha}</p>
                   ) : null}
 
                   {errors.general ? (
-                    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                    <p className="rounded-lg border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-semibold text-[var(--danger-500)]">
                       {errors.general}
                     </p>
                   ) : null}

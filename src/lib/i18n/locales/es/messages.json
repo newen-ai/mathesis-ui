@@ -51,7 +51,7 @@
     "contacts": "Contactos",
     "searchingContacts": "Buscando contactos...",
     "emptySearch": "No encontramos contactos para esa búsqueda.",
-    "emptyContacts": "No hay contactos disponibles todavía.",
+    "emptyContacts": "Tus conexiones van a aparecer acá.",
     "writeMessage": "Escribir un mensaje...",
     "send": "Enviar",
     "sending": "Enviando...",
@@ -59,11 +59,11 @@
   },
   "conversations": {
     "loading": "Cargando conversaciones...",
-    "empty": "Aún no tenés conversaciones.",
+    "empty": "Empezá una conversación con otro Miembro.",
     "selectToStart": "Seleccioná una conversación para empezar.",
     "backToList": "Volver a la lista",
     "loadingOlder": "Cargando mensajes anteriores...",
-    "emptyThread": "Sin mensajes todavía.",
+    "emptyThread": "Escribí el primer mensaje.",
     "deletedMessage": "Mensaje eliminado",
     "newConversationButton": "Nueva conversación"
   },

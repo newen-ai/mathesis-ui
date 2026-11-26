@@ -347,7 +347,7 @@ export default function AdminPage() {
         )}
 
         {loadError ? (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="mt-4 rounded-xl border border-[var(--pending-line)] bg-[var(--pending-soft)] px-3 py-2 text-sm text-[var(--pending-500)]">
             {loadError}
           </div>
         ) : null}
@@ -391,7 +391,7 @@ export default function AdminPage() {
           </div>
 
           {actionMessage ? (
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <div className="mt-3 rounded-xl border border-[var(--success-line)] bg-[var(--success-soft)] px-3 py-2 text-sm text-[var(--success-500)]">
               {actionMessage}
             </div>
           ) : null}
@@ -482,13 +482,13 @@ export default function AdminPage() {
           </div>
 
           {meAdminMessage ? (
-            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <div className="mt-4 rounded-xl border border-[var(--success-line)] bg-[var(--success-soft)] px-3 py-2 text-sm text-[var(--success-500)]">
               {meAdminMessage}
             </div>
           ) : null}
 
           {meAdminError ? (
-            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="mt-4 rounded-xl border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger-500)]">
               {meAdminError}
             </div>
           ) : null}
@@ -512,7 +512,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => void onRemoveAdmin(admin.userId)}
-                    className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500"
+                    className="rounded-full bg-[var(--danger-500)] px-4 py-2 text-sm font-semibold text-[var(--on-danger)] transition hover:brightness-110"
                   >
                     Quitar admin
                   </button>

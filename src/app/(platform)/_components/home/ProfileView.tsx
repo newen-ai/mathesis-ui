@@ -922,7 +922,7 @@ export function ProfileView() {
             </div>
 
             {headerImageError ? (
-              <p className="mt-2 max-w-xl rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+              <p className="mt-2 max-w-xl rounded-lg border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-semibold text-[var(--danger-500)]">
                 {headerImageError}
               </p>
             ) : null}

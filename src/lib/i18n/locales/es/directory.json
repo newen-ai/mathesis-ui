@@ -2,7 +2,7 @@
   "brand": "Sophium Empresarios",
   "header": {
     "title": "Empresas de la comunidad",
-    "subtitle": "Fundadas o lideradas por socios Sophium. Verificadas."
+    "subtitle": "Fundadas o lideradas por Miembros Sophium. Verificadas."
   },
   "membership": {
     "title": "¿Sos empresario/a?",
@@ -20,7 +20,7 @@
     "successCancel": "Solicitud cancelada."
   },
   "card": {
-    "fallbackFounder": "Socio Sophium",
+    "fallbackFounder": "Miembro Sophium",
     "fallbackRole": "Empresario/a",
     "fallbackDescription": "Sin descripción disponible.",
     "fallbackLocation": "Ubicación",
@@ -31,6 +31,6 @@
   "states": {
     "loadingEnterprises": "Cargando empresas...",
     "loadError": "No pudimos cargar el directorio en este momento.",
-    "empty": "Todavía no hay empresas verificadas en el directorio."
+    "empty": "Las empresas verificadas van a aparecer acá."
   }
 }

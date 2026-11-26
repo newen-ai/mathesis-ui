@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Sora, Spectral } from "next/font/google";
+import { Inter } from "next/font/google";
 import { AppToaster } from "@/components/ui/AppToaster";
 import { AuthLanguageSwitcher } from "@/components/auth/AuthLanguageSwitcher";
 import { BugReportWidget } from "./(platform)/_components/BugReportWidget";
@@ -13,26 +13,24 @@ import {
 } from "@/lib/theme/theme-preference";
 import "./globals.css";
 
-const sora = Sora({
-  variable: "--font-sora",
+// Brand manual: Inter for the app UI; headings use Georgia (system font, see --font-display in globals.css).
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const spectral = Spectral({
-  variable: "--font-spectral",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
   title: "Sophium | Red Profesional",
   description:
     "Red profesional de Sophium para construir perfiles y mostrar experiencia laboral.",
+  // Brand manual: favicon and app icon (symbol centred on cream).
   icons: {
-    icon: withBasePath("/sophium-logo.png"),
-    shortcut: withBasePath("/sophium-logo.png"),
-    apple: withBasePath("/sophium-logo.png"),
+    icon: [
+      { url: withBasePath("/brand/favicon.png"), sizes: "192x192", type: "image/png" },
+      { url: withBasePath("/brand/app-icon.png"), sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: withBasePath("/brand/favicon.png"),
+    apple: withBasePath("/brand/app-icon.png"),
   },
 };
 
@@ -49,7 +47,7 @@ export default async function RootLayout({
       lang="es"
       suppressHydrationWarning
       data-theme={initialTheme}
-      className={`${sora.variable} ${spectral.variable} h-full antialiased`}
+      className={`${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full overflow-x-hidden">
         <ThemeInitializer />
