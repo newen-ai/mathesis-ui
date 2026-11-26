@@ -23,12 +23,10 @@ export const metadata: Metadata = {
   title: "Sophium | Red Profesional",
   description:
     "Red profesional de Sophium para construir perfiles y mostrar experiencia laboral.",
-  // Brand manual: favicon and app icon (symbol centred on cream).
+  // Browser tab: realistic gold symbol on a transparent background. Home-screen icon on iOS: the manual's app
+  // icon (symbol on cream), because iOS does not support transparent icons.
   icons: {
-    icon: [
-      { url: withBasePath("/brand/favicon.png"), sizes: "192x192", type: "image/png" },
-      { url: withBasePath("/brand/app-icon.png"), sizes: "512x512", type: "image/png" },
-    ],
+    icon: [{ url: withBasePath("/brand/favicon.png"), sizes: "256x256", type: "image/png" }],
     shortcut: withBasePath("/brand/favicon.png"),
     apple: withBasePath("/brand/app-icon.png"),
   },
