@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
-import { BrandLockup } from "@/components/ui/BrandLockup";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 import { resetPassword } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
 import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
@@ -156,9 +156,8 @@ function ResetPasswordContent() {
               style={{ borderColor: "color-mix(in srgb, var(--brand-500) 24%, transparent)" }}
             />
 
-            <div className="relative z-10 flex flex-col items-center lg:flex-row lg:items-center lg:gap-3">
-              <BrandLockup className="mx-auto h-14 lg:mx-0 lg:h-11" />
-            </div>
+            <BrandCornerLogo />
+            <div aria-hidden="true" className="h-14" />
 
             <div className="relative z-10 mt-10 lg:mt-0">
               <h1 className="mt-4 font-display text-[1.35rem] font-bold leading-tight text-[#FAF8F5]">

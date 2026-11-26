@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { BrandLockup } from "@/components/ui/BrandLockup";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 import { normalizeEmailInput } from "@/lib/utils/email";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { requestPasswordReset } from "@/lib/api/auth";
@@ -114,9 +114,8 @@ export default function ForgotPasswordPage() {
             style={{ borderColor: "color-mix(in srgb, var(--brand-500) 24%, transparent)" }}
           />
 
-          <div className="relative z-10 flex flex-col items-center lg:flex-row lg:items-center lg:gap-3">
-            <BrandLockup className="mx-auto h-14 lg:mx-0 lg:h-11" />
-          </div>
+          <BrandCornerLogo />
+          <div aria-hidden="true" className="h-14" />
 
           <div className="relative z-10 mt-10 lg:mt-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">{t("forgotPassword.desktopEyebrow")}</p>

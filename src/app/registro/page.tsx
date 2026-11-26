@@ -11,7 +11,7 @@ import { useTurnstile } from "@/components/auth/TurnstileWidget";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
-import { BrandLockup } from "@/components/ui/BrandLockup";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 import { normalizeEmailInput } from "@/lib/utils/email";
 import { HOME_PATH } from "@/lib/routes";
 
@@ -180,11 +180,10 @@ export default function RegistroPage() {
       <main className="flex h-dvh flex-col bg-[#FAF8F5] lg:bg-white">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           {/* Navy: header en mobile / columna de marca a pantalla completa en desktop */}
-          <div className="bg-[#0A2540] px-4 py-3 lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:px-12 lg:py-12">
+          <div className="bg-[#0A2540] px-4 py-3 lg:relative lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:px-12 lg:py-12">
             {/* Desktop: logo */}
-            <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-2.5">
-              <BrandLockup className="h-11" />
-            </div>
+            <BrandCornerLogo className="hidden lg:flex" />
+            <div aria-hidden="true" className="hidden lg:block lg:h-14" />
 
             {/* Mobile: flecha + eyebrow */}
             <div className="mb-1 flex items-center gap-2 lg:hidden">
