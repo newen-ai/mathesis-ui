@@ -213,6 +213,24 @@ describe("API contract with the backend", () => {
     expect(mock.last.path).toBe("/support/bug-reports");
     expect(bugForm.get("pageUrl")).toBe("https://x");
     expect(bugForm.getAll("screenshots")).toHaveLength(1);
+    // Logged in: no contact email, device or captcha unless given.
+    expect(bugForm.has("contactEmail")).toBe(false);
+    expect(bugForm.has("device")).toBe(false);
+    expect(bugForm.has("captchaToken")).toBe(false);
+
+    await profile.submitBugReport({
+      title: "Bug",
+      description: "Desc",
+      pageUrl: "https://x",
+      screenshots: [],
+      contactEmail: "visita@example.com",
+      device: { browser: "Chrome 131", deviceType: "desktop" },
+      captchaToken: "tok",
+    });
+    const anonymousForm = mock.last.body as FormData;
+    expect(anonymousForm.get("contactEmail")).toBe("visita@example.com");
+    expect(JSON.parse(anonymousForm.get("device") as string)).toEqual({ browser: "Chrome 131", deviceType: "desktop" });
+    expect(anonymousForm.get("captchaToken")).toBe("tok");
   });
 
   it("skips the request for too-short searches", async () => {

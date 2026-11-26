@@ -453,6 +453,25 @@ export async function getSessionUserId(): Promise<string | null> {
 	}
 }
 
+export type SessionContact = { id: string; email: string };
+
+// Who is logged in, for forms that prefill the account email (bug reports). Null when there is no session.
+export async function getSessionContact(): Promise<SessionContact | null> {
+	try {
+		const sessionResponse = await apiRequest("/auth/session");
+		if (!sessionResponse.ok) {
+			return null;
+		}
+
+		const payload = (await sessionResponse.json()) as { data?: { user?: { id?: unknown; email?: unknown } } };
+		const id = payload?.data?.user?.id;
+		const email = payload?.data?.user?.email;
+		return typeof id === "string" && id && typeof email === "string" && email ? { id, email } : null;
+	} catch {
+		return null;
+	}
+}
+
 export async function logout(): Promise<AuthServiceResponse> {
 	try {
 		const response = await apiRequest("/auth/logout", {

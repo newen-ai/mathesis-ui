@@ -7,6 +7,11 @@
       "missingApiBaseUrl": "Bug report integration is not configured in this environment.",
       "imageTooLarge": "One of the screenshots is too large to send.",
       "imagesOnly": "Only image files are allowed as bug report screenshots.",
+      "contactEmailRequired": "Leave a contact email so we can get back to you.",
+      "tooManyScreenshots": "You attached more screenshots than allowed.",
+      "captchaRequired": "Complete the verification to send the report.",
+      "captchaFailed": "The verification failed. Try again.",
+      "rateLimited": "You sent many reports. Try again later.",
       "default": "We could not send the bug report right now."
     }
   },

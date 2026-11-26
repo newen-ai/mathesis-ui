@@ -1,3 +1,4 @@
+import type { DeviceInfo } from "@/lib/utils/device-info";
 import {
   apiRequest,
   ApiServiceResponse,
@@ -82,6 +83,11 @@ export type BugReportSubmitInput = {
   description: string;
   pageUrl: string;
   screenshots: File[];
+  // Only sent before login; the backend uses the account email otherwise.
+  contactEmail?: string;
+  device?: DeviceInfo | null;
+  // Turnstile token, required by the backend when there is no session.
+  captchaToken?: string | null;
 };
 
 export type BugReportAttachmentSummary = {
@@ -591,6 +597,15 @@ export async function submitBugReport(
     formData.set("title", input.title);
     formData.set("description", input.description);
     formData.set("pageUrl", input.pageUrl);
+    if (input.contactEmail) {
+      formData.set("contactEmail", input.contactEmail);
+    }
+    if (input.device) {
+      formData.set("device", JSON.stringify(input.device));
+    }
+    if (input.captchaToken) {
+      formData.set("captchaToken", input.captchaToken);
+    }
 
     for (const screenshot of input.screenshots) {
       formData.append("screenshots", screenshot);

@@ -7,6 +7,11 @@
       "missingApiBaseUrl": "La integración de reportes no está configurada en este entorno.",
       "imageTooLarge": "Una de las capturas supera el tamaño permitido para enviarla.",
       "imagesOnly": "Solo se permiten imágenes como capturas del reporte.",
+      "contactEmailRequired": "Dejanos un email de contacto para poder responderte.",
+      "tooManyScreenshots": "Adjuntaste más capturas de las permitidas.",
+      "captchaRequired": "Completá la verificación para enviar el reporte.",
+      "captchaFailed": "La verificación falló. Intentá de nuevo.",
+      "rateLimited": "Enviaste muchos reportes. Probá de nuevo más tarde.",
       "default": "No pudimos enviar el reporte en este momento."
     }
   },
