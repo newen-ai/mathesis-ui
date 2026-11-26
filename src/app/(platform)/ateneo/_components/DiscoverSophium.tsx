@@ -29,7 +29,7 @@ export function DiscoverSophium() {
         </div>
         <h3 className="mt-3 text-[1.45rem] font-semibold leading-tight text-[var(--heading-primary)]">Sophium Empresarios</h3>
         <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">
-          Directorio de empresas de socios Mensa. Encontrá proveedores o sumá la tuya.
+          Directorio de empresas. Encontrá proveedores o sumá la tuya.
         </p>
         <button type="button" disabled className="mt-4 text-scale-2 font-semibold text-[var(--brand-800)] opacity-85">
           Conocé el Directorio →

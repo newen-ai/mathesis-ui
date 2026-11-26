@@ -2,10 +2,10 @@
   "brand": "Sophium Entrepreneurs",
   "header": {
     "title": "Community companies",
-    "subtitle": "Founded or led by Mensa members. Verified."
+    "subtitle": "Founded or led by Sophium members. Verified."
   },
   "membership": {
-    "title": "Are you a Mensa entrepreneur?",
+    "title": "Are you an entrepreneur?",
     "subtitle": "Sophium Entrepreneurs is new; we will tell you what it is about. You can also request it from your profile.",
     "ariaRequest": "Request Sophium Entrepreneurs membership",
     "ariaCancel": "Cancel Sophium Entrepreneurs membership request",
@@ -20,7 +20,7 @@
     "successCancel": "Request cancelled."
   },
   "card": {
-    "fallbackFounder": "Mensa member",
+    "fallbackFounder": "Sophium member",
     "fallbackRole": "Entrepreneur",
     "fallbackDescription": "No description available.",
     "fallbackLocation": "Location",

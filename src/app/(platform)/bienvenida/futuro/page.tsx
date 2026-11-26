@@ -19,7 +19,7 @@ const priorityCards = [
     eyebrow: "Visión Sophium",
     title: "Comunidad Global",
     description:
-      "Empezamos en Mensa Argentina, pero la comunidad que estamos construyendo no tiene fronteras: cada Mensa Nacional del mundo, conectada.",
+      "Buscamos conectar a todas las personas con alto IQ",
     highlighted: true,
     icon: (
       <svg viewBox="0 0 24 24" className="h-11 w-11" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -48,7 +48,7 @@ const futureCards = [
   },
   {
     title: "Xenia",
-    description: "Viajás y tenés quién te reciba: conectá con Mensa en cualquier parte del mundo.",
+    description: "Conectá con gente con alto IQ en cualquier parte del mundo",
     badge: "PRÓXIMAMENTE",
     icon: (
       <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.8">

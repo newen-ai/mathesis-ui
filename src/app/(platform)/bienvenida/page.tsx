@@ -63,7 +63,7 @@ const currentFeatures: WelcomeFeature[] = [
   },
   {
     title: "Credencial digital",
-    description: "Tu credencial de Miembro de Mensa, siempre a mano.",
+    description: "Tu credencial de Miembro, siempre a mano.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="4.5" y="6" width="15" height="12" rx="2" />

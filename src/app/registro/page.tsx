@@ -39,7 +39,6 @@ export default function RegistroPage() {
   const [step, setStep] = useState<1 | 2>(1);
 
   // Paso 1 — verificación de membresía
-  const [organization, setOrganization] = useState(t("register.organizationMensa"));
   const [dni, setDni] = useState("");
   const [email, setEmail] = useState("");
   const [isAdult, setIsAdult] = useState(false);
@@ -166,10 +165,7 @@ export default function RegistroPage() {
     step === 1 ? t("register.step1Label") : t("register.step2Label");
   const stepTitle = step === 1 ? t("register.step1Title") : t("register.step2Title");
   const formHeading = step === 1 ? t("register.formHeadingStep1") : t("register.formHeadingStep2");
-  const formSub =
-    step === 1
-      ? t("register.formSubStep1")
-      : t("register.formSubStep2");
+  const formSub = step === 1 ? null : t("register.formSubStep2");
 
   return (
     <>
@@ -253,7 +249,6 @@ export default function RegistroPage() {
                     </svg>
                     {t("register.membershipVerified")}
                   </div>
-                  <div className="mt-3 text-sm text-[#FAF8F5]/70">{organization}</div>
                 </>
               )}
             </div>
@@ -319,7 +314,7 @@ export default function RegistroPage() {
                 <div className="font-display text-2xl font-bold text-[#0A2540]">
                   {formHeading}
                 </div>
-                <div className="mt-1 text-sm text-[#666666]">{formSub}</div>
+                {formSub ? <div className="mt-1 text-sm text-[#666666]">{formSub}</div> : null}
               </div>
 
               {step === 1 ? (
@@ -327,20 +322,6 @@ export default function RegistroPage() {
                   <p className="text-xs leading-relaxed text-[#666666] lg:hidden">
                     {t("register.mobileStep1Intro")}
                   </p>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="organization" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      {t("register.organizationLabel")}
-                    </label>
-                    <select
-                      id="organization"
-                      value={organization}
-                      onChange={(event) => setOrganization(event.target.value)}
-                      className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
-                    >
-                      <option value={t("register.organizationMensa")}>{t("register.organizationMensa")}</option>
-                    </select>
-                  </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="dni" className="text-xs font-bold tracking-wide text-[#0A2540]">
@@ -374,9 +355,6 @@ export default function RegistroPage() {
                       aria-invalid={Boolean(errors.email)}
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
-                    <p className="text-[0.7rem] leading-relaxed text-[#666666]">
-                      {t("register.emailHelp")}
-                    </p>
                     {errors.email ? (
                       <p className="text-xs font-medium text-red-700">{errors.email}</p>
                     ) : null}
@@ -416,10 +394,6 @@ export default function RegistroPage() {
                     {t("register.verifyAndContinue")}
                   </button>
 
-                  <p className="rounded-lg bg-white px-3 py-2 text-[0.7rem] leading-relaxed text-[#666666] lg:bg-[#FAF8F5]">
-                    {t("register.step1Footnote")}
-                  </p>
-
                   <p className="text-center text-xs text-[#666666]">
                     {t("register.alreadyHaveAccount")}{" "}
                     <Link href="/login" className="font-bold text-[#7A6435] hover:underline">
@@ -448,7 +422,6 @@ export default function RegistroPage() {
                       {t("register.membershipVerified")}
                     </div>
                     <div className="mt-1.5 text-sm font-bold text-[#0A2540]">{email}</div>
-                    <div className="text-xs text-[#666666]">{organization}</div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">

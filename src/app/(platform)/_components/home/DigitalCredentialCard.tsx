@@ -27,6 +27,8 @@ type CredentialBadgeCriterion = {
   aliases: string[];
   logoSrc?: string;
   logoAlt?: string;
+  // When true the badge is listed only if the user actually holds it (no greyed-out preview).
+  onlyWhenActive?: boolean;
 };
 
 const CREDENTIAL_BADGE_CRITERIA: CredentialBadgeCriterion[] = [
@@ -37,6 +39,7 @@ const CREDENTIAL_BADGE_CRITERIA: CredentialBadgeCriterion[] = [
     aliases: ["mensa_argentina", "mensa_ar"],
     logoSrc: MENSA_ARGENTINA_LOGO_SRC,
     logoAlt: "credential.logoMensaAlt",
+    onlyWhenActive: true,
   },
   {
     id: "sophium-empresarios",
@@ -115,13 +118,18 @@ export function DigitalCredentialCard() {
     );
 
     const configuredCriteria = CREDENTIAL_BADGE_CRITERIA.map((criterion) => ({
-      id: criterion.id,
-      label: t(criterion.label),
-      criteria: t(criterion.criteria),
-      logoSrc: criterion.logoSrc,
-      logoAlt: criterion.logoAlt ? t(criterion.logoAlt) : undefined,
+      criterion,
       active: criterion.aliases.some((alias) => normalizedUserBadges.has(alias)),
-    }));
+    }))
+      .filter(({ criterion, active }) => active || !criterion.onlyWhenActive)
+      .map(({ criterion, active }) => ({
+        id: criterion.id,
+        label: t(criterion.label),
+        criteria: t(criterion.criteria),
+        logoSrc: criterion.logoSrc,
+        logoAlt: criterion.logoAlt ? t(criterion.logoAlt) : undefined,
+        active,
+      }));
 
     const configuredAliases = new Set(
       CREDENTIAL_BADGE_CRITERIA.flatMap((criterion) => criterion.aliases)
@@ -140,21 +148,11 @@ export function DigitalCredentialCard() {
     return [...configuredCriteria, ...extraOwnedBadges].slice(0, 4);
   }, [badges, t]);
 
-  const frontMembershipChip = useMemo(() => {
-    const primaryActiveBadge = badgePreviews.find((badge) => badge.active);
-    if (primaryActiveBadge) {
-      return primaryActiveBadge;
-    }
-
-    return {
-      id: "fallback-membership",
-      label: t("credential.frontMembershipFallbackLabel"),
-      criteria: t("credential.frontMembershipFallbackCriteria"),
-      logoSrc: MENSA_ARGENTINA_LOGO_SRC,
-      logoAlt: t("credential.logoMensaAlt"),
-      active: true,
-    } as BadgePreview;
-  }, [badgePreviews, t]);
+  // No fallback chip: without an active badge the front shows none.
+  const frontMembershipChip = useMemo(
+    () => badgePreviews.find((badge) => badge.active) ?? null,
+    [badgePreviews]
+  );
 
   const fullName = userDisplayName || t("credential.fallbackName");
 
@@ -228,6 +226,7 @@ export function DigitalCredentialCard() {
                     {fullName}
                   </h1>
 
+                  {frontMembershipChip ? (
                   <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.12)] px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-white">
                     {frontMembershipChip.logoSrc ? (
                       <span
@@ -242,6 +241,7 @@ export function DigitalCredentialCard() {
                     )}
                     {frontMembershipChip.criteria}
                   </div>
+                  ) : null}
                 </div>
 
                 <div className="mt-5 flex items-end justify-between gap-4">

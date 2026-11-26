@@ -224,16 +224,18 @@ export function TopBarMobile({
             </button>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(activeBadges.length > 0 ? activeBadges : ["∫ Mensa AR"]).slice(0, 2).map((badge) => (
-              <span
-                key={badge}
-                className="rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_62%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_62%,var(--surface))] px-2.5 py-0.5 text-scale-1 font-semibold text-[var(--brand-900)]"
-              >
-                {badge}
-              </span>
-            ))}
-          </div>
+          {activeBadges.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {activeBadges.slice(0, 2).map((badge) => (
+                <span
+                  key={badge}
+                  className="rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_62%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_62%,var(--surface))] px-2.5 py-0.5 text-scale-1 font-semibold text-[var(--brand-900)]"
+                >
+                  {badge}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-3 px-3 py-3 pb-8">
@@ -255,7 +257,7 @@ export function TopBarMobile({
                     </span>
                     <span>
                       <span className="block text-scale-3 font-semibold text-[var(--text-primary)]">{t("topbar:mobile.nexum.profile.title", { defaultValue: "Tu Perfil Profesional" })}</span>
-                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.nexum.profile.subtitle", { defaultValue: "CV, experiencia y verificación Mensa" })}</span>
+                      <span className="block text-scale-2 text-[var(--text-secondary)]">{t("topbar:mobile.nexum.profile.subtitle", { defaultValue: "CV y experiencia" })}</span>
                     </span>
                   </span>
                   <Chevron open={mobileExpandedPanel === "profile"} />

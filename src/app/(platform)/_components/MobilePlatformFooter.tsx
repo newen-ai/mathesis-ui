@@ -22,7 +22,7 @@ const SHEET_BOTTOM = `calc(max(env(safe-area-inset-bottom), 0.35rem) + ${FOOTER_
 const nexumOverlayItems: OverlayItem[] = [
   {
     label: "Tu Perfil Profesional",
-    description: "CV, experiencia y verificación Mensa",
+    description: "CV y experiencia",
     icon: "user",
     href: "/perfil",
     isSelected: true,
