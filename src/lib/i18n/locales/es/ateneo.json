@@ -30,11 +30,25 @@
     "groupInfo": "Ver info del grupo",
     "groupMembers": "Ver miembros del grupo",
     "editGroup": "Editar grupo",
+    "moreOptions": "Más opciones del grupo",
+    "leaveGroup": "Salir del grupo",
+    "leaveGroupOwnerDisabled": "Sos el creador del grupo, no podés salir.",
     "hints": {
       "groupInfo": "Info",
       "groupMembers": "Miembros",
-      "editGroup": "Editar"
-    }
+      "editGroup": "Editar",
+      "moreOptions": "Más"
+    },
+    "leaveConfirm": {
+      "title": "Salir del grupo",
+      "body": "Vas a salir de {{name}}. Tus temas y comentarios quedan en el grupo, y podés volver a unirte cuando quieras.",
+      "cancel": "Cancelar",
+      "confirm": "Salir del grupo",
+      "leaving": "Saliendo...",
+      "closeAria": "Cerrar"
+    },
+    "leaveSuccess": "Saliste del grupo",
+    "leaveError": "No pudimos sacarte del grupo. Intentá de nuevo."
   },
   "newTopic": {
     "title": "Nuevo tema",

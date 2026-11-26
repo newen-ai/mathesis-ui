@@ -52,6 +52,7 @@ const cases: ContractCase[] = [
     { name: "Nuevo", icon: "community" },
   ],
   ["joinAteneoGroup", () => ateneo.joinAteneoGroup(G), "POST", `/ateneo/groups/${eG}/join`],
+  ["leaveAteneoGroup", () => ateneo.leaveAteneoGroup(G), "POST", `/ateneo/groups/${eG}/leave`],
   ["listAteneoFeed", () => ateneo.listAteneoFeed(5), "GET", "/ateneo/feed?limit=5"],
   ["listAteneoTopics", () => ateneo.listAteneoTopics(G, 7), "GET", `/ateneo/groups/${eG}/topics?limit=7`],
   ["getAteneoTopic", () => ateneo.getAteneoTopic(G, T), "GET", `/ateneo/groups/${eG}/topics/${eT}`],

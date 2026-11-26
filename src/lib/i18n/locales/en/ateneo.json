@@ -30,11 +30,25 @@
     "groupInfo": "View group info",
     "groupMembers": "View group members",
     "editGroup": "Edit group",
+    "moreOptions": "More group options",
+    "leaveGroup": "Leave group",
+    "leaveGroupOwnerDisabled": "You created this group, so you can't leave it.",
     "hints": {
       "groupInfo": "Info",
       "groupMembers": "Members",
-      "editGroup": "Edit"
-    }
+      "editGroup": "Edit",
+      "moreOptions": "More"
+    },
+    "leaveConfirm": {
+      "title": "Leave group",
+      "body": "You are about to leave {{name}}. Your topics and comments stay in the group, and you can join again at any time.",
+      "cancel": "Cancel",
+      "confirm": "Leave group",
+      "leaving": "Leaving...",
+      "closeAria": "Close"
+    },
+    "leaveSuccess": "You left the group",
+    "leaveError": "We couldn't remove you from the group. Please try again."
   },
   "newTopic": {
     "title": "New topic",
