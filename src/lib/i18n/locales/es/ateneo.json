@@ -1,0 +1,198 @@
+{
+  "feed": {
+    "authorFallback": "Usuario",
+    "title": "Feed",
+    "subtitle": "Todos tus grupos, mezclados",
+    "newTopic": "+ Nuevo tema",
+    "loading": "Cargando feed...",
+    "empty": "Abrí el primer tema de conversación.",
+    "discoveryBadge": "Grupo sugerido"
+  },
+  "explorer": {
+    "tabs": {
+      "mine": "Tus grupos",
+      "discover": "Descubrir",
+      "admin": "Grupos que administrás"
+    },
+    "headerTitle": "Explorar Grupos",
+    "breadcrumb": "Agora > Ateneo > Explorar",
+    "createGroup": "+ Crear grupo",
+    "searchPlaceholder": "Buscar grupos...",
+    "official": "Oficial",
+    "optionsAria": "Opciones de {{name}}",
+    "join": "Unirse",
+    "loading": "Cargando grupos...",
+    "empty": "No encontramos grupos con ese criterio.",
+    "floatingCreateAria": "Crear grupo",
+    "comingSoon": "Coming soon"
+  },
+  "headerActions": {
+    "groupInfo": "Ver info del grupo",
+    "groupMembers": "Ver miembros del grupo",
+    "editGroup": "Editar grupo",
+    "moreOptions": "Más opciones del grupo",
+    "leaveGroup": "Salir del grupo",
+    "leaveGroupOwnerDisabled": "Sos el creador del grupo, no podés salir.",
+    "hints": {
+      "groupInfo": "Info",
+      "groupMembers": "Miembros",
+      "editGroup": "Editar",
+      "moreOptions": "Más"
+    },
+    "leaveConfirm": {
+      "title": "Salir del grupo",
+      "body": "Vas a salir de {{name}}. Tus temas y comentarios quedan en el grupo, y podés volver a unirte cuando quieras.",
+      "cancel": "Cancelar",
+      "confirm": "Salir del grupo",
+      "leaving": "Saliendo...",
+      "closeAria": "Cerrar"
+    },
+    "leaveSuccess": "Saliste del grupo",
+    "leaveError": "No pudimos sacarte del grupo. Intentá de nuevo."
+  },
+  "newTopic": {
+    "title": "Nuevo tema",
+    "backAria": "Volver",
+    "publish": "Publicar",
+    "publishing": "Publicando...",
+    "emptyGroupsMessage": "Para publicar, sumate a un grupo o creá uno nuevo desde Ateneo.",
+    "adminsOnlyMessage": "Solo los administradores pueden crear temas en este grupo.",
+    "groupLabel": "Grupo",
+    "selectedGroup": "Grupo seleccionado",
+    "selectGroup": "Seleccioná un grupo",
+    "noGroupsAvailable": "Creá el primer grupo",
+    "groupAdminsOnlyLabel": "Solo administradores pueden crear",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Título del tema...",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Contá de qué se trata...",
+    "detectedLinks": "Links detectados",
+    "attachLabel": "Adjuntar",
+    "attachPhoto": "Foto",
+    "attachFile": "Archivo",
+    "openPreviewAria": "Abrir vista previa de {{name}}",
+    "previewAlt": "Vista previa de {{name}}",
+    "removeAria": "Quitar {{name}}",
+    "fileTypesHint": "Foto: JPG, PNG o HEIC · Archivo: solo PDF",
+    "toneLabel": "Tono del tema (opcional, indicativo)",
+    "tones": {
+      "serio": "SERIO",
+      "mix": "MIX",
+      "libre": "LIBRE"
+    },
+    "toneHint": "Solo indicativo: no cambia moderación ni el Seriómetro real de reacciones.",
+    "closeGroupPickerAria": "Cerrar selector de grupos",
+    "chooseGroupTitle": "Elegir grupo",
+    "closePickerAria": "Cerrar selector",
+    "closePreviewAria": "Cerrar vista previa",
+    "removeCurrentImageAria": "Quitar imagen actual",
+    "previousImageAria": "Imagen anterior",
+    "nextImageAria": "Imagen siguiente",
+    "toasts": {
+      "imageTypesOnly": "Solo se permiten imágenes JPG, PNG o HEIC/HEIF.",
+      "pdfOnly": "Solo se permiten archivos PDF.",
+      "fileTooLarge": "El archivo {{name}} es demasiado grande. Máximo {{maxSize}} por archivo.",
+      "chooseImage": "Elegí una imagen JPG, PNG o HEIC.",
+      "choosePdf": "Elegí un archivo PDF.",
+      "maxAttachments": "Máximo 5 adjuntos por tema. Quitá alguno para sumar otro.",
+      "preferredGroupUnavailable": "No pudimos cargar el grupo del enlace. Te mostramos tus grupos disponibles.",
+      "published": "Tema publicado"
+    },
+    "errors": {
+      "groupRequired": "Elegí un grupo para publicar el tema.",
+      "groupAdminsOnly": "En este grupo solo los administradores pueden crear temas. Elegí otro grupo.",
+      "titleRequired": "Escribí un título.",
+      "titleTooShort": "El título necesita al menos {{min}} caracteres.",
+      "titleTooLong": "El título puede tener hasta {{max}} caracteres.",
+      "descriptionRequired": "Escribí una descripción.",
+      "descriptionTooShort": "La descripción necesita al menos {{min}} caracteres.",
+      "descriptionTooLong": "La descripción puede tener hasta {{max}} caracteres."
+    },
+    "pdf": {
+      "open": "Ver PDF",
+      "pages_one": "{{count}} pág.",
+      "pages_other": "{{count}} págs."
+    }
+  },
+  "groupMeta": {
+    "members_one": "{{count}} miembro",
+    "members_other": "{{count}} miembros",
+    "activity": {
+      "new": "Creado recientemente",
+      "active": "Activo hoy",
+      "inactive": "Sin actividad"
+    }
+  },
+  "discussion": {
+    "deletedComment": "Comentario eliminado",
+    "deleteComment": "Eliminar comentario",
+    "deletingComment": "Eliminando...",
+    "deleteCommentConfirm": "¿Querés eliminar este comentario? Esta acción no se puede deshacer.",
+    "commentDeleted": "Comentario eliminado",
+    "deleteCommentError": "No pudimos eliminar el comentario."
+  },
+  "membersPanel": {
+    "loading": "Cargando miembros...",
+    "loadError": "No pudimos cargar este grupo.",
+    "joinToSee": "Unite al grupo para ver el listado completo de miembros.",
+    "joinBlockedHint": "No podés unirte porque fuiste expulsado de este grupo.",
+    "join": "Unirse al grupo",
+    "joining": "Uniéndote...",
+    "joinBlocked": "Esta cuenta fue expulsada del grupo y no puede volver a unirse.",
+    "joinError": "No pudimos unirte al grupo.",
+    "tabsAria": "Secciones de miembros",
+    "tabs": {
+      "members": "Miembros",
+      "moderation": "Moderación"
+    },
+    "userFallback": "Usuario",
+    "adminFallback": "Admin",
+    "avatar": "Foto de perfil de {{name}}",
+    "badges": {
+      "owner": "OWNER",
+      "admin": "ADMIN",
+      "pinned": "FIJADO"
+    },
+    "memberSince": "Miembro desde {{date}}",
+    "moreOptions": "Más opciones para {{name}}",
+    "kick": "Expulsar usuario",
+    "kickNotAllowed": "No tenés permisos para expulsar a este usuario.",
+    "kicked": "Usuario expulsado",
+    "kickError": "No pudimos expulsar al usuario.",
+    "total_one": "{{count}} miembro en total.",
+    "total_other": "{{count}} miembros en total.",
+    "showing": "Mostrando {{shown}} de {{total}} miembros.",
+    "loadMore": "Ver más miembros",
+    "loadingMore": "Cargando...",
+    "loadMoreError": "No pudimos cargar más miembros.",
+    "moderation": {
+      "intro": "Usuarios expulsados y contenido eliminado por moderación. Podés revertir cualquiera de estas acciones.",
+      "filtersAria": "Tipo de moderación",
+      "users": "Usuarios ({{count}})",
+      "topics": "Temas ({{count}})",
+      "comments": "Comentarios ({{count}})",
+      "noUsers": "Ningún usuario expulsado.",
+      "kickedBy": "Expulsado por {{name}} · {{date}}",
+      "reason": "Motivo: {{reason}}",
+      "readmit": "Readmitir",
+      "readmitting": "Readmitiendo...",
+      "readmitted": "Usuario readmitido",
+      "readmitError": "No pudimos readmitir al usuario.",
+      "noTopics": "Ninguna publicación retirada.",
+      "topicBy": "Publicación de {{name}} · {{date}}",
+      "opening": "Abriendo...",
+      "clickToView": "Click para ver contenido",
+      "previewError": "No pudimos abrir la vista previa de la publicación eliminada.",
+      "restoring": "Restaurando...",
+      "restoreTopic": "Restaurar publicación",
+      "topicRestored": "Publicación restaurada",
+      "restoreTopicError": "No pudimos restaurar la publicación.",
+      "noComments": "Ningún comentario retirado.",
+      "emptyComment": "Comentario sin contenido",
+      "commentBy": "Comentario de {{name}} · {{date}}",
+      "restoreComment": "Restaurar comentario",
+      "commentRestored": "Comentario restaurado",
+      "restoreCommentError": "No pudimos restaurar el comentario."
+    }
+  }
+}

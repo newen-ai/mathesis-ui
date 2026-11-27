@@ -1,0 +1,130 @@
+import i18next from "@/lib/i18n";
+
+export type SupportedLocale = "es";
+
+export type AuthErrorDetails = {
+  code?: string;
+  reason?: string;
+  [key: string]: unknown;
+};
+
+export const authErrorCodeToKey: Record<string, string> = {
+  EMAIL_NOT_VERIFIED: "auth:emailNotVerified",
+  VERIFICATION_EMAIL_RATE_LIMITED: "auth:verificationEmailRateLimited",
+  USER_NOT_WHITELISTED: "auth:userNotWhitelisted",
+  INVALID_EMAIL_OR_PASSWORD: "auth:invalidCredentials",
+  CAPTCHA_REQUIRED: "auth:captchaRequired",
+  CAPTCHA_INVALID: "auth:captchaInvalid",
+  CAPTCHA_UNAVAILABLE: "auth:captchaUnavailable",
+};
+
+const CAPTCHA_ERROR_CODES = new Set(["CAPTCHA_REQUIRED", "CAPTCHA_INVALID", "CAPTCHA_UNAVAILABLE"]);
+
+// True when the backend asked for (or rejected) the Turnstile check: the page shows the widget and retries.
+export function isCaptchaError(details?: unknown): boolean {
+  const code = extractAuthErrorCode(details);
+  return code !== undefined && CAPTCHA_ERROR_CODES.has(code);
+}
+
+// Message for a CAPTCHA error, or null for any other error so each page keeps its own message.
+export function getCaptchaErrorMessage(details?: unknown): string | null {
+  const code = extractAuthErrorCode(details);
+  return code && CAPTCHA_ERROR_CODES.has(code) ? i18next.t(authErrorCodeToKey[code]) : null;
+}
+
+export function normalizeAuthErrorCode(value?: string): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+  return normalized ? normalized.toUpperCase() : undefined;
+}
+
+export function normalizeMessageKey(value?: string): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  return normalized
+    .replace(/\s+/g, " ")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+export function extractAuthErrorCode(details?: unknown): string | undefined {
+  if (!details) {
+    return undefined;
+  }
+
+  if (typeof details === "string") {
+    return normalizeAuthErrorCode(details);
+  }
+
+  if (typeof details === "object") {
+    const maybeCode = (details as { code?: unknown }).code;
+    if (typeof maybeCode === "string") {
+      return normalizeAuthErrorCode(maybeCode);
+    }
+  }
+
+  return undefined;
+}
+
+// "Too many attempts" from the backend's auth rate limits (429, code RATE_LIMITED), with the wait in minutes.
+// Returns null for any other error so each page keeps its own message.
+export function getRateLimitMessage(details?: unknown): string | null {
+  if (extractAuthErrorCode(details) !== "RATE_LIMITED") {
+    return null;
+  }
+
+  const seconds = Number((details as { retryAfterSeconds?: unknown }).retryAfterSeconds);
+  const minutes = Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds / 60) : 1;
+  return i18next.t("auth:rateLimited", { count: minutes });
+}
+
+export function getAuthErrorTranslation(
+  codeOrMessage?: string | unknown,
+  fallback = i18next.t("auth:default", { defaultValue: "No pudimos iniciar sesión." })
+): string {
+  const code =
+    typeof codeOrMessage === "string"
+      ? normalizeAuthErrorCode(codeOrMessage)
+      : extractAuthErrorCode(codeOrMessage);
+
+  const rateLimited = getRateLimitMessage(codeOrMessage);
+  if (rateLimited) {
+    return rateLimited;
+  }
+
+  if (code && authErrorCodeToKey[code]) {
+    return i18next.t(authErrorCodeToKey[code], { defaultValue: fallback });
+  }
+
+  if (typeof codeOrMessage === "string") {
+    const aliasKey = normalizeMessageKey(codeOrMessage);
+    const mappedCode = aliasKey
+      ? {
+          EMAIL_ADDRESS_IS_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
+          EMAIL_IS_NOT_VERIFIED: "EMAIL_NOT_VERIFIED",
+          PLEASE_WAIT_BEFORE_REQUESTING_ANOTHER_VERIFICATION_EMAIL: "VERIFICATION_EMAIL_RATE_LIMITED",
+          ACCOUNT_PENDING_WHITELIST_APPROVAL: "USER_NOT_WHITELISTED",
+          INVALID_EMAIL_OR_PASSWORD: "INVALID_EMAIL_OR_PASSWORD",
+        }[aliasKey]
+      : undefined;
+
+    if (mappedCode && authErrorCodeToKey[mappedCode]) {
+      return i18next.t(authErrorCodeToKey[mappedCode], { defaultValue: fallback });
+    }
+  }
+
+  return i18next.t("auth:default", { defaultValue: fallback });
+}
+
+export default i18next;

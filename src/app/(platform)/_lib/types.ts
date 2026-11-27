@@ -4,18 +4,40 @@ export type Profile = {
   fechaNacimiento: string;
   nacionalidad: string;
   puesto: string;
+  empresaActual: string;
+  about: string;
+  locationCountry: string;
+  locationCity: string;
+  locationPostalCode: string;
+  intereses: string[];
+  imagenPerfilUrl: string;
+  imagenBannerUrl: string;
 };
 
 export type Experience = {
   id: string;
   puestoTrabajo: string;
   lugarTrabajo: string;
+  descripcion: string;
   fechaComienzo: string;
   fechaFinalizacion: string;
   trabajoActual: boolean;
 };
 
 export type ExperienceDraft = Omit<Experience, "id">;
+
+export type Education = {
+  id: string;
+  institucion: string;
+  titulo: string;
+  campoEstudio: string;
+  fechaComienzo: string;
+  fechaFinalizacion: string;
+  estudiandoActualmente: boolean;
+  descripcion: string;
+};
+
+export type EducationDraft = Omit<Education, "id">;
 
 export type FeedPost = {
   id: string;
@@ -25,4 +47,12 @@ export type FeedPost = {
   contenido: string;
   etiqueta?: string;
   ownerProfileId?: string;
+  attachment?: {
+    type: "pdf" | "image";
+    title: string;
+    subtitle: string;
+    sourceLabel?: string;
+    url?: string;
+    isAvailable?: boolean;
+  };
 };

@@ -1,0 +1,525 @@
+import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { AppCard } from "@/components/ui/AppCard";
+import { ProfileShowAllToggle } from "./ProfileCollapsibleText";
+import { ReadOnlySectionHeader } from "./ProfileSectionHeaders";
+import {
+  ProfileEditModal,
+  ProfileModalError,
+  ProfileModalPrimaryButton,
+  ProfileModalSecondaryButton,
+} from "./ProfileEditModal";
+import { searchInterestSuggestions } from "@/lib/api/profile";
+import type { Profile } from "../../_lib/types";
+
+const COLLAPSED_INTERESTS_COUNT = 12;
+
+type InteresesCardProps = {
+  profile: Profile;
+  canEdit: boolean;
+  isEditingMode: boolean;
+  onStartEditing: () => void;
+  onCloseEditing: () => void;
+  isSaving: boolean;
+  saveError: string | null;
+  onSave: (profile: Profile) => Promise<{ ok: boolean; message?: string }>;
+  onClearSaveError: () => void;
+};
+
+function normalizeInterest(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function uniqueInterests(values: string[]) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  values.forEach((value) => {
+    const normalized = normalizeInterest(value);
+    if (!normalized) {
+      return;
+    }
+
+    const dedupeKey = normalized.toLocaleLowerCase();
+    if (seen.has(dedupeKey)) {
+      return;
+    }
+
+    seen.add(dedupeKey);
+    result.push(dedupeKey);
+  });
+
+  return result;
+}
+
+export function InteresesCard({
+  profile,
+  canEdit,
+  isEditingMode,
+  onStartEditing,
+  onCloseEditing,
+  isSaving,
+  saveError,
+  onSave,
+  onClearSaveError,
+}: InteresesCardProps) {
+  const { t } = useTranslation("profile");
+  const [workingInterests, setWorkingInterests] = useState<string[]>(profile.intereses);
+  const [isShowingAllInterests, setIsShowingAllInterests] = useState(false);
+  const visibleInterests = isShowingAllInterests
+    ? profile.intereses
+    : profile.intereses.slice(0, COLLAPSED_INTERESTS_COUNT);
+  const [draftInterest, setDraftInterest] = useState("");
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
+  const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState(0);
+  const [suggestionOptions, setSuggestionOptions] = useState<string[]>([]);
+  const [draggedInterest, setDraggedInterest] = useState<string | null>(null);
+  const [dragOverInterest, setDragOverInterest] = useState<string | null>(null);
+
+  const suggestionTimeoutRef = useRef<number | null>(null);
+  const suggestionsAbortControllerRef = useRef<AbortController | null>(null);
+
+  const hasChanges = useMemo(() => {
+    if (profile.intereses.length !== workingInterests.length) {
+      return true;
+    }
+
+    return profile.intereses.some((value, index) => value !== workingInterests[index]);
+  }, [profile.intereses, workingInterests]);
+
+  const draftNormalized = normalizeInterest(draftInterest);
+
+  const resetSuggestionFetch = () => {
+    if (suggestionTimeoutRef.current !== null) {
+      window.clearTimeout(suggestionTimeoutRef.current);
+      suggestionTimeoutRef.current = null;
+    }
+
+    if (suggestionsAbortControllerRef.current) {
+      suggestionsAbortControllerRef.current.abort();
+      suggestionsAbortControllerRef.current = null;
+    }
+  };
+
+  const scheduleSuggestionsFetch = (value: string, interestsSource: string[]) => {
+    const normalized = normalizeInterest(value);
+    resetSuggestionFetch();
+
+    if (normalized.length < 3) {
+      setSuggestionOptions([]);
+      setIsSuggestionsLoading(false);
+      return;
+    }
+
+    setIsSuggestionsLoading(true);
+
+    suggestionTimeoutRef.current = window.setTimeout(() => {
+      const controller = new AbortController();
+      suggestionsAbortControllerRef.current = controller;
+
+      void searchInterestSuggestions(normalized, controller.signal)
+        .then((result) => {
+          const currentInterests = new Set(
+            interestsSource.map((item) => item.toLocaleLowerCase())
+          );
+
+          const nextOptions = (result.data ?? [])
+            .map((item) => normalizeInterest(item.value))
+            .filter((item) => item.length > 0)
+            .filter((item) => !currentInterests.has(item.toLocaleLowerCase()))
+            .slice(0, 8);
+
+          setSuggestionOptions(nextOptions);
+          setHighlightedSuggestionIndex(0);
+        })
+        .catch((error: unknown) => {
+          if (error instanceof Error && error.name === "AbortError") {
+            return;
+          }
+
+          setSuggestionOptions([]);
+        })
+        .finally(() => {
+          setIsSuggestionsLoading(false);
+          suggestionsAbortControllerRef.current = null;
+        });
+    }, 180);
+  };
+
+  const onAddInterest = () => {
+    const normalized = normalizeInterest(draftInterest);
+    if (!normalized) {
+      setDraftError(t("interests.errors.invalid"));
+      return;
+    }
+
+    const exists = workingInterests.some(
+      (item) => item.toLocaleLowerCase() === normalized.toLocaleLowerCase()
+    );
+    if (exists) {
+      setDraftError(t("interests.errors.duplicate"));
+      return;
+    }
+
+    const nextInterests = [...workingInterests, normalized];
+    setWorkingInterests(nextInterests);
+    setDraftInterest("");
+    setDraftError(null);
+    setSuggestionOptions([]);
+    setIsSuggestionsOpen(false);
+    setHighlightedSuggestionIndex(0);
+    setIsSuggestionsLoading(false);
+    resetSuggestionFetch();
+  };
+
+  const onSelectSuggestion = (value: string) => {
+    const normalized = normalizeInterest(value);
+    const exists = workingInterests.some(
+      (item) => item.toLocaleLowerCase() === normalized.toLocaleLowerCase()
+    );
+    if (exists) {
+      return;
+    }
+
+    const nextInterests = [...workingInterests, normalized];
+    setWorkingInterests(nextInterests);
+    setDraftInterest("");
+    setDraftError(null);
+    setSuggestionOptions([]);
+    setIsSuggestionsOpen(false);
+    setHighlightedSuggestionIndex(0);
+    setIsSuggestionsLoading(false);
+    resetSuggestionFetch();
+  };
+
+  const onRemoveInterest = (interest: string) => {
+    const nextInterests = workingInterests.filter((item) => item !== interest);
+    setWorkingInterests(nextInterests);
+    setDraftError(null);
+    if (draggedInterest === interest) {
+      setDraggedInterest(null);
+    }
+    if (dragOverInterest === interest) {
+      setDragOverInterest(null);
+    }
+
+    if (draftNormalized.length >= 3) {
+      scheduleSuggestionsFetch(draftNormalized, nextInterests);
+    }
+  };
+
+  const onDropInterest = (targetInterest: string) => {
+    if (!draggedInterest || draggedInterest === targetInterest) {
+      return;
+    }
+
+    setWorkingInterests((current) => {
+      const fromIndex = current.indexOf(draggedInterest);
+      const toIndex = current.indexOf(targetInterest);
+
+      if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) {
+        return current;
+      }
+
+      const next = [...current];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+
+    setDraggedInterest(null);
+    setDragOverInterest(null);
+  };
+
+  const onDiscard = () => {
+    setWorkingInterests(profile.intereses);
+    setDraftInterest("");
+    setDraftError(null);
+    setSuggestionOptions([]);
+    setIsSuggestionsOpen(false);
+    setHighlightedSuggestionIndex(0);
+    setIsSuggestionsLoading(false);
+    setDraggedInterest(null);
+    setDragOverInterest(null);
+    onClearSaveError();
+    resetSuggestionFetch();
+    onCloseEditing();
+  };
+
+  const onSaveAll = async () => {
+    const nextInterests = uniqueInterests(workingInterests);
+
+    const result = await onSave({
+      ...profile,
+      intereses: nextInterests,
+    });
+
+    if (!result.ok) {
+      return;
+    }
+
+    setDraftError(null);
+    setSuggestionOptions([]);
+    setIsSuggestionsOpen(false);
+    setHighlightedSuggestionIndex(0);
+    setIsSuggestionsLoading(false);
+    setDraggedInterest(null);
+    setDragOverInterest(null);
+    resetSuggestionFetch();
+    onCloseEditing();
+  };
+
+  const onEnterEdit = () => {
+    setWorkingInterests(profile.intereses);
+    setDraftInterest("");
+    setDraftError(null);
+    setSuggestionOptions([]);
+    setIsSuggestionsOpen(false);
+    setHighlightedSuggestionIndex(0);
+    setIsSuggestionsLoading(false);
+    setDraggedInterest(null);
+    setDragOverInterest(null);
+    onClearSaveError();
+    resetSuggestionFetch();
+    onStartEditing();
+  };
+
+  return (
+    <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
+      <ReadOnlySectionHeader title={t("interests.title")} canEdit={canEdit} onEdit={onEnterEdit} />
+
+      {profile.intereses.length > 0 ? (
+        <>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {visibleInterests.map((interest) => (
+              <span
+                key={interest}
+                className="inline-flex max-w-full items-center rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-3 py-[0.32rem] text-[0.64rem] font-semibold text-[var(--brand-700)] [overflow-wrap:anywhere]"
+              >
+                {interest}
+              </span>
+            ))}
+          </div>
+          <ProfileShowAllToggle
+            hiddenCount={profile.intereses.length - COLLAPSED_INTERESTS_COUNT}
+            isShowingAll={isShowingAllInterests}
+            onToggle={() => setIsShowingAllInterests((current) => !current)}
+          />
+        </>
+      ) : (
+        <p className="mt-3 text-scale-2 leading-[1.55] text-[var(--text-secondary)]">
+          {t("interests.empty")}
+        </p>
+      )}
+
+      {canEdit && isEditingMode ? (
+        <ProfileEditModal
+          title={t("interests.title")}
+          onClose={onDiscard}
+          isBusy={isSaving}
+          footer={
+            <>
+              <ProfileModalSecondaryButton onClick={onDiscard} disabled={isSaving}>
+                {t("interests.discard")}
+              </ProfileModalSecondaryButton>
+              <ProfileModalPrimaryButton
+                onClick={() => {
+                  void onSaveAll();
+                }}
+                disabled={isSaving || !hasChanges}
+              >
+                {isSaving ? t("common.saving") : t("interests.save")}
+              </ProfileModalPrimaryButton>
+            </>
+          }
+        >
+          {/* min-height leaves room for the suggestions dropdown inside the scrollable body */}
+          <div className="min-h-[16rem] space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+              <div className="relative w-full">
+                <input
+                  value={draftInterest}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    const normalized = normalizeInterest(value);
+
+                    setDraftInterest(value);
+                    setIsSuggestionsOpen(normalized.length >= 3);
+                    setHighlightedSuggestionIndex(0);
+
+                    if (draftError) {
+                      setDraftError(null);
+                    }
+
+                    scheduleSuggestionsFetch(value, workingInterests);
+                  }}
+                  onFocus={() => {
+                    if (draftNormalized.length >= 3) {
+                      setIsSuggestionsOpen(true);
+                      scheduleSuggestionsFetch(draftNormalized, workingInterests);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      setIsSuggestionsOpen(false);
+                    }, 120);
+                  }}
+                  onKeyDown={(event) => {
+                    if (!isSuggestionsOpen || suggestionOptions.length === 0) {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        onAddInterest();
+                      }
+                      return;
+                    }
+
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      setHighlightedSuggestionIndex((current) =>
+                        Math.min(current + 1, suggestionOptions.length - 1)
+                      );
+                      return;
+                    }
+
+                    if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setHighlightedSuggestionIndex((current) => Math.max(current - 1, 0));
+                      return;
+                    }
+
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      setIsSuggestionsOpen(false);
+                      return;
+                    }
+
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      onSelectSuggestion(
+                        suggestionOptions[highlightedSuggestionIndex] ?? suggestionOptions[0]
+                      );
+                    }
+                  }}
+                  placeholder={t("interests.inputPlaceholder")}
+                  className="w-full rounded-md border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-200)]"
+                />
+
+                {isSuggestionsOpen && suggestionOptions.length > 0 ? (
+                  <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] shadow-lg">
+                    {suggestionOptions.map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          onSelectSuggestion(suggestion);
+                        }}
+                        onMouseEnter={() => setHighlightedSuggestionIndex(index)}
+                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm ${
+                          index === highlightedSuggestionIndex
+                            ? "bg-[var(--surface-2)] text-[var(--text-primary)]"
+                            : "bg-[var(--surface)] text-[var(--text-secondary)]"
+                        }`}
+                      >
+                        <span>{suggestion}</span>
+                        <span className="text-xs text-[var(--text-soft)]">{t("interests.suggestionTag")}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                {isSuggestionsOpen && draftNormalized.length >= 3 && isSuggestionsLoading ? (
+                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
+                    {t("interests.loadingSuggestions")}
+                  </div>
+                ) : null}
+
+                {isSuggestionsOpen &&
+                draftNormalized.length >= 3 &&
+                suggestionOptions.length === 0 &&
+                !isSuggestionsLoading ? (
+                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] shadow-lg">
+                    {t("interests.noSuggestions")}
+                  </div>
+                ) : null}
+              </div>
+
+              <button
+                type="button"
+                onClick={onAddInterest}
+                className="inline-flex items-center justify-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-sm font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)]"
+              >
+                  {t("interests.add")}
+              </button>
+            </div>
+
+            <p className="text-scale-1 text-[var(--text-soft)]">
+                {t("interests.helpTypeToSuggest")}
+            </p>
+            <p className="text-scale-1 text-[var(--text-soft)]">
+                {t("interests.helpDragToReorder")}
+            </p>
+
+            {workingInterests.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                {workingInterests.map((interest) => (
+                  <span
+                    key={interest}
+                    draggable
+                    onDragStart={() => {
+                      setDraggedInterest(interest);
+                      setDragOverInterest(null);
+                    }}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      if (draggedInterest && draggedInterest !== interest) {
+                        setDragOverInterest(interest);
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      onDropInterest(interest);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedInterest(null);
+                      setDragOverInterest(null);
+                    }}
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-[0.32rem] text-scale-1 font-semibold text-[var(--brand-700)] ${
+                      draggedInterest === interest
+                        ? "cursor-grabbing border-[var(--brand-500)] bg-[var(--brand-100)]"
+                        : "cursor-grab border-[var(--line-strong)] bg-[var(--brand-50)]"
+                    } ${
+                      dragOverInterest === interest
+                        ? "ring-2 ring-[var(--brand-300)] ring-offset-1"
+                        : ""
+                    }`}
+                  >
+                    {interest}
+                    <button
+                      type="button"
+                      onClick={() => onRemoveInterest(interest)}
+                      className="text-[0.85rem] leading-none text-[var(--danger-500)] transition hover:opacity-85"
+                      aria-label={t("interests.aria.removeInterest", { interest })}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-scale-2 text-[var(--text-secondary)]">
+                {t("interests.empty")}
+              </p>
+            )}
+
+            <ProfileModalError message={draftError} />
+
+            <ProfileModalError message={saveError} />
+          </div>
+        </ProfileEditModal>
+      ) : null}
+    </AppCard>
+  );
+}

@@ -1,0 +1,210 @@
+"use client";
+
+import Link from "next/link";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
+import { normalizeEmailInput } from "@/lib/utils/email";
+import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
+import { requestPasswordReset } from "@/lib/api/auth";
+import { formatApiErrorDetails } from "@/lib/api/client";
+import { getCaptchaErrorMessage, getRateLimitMessage } from "@/lib/i18n/auth-errors";
+import { useTurnstile } from "@/components/auth/TurnstileWidget";
+
+type ValidationErrors = {
+  email?: string;
+  captcha?: string;
+};
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+export default function ForgotPasswordPage() {
+  const { t } = useTranslation("auth");
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const captcha = useTurnstile("flex justify-center");
+  const [popupInfo, setPopupInfo] = useState<{
+    title: string;
+    message: string;
+    details?: string;
+  } | null>(null);
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const trimmedEmail = normalizeEmailInput(email);
+    const nextErrors: ValidationErrors = {};
+
+    if (!trimmedEmail || !isValidEmail(trimmedEmail)) {
+      nextErrors.email = t("forgotPassword.errors.emailInvalid");
+    }
+
+    if (captcha.enabled && !captcha.token) {
+      nextErrors.captcha = t("captchaRequired");
+    }
+
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const result = await requestPasswordReset({ email: trimmedEmail, captchaToken: captcha.token });
+    // Turnstile tokens are single-use.
+    captcha.reset();
+
+    if (!result.success) {
+      setPopupInfo({
+        title: t("common.serviceErrorTitle"),
+        message: getRateLimitMessage(result.details) ?? getCaptchaErrorMessage(result.details) ?? result.message,
+        details: formatApiErrorDetails(result.details, result.status),
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    router.push(`/forgot-password/sent?email=${encodeURIComponent(trimmedEmail)}`);
+  };
+
+  return (
+    <>
+      <ServiceErrorPopup
+        isOpen={popupInfo !== null}
+        title={popupInfo?.title ?? ""}
+        message={popupInfo?.message ?? ""}
+        details={popupInfo?.details}
+        onClose={() => setPopupInfo(null)}
+      />
+
+      <main
+        className="min-h-screen"
+        style={{ backgroundColor: "var(--background)", color: "var(--text-primary)" }}
+      >
+      <section className="flex min-h-screen w-full flex-col lg:flex-row">
+        <div className="px-8 pb-10 pt-9 lg:hidden" style={{ backgroundColor: "var(--navy-900)" }}>
+          <Link
+            href="/login"
+            className="inline-flex text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C] transition hover:opacity-80"
+          >
+            {t("forgotPassword.back")}
+          </Link>
+          <h1 className="mt-3 font-display text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
+            {t("forgotPassword.mobileTitle")}
+          </h1>
+          <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
+        </div>
+
+        <div
+          className="relative hidden overflow-hidden text-center lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:justify-between lg:px-12 lg:py-14 lg:text-left"
+          style={{ backgroundColor: "var(--navy-900)" }}
+        >
+          <span
+            className="pointer-events-none absolute right-[-92px] top-[-52px] hidden h-56 w-56 rounded-full border lg:block"
+            style={{ borderColor: "color-mix(in srgb, var(--brand-500) 26%, transparent)" }}
+          />
+          <span
+            className="pointer-events-none absolute bottom-[-94px] left-[58%] hidden h-56 w-56 rounded-full border lg:block"
+            style={{ borderColor: "color-mix(in srgb, var(--brand-500) 24%, transparent)" }}
+          />
+
+          <BrandCornerLogo />
+          <div aria-hidden="true" className="h-14" />
+
+          <div className="relative z-10 mt-10 lg:mt-0">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">{t("forgotPassword.desktopEyebrow")}</p>
+            <h1 className="mt-4 font-display text-[2.2rem] font-bold leading-tight text-[#FAF8F5] lg:max-w-[350px] lg:text-[3.15rem] lg:leading-[1.08]">
+              {t("forgotPassword.desktopTitle")}
+            </h1>
+            <p className="mx-auto mt-4 max-w-[370px] font-display text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
+              {t("forgotPassword.desktopDescription")}
+            </p>
+          </div>
+
+          <p className="relative z-10 mt-10 text-[0.66rem] text-[#8EA0B6] lg:mt-0">sophium.social</p>
+        </div>
+
+        <div
+          className="flex flex-1 flex-col px-8 pb-8 pt-8 lg:justify-center lg:px-14 lg:py-14"
+          style={{ backgroundColor: "var(--surface)" }}
+        >
+          <div className="w-full lg:mx-auto lg:max-w-[440px]">
+            <div className="mt-0 lg:mt-0">
+              <h2
+                className="hidden font-display text-[1.35rem] font-bold text-[#0A2540] lg:block"
+                style={{ color: "var(--text-primary)" }}
+              >
+                {t("forgotPassword.formTitle")}
+              </h2>
+              <p className="text-sm leading-relaxed lg:mt-2 lg:text-sm" style={{ color: "var(--text-secondary)" }}>
+                {t("forgotPassword.formSubtitle")}
+              </p>
+            </div>
+
+            <form className="mt-8 flex flex-col gap-5 lg:mt-6 lg:gap-4" onSubmit={onSubmit} noValidate>
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="email"
+                  className="text-sm font-bold tracking-wide lg:text-xs"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {t("forgotPassword.emailLabel")}
+                </label>
+                <input
+                  id="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  placeholder={t("forgotPassword.emailPlaceholder")}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  aria-invalid={Boolean(errors.email)}
+                  aria-describedby={errors.email ? "email-error" : undefined}
+                  className="rounded-2xl border-[1.5px] px-5 py-2.5 text-sm outline-none transition lg:rounded-lg lg:px-3.5 lg:py-2.5 lg:text-sm"
+                  style={{
+                    borderColor: "var(--line)",
+                    color: "var(--text-primary)",
+                    backgroundColor: "var(--surface)",
+                  }}
+                />
+                {errors.email ? (
+                  <p id="email-error" className="text-sm font-medium text-[var(--danger-500)]">
+                    {errors.email}
+                  </p>
+                ) : null}
+              </div>
+
+              {captcha.widget}
+              {errors.captcha ? (
+                <p className="text-center text-sm font-medium text-[var(--danger-500)]">{errors.captcha}</p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-4 w-full rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70 lg:mt-1 lg:text-sm"
+                style={{ backgroundColor: "var(--brand-500)" }}
+              >
+                {isSubmitting ? t("forgotPassword.submitting") : t("forgotPassword.submit")}
+              </button>
+
+              <Link
+                href="/login"
+                className="mt-1 hidden text-center text-sm transition hover:opacity-80 lg:block lg:text-xs"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {t("forgotPassword.backToLogin")}
+              </Link>
+            </form>
+          </div>
+        </div>
+      </section>
+      </main>
+    </>
+  );
+}

@@ -1,63 +1,701 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { NavItem } from "../_lib/constants";
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const logoSrc = `${basePath}/mensa-empresarios-logo.svg`;
+import {
+  checkCompaniesAdminAccess,
+  cancelCompaniesMembershipRequest,
+  createCompaniesMembershipRequest,
+  getCompaniesMembershipState,
+} from "@/lib/api/admin";
+import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
+import { BrandLockup } from "@/components/ui/BrandLockup";
+import { listMyChats } from "@/lib/api/chat";
+import {
+  listNotifications,
+  onNotificationsUnreadCountUpdated,
+} from "@/lib/api/notifications";
+import { listAteneoGroups, onAteneoGroupsChanged, type AteneoGroup } from "@/lib/api/ateneo";
+import {
+  ProfileHttpError,
+  type BadgeOutput,
+  getMyProfile,
+  searchProfiles,
+  type SearchProfileOutput,
+} from "@/lib/api/profile";
+import { useUiTheme } from "@/lib/theme/useUiTheme";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { getTwoInitials } from "@/lib/utils/name";
+import { formatBadgeSlug } from "@/lib/utils/badge";
+import { toast } from "sonner";
+import { TopBarDesktop } from "./TopBarDesktop";
+import { TopBarMobile } from "./TopBarMobile";
+import { TopBarNavIcon } from "./TopBarNavIcon";
+import {
+  desktopAdminTopbarItem,
+  desktopBaseTopbarItems,
+  desktopCompaniesAdminTopbarItem,
+  desktopDropdownTopbarItems,
+  formatBadgeCount,
+  resolveMembershipCtaMode,
+  type DesktopDropdownKey,
+  type MembershipCtaMode,
+  type MobileAccordionKey,
+} from "./topbar.shared";
+import { isTopbarItemActive } from "../_lib/topbar-active";
 
 type TopBarProps = {
   navItems: NavItem[];
 };
 
-export function TopBar({ navItems }: TopBarProps) {
-  const pathname = usePathname();
+type SessionAccess = {
+  role: SessionRole | null;
+};
 
-  const isNavItemActive = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
+export function TopBar({ navItems }: TopBarProps) {
+  void navItems;
+  const { t } = useTranslation();
+
+  const pathname = usePathname();
+  const router = useRouter();
+  useUiTheme();
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [desktopDropdownOpen, setDesktopDropdownOpen] =
+    useState<DesktopDropdownKey | null>(null);
+  const [mobileExpandedPanel, setMobileExpandedPanel] =
+    useState<MobileAccordionKey | null>(null);
+  const [userName, setUserName] = useState("");
+  const [userProfileImageUrl, setUserProfileImageUrl] = useState<string | null>(null);
+  const [userIdentityLine, setUserIdentityLine] = useState("");
+  const [userBadges, setUserBadges] = useState<BadgeOutput[]>([]);
+  const [isLoadingUserName, setIsLoadingUserName] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchProfileOutput[]>([]);
+  const [searchMessage, setSearchMessage] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [sessionAccess, setSessionAccess] = useState<SessionAccess>({ role: null });
+  const [hasCompaniesAdminAccess, setHasCompaniesAdminAccess] = useState(false);
+  const [membershipCtaMode, setMembershipCtaMode] =
+    useState<MembershipCtaMode>("loading");
+  const [isMembershipActionPending, setIsMembershipActionPending] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [ateneoAdminGroups, setAteneoAdminGroups] = useState<AteneoGroup[]>([]);
+  const [ateneoMineGroups, setAteneoMineGroups] = useState<AteneoGroup[]>([]);
+  const desktopNavRef = useRef<HTMLElement | null>(null);
+  const mobileDrawerRef = useRef<HTMLElement | null>(null);
+
+  const normalizedSearchText = useMemo(() => searchText.trim(), [searchText]);
+  const userInitials = useMemo(
+    () => getTwoInitials({ fullName: userName, fallback: "M" }),
+    [userName]
+  );
+  const isAdmin = sessionAccess.role === "admin";
+  const activeBadges = useMemo(
+    () => userBadges.map((badge) => `∫ ${formatBadgeSlug(badge.slug)}`),
+    [userBadges]
+  );
+
+  const desktopTopbarItems = useMemo(() => {
+    const items = [...desktopBaseTopbarItems];
+
+    if (isAdmin) {
+      items.push(desktopAdminTopbarItem);
     }
 
-    return pathname.startsWith(href);
+    if (hasCompaniesAdminAccess) {
+      items.push(desktopCompaniesAdminTopbarItem);
+    }
+
+    items.push(...desktopDropdownTopbarItems);
+
+    return items;
+  }, [hasCompaniesAdminAccess, isAdmin]);
+
+  const isNavItemActive = (href: string) => isTopbarItemActive(pathname, href);
+
+  const forceLogout = useCallback(() => {
+    router.replace("/login");
+    router.refresh();
+  }, [router]);
+
+  const onLogout = async () => {
+    await logout();
+    forceLogout();
   };
 
+  const reloadMembershipState = useCallback(async (signal?: AbortSignal) => {
+    const membershipState = await getCompaniesMembershipState(signal);
+    setMembershipCtaMode(resolveMembershipCtaMode(membershipState));
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadSessionAccess = async () => {
+      try {
+        const decision = await getSessionAccessDecision();
+        if (!isMounted || controller.signal.aborted) return;
+
+        setSessionAccess({ role: decision.role ?? null });
+      } catch {
+        if (!isMounted || controller.signal.aborted) return;
+        setSessionAccess({ role: null });
+      }
+    };
+
+    void loadSessionAccess();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadCompaniesAccess = async () => {
+      try {
+        const { status } = await checkCompaniesAdminAccess(controller.signal);
+        if (!isMounted || controller.signal.aborted) return;
+
+        setHasCompaniesAdminAccess(status === 200);
+      } catch {
+        if (!isMounted || controller.signal.aborted) return;
+        setHasCompaniesAdminAccess(false);
+      }
+    };
+
+    void loadCompaniesAccess();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mobileDrawerOpen) {
+      document.body.style.removeProperty("overflow");
+      return;
+    }
+
+    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
+    if (!isMobileViewport) {
+      return;
+    }
+
+    document.body.style.setProperty("overflow", "hidden");
+    return () => {
+      document.body.style.removeProperty("overflow");
+    };
+  }, [mobileDrawerOpen]);
+
+  useEffect(() => {
+    if (!mobileDrawerOpen && !desktopDropdownOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileDrawerOpen(false);
+        setDesktopDropdownOpen(null);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [desktopDropdownOpen, mobileDrawerOpen]);
+
+  useEffect(() => {
+    const onCloseDrawerRequest = () => {
+      setMobileDrawerOpen(false);
+      setMobileExpandedPanel(null);
+    };
+
+    window.addEventListener("sophium:close-mobile-drawer-request", onCloseDrawerRequest);
+    return () => {
+      window.removeEventListener("sophium:close-mobile-drawer-request", onCloseDrawerRequest);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!desktopDropdownOpen) return;
+
+    const onMouseDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      const inDesktopTopbar = desktopNavRef.current?.contains(target);
+      if (!inDesktopTopbar) {
+        setDesktopDropdownOpen(null);
+      }
+    };
+
+    window.addEventListener("mousedown", onMouseDown);
+    return () => {
+      window.removeEventListener("mousedown", onMouseDown);
+    };
+  }, [desktopDropdownOpen]);
+
+  useEffect(() => {
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (desktopDropdownOpen) {
+        const isInsideDesktopNav = desktopNavRef.current?.contains(target) ?? false;
+        if (!isInsideDesktopNav) {
+          setDesktopDropdownOpen(null);
+        }
+      }
+
+      if (mobileDrawerOpen) {
+        const isInsideMobileDrawer = mobileDrawerRef.current?.contains(target) ?? false;
+        if (!isInsideMobileDrawer) {
+          setMobileDrawerOpen(false);
+          setMobileExpandedPanel(null);
+        }
+      }
+    };
+
+    window.addEventListener("focusin", onFocusIn);
+    return () => {
+      window.removeEventListener("focusin", onFocusIn);
+    };
+  }, [desktopDropdownOpen, mobileDrawerOpen]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTopbarCounters = async () => {
+      const [chatsResult, notificationsResult] = await Promise.allSettled([
+        listMyChats(30),
+        listNotifications(50),
+      ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (chatsResult.status === "fulfilled") {
+        const totalUnread = chatsResult.value.data.chats.reduce(
+          (sum, chat) => sum + chat.unreadMessagesCount,
+          0
+        );
+        setUnreadMessagesCount(totalUnread);
+      }
+
+      if (notificationsResult.status === "fulfilled") {
+        setUnreadNotificationsCount(notificationsResult.value.data.unreadCount);
+      }
+    };
+
+    void loadTopbarCounters();
+    const intervalId = window.setInterval(() => {
+      void loadTopbarCounters();
+    }, 30_000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    return onNotificationsUnreadCountUpdated((nextUnreadCount) => {
+      setUnreadNotificationsCount(nextUnreadCount);
+    });
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    let latestRequestId = 0;
+
+    const loadMobileAteneoGroups = async () => {
+      const requestId = ++latestRequestId;
+      const [adminResult, mineResult] = await Promise.allSettled([
+        listAteneoGroups("admin", 6, controller.signal),
+        listAteneoGroups("mine", 8, controller.signal),
+      ]);
+
+      if (!isMounted || controller.signal.aborted || requestId !== latestRequestId) {
+        return;
+      }
+
+      const adminGroups =
+        adminResult.status === "fulfilled" ? adminResult.value.data.groups : [];
+      const mineGroups =
+        mineResult.status === "fulfilled" ? mineResult.value.data.groups : [];
+
+      const adminGroupIdSet = new Set(adminGroups.map((group) => group.id));
+      const mineOnlyGroups = mineGroups.filter((group) => !adminGroupIdSet.has(group.id));
+
+      setAteneoAdminGroups(adminGroups);
+      setAteneoMineGroups(mineOnlyGroups);
+    };
+
+    void loadMobileAteneoGroups();
+    // Joining or creating a group must show up in the mobile drawer's group lists right away.
+    const unsubscribe = onAteneoGroupsChanged(() => void loadMobileAteneoGroups());
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadCurrentUserName = async () => {
+      try {
+        const profile = await getMyProfile(controller.signal);
+        if (!isMounted) return;
+
+        const fullName = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
+        const subtitle = [profile.currentJobTitle, profile.currentCompany]
+          .filter((value) => typeof value === "string" && value.trim().length > 0)
+          .join(" · ");
+        setUserName(fullName);
+        setUserProfileImageUrl(profile.profileImageUrl ?? null);
+        setUserIdentityLine(subtitle);
+        setUserBadges(profile.badges ?? []);
+        setIsLoadingUserName(false);
+      } catch (error) {
+        if (!isMounted || controller.signal.aborted) {
+          return;
+        }
+
+        if (
+          error instanceof ProfileHttpError &&
+          (error.status === 401 || error.status === 403)
+        ) {
+          if (
+            error.status === 403 &&
+            error.details?.code === "USER_NOT_WHITELISTED"
+          ) {
+            router.replace(error.details.redirectTo ?? "/whitelist-access");
+            return;
+          }
+
+          await logout();
+          forceLogout();
+          return;
+        }
+
+        setUserName("");
+        setUserProfileImageUrl(null);
+        setUserIdentityLine("");
+        setUserBadges([]);
+        setIsLoadingUserName(false);
+      }
+    };
+
+    void loadCurrentUserName();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [forceLogout, router]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadMembershipState = async () => {
+      try {
+        await reloadMembershipState(controller.signal);
+      } catch {
+        setMembershipCtaMode("request");
+      }
+    };
+
+    void loadMembershipState();
+
+    return () => {
+      controller.abort();
+    };
+  }, [reloadMembershipState]);
+
+  const onSearchTextChange = (value: string) => {
+    setSearchText(value);
+    if (value.trim()) return;
+    setSearchResults([]);
+    setSearchMessage("");
+    setIsSearching(false);
+  };
+
+  const toggleMobilePanel = (panel: MobileAccordionKey) => {
+    setMobileExpandedPanel((current) => (current === panel ? null : panel));
+  };
+
+  const onRequestMembership = async () => {
+    if (membershipCtaMode !== "request" || isMembershipActionPending) {
+      return;
+    }
+
+    setIsMembershipActionPending(true);
+
+    try {
+      const result = await createCompaniesMembershipRequest();
+
+      if (!result.success) {
+        toast.error(result.message || "No se pudo enviar la solicitud.");
+        return;
+      }
+
+      toast.success("Solicitud enviada.");
+      await reloadMembershipState();
+    } catch {
+      toast.error("No pudimos actualizar tu membresía en este momento.");
+    } finally {
+      setIsMembershipActionPending(false);
+    }
+  };
+
+  const onCancelMembership = async () => {
+    if (membershipCtaMode !== "requested" || isMembershipActionPending) {
+      return;
+    }
+
+    setIsMembershipActionPending(true);
+
+    try {
+      const result = await cancelCompaniesMembershipRequest();
+
+      if (!result.success) {
+        toast.error(result.message || "No se pudo cancelar la solicitud.");
+        return;
+      }
+
+      toast.success("Solicitud cancelada.");
+      await reloadMembershipState();
+    } catch {
+      toast.error("No pudimos actualizar tu membresía en este momento.");
+    } finally {
+      setIsMembershipActionPending(false);
+    }
+  };
+
+  const closeMobileDrawer = () => {
+    setMobileDrawerOpen(false);
+    setMobileExpandedPanel(null);
+  };
+
+  useEffect(() => {
+    if (!normalizedSearchText) return;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      setIsSearching(true);
+
+      try {
+        const response = await searchProfiles(
+          normalizedSearchText,
+          controller.signal
+        );
+
+        if (!response.success) {
+          setSearchResults([]);
+          setSearchMessage(response.message || "No se pudo buscar perfiles");
+          return;
+        }
+
+        setSearchResults(response.data);
+        setSearchMessage(response.data.length === 0 ? "Sin resultados" : "");
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+
+        setSearchResults([]);
+        setSearchMessage("No se pudo buscar perfiles");
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [normalizedSearchText]);
+
+  const showSearchPanel =
+    normalizedSearchText.length > 0 && (isSearching || searchResults.length > 0 || !!searchMessage);
+
   return (
-    <header className="linkedin-topbar sticky top-0 z-50 border-b border-[var(--line)] bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 rounded-md px-1 py-1 transition hover:bg-slate-100/70">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={logoSrc}
-            alt="Logo Mensa Empresarios"
-            width={34}
-            height={34}
-            loading="eager"
-            decoding="async"
-          />
-          <p className="text-sm font-semibold text-slate-900">Mensa Empresarios</p>
+    <>
+      <header className="sophium-topbar fixed left-0 right-0 top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
+      <div className="flex h-16 w-full items-center gap-3 px-4 md:h-[5.5rem] md:px-6 lg:px-8">
+        <Link href="/" className="sophium-nav-logo flex shrink-0 items-center gap-2 px-2 py-1">
+          <BrandLockup className="h-8 md:h-12 lg:h-14" />
         </Link>
 
-        <div className="ml-auto flex w-full max-w-md items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-          <span className="text-xs uppercase tracking-wide text-slate-500">Buscar</span>
-          <p className="truncate text-sm text-slate-500">Perfiles, experiencias, ideas</p>
+        <div className="relative ml-2 w-full max-w-[560px] min-w-0 md:ml-4">
+          <label className="sr-only" htmlFor="topbar-search">
+            {t("topbar:search.label", { defaultValue: "Buscar perfiles" })}
+          </label>
+          <div className="flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-[var(--surface-2)] px-4 py-2.5 md:py-3">
+            <span className="text-[var(--text-soft)]" aria-hidden="true">
+              <TopBarNavIcon icon="search" />
+            </span>
+            <input
+              id="topbar-search"
+              type="search"
+              value={searchText}
+              onChange={(event) => onSearchTextChange(event.target.value)}
+              placeholder={t("topbar:search.placeholder", { defaultValue: "Buscar" })}
+              className="w-full bg-transparent text-base font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-soft)] md:text-xl"
+              autoComplete="off"
+            />
+          </div>
+
+          {showSearchPanel ? (
+            <div className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-40 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-1 shadow-lg">
+              {isSearching ? (
+                <p className="px-3 py-2 text-sm text-[var(--text-secondary)]">{t("topbar:search.searching", { defaultValue: "Buscando..." })}</p>
+              ) : null}
+
+              {!isSearching && searchMessage ? (
+                <p className="px-3 py-2 text-sm text-[var(--text-secondary)]">{searchMessage}</p>
+              ) : null}
+
+              {!isSearching && searchResults.length > 0
+                ? searchResults.map((profile) => (
+                    <button
+                      key={profile.userId}
+                      type="button"
+                      onClick={() => {
+                        const selectedName = `${profile.firstName} ${profile.lastName}`.trim();
+                        setSearchText(selectedName);
+                        setSearchResults([]);
+                        setSearchMessage("");
+                        setMobileDrawerOpen(false);
+                        setDesktopDropdownOpen(null);
+                        router.push(`/perfil?userId=${encodeURIComponent(profile.userId)}`);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition hover:bg-[var(--surface-2)]"
+                    >
+                      <UserAvatar
+                        imageUrl={profile.profileImageUrl}
+                        initials={getTwoInitials({
+                          fullName: `${profile.firstName} ${profile.lastName}`.trim(),
+                          fallback: "M",
+                        })}
+                        label={`Foto de perfil de ${`${profile.firstName} ${profile.lastName}`.trim()}`}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-800)]"
+                        initialsClassName="text-xs font-bold text-[var(--brand-300)]"
+                      />
+                      <span className="min-w-0 truncate text-sm font-medium text-[var(--text-primary)]">
+                        {profile.firstName} {profile.lastName}
+                      </span>
+                    </button>
+                  ))
+                : null}
+            </div>
+          ) : null}
         </div>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`linkedin-nav-item ${
-                isNavItemActive(item.href) ? "is-active" : ""
-              }`}
-            >
-              <span className="linkedin-nav-dot" aria-hidden="true" />
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
+        <TopBarDesktop
+          desktopNavRef={desktopNavRef}
+          desktopTopbarItems={desktopTopbarItems}
+          desktopDropdownOpen={desktopDropdownOpen}
+          setDesktopDropdownOpen={setDesktopDropdownOpen}
+          isNavItemActive={isNavItemActive}
+          unreadMessagesCount={unreadMessagesCount}
+          unreadNotificationsCount={unreadNotificationsCount}
+          userProfileImageUrl={userProfileImageUrl}
+          userInitials={userInitials}
+          userName={userName}
+          userIdentityLine={userIdentityLine}
+          isLoadingUserName={isLoadingUserName}
+          onLogout={onLogout}
+        />
+
+        <div className="flex items-center gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(new Event("sophium:close-mobile-footer-overlay-request"));
+              setMobileDrawerOpen(false);
+              setMobileExpandedPanel(null);
+              setDesktopDropdownOpen(null);
+              router.push("/notificaciones");
+            }}
+            className="relative flex h-10 w-10 items-center justify-center text-[var(--brand-500)]"
+            aria-label={t("topbar:mobile.goToNotifications", { defaultValue: "Ir a notificaciones" })}
+          >
+            <TopBarNavIcon icon="bell" className="h-6 w-6" />
+            {unreadNotificationsCount > 0 ? (
+              <span className="absolute -right-1 -top-0.5 min-w-[1.1rem] rounded-full bg-[var(--danger-500)] px-1.5 py-[0.12rem] text-center text-[0.62rem] font-bold leading-none text-white">
+                {formatBadgeCount(unreadNotificationsCount)}
+              </span>
+            ) : null}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(new Event("sophium:close-mobile-footer-overlay-request"));
+              setDesktopDropdownOpen(null);
+              setMobileDrawerOpen((current) => {
+                if (current) {
+                  setMobileExpandedPanel(null);
+                }
+                return !current;
+              });
+            }}
+            className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--line-strong)] bg-[var(--surface-2)]"
+            aria-label={t("topbar:mobile.openMenu", { defaultValue: "Abrir menú" })}
+          >
+            <svg viewBox="0 0 24 24" className="h-7 w-7 text-[var(--brand-500)]" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
       </div>
-    </header>
+
+      </header>
+
+  <div className="h-16 md:h-[5.5rem]" aria-hidden="true" />
+
+      <TopBarMobile
+        mobileDrawerOpen={mobileDrawerOpen}
+        mobileDrawerRef={mobileDrawerRef}
+        closeMobileDrawer={closeMobileDrawer}
+        mobileExpandedPanel={mobileExpandedPanel}
+        toggleMobilePanel={toggleMobilePanel}
+        userProfileImageUrl={userProfileImageUrl}
+        userInitials={userInitials}
+        isLoadingUserName={isLoadingUserName}
+        userName={userName}
+        userIdentityLine={userIdentityLine}
+        activeBadges={activeBadges}
+        membershipCtaMode={membershipCtaMode}
+        isMembershipActionPending={isMembershipActionPending}
+        onRequestMembership={onRequestMembership}
+        onCancelMembership={onCancelMembership}
+        hasCompaniesAdminAccess={hasCompaniesAdminAccess}
+        isAdmin={isAdmin}
+        ateneoAdminGroups={ateneoAdminGroups}
+        ateneoMineGroups={ateneoMineGroups}
+        onLogout={onLogout}
+      />
+    </>
   );
 }

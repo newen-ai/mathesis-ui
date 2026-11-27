@@ -1,121 +1,166 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AppCard } from "@/components/ui/AppCard";
-import { toDateLabel } from "../../_lib/utils/date";
 import type { Experience, ExperienceDraft } from "../../_lib/types";
+import type { WorkExperienceOperation } from "@/lib/api/profile";
+import { ReadOnlySectionHeader } from "./ProfileSectionHeaders";
+import { ProfileCollapsibleText, ProfileShowAllToggle } from "./ProfileCollapsibleText";
+import {
+  ProfileEditModal,
+  ProfileModalError,
+  ProfileModalPrimaryButton,
+  ProfileModalSecondaryButton,
+} from "./ProfileEditModal";
+import { isFutureMonthForYear } from "./ProfileSectionDateUtils";
+import { ProfileYearMonthRangeFields } from "./ProfileYearMonthRangeFields";
 
-const monthOptions = [
-  { value: "01", label: "Enero" },
-  { value: "02", label: "Febrero" },
-  { value: "03", label: "Marzo" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Mayo" },
-  { value: "06", label: "Junio" },
-  { value: "07", label: "Julio" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Septiembre" },
-  { value: "10", label: "Octubre" },
-  { value: "11", label: "Noviembre" },
-  { value: "12", label: "Diciembre" },
-];
+const COLLAPSED_ITEMS_COUNT = 3;
 
-const today = new Date();
-const currentYear = today.getFullYear();
-const currentMonth = today.getMonth() + 1;
-const yearOptions = Array.from({ length: 70 }, (_, index) => String(currentYear - index));
-
-const splitYearMonth = (value: string) => {
-  if (!value || value.length < 7) {
-    return { year: "", month: "" };
-  }
-
-  const [year, month] = value.split("-");
-  return { year: year ?? "", month: month ?? "" };
+const emptyDraft: ExperienceDraft = {
+  puestoTrabajo: "",
+  lugarTrabajo: "",
+  descripcion: "",
+  fechaComienzo: "",
+  fechaFinalizacion: "",
+  trabajoActual: false,
 };
 
 type ExperienceCardProps = {
-  editingId: string | null;
-  draft: ExperienceDraft;
   experiences: Experience[];
-  onDraftChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onSubmitExperience: (event: FormEvent<HTMLFormElement>) => void;
-  onResetDraft: () => void;
-  onEditExperience: (experience: Experience) => void;
-  onDeleteExperience: (id: string) => void;
+  canEdit: boolean;
+  isEditingMode: boolean;
+  onStartEditing: () => void;
+  onCloseEditing: () => void;
+  defaultLocation?: string;
+  isSaving: boolean;
+  saveError: string | null;
+  onSaveOperations: (
+    operations: WorkExperienceOperation[]
+  ) => Promise<{ ok: boolean; message?: string }>;
+  onClearSaveError: () => void;
 };
 
 export function ExperienceCard({
-  editingId,
-  draft,
   experiences,
-  onDraftChange,
-  onSubmitExperience,
-  onResetDraft,
-  onEditExperience,
-  onDeleteExperience,
+  canEdit,
+  isEditingMode,
+  onStartEditing,
+  onCloseEditing,
+  defaultLocation,
+  isSaving,
+  saveError,
+  onSaveOperations,
+  onClearSaveError,
 }: ExperienceCardProps) {
-  const beginDate = splitYearMonth(draft.fechaComienzo);
-  const endDate = splitYearMonth(draft.fechaFinalizacion);
-  const [beginMonth, setBeginMonth] = useState(beginDate.month);
-  const [beginYear, setBeginYear] = useState(beginDate.year);
-  const [endMonth, setEndMonth] = useState(endDate.month);
-  const [endYear, setEndYear] = useState(endDate.year);
+  const { t } = useTranslation("profile");
+  const [draft, setDraft] = useState<ExperienceDraft>(emptyDraft);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [startMonth, setStartMonth] = useState("");
+  const [startYear, setStartYear] = useState("");
+  const [endMonth, setEndMonth] = useState("");
+  const [endYear, setEndYear] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isShowingAll, setIsShowingAll] = useState(false);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBeginMonth(beginDate.month);
-    setBeginYear(beginDate.year);
-  }, [beginDate.month, beginDate.year]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEndMonth(endDate.month);
-    setEndYear(endDate.year);
-  }, [endDate.month, endDate.year]);
-
-  const isFutureMonthForYear = (monthValue: string, yearValue: string) => {
-    if (!monthValue || !yearValue) return false;
-    if (Number(yearValue) < currentYear) return false;
-    if (Number(yearValue) > currentYear) return true;
-    return Number(monthValue) > currentMonth;
-  };
+  const isExperienceManagerMode = canEdit && isEditingMode;
 
   const pushDatePart = (
     fieldName: "fechaComienzo" | "fechaFinalizacion",
     nextYear: string,
     nextMonth: string
   ) => {
-    const value =
-      nextYear && nextMonth
-        ? `${nextYear}-${nextMonth}`
-        : "";
-
-    onDraftChange({
-      target: {
-        name: fieldName,
-        value,
-        type: "text",
-      },
-    } as ChangeEvent<HTMLInputElement>);
+    const value = nextYear && nextMonth ? `${nextYear}-${nextMonth}` : "";
+    setDraft((current) => ({
+      ...current,
+      [fieldName]: value,
+    }));
   };
 
-  const onStartMonthChange = (month: string) => {
-    if (isFutureMonthForYear(month, beginYear)) {
-      setBeginMonth("");
-      pushDatePart("fechaComienzo", beginYear, "");
+  const onDraftChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, type, value } = event.target;
+    const checked = "checked" in event.target ? event.target.checked : false;
+
+    if (name === "trabajoActual") {
+      setDraft((current) => ({
+        ...current,
+        trabajoActual: checked,
+        fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
+      }));
+
+      if (checked) {
+        setEndMonth("");
+        setEndYear("");
+      }
       return;
     }
 
-    setBeginMonth(month);
-    pushDatePart("fechaComienzo", beginYear, month);
+    setDraft((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const resetDraft = () => {
+    setDraft(emptyDraft);
+    setEditingId(null);
+    setStartMonth("");
+    setStartYear("");
+    setEndMonth("");
+    setEndYear("");
+  };
+
+  const formatYearRange = (start: string, end: string, isCurrent: boolean) => {
+    const startYear = start.slice(0, 4);
+    if (isCurrent || !end) {
+      return `${startYear} - ${t("experience.present")}`;
+    }
+    return `${startYear} - ${end.slice(0, 4)}`;
+  };
+
+  const onStartAdding = () => {
+    resetDraft();
+    setDraftError(null);
+    onClearSaveError();
+    setIsFormOpen(true);
+  };
+
+  const onEditExperience = (item: Experience) => {
+    setEditingId(item.id);
+    setDraftError(null);
+    setDraft({
+      puestoTrabajo: item.puestoTrabajo,
+      lugarTrabajo: item.lugarTrabajo,
+      descripcion: item.descripcion,
+      fechaComienzo: item.fechaComienzo,
+      fechaFinalizacion: item.fechaFinalizacion,
+      trabajoActual: item.trabajoActual,
+    });
+
+    setStartYear(item.fechaComienzo.slice(0, 4));
+    setStartMonth(item.fechaComienzo.slice(5, 7));
+    setEndYear(item.fechaFinalizacion ? item.fechaFinalizacion.slice(0, 4) : "");
+    setEndMonth(item.fechaFinalizacion ? item.fechaFinalizacion.slice(5, 7) : "");
+    onClearSaveError();
+    setIsFormOpen(true);
+  };
+
+  const onStartMonthChange = (month: string) => {
+    if (isFutureMonthForYear(month, startYear)) {
+      setStartMonth("");
+      pushDatePart("fechaComienzo", startYear, "");
+      return;
+    }
+
+    setStartMonth(month);
+    pushDatePart("fechaComienzo", startYear, month);
   };
 
   const onStartYearChange = (year: string) => {
-    const normalizedMonth = isFutureMonthForYear(beginMonth, year)
-      ? ""
-      : beginMonth;
+    const normalizedMonth = isFutureMonthForYear(startMonth, year) ? "" : startMonth;
 
-    setBeginYear(year);
-    setBeginMonth(normalizedMonth);
+    setStartYear(year);
+    setStartMonth(normalizedMonth);
     pushDatePart("fechaComienzo", year, normalizedMonth);
   };
 
@@ -131,199 +176,300 @@ export function ExperienceCard({
   };
 
   const onEndYearChange = (year: string) => {
-    const normalizedMonth = isFutureMonthForYear(endMonth, year)
-      ? ""
-      : endMonth;
+    const normalizedMonth = isFutureMonthForYear(endMonth, year) ? "" : endMonth;
 
     setEndYear(year);
     setEndMonth(normalizedMonth);
     pushDatePart("fechaFinalizacion", year, normalizedMonth);
   };
 
+  const onCurrentWorkingChange = (checked: boolean) => {
+    setDraft((current) => ({
+      ...current,
+      trabajoActual: checked,
+      fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
+    }));
+
+    if (checked) {
+      setEndMonth("");
+      setEndYear("");
+    }
+  };
+
+  const onDeleteExperience = async (id: string) => {
+    if (isSaving) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(t("experience.confirmDelete"));
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDraftError(null);
+    onClearSaveError();
+    const result = await onSaveOperations([{ action: "REMOVE", id }]);
+    if (!result.ok) {
+      setDraftError(result.message ?? t("experience.errors.delete"));
+      return;
+    }
+
+    if (editingId === id) {
+      resetDraft();
+      setIsFormOpen(false);
+    }
+  };
+
+  const onSubmitExperience = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (
+      !draft.puestoTrabajo.trim() ||
+      !draft.lugarTrabajo.trim() ||
+      !draft.fechaComienzo ||
+      (!draft.trabajoActual && !draft.fechaFinalizacion)
+    ) {
+      setDraftError(t("experience.errors.required"));
+      return;
+    }
+
+    const payload = {
+      company: draft.lugarTrabajo.trim(),
+      jobTitle: draft.puestoTrabajo.trim(),
+      description: draft.descripcion.trim(),
+      startYearMonth: draft.fechaComienzo,
+      ...(draft.trabajoActual || !draft.fechaFinalizacion
+        ? {}
+        : { endYearMonth: draft.fechaFinalizacion }),
+    };
+
+    const originalItem = editingId
+      ? experiences.find((item) => item.id === editingId)
+      : null;
+
+    const operations: WorkExperienceOperation[] = editingId
+      ? originalItem?.fechaFinalizacion && draft.trabajoActual
+        ? [
+            { action: "REMOVE", id: editingId },
+            { action: "ADD", ...payload },
+          ]
+        : [{ action: "EDIT", id: editingId, ...payload }]
+      : [{ action: "ADD", ...payload }];
+
+    onClearSaveError();
+    setDraftError(null);
+    const result = await onSaveOperations(operations);
+    if (!result.ok) {
+      setDraftError(result.message ?? t("experience.errors.save"));
+      return;
+    }
+
+    resetDraft();
+    setIsFormOpen(false);
+  };
+
+  const onCloseManager = () => {
+    onClearSaveError();
+    setDraftError(null);
+    resetDraft();
+    setIsFormOpen(false);
+    onCloseEditing();
+  };
+
+  const listItems = experiences;
+
+  const onBackToList = () => {
+    resetDraft();
+    setDraftError(null);
+    setIsFormOpen(false);
+  };
+
+  const visibleItems = isShowingAll ? listItems : listItems.slice(0, COLLAPSED_ITEMS_COUNT);
+
   return (
-    <AppCard className="p-5 sm:p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-[family-name:var(--font-spectral)] text-xl font-semibold text-slate-900">
-          Experiencia laboral
-        </h3>
-        {editingId && (
-          <button
-            type="button"
-            onClick={onResetDraft}
-            className="text-sm font-medium text-[var(--brand-700)] hover:text-[var(--brand-900)]"
-          >
-            Cancelar edicion
-          </button>
-        )}
-      </div>
+    <AppCard className="px-3 py-2.5 sm:px-4 sm:py-3">
+      <ReadOnlySectionHeader title={t("experience.title")} canEdit={canEdit} onEdit={onStartEditing} />
 
-      <form onSubmit={onSubmitExperience} className="mt-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="mensa-field sm:col-span-1">
-            Lugar de trabajo
-            <input
-              name="lugarTrabajo"
-              value={draft.lugarTrabajo}
-              onChange={onDraftChange}
-              placeholder="Mensa Empresarios"
-            />
-          </label>
-
-          <label className="mensa-field sm:col-span-1">
-            Puesto de trabajo
-            <input
-              name="puestoTrabajo"
-              value={draft.puestoTrabajo}
-              onChange={onDraftChange}
-              placeholder="Analista de Estrategia"
-            />
-          </label>
-
-          <label className="mensa-field sm:col-span-1">
-            Fecha de comienzo
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={beginMonth}
-                onChange={(event) => onStartMonthChange(event.target.value)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
-              >
-                <option value="">Mes</option>
-                {monthOptions.map((month) => (
-                  <option
-                    key={month.value}
-                    value={month.value}
-                    disabled={isFutureMonthForYear(month.value, beginYear)}
-                  >
-                    {month.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={beginYear}
-                onChange={(event) => onStartYearChange(event.target.value)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800"
-              >
-                <option value="">Año</option>
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <span className="text-xs font-normal text-slate-500">
-              Selecciona mes y año (formato: mm/aaaa)
-            </span>
-          </label>
-
-          <label className="mensa-field sm:col-span-1">
-            Fecha de finalizacion
-            <div className="grid grid-cols-2 gap-2">
-              <select
-                value={endMonth}
-                onChange={(event) => onEndMonthChange(event.target.value)}
-                disabled={draft.trabajoActual}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
-              >
-                <option value="">Mes</option>
-                {monthOptions.map((month) => (
-                  <option
-                    key={month.value}
-                    value={month.value}
-                    disabled={isFutureMonthForYear(month.value, endYear)}
-                  >
-                    {month.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={endYear}
-                onChange={(event) => onEndYearChange(event.target.value)}
-                disabled={draft.trabajoActual}
-                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 disabled:bg-slate-100 disabled:text-slate-500"
-              >
-                <option value="">Año</option>
-                {yearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <span className="text-xs font-normal text-slate-500">
-              {draft.trabajoActual
-                ? "Deshabilitada porque marcaste trabajo actual"
-                : "Selecciona mes y año (formato: mm/aaaa)"}
-            </span>
-          </label>
-
-          <label className="sm:col-span-2 inline-flex items-center gap-2 text-sm font-medium text-slate-700">
-            <input
-              name="trabajoActual"
-              type="checkbox"
-              checked={draft.trabajoActual}
-              onChange={onDraftChange}
-              className="h-4 w-4 rounded border-slate-300 text-[var(--brand-700)] focus:ring-[var(--brand-700)]"
-            />
-            Actualmente trabajo aqui
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          className="mt-5 inline-flex items-center rounded-full bg-[var(--brand-700)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)]"
-        >
-          {editingId ? "Actualizar experiencia" : "Agregar experiencia"}
-        </button>
-      </form>
-
-      <div className="mt-5 border-t border-slate-100 pt-4">
-        {experiences.length === 0 ? (
-          <p className="text-sm text-slate-600">
-            Todavia no agregaste experiencias laborales.
-          </p>
+      <div className="mt-2 border-t border-[var(--line)] pt-2">
+        {listItems.length === 0 ? (
+          <p className="text-scale-2 text-[var(--text-secondary)]">{t("experience.empty")}</p>
         ) : (
-          <ul className="space-y-3">
-            {experiences.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-xl border border-slate-200 bg-slate-50/70 p-4"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {item.lugarTrabajo}
+          <>
+            <ul>
+              {visibleItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="border-b border-[var(--line)] py-[0.6rem] last:border-b-0 sm:py-[0.7rem]"
+                >
+                  <p className="text-scale-3 font-bold leading-tight text-[var(--text-primary)] [overflow-wrap:anywhere]">{item.puestoTrabajo}</p>
+                  <p className="mt-[0.1rem] text-scale-2 text-[var(--text-soft)] [overflow-wrap:anywhere]">
+                    {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
+                    {defaultLocation?.trim() ? ` · ${defaultLocation.trim()}` : ""}
                   </p>
-                  <p className="text-sm font-medium text-slate-700">
-                    {item.puestoTrabajo}
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    {toDateLabel(item.fechaComienzo)} - {item.trabajoActual ? "Actualidad" : toDateLabel(item.fechaFinalizacion)}
-                  </p>
-                </div>
-
-                <div className="mt-3 flex gap-4 text-xs font-semibold">
-                  <button
-                    type="button"
-                    className="text-[var(--brand-700)] hover:text-[var(--brand-900)]"
-                    onClick={() => onEditExperience(item)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    className="text-rose-600 hover:text-rose-700"
-                    onClick={() => onDeleteExperience(item.id)}
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                  <ProfileCollapsibleText
+                    text={item.descripcion}
+                    lines={3}
+                    className="mt-2 text-scale-2 leading-[1.5] text-[var(--text-secondary)]"
+                  />
+                </li>
+              ))}
+            </ul>
+            <ProfileShowAllToggle
+              hiddenCount={listItems.length - COLLAPSED_ITEMS_COUNT}
+              isShowingAll={isShowingAll}
+              onToggle={() => setIsShowingAll((current) => !current)}
+            />
+          </>
         )}
       </div>
+
+      {isExperienceManagerMode ? (
+        <ProfileEditModal
+          title={isFormOpen ? (editingId ? t("experience.editTitle") : t("experience.new")) : t("experience.title")}
+          onClose={onCloseManager}
+          isBusy={isSaving}
+          headerStart={
+            isFormOpen ? (
+              <button
+                type="button"
+                onClick={onBackToList}
+                disabled={isSaving}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[1.4rem] leading-none text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:opacity-60"
+                aria-label={t("common.back")}
+              >
+                ‹
+              </button>
+            ) : null
+          }
+          footer={
+            isFormOpen ? (
+              <>
+                <ProfileModalSecondaryButton onClick={onBackToList} disabled={isSaving}>
+                  {t("common.cancel")}
+                </ProfileModalSecondaryButton>
+                <ProfileModalPrimaryButton type="submit" form="experience-edit-form" disabled={isSaving}>
+                  {isSaving ? t("common.saving") : editingId ? t("experience.update") : t("experience.addAction")}
+                </ProfileModalPrimaryButton>
+              </>
+            ) : (
+              <ProfileModalPrimaryButton onClick={onCloseManager} disabled={isSaving}>
+                {t("common.finalize")}
+              </ProfileModalPrimaryButton>
+            )
+          }
+        >
+          {isFormOpen ? (
+            <form id="experience-edit-form" onSubmit={onSubmitExperience}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="sophium-field sm:col-span-1">
+                  {t("experience.labels.workplace")}
+                  <input
+                    name="lugarTrabajo"
+                    value={draft.lugarTrabajo}
+                    onChange={onDraftChange}
+                    placeholder={t("experience.placeholders.workplace")}
+                  />
+                </label>
+
+                <label className="sophium-field sm:col-span-1">
+                  {t("experience.labels.jobTitle")}
+                  <input
+                    name="puestoTrabajo"
+                    value={draft.puestoTrabajo}
+                    onChange={onDraftChange}
+                    placeholder={t("experience.placeholders.jobTitle")}
+                  />
+                </label>
+
+                <ProfileYearMonthRangeFields
+                  startLabel={t("experience.labels.startDate")}
+                  endLabel={t("experience.labels.endDate")}
+                  currentLabel={t("experience.labels.currentlyWorking")}
+                  currentChecked={draft.trabajoActual}
+                  startMonth={startMonth}
+                  startYear={startYear}
+                  endMonth={endMonth}
+                  endYear={endYear}
+                  onStartMonthChange={onStartMonthChange}
+                  onStartYearChange={onStartYearChange}
+                  onEndMonthChange={onEndMonthChange}
+                  onEndYearChange={onEndYearChange}
+                  onCurrentChange={onCurrentWorkingChange}
+                />
+
+                <label className="sophium-field sm:col-span-2">
+                  {t("experience.labels.description")}
+                  <textarea
+                    name="descripcion"
+                    value={draft.descripcion}
+                    onChange={onDraftChange}
+                    maxLength={300}
+                    rows={4}
+                  />
+                  <span className="text-right text-xs text-[var(--text-soft)]">{draft.descripcion.length}/300</span>
+                </label>
+              </div>
+
+              <ProfileModalError message={draftError} tone="warning" />
+              <ProfileModalError message={saveError} />
+            </form>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={onStartAdding}
+                disabled={isSaving}
+                className="inline-flex items-center rounded-xl border border-[var(--brand-500)] bg-[var(--brand-50)] px-4 py-2 text-sm font-semibold text-[var(--brand-700)] transition hover:bg-[var(--brand-100)] disabled:opacity-60"
+              >
+                {t("experience.add")}
+              </button>
+
+              {listItems.length > 0 ? (
+                <ul className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)]">
+                  {listItems.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3 last:border-b-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-scale-3 font-bold leading-tight text-[var(--text-primary)]">{item.puestoTrabajo}</p>
+                        <p className="mt-[0.1rem] truncate text-scale-2 text-[var(--text-soft)]">
+                          {item.lugarTrabajo} · {formatYearRange(item.fechaComienzo, item.fechaFinalizacion, item.trabajoActual)}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onEditExperience(item)}
+                          disabled={isSaving}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[1rem] leading-none text-[var(--text-soft)] transition hover:bg-[var(--surface-2)] hover:text-[var(--navy-900)] disabled:opacity-60"
+                          aria-label={t("experience.aria.edit")}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteExperience(item.id)}
+                          disabled={isSaving}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[1rem] leading-none text-[var(--danger-500)] transition hover:bg-[var(--surface-2)] disabled:opacity-60"
+                          aria-label={t("experience.aria.delete")}
+                        >
+                          🗑
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-scale-2 text-[var(--text-secondary)]">{t("experience.empty")}</p>
+              )}
+
+              <ProfileModalError message={draftError} tone="warning" />
+              <ProfileModalError message={saveError} />
+            </>
+          )}
+        </ProfileEditModal>
+      ) : null}
     </AppCard>
   );
 }

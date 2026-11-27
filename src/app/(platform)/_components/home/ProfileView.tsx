@@ -1,75 +1,1247 @@
 "use client";
 
+import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import { ReportDialog, type ReportTarget } from "@/app/(platform)/_components/ReportDialog";
+import { toast } from "sonner";
 import {
-  catchyLines,
   navItems,
-  professionalStampLines,
 } from "../../_lib/constants";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
+import type { Profile } from "../../_lib/types";
+import { blockUser } from "@/lib/api/block";
+import { MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
+import { formatBadgeSlug } from "@/lib/utils/badge";
 import { TopBar } from "../TopBar";
-import { CatchyPhrasesBanner } from "./CatchyPhrasesBanner";
+import { EducationCard } from "./EducationCard";
 import { ExperienceCard } from "./ExperienceCard";
-import { LeftSidebar } from "./LeftSidebar";
-import { ProfileFormCard } from "./ProfileFormCard";
-import { RightSidebar } from "./RightSidebar";
+import { InteresesCard } from "./InteresesCard";
+import { ProfileAboutCard } from "./ProfileAboutCard";
+import { ProfileBasicInfoModal } from "./ProfileBasicInfoModal";
+import { ProfileInitializationView } from "./ProfileInitializationView";
+
+type ProfileEditSection = "basicInfo" | "about" | "experience" | "education" | "interests";
+
+const AVATAR_PREVIEW_SIZE = 220;
+const AVATAR_EXPORT_SIZE = 512;
+
+type AvatarEditorState = {
+  sourceDataUrl: string;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+type BannerEditorState = {
+  sourceDataUrl: string;
+  scale: number;
+  offsetX: number;
+  offsetY: number;
+  targetWidth: number;
+  targetHeight: number;
+};
+
+type TouchGestureState =
+  | {
+      mode: "drag";
+      startX: number;
+      startY: number;
+      startOffsetX: number;
+      startOffsetY: number;
+    }
+  | {
+      mode: "pinch";
+      startDistance: number;
+      startScale: number;
+    };
+
+function isMensaArgentinaBadge(slug: string): boolean {
+  const normalized = slug.trim().toLowerCase();
+  return normalized === "mensa_argentina" || normalized === "mensa_ar";
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("No se pudo cargar la imagen"));
+    image.src = src;
+  });
+}
+
+function getTouchDistance(
+  first: { clientX: number; clientY: number },
+  second: { clientX: number; clientY: number }
+) {
+  const deltaX = second.clientX - first.clientX;
+  const deltaY = second.clientY - first.clientY;
+  return Math.hypot(deltaX, deltaY);
+}
+
+async function renderAvatarFromEditor(state: AvatarEditorState): Promise<string> {
+  const image = await loadImage(state.sourceDataUrl);
+  const previewSize = AVATAR_PREVIEW_SIZE;
+  const exportSize = AVATAR_EXPORT_SIZE;
+  const canvas = document.createElement("canvas");
+  canvas.width = exportSize;
+  canvas.height = exportSize;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("No se pudo preparar el lienzo de imagen");
+  }
+
+  const imageRatio = image.width / image.height;
+  const baseWidth = imageRatio >= 1 ? previewSize * imageRatio : previewSize;
+  const baseHeight = imageRatio >= 1 ? previewSize : previewSize / imageRatio;
+  const drawWidth = baseWidth * state.scale;
+  const drawHeight = baseHeight * state.scale;
+  const drawLeft = previewSize / 2 - drawWidth / 2 + state.offsetX;
+  const drawTop = previewSize / 2 - drawHeight / 2 + state.offsetY;
+  const factor = exportSize / previewSize;
+
+  context.fillStyle = "#102e4b";
+  context.fillRect(0, 0, exportSize, exportSize);
+  context.drawImage(
+    image,
+    drawLeft * factor,
+    drawTop * factor,
+    drawWidth * factor,
+    drawHeight * factor
+  );
+
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
+
+async function renderBannerFromEditor(
+  state: BannerEditorState,
+  previewWidth: number,
+  previewHeight: number,
+  outputWidth: number,
+  outputHeight: number
+): Promise<string> {
+  const image = await loadImage(state.sourceDataUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("No se pudo preparar el lienzo de banner");
+  }
+
+  const imageRatio = image.width / image.height;
+  const previewRatio = previewWidth / previewHeight;
+  const baseWidth = imageRatio >= previewRatio ? previewWidth : previewHeight * imageRatio;
+  const baseHeight = imageRatio >= previewRatio ? previewWidth / imageRatio : previewHeight;
+  const drawWidth = baseWidth * state.scale;
+  const drawHeight = baseHeight * state.scale;
+  const drawLeft = previewWidth / 2 - drawWidth / 2 + state.offsetX;
+  const drawTop = previewHeight / 2 - drawHeight / 2 + state.offsetY;
+  const factorX = outputWidth / previewWidth;
+  const factorY = outputHeight / previewHeight;
+
+  context.fillStyle = "#173A5C";
+  context.fillRect(0, 0, outputWidth, outputHeight);
+  context.drawImage(
+    image,
+    drawLeft * factorX,
+    drawTop * factorY,
+    drawWidth * factorX,
+    drawHeight * factorY
+  );
+
+  return canvas.toDataURL("image/jpeg", 0.92);
+}
+
+function buildHeadline(puesto: string, empresa: string, city: string, fallback: string) {
+  const firstPart = [puesto, empresa].filter((item) => item.trim().length > 0).join(" · ");
+  if (!firstPart && !city) {
+    return fallback;
+  }
+  if (!city) {
+    return firstPart;
+  }
+  if (!firstPart) {
+    return city;
+  }
+  return `${firstPart} · ${city}`;
+}
 
 export function ProfileView() {
+  const { t } = useTranslation("profile");
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const router = useRouter();
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const headerActionsContainerRef = useRef<HTMLDivElement | null>(null);
+  const bannerDisplayRef = useRef<HTMLDivElement | null>(null);
+  const bannerPreviewRef = useRef<HTMLDivElement | null>(null);
+  const [activeEditSection, setActiveEditSection] = useState<ProfileEditSection | null>(null);
+  const [avatarEditor, setAvatarEditor] = useState<AvatarEditorState | null>(null);
+  const [bannerEditor, setBannerEditor] = useState<BannerEditorState | null>(null);
+  const [headerImageError, setHeaderImageError] = useState<string | null>(null);
+  const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
+  const [isDraggingBanner, setIsDraggingBanner] = useState(false);
+  const [isHeaderActionsOpen, setIsHeaderActionsOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [blockReasonNote, setBlockReasonNote] = useState("");
+  const [isBlockingUser, setIsBlockingUser] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
+  const bannerDragStartRef = useRef<{ x: number; y: number; startOffsetX: number; startOffsetY: number } | null>(null);
+  const avatarTouchRef = useRef<TouchGestureState | null>(null);
+  const bannerTouchRef = useRef<TouchGestureState | null>(null);
+
   const {
     profile,
-    draft,
-    editingId,
     sortedExperiences,
-    profileOptions,
+    sortedEducations,
     activeProfileId,
-    profileCompletion,
+    currentUserId,
+    canEditProfile,
+    isViewingOwnProfileAsMember,
+    isProfileLoading,
+    isSavingProfile,
+    profileSaveError,
+    needsProfileInitialization,
+    isProfileUnavailable,
+    isSavingExperiences,
+    experienceSaveError,
+    isSavingEducations,
+    educationSaveError,
     userDisplayName,
     initials,
-    handleProfileChange,
-    handleDraftChange,
-    resetDraft,
-    onSubmitExperience,
-    onEditExperience,
-    onDeleteExperience,
-    selectProfile,
-    createNewProfile,
+    badges,
+    onSaveProfile,
+    onSaveExperienceOperations,
+    onSaveEducationOperations,
+    clearProfileSaveError,
+    clearExperienceSaveError,
+    clearEducationSaveError,
+    refetchProfile,
   } = useProfessionalProfile();
 
+  const headline = buildHeadline(
+    profile.puesto,
+    profile.empresaActual,
+    profile.locationCity,
+    t("profileView.headlineFallback")
+  );
+
+  const onStartSectionEdit = (section: ProfileEditSection) => {
+    setActiveEditSection(section);
+  };
+
+  const onCloseSectionEdit = () => {
+    setActiveEditSection(null);
+  };
+
+  useEffect(() => {
+    if (!isHeaderActionsOpen) {
+      return;
+    }
+
+    const onPointerDown = (event: MouseEvent) => {
+      const targetNode = event.target as Node;
+
+      if (!headerActionsContainerRef.current?.contains(targetNode)) {
+        setIsHeaderActionsOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsHeaderActionsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isHeaderActionsOpen]);
+
+  useEffect(() => {
+    if (!isBlockModalOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isBlockingUser) {
+        setIsBlockModalOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isBlockModalOpen, isBlockingUser]);
+
+  const onBlockProfileUser = async () => {
+    setIsHeaderActionsOpen(false);
+    setIsBlockModalOpen(true);
+  };
+
+  const onConfirmBlockProfileUser = async () => {
+    if (!activeProfileId || isBlockingUser) {
+      return;
+    }
+
+    setIsBlockingUser(true);
+
+    try {
+      const normalizedReason = blockReasonNote.trim();
+      await blockUser(activeProfileId, normalizedReason.length > 0 ? normalizedReason : undefined);
+      toast.success(t("profileView.toasts.userBlocked"));
+      setIsBlockModalOpen(false);
+      setBlockReasonNote("");
+      await refetchProfile();
+    } catch {
+      toast.error(t("profileView.errors.blockUser"));
+    } finally {
+      setIsBlockingUser(false);
+    }
+  };
+
+  const saveHeaderImageProfile = async (nextProfile: Profile) => {
+    setHeaderImageError(null);
+    const result = await onSaveProfile(nextProfile);
+    if (!result.ok) {
+      setHeaderImageError(result.message ?? t("profileView.errors.saveImage"));
+    }
+  };
+
+  const onBannerFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setHeaderImageError(t("profileView.errors.invalidBannerImage"));
+      return;
+    }
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const bannerRect = bannerDisplayRef.current?.getBoundingClientRect();
+      const targetWidth = Math.max(1, Math.round(bannerRect?.width ?? 1280));
+      const targetHeight = Math.max(1, Math.round(bannerRect?.height ?? 208));
+      setBannerEditor({
+        sourceDataUrl: dataUrl,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+        targetWidth,
+        targetHeight,
+      });
+      setHeaderImageError(null);
+    } catch {
+      setHeaderImageError(t("profileView.errors.processBannerImage"));
+    }
+  };
+
+  const onAvatarFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setHeaderImageError(t("profileView.errors.invalidProfileImage"));
+      return;
+    }
+
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setAvatarEditor({
+        sourceDataUrl: dataUrl,
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0,
+      });
+      setHeaderImageError(null);
+    } catch {
+      setHeaderImageError(t("profileView.errors.processProfileImage"));
+    }
+  };
+
+  const onConfirmAvatarEditor = async () => {
+    if (!avatarEditor) return;
+
+    try {
+      const finalAvatar = await renderAvatarFromEditor(avatarEditor);
+      await saveHeaderImageProfile({
+        ...profile,
+        imagenPerfilUrl: finalAvatar,
+      });
+      setAvatarEditor(null);
+    } catch {
+      setHeaderImageError(t("profileView.errors.prepareProfileImage"));
+    }
+  };
+
+  const onAvatarTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!avatarEditor) return;
+
+    if (event.touches.length === 1) {
+      const touch = event.touches[0];
+      avatarTouchRef.current = {
+        mode: "drag",
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startOffsetX: avatarEditor.offsetX,
+        startOffsetY: avatarEditor.offsetY,
+      };
+      return;
+    }
+
+    if (event.touches.length === 2) {
+      avatarTouchRef.current = {
+        mode: "pinch",
+        startDistance: getTouchDistance(event.touches[0], event.touches[1]),
+        startScale: avatarEditor.scale,
+      };
+    }
+  };
+
+  const onAvatarTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const gesture = avatarTouchRef.current;
+    if (!gesture || !avatarEditor) return;
+
+    event.preventDefault();
+
+    if (gesture.mode === "drag" && event.touches.length === 1) {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - gesture.startX;
+      const deltaY = touch.clientY - gesture.startY;
+
+      setAvatarEditor((current) =>
+        current
+          ? {
+              ...current,
+              offsetX: gesture.startOffsetX + deltaX,
+              offsetY: gesture.startOffsetY + deltaY,
+            }
+          : current
+      );
+      return;
+    }
+
+    if (gesture.mode === "pinch" && event.touches.length === 2) {
+      const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
+      const nextScale = Math.min(3, Math.max(1, Number((gesture.startScale * (currentDistance / gesture.startDistance)).toFixed(2))));
+      setAvatarEditor((current) =>
+        current
+          ? {
+              ...current,
+              scale: nextScale,
+            }
+          : current
+      );
+    }
+  };
+
+  const onAvatarTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!avatarEditor) return;
+
+    if (event.touches.length === 1) {
+      const touch = event.touches[0];
+      avatarTouchRef.current = {
+        mode: "drag",
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startOffsetX: avatarEditor.offsetX,
+        startOffsetY: avatarEditor.offsetY,
+      };
+      return;
+    }
+
+    if (event.touches.length === 0) {
+      avatarTouchRef.current = null;
+    }
+  };
+
+  const onBannerTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!bannerEditor) return;
+
+    if (event.touches.length === 1) {
+      const touch = event.touches[0];
+      bannerTouchRef.current = {
+        mode: "drag",
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startOffsetX: bannerEditor.offsetX,
+        startOffsetY: bannerEditor.offsetY,
+      };
+      return;
+    }
+
+    if (event.touches.length === 2) {
+      bannerTouchRef.current = {
+        mode: "pinch",
+        startDistance: getTouchDistance(event.touches[0], event.touches[1]),
+        startScale: bannerEditor.scale,
+      };
+    }
+  };
+
+  const onBannerTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    const gesture = bannerTouchRef.current;
+    if (!gesture || !bannerEditor) return;
+
+    event.preventDefault();
+
+    if (gesture.mode === "drag" && event.touches.length === 1) {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - gesture.startX;
+      const deltaY = touch.clientY - gesture.startY;
+
+      setBannerEditor((current) =>
+        current
+          ? {
+              ...current,
+              offsetX: gesture.startOffsetX + deltaX,
+              offsetY: gesture.startOffsetY + deltaY,
+            }
+          : current
+      );
+      return;
+    }
+
+    if (gesture.mode === "pinch" && event.touches.length === 2) {
+      const currentDistance = getTouchDistance(event.touches[0], event.touches[1]);
+      const nextScale = Math.min(3, Math.max(1, Number((gesture.startScale * (currentDistance / gesture.startDistance)).toFixed(2))));
+      setBannerEditor((current) =>
+        current
+          ? {
+              ...current,
+              scale: nextScale,
+            }
+          : current
+      );
+    }
+  };
+
+  const onBannerTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!bannerEditor) return;
+
+    if (event.touches.length === 1) {
+      const touch = event.touches[0];
+      bannerTouchRef.current = {
+        mode: "drag",
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startOffsetX: bannerEditor.offsetX,
+        startOffsetY: bannerEditor.offsetY,
+      };
+      return;
+    }
+
+    if (event.touches.length === 0) {
+      bannerTouchRef.current = null;
+    }
+  };
+
+  const onConfirmBannerEditor = async () => {
+    if (!bannerEditor) return;
+
+    try {
+      const previewRect = bannerPreviewRef.current?.getBoundingClientRect();
+      const previewWidth = previewRect?.width ?? bannerEditor.targetWidth;
+      const previewHeight = previewRect?.height ?? bannerEditor.targetHeight;
+      const outputWidth = Math.min(3840, Math.max(960, bannerEditor.targetWidth * 3));
+      const outputHeight = Math.min(2160, Math.max(320, bannerEditor.targetHeight * 3));
+      const finalBanner = await renderBannerFromEditor(
+        bannerEditor,
+        previewWidth,
+        previewHeight,
+        outputWidth,
+        outputHeight
+      );
+      await saveHeaderImageProfile({
+        ...profile,
+        imagenBannerUrl: finalBanner,
+      });
+      setBannerEditor(null);
+    } catch {
+      setHeaderImageError(t("profileView.errors.prepareBannerImage"));
+    }
+  };
+
+  useEffect(() => {
+    if (!isDraggingAvatar) {
+      return;
+    }
+
+    const onMouseMove = (event: MouseEvent) => {
+      const start = dragStartRef.current;
+      if (!start) {
+        return;
+      }
+
+      const deltaX = event.clientX - start.x;
+      const deltaY = event.clientY - start.y;
+
+      setAvatarEditor((current) =>
+        current
+          ? {
+              ...current,
+              offsetX: start.startOffsetX + deltaX,
+              offsetY: start.startOffsetY + deltaY,
+            }
+          : current
+      );
+    };
+
+    const onMouseUp = () => {
+      setIsDraggingAvatar(false);
+      dragStartRef.current = null;
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [isDraggingAvatar]);
+
+  useEffect(() => {
+    if (!isDraggingBanner) {
+      return;
+    }
+
+    const onMouseMove = (event: MouseEvent) => {
+      const start = bannerDragStartRef.current;
+      if (!start) {
+        return;
+      }
+
+      const deltaX = event.clientX - start.x;
+      const deltaY = event.clientY - start.y;
+
+      setBannerEditor((current) =>
+        current
+          ? {
+              ...current,
+              offsetX: start.startOffsetX + deltaX,
+              offsetY: start.startOffsetY + deltaY,
+            }
+          : current
+      );
+    };
+
+    const onMouseUp = () => {
+      setIsDraggingBanner(false);
+      bannerDragStartRef.current = null;
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [isDraggingBanner]);
+
+  if (needsProfileInitialization) {
+    return (
+      <ProfileInitializationView
+        isSaving={isSavingProfile}
+        saveError={profileSaveError}
+        onSave={onSaveProfile}
+        onClearSaveError={clearProfileSaveError}
+      />
+    );
+  }
+
+  if (isProfileUnavailable) {
+    return (
+      <div className="sophium-shell min-h-screen">
+        <TopBar navItems={navItems} />
+        <main className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
+          <section className="sophium-card px-6 py-10 text-center sm:px-8">
+            <h1 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
+              {t("profileView.unavailable.title")}
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-scale-3 text-[var(--text-secondary)]">
+              {t("profileView.unavailable.description")}
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="linkedin-shell min-h-screen">
+    <div className="sophium-shell min-h-screen">
       <TopBar navItems={navItems} />
-      <CatchyPhrasesBanner lines={catchyLines} />
 
-      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[250px_minmax(0,1fr)_290px] lg:items-start lg:px-8">
-        <LeftSidebar
-          initials={initials}
-          userDisplayName={userDisplayName}
-          puesto={profile.puesto}
-          profileCompletion={profileCompletion}
-        />
+      <main className="mx-auto w-full max-w-7xl space-y-3 px-3 py-4 sm:px-6 sm:py-5 lg:px-8">
+        <section className="sophium-card">
+          <div className="group relative">
+            <div
+              ref={bannerDisplayRef}
+              className={`h-36 sm:h-52 ${profile.imagenBannerUrl.trim() ? "" : "bg-[linear-gradient(135deg,#0e2d4d,#21476e)]"}`}
+              style={
+                profile.imagenBannerUrl.trim()
+                  ? {
+                      backgroundImage: `url(${profile.imagenBannerUrl.trim()})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
+            />
+            {canEditProfile ? (
+              <button
+                type="button"
+                onClick={() => bannerInputRef.current?.click()}
+                disabled={isSavingProfile}
+                className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition hover:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed"
+                aria-label={t("profileView.aria.changeBannerImage")}
+              >
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-black/35 px-4 py-2 text-sm font-semibold">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 7h3l2-2h6l2 2h3v12H4z" />
+                    <circle cx="12" cy="13" r="3" />
+                  </svg>
+                  {t("profileView.actions.changeBanner")}
+                </span>
+              </button>
+            ) : null}
+          </div>
+          <div className="relative px-4 pb-3 pt-3 sm:px-7 sm:pb-4 sm:pt-4">
+            <div className="group absolute -top-10 left-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#102e4b] text-[1.5rem] font-semibold text-[var(--brand-500)] sm:-top-14 sm:left-7 sm:h-28 sm:w-28 sm:border-[6px] sm:text-[2rem]">
+              {profile.imagenPerfilUrl.trim() ? (
+                <div
+                  role="img"
+                  aria-label={t("profileView.aria.profilePhotoOf", { name: userDisplayName })}
+                  className="h-full w-full bg-cover bg-center"
+                  style={{ backgroundImage: `url(${profile.imagenPerfilUrl.trim()})` }}
+                />
+              ) : (
+                initials || "M"
+              )}
+              {canEditProfile ? (
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={isSavingProfile}
+                  className="absolute inset-0 flex items-center justify-center bg-black/35 text-white opacity-0 transition hover:opacity-100 group-hover:opacity-100 disabled:cursor-not-allowed"
+                  aria-label={t("profileView.aria.changeProfileImage")}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 7h3l2-2h6l2 2h3v12H4z" />
+                    <circle cx="12" cy="13" r="3" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
 
-        <section className="mensa-fade-up-delay space-y-4">
-          <ProfileFormCard
+            <div className="mt-10 flex flex-wrap items-end justify-between gap-2 sm:mt-14 sm:gap-3">
+              <div>
+                <h1 className="font-display text-scale-4 font-semibold leading-tight text-[var(--navy-900)] sm:text-scale-5">
+                  {userDisplayName}
+                </h1>
+                {badges.length > 0 ? (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    {badges.map((slug, index) => (
+                      <div
+                        key={`${slug}-${index}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-[var(--line-strong)] bg-[var(--brand-50)] px-[0.55rem] py-[0.22rem] text-scale-1 font-semibold text-[var(--brand-700)]"
+                      >
+                        {isMensaArgentinaBadge(slug) ? (
+                          <span
+                            aria-hidden="true"
+                            className="h-[0.62rem] w-[0.62rem] shrink-0 -translate-y-[1px] bg-contain bg-center bg-no-repeat"
+                            style={{ backgroundImage: `url(${MENSA_ARGENTINA_LOGO_SRC})` }}
+                          />
+                        ) : (
+                          <span aria-hidden="true" className="leading-none">
+                            ∫
+                          </span>
+                        )}
+                        <span>{formatBadgeSlug(slug)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <p className="mt-1.5 text-scale-2 text-[var(--text-primary)] sm:mt-2 sm:text-scale-3">{headline}</p>
+              </div>
+
+              {canEditProfile ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearProfileSaveError();
+                      onStartSectionEdit("basicInfo");
+                    }}
+                    disabled={isProfileLoading}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-3 py-[0.34rem] text-scale-1 font-semibold text-[var(--brand-700)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem]"
+                  >
+                    <span aria-hidden="true">✎</span>
+                    {t("profileView.actions.editProfile")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!currentUserId) {
+                        return;
+                      }
+
+                      router.push(`/perfil?userId=${encodeURIComponent(currentUserId)}`);
+                    }}
+                    disabled={!currentUserId}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-scale-1 font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-4 sm:py-[0.38rem]"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-[0.86rem] w-[0.86rem] sm:h-[0.95rem] sm:w-[0.95rem]"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    {t("profileView.actions.viewAsMember")}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-[2rem] w-[2rem] items-center justify-center rounded-[0.5rem] border border-[var(--line)] text-[1rem] text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] sm:h-[2.4rem] sm:w-[2.4rem] sm:rounded-[0.55rem] sm:text-[1.1rem]"
+                    aria-label={t("profileView.aria.moreOptions")}
+                  >
+                    ···
+                  </button>
+                </div>
+              ) : isViewingOwnProfileAsMember ? (
+                <button
+                  type="button"
+                  onClick={() => router.push("/perfil")}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-500)] px-3 py-[0.34rem] text-scale-1 font-semibold text-[var(--navy-900)] transition hover:bg-[var(--brand-300)] sm:gap-2 sm:px-4 sm:py-[0.38rem]"
+                >
+                  <span aria-hidden="true">✎</span>
+                  {t("profileView.actions.backToEditMode")}
+                </button>
+              ) : activeProfileId ? (
+                <div ref={headerActionsContainerRef} className="relative z-40">
+                  <button
+                    type="button"
+                    onClick={() => setIsHeaderActionsOpen((current) => !current)}
+                    aria-label={t("profileView.aria.moreOptions")}
+                    aria-haspopup="menu"
+                    aria-expanded={isHeaderActionsOpen}
+                    className="inline-flex h-[2rem] w-[2rem] items-center justify-center rounded-[0.5rem] border border-[var(--line)] text-[1rem] text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] sm:h-[2.4rem] sm:w-[2.4rem] sm:rounded-[0.55rem] sm:text-[1.1rem]"
+                  >
+                    ...
+                  </button>
+
+                  {isHeaderActionsOpen ? (
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-[calc(100%+0.55rem)] z-50 min-w-52 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-2 shadow-2xl"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void onBlockProfileUser();
+                        }}
+                        disabled={isBlockingUser}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[0.96rem] font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <span className="text-[var(--text-secondary)]" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+                            <circle cx="12" cy="12" r="8" />
+                            <path d="m7 7 10 10" />
+                          </svg>
+                        </span>
+                        <span>{isBlockingUser ? t("profileView.actions.blocking") : t("profileView.actions.block")}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsHeaderActionsOpen(false);
+                          if (activeProfileId) {
+                            setReportTarget({ type: "PROFILE", id: activeProfileId });
+                          }
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[0.96rem] font-semibold text-[var(--danger-500)] transition hover:bg-[var(--surface-2)]"
+                      >
+                        <span aria-hidden="true">
+                          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+                            <path d="M6 4.5v15" />
+                            <path d="M6 5.5h9l-1.2 3 1.2 3H6" />
+                          </svg>
+                        </span>
+                        <span>{t("profileView.actions.report")}</span>
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {headerImageError ? (
+              <p className="mt-2 max-w-xl rounded-lg border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-semibold text-[var(--danger-500)]">
+                {headerImageError}
+              </p>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="sophium-fade-up-delay sophium-profile-stack space-y-2">
+          <ProfileAboutCard
             profile={profile}
-            profileOptions={profileOptions}
-            activeProfileId={activeProfileId}
-            onProfileChange={handleProfileChange}
-            onSelectProfile={selectProfile}
-            onCreateNewProfile={createNewProfile}
+            canEdit={canEditProfile}
+            isEditingMode={activeEditSection === "about"}
+            isLoading={isProfileLoading}
+            isSaving={isSavingProfile}
+            saveError={profileSaveError}
+            onSave={onSaveProfile}
+            onClearSaveError={clearProfileSaveError}
+            onStartEditing={() => onStartSectionEdit("about")}
+            onCloseEditing={onCloseSectionEdit}
           />
           <ExperienceCard
-            editingId={editingId}
-            draft={draft}
             experiences={sortedExperiences}
-            onDraftChange={handleDraftChange}
-            onSubmitExperience={onSubmitExperience}
-            onResetDraft={resetDraft}
-            onEditExperience={onEditExperience}
-            onDeleteExperience={onDeleteExperience}
+            canEdit={canEditProfile}
+            isEditingMode={activeEditSection === "experience"}
+            defaultLocation={profile.locationCity}
+            isSaving={isSavingExperiences}
+            saveError={experienceSaveError}
+            onSaveOperations={onSaveExperienceOperations}
+            onClearSaveError={clearExperienceSaveError}
+            onStartEditing={() => onStartSectionEdit("experience")}
+            onCloseEditing={onCloseSectionEdit}
+          />
+          <EducationCard
+            educations={sortedEducations}
+            canEdit={canEditProfile}
+            isEditingMode={activeEditSection === "education"}
+            isSaving={isSavingEducations}
+            saveError={educationSaveError}
+            onSaveOperations={onSaveEducationOperations}
+            onClearSaveError={clearEducationSaveError}
+            onStartEditing={() => onStartSectionEdit("education")}
+            onCloseEditing={onCloseSectionEdit}
+          />
+          <InteresesCard
+            profile={profile}
+            canEdit={canEditProfile}
+            isEditingMode={activeEditSection === "interests"}
+            isSaving={isSavingProfile || isSavingExperiences || isSavingEducations}
+            saveError={profileSaveError}
+            onSave={onSaveProfile}
+            onClearSaveError={clearProfileSaveError}
+            onStartEditing={() => onStartSectionEdit("interests")}
+            onCloseEditing={onCloseSectionEdit}
           />
         </section>
 
-        <RightSidebar professionalStampLines={professionalStampLines} />
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onBannerFileChange}
+        />
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onAvatarFileChange}
+        />
       </main>
+
+      {bannerEditor ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3">
+          <div className="w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="font-display text-scale-4 font-semibold text-[var(--navy-900)]">
+              {t("profileView.bannerEditor.title")}
+            </h3>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              {t("profileView.bannerEditor.description")}
+            </p>
+
+            <div className="mt-4 flex justify-center">
+              <div
+                ref={bannerPreviewRef}
+                className="relative w-full max-w-[900px] overflow-hidden rounded-xl border border-[var(--line)] bg-[#173A5C]"
+                style={{
+                  touchAction: "none",
+                  aspectRatio: `${bannerEditor.targetWidth} / ${bannerEditor.targetHeight}`,
+                }}
+                onMouseDown={(event) => {
+                  if (!bannerEditor) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  bannerDragStartRef.current = {
+                    x: event.clientX,
+                    y: event.clientY,
+                    startOffsetX: bannerEditor.offsetX,
+                    startOffsetY: bannerEditor.offsetY,
+                  };
+                  setIsDraggingBanner(true);
+                }}
+                onTouchStart={onBannerTouchStart}
+                onTouchMove={onBannerTouchMove}
+                onTouchEnd={onBannerTouchEnd}
+                onWheel={(event) => {
+                  event.preventDefault();
+                  const step = event.deltaY > 0 ? -0.08 : 0.08;
+
+                  setBannerEditor((current) => {
+                    if (!current) {
+                      return current;
+                    }
+
+                    const nextScale = Math.min(3, Math.max(1, Number((current.scale + step).toFixed(2))));
+                    return {
+                      ...current,
+                      scale: nextScale,
+                    };
+                  });
+                }}
+              >
+                <div
+                  role="img"
+                  aria-label={t("profileView.aria.bannerPreview")}
+                  className={`absolute left-1/2 top-1/2 h-full w-full bg-contain bg-center bg-no-repeat ${isDraggingBanner ? "cursor-grabbing" : "cursor-grab"}`}
+                  style={{
+                    backgroundImage: `url(${bannerEditor.sourceDataUrl})`,
+                    transform: `translate(calc(-50% + ${bannerEditor.offsetX}px), calc(-50% + ${bannerEditor.offsetY}px)) scale(${bannerEditor.scale})`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)]">
+              {t("profileView.bannerEditor.tip")}
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={onConfirmBannerEditor}
+                disabled={isSavingProfile}
+                className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isSavingProfile ? t("common.saving") : t("profileView.actions.saveBanner")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBannerEditor(null)}
+                disabled={isSavingProfile}
+                className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {avatarEditor ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3">
+          <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
+            <h3 className="font-display text-scale-4 font-semibold text-[var(--navy-900)]">
+              {t("profileView.avatarEditor.title")}
+            </h3>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              {t("profileView.avatarEditor.description")}
+            </p>
+
+            <div className="mt-4 flex justify-center">
+              <div
+                className="relative h-[220px] w-[220px] overflow-hidden rounded-full border-4 border-white bg-[#102e4b] shadow-[0_0_0_1px_rgba(15,23,42,0.15)]"
+                style={{ touchAction: "none" }}
+                onMouseDown={(event) => {
+                  if (!avatarEditor) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  dragStartRef.current = {
+                    x: event.clientX,
+                    y: event.clientY,
+                    startOffsetX: avatarEditor.offsetX,
+                    startOffsetY: avatarEditor.offsetY,
+                  };
+                  setIsDraggingAvatar(true);
+                }}
+                onTouchStart={onAvatarTouchStart}
+                onTouchMove={onAvatarTouchMove}
+                onTouchEnd={onAvatarTouchEnd}
+                onWheel={(event) => {
+                  event.preventDefault();
+                  const step = event.deltaY > 0 ? -0.08 : 0.08;
+
+                  setAvatarEditor((current) => {
+                    if (!current) {
+                      return current;
+                    }
+
+                    const nextScale = Math.min(3, Math.max(1, Number((current.scale + step).toFixed(2))));
+                    return {
+                      ...current,
+                      scale: nextScale,
+                    };
+                  });
+                }}
+              >
+                <div
+                  role="img"
+                  aria-label={t("profileView.aria.profilePreview")}
+                  className={`absolute left-1/2 top-1/2 h-full w-full bg-cover bg-center ${isDraggingAvatar ? "cursor-grabbing" : "cursor-grab"}`}
+                  style={{
+                    backgroundImage: `url(${avatarEditor.sourceDataUrl})`,
+                    transform: `translate(calc(-50% + ${avatarEditor.offsetX}px), calc(-50% + ${avatarEditor.offsetY}px)) scale(${avatarEditor.scale})`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)]">
+              {t("profileView.avatarEditor.tip")}
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={onConfirmAvatarEditor}
+                disabled={isSavingProfile}
+                className="inline-flex items-center rounded-xl bg-[var(--brand-700)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-800)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isSavingProfile ? t("common.saving") : t("profileView.actions.saveImage")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAvatarEditor(null)}
+                disabled={isSavingProfile}
+                className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {canEditProfile && activeEditSection === "basicInfo" ? (
+        <ProfileBasicInfoModal
+          profile={profile}
+          completionCounts={{ experiences: sortedExperiences.length, educations: sortedEducations.length }}
+          isSaving={isSavingProfile}
+          saveError={profileSaveError}
+          onSave={onSaveProfile}
+          onClose={() => {
+            clearProfileSaveError();
+            onCloseSectionEdit();
+          }}
+        />
+      ) : null}
+
+      <ReportDialog target={reportTarget} onClose={() => setReportTarget(null)} />
+
+      {isBlockModalOpen ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-3"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isBlockingUser) {
+              setIsBlockModalOpen(false);
+            }
+          }}
+        >
+          <div className="w-full max-w-xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-2xl sm:p-6">
+            <h3 className="font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
+              {t("profileView.blockModal.title")}
+            </h3>
+            <p className="mt-2 text-scale-3 leading-relaxed text-[var(--text-secondary)]">
+              {t("profileView.blockModal.description")}
+            </p>
+
+            <label className="mt-4 block text-scale-2 font-semibold text-[var(--text-primary)]" htmlFor="block-reason-note">
+              {t("profileView.blockModal.noteLabel")}
+            </label>
+            <textarea
+              id="block-reason-note"
+              value={blockReasonNote}
+              onChange={(event) => setBlockReasonNote(event.target.value)}
+              maxLength={400}
+              rows={4}
+              placeholder={t("profileView.blockModal.notePlaceholder")}
+              className="mt-2 w-full resize-none rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-2 text-scale-3 text-[var(--text-primary)] outline-none ring-0 placeholder:text-[var(--text-secondary)]"
+            />
+            <p className="mt-1 text-right text-scale-1 text-[var(--text-secondary)]">
+              {blockReasonNote.length}/400
+            </p>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsBlockModalOpen(false)}
+                disabled={isBlockingUser}
+                className="inline-flex items-center rounded-xl border border-[var(--line)] px-4 py-2 text-scale-2 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void onConfirmBlockProfileUser();
+                }}
+                disabled={isBlockingUser}
+                className="inline-flex items-center rounded-xl bg-[var(--danger-500)] px-4 py-2 text-scale-2 font-semibold text-[var(--surface)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isBlockingUser ? t("profileView.actions.blocking") : t("profileView.actions.block")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

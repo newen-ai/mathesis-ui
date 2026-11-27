@@ -1,0 +1,125 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  listAteneoFeedForView,
+  listAteneoGroups,
+  type AteneoTopic,
+  type AteneoTopicAttachment
+} from "@/lib/api/ateneo";
+import { AteneoTopicCard, type AteneoTopicCardTopic } from "./AteneoTopicCard";
+
+type AteneoFeedTopic = AteneoTopicCardTopic & {
+  groupId: string;
+  reactions: number;
+  attachments: AteneoTopicAttachment[];
+};
+
+function mapTopic(topic: AteneoTopic, authorFallback: string): AteneoFeedTopic {
+  const authorName = [topic.author.firstName, topic.author.lastName].filter(Boolean).join(" ").trim();
+
+  return {
+    id: topic.id,
+    groupId: topic.groupId,
+    groupLabel: topic.groupLabel,
+    authorImageUrl: topic.author.profileImageUrl,
+    authorInitial: topic.author.initials,
+    authorUserId: topic.author.userId,
+    authorName: authorName || authorFallback,
+    timeLabel: topic.timeLabel,
+    createdAt: topic.createdAt,
+    title: topic.title,
+    description: topic.description,
+    tone: topic.tone,
+    hotScore: topic.hotScore,
+    reactions: topic.reactions,
+    comments: topic.comments,
+    isRecommended: topic.isRecommended,
+    attachments: topic.attachments,
+    isFromOtherGroup: topic.viewerIsGroupMember === false
+  };
+}
+
+export function AteneoFeedMiddle() {
+  const { t } = useTranslation("ateneo");
+  const [topics, setTopics] = useState<AteneoFeedTopic[]>([]);
+  const [createTopicGroupId, setCreateTopicGroupId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const translationRef = useRef(t);
+
+  useEffect(() => {
+    translationRef.current = t;
+  }, [t]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const [feedResponse, mineResponse] = await Promise.all([listAteneoFeedForView(), listAteneoGroups("mine", 1)]);
+        if (cancelled) return;
+        setTopics(
+          feedResponse.data.topics.map((topic) =>
+            mapTopic(topic, translationRef.current("feed.authorFallback"))
+          )
+        );
+        setCreateTopicGroupId(mineResponse.data.groups[0]?.id ?? null);
+      } catch {
+        if (cancelled) return;
+        setTopics([]);
+        setCreateTopicGroupId(null);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const createTopicHref = createTopicGroupId
+    ? `/ateneo/groups/${encodeURIComponent(createTopicGroupId)}/new-topic`
+    : "/ateneo/groups?tab=mine";
+
+  return (
+    <section className="space-y-3">
+      <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <div>
+            <h1 className="font-display text-scale-5 font-semibold leading-tight text-[var(--heading-primary)]">{t("feed.title")}</h1>
+            <p className="mt-1 text-scale-2 text-[var(--text-secondary)]">{t("feed.subtitle")}</p>
+          </div>
+
+          <Link
+            href={createTopicHref}
+            className="inline-flex w-full items-center justify-center rounded-full bg-[var(--brand-500)] px-6 py-2.5 text-scale-2 font-semibold sophium-on-brand transition hover:brightness-95"
+          >
+            {t("feed.newTopic")}
+          </Link>
+        </div>
+      </div>
+
+      <div className="space-y-3 sm:space-y-4">
+        {isLoading ? <p className="px-1 text-scale-3 text-[var(--text-secondary)]">{t("feed.loading")}</p> : null}
+        {!isLoading && topics.length === 0 ? <p className="px-1 text-scale-3 text-[var(--text-secondary)]">{t("feed.empty")}</p> : null}
+        {topics.map((topic) => (
+          <AteneoTopicCard
+            key={topic.id}
+            topic={topic}
+            topicHref={`/ateneo/groups/${encodeURIComponent(topic.groupId)}/topics/${encodeURIComponent(topic.id)}`}
+            variant="feed"
+            showRecommendedBadge
+          />
+        ))}
+      </div>
+    </section>
+  );
+}

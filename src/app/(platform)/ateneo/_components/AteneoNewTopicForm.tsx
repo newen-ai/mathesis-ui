@@ -1,0 +1,1213 @@
+"use client";
+
+import { createAteneoTopic, getAteneoGroup, listAteneoGroups } from "@/lib/api/ateneo";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
+import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { extractUniqueUrlsFromText } from "@/lib/utils/link-preview";
+import { createRenderableImageUrlFromBlob } from "@/lib/utils/image-preview";
+import { createPdfPreview, openLocalFileInNewTab } from "@/lib/utils/pdf-preview";
+import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
+import { getAteneoTopicPublishErrorTranslation } from "@/lib/i18n/ateneo-errors";
+import {
+  TOPIC_DESCRIPTION_MAX_LENGTH,
+  TOPIC_TITLE_MAX_LENGTH,
+  firstInvalidField,
+  mapBackendTopicIssues,
+  normalizeTopicText,
+  validateNewTopic,
+  type NewTopicErrors,
+  type NewTopicField,
+} from "../_lib/new-topic-validation";
+
+const toneOptions = ["SERIO", "MIX", "LIBRE"] as const;
+const TOPIC_TITLE_LIMIT = TOPIC_TITLE_MAX_LENGTH;
+const TOPIC_DESCRIPTION_LIMIT = TOPIC_DESCRIPTION_MAX_LENGTH;
+const MAX_ATTACHMENTS_PER_TOPIC = 5;
+const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024;
+
+type AteneoNewTopicFormProps = {
+  groupId?: string;
+};
+
+type TopicGroupOption = {
+  id: string;
+  name: string;
+  canCreateTopics: boolean;
+};
+
+type TopicAttachmentDraft = {
+  file: File;
+  kind: "image" | "pdf";
+  /** Image preview, or the first-page thumbnail for PDFs. Always an object URL to revoke. */
+  previewUrl?: string;
+  /** PDFs only. */
+  pageCount?: number;
+  previewStatus?: "loading" | "ready" | "failed";
+};
+
+type TopicImagePreviewItem = {
+  attachmentIndex: number;
+  file: File;
+  previewUrl: string;
+};
+
+const IMAGE_ATTACHMENT_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/heic", "image/heif"]);
+const PDF_ATTACHMENT_MIME_TYPE = "application/pdf";
+
+function formatMaxSizeLabel(bytes: number): string {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
+}
+
+export function AteneoNewTopicForm({ groupId }: AteneoNewTopicFormProps) {
+  const { t } = useTranslation("ateneo");
+  const preferredGroupId = groupId?.trim() ?? "";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const cameFromFooter = searchParams.get("source") === "footer";
+  const [groupOptions, setGroupOptions] = useState<TopicGroupOption[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState(preferredGroupId);
+  const [isGroupPickerOpen, setIsGroupPickerOpen] = useState(false);
+  const [isDesktopGroupPickerOpen, setIsDesktopGroupPickerOpen] = useState(false);
+  const [canCreateTopics, setCanCreateTopics] = useState(true);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [selectedTone, setSelectedTone] = useState<(typeof toneOptions)[number]>("LIBRE");
+  const [attachments, setAttachments] = useState<TopicAttachmentDraft[]>([]);
+  const [activePreviewImageIndex, setActivePreviewImageIndex] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<NewTopicErrors>({});
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const descriptionInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const groupSectionRef = useRef<HTMLDivElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const desktopGroupPickerRef = useRef<HTMLDivElement | null>(null);
+  const translationRef = useRef(t);
+  const attachmentsRef = useRef<TopicAttachmentDraft[]>([]);
+  // PDFs removed while their thumbnail is still rendering, so the late thumbnail is discarded.
+  const removedFilesRef = useRef(new WeakSet<File>());
+  const isUnmountedRef = useRef(false);
+  const previewTouchStartXRef = useRef<number | null>(null);
+  const previewTouchStartYRef = useRef<number | null>(null);
+  const isTitleTooLong = normalizeTopicText(title).length > TOPIC_TITLE_LIMIT;
+  const isDescriptionTooLong = normalizeTopicText(description).length > TOPIC_DESCRIPTION_LIMIT;
+  const isTitleInvalid = isTitleTooLong || Boolean(fieldErrors.title);
+  const isDescriptionInvalid = isDescriptionTooLong || Boolean(fieldErrors.description);
+  const fieldErrorMessage = (field: NewTopicField) => {
+    const error = fieldErrors[field];
+    return error ? t(`newTopic.errors.${error.key}`, error.params) : null;
+  };
+  const detectedUrls = extractUniqueUrlsFromText(description, 3);
+  const imagePreviewItems = useMemo<TopicImagePreviewItem[]>(() => {
+    const nextItems: TopicImagePreviewItem[] = [];
+
+    attachments.forEach((attachment, attachmentIndex) => {
+      if (attachment.kind !== "image" || !attachment.previewUrl) {
+        return;
+      }
+
+      nextItems.push({
+        attachmentIndex,
+        file: attachment.file,
+        previewUrl: attachment.previewUrl,
+      });
+    });
+
+    return nextItems;
+  }, [attachments]);
+  const normalizedActivePreviewImageIndex =
+    activePreviewImageIndex === null || imagePreviewItems.length === 0
+      ? null
+      : Math.min(activePreviewImageIndex, imagePreviewItems.length - 1);
+  const isImagePreviewOpen = normalizedActivePreviewImageIndex !== null;
+  const activePreviewImage =
+    normalizedActivePreviewImageIndex !== null
+      ? (imagePreviewItems[normalizedActivePreviewImageIndex] ?? null)
+      : null;
+  const isImageCarouselEnabled = imagePreviewItems.length > 1;
+  const shouldLockBodyScroll = isGroupPickerOpen || isImagePreviewOpen;
+  const selectedGroupLabel = useMemo(() => {
+    if (!selectedGroupId) {
+      return t("newTopic.selectGroup");
+    }
+
+    return (
+      groupOptions.find((group) => group.id === selectedGroupId)?.name ||
+      t("newTopic.selectGroup")
+    );
+  }, [groupOptions, selectedGroupId, t]);
+
+  const selectedGroup = useMemo(
+    () => groupOptions.find((group) => group.id === selectedGroupId) ?? null,
+    [groupOptions, selectedGroupId]
+  );
+
+  const getGroupWarningMessage = () => t("newTopic.adminsOnlyMessage");
+
+  useEffect(() => {
+    translationRef.current = t;
+  }, [t]);
+
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(() => {
+    isUnmountedRef.current = false;
+    return () => {
+      isUnmountedRef.current = true;
+      attachmentsRef.current.forEach((attachment) => {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      });
+    };
+  }, []);
+
+  const buildImagePreviewUrl = async (file: File): Promise<string> => {
+    return createRenderableImageUrlFromBlob(file);
+  };
+
+  const registerAttachments = async (files: FileList | File[] | null, kind: TopicAttachmentDraft["kind"]) => {
+    if (!files) return;
+
+    const allowedFiles = Array.from(files).filter((file) => {
+        if (kind === "image") {
+          return IMAGE_ATTACHMENT_MIME_TYPES.has(file.type);
+        }
+
+        return file.type === PDF_ATTACHMENT_MIME_TYPE;
+      });
+
+    const rejectedByType = Array.from(files).length - allowedFiles.length;
+    if (rejectedByType > 0) {
+      toast.info(kind === "image" ? t("newTopic.toasts.imageTypesOnly") : t("newTopic.toasts.pdfOnly"));
+    }
+
+    const oversizedFiles = allowedFiles.filter((file) => file.size > MAX_ATTACHMENT_SIZE_BYTES);
+    if (oversizedFiles.length > 0) {
+      const firstOversizedFile = oversizedFiles[0];
+      toast.info(
+        t("newTopic.toasts.fileTooLarge", {
+          name: firstOversizedFile.name,
+          maxSize: formatMaxSizeLabel(MAX_ATTACHMENT_SIZE_BYTES),
+        })
+      );
+    }
+
+    const acceptedFiles = allowedFiles.filter((file) => file.size <= MAX_ATTACHMENT_SIZE_BYTES);
+
+    if (acceptedFiles.length === 0) {
+      toast.info(kind === "image" ? t("newTopic.toasts.chooseImage") : t("newTopic.toasts.choosePdf"));
+      return;
+    }
+
+    const nextAttachments = await Promise.all(
+      acceptedFiles.map(async (file) => {
+        if (kind === "image") {
+          const previewUrl = await buildImagePreviewUrl(file);
+          return { file, kind, previewUrl };
+        }
+
+        return { file, kind, previewStatus: "loading" as const };
+      })
+    );
+
+    const droppedCount = Math.max(0, attachments.length + nextAttachments.length - MAX_ATTACHMENTS_PER_TOPIC);
+    if (droppedCount > 0) {
+      toast.info(t("newTopic.toasts.maxAttachments"));
+    }
+
+    setAttachments((current) => {
+      const merged = [...current, ...nextAttachments];
+      const kept = merged.slice(0, MAX_ATTACHMENTS_PER_TOPIC);
+      const dropped = merged.slice(MAX_ATTACHMENTS_PER_TOPIC);
+      dropped.forEach((attachment) => {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      });
+      return kept;
+    });
+
+    nextAttachments.filter((attachment) => attachment.kind === "pdf").forEach((attachment) => {
+      void loadPdfPreview(attachment.file);
+    });
+  };
+
+  // Renders the first page in the background; the card shows the PDF icon meanwhile (or if it fails).
+  const loadPdfPreview = async (file: File) => {
+    let preview: Awaited<ReturnType<typeof createPdfPreview>> | null = null;
+    try {
+      preview = await createPdfPreview(file);
+    } catch (error) {
+      console.warn("ateneo_pdf_preview_failed", { fileName: file.name, error });
+    }
+
+    // The file may have been removed (or the form left) while rendering.
+    if (isUnmountedRef.current || removedFilesRef.current.has(file)) {
+      if (preview) URL.revokeObjectURL(preview.thumbnailUrl);
+      return;
+    }
+
+    setAttachments((current) =>
+      current.map((attachment) =>
+        attachment.file === file
+          ? preview
+            ? { ...attachment, previewUrl: preview.thumbnailUrl, pageCount: preview.pageCount, previewStatus: "ready" }
+            : { ...attachment, previewStatus: "failed" }
+          : attachment
+      )
+    );
+  };
+
+  const removeAttachmentAt = (indexToRemove: number) => {
+    setAttachments((current) => {
+      const target = current[indexToRemove];
+      if (target) {
+        removedFilesRef.current.add(target.file);
+      }
+      if (target?.previewUrl) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return current.filter((_, index) => index !== indexToRemove);
+    });
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadOptions = async () => {
+      try {
+        const mineGroupsResponse = await listAteneoGroups("mine", 50);
+        const nextOptions: TopicGroupOption[] = mineGroupsResponse.data.groups.map((group) => ({
+          id: group.id,
+          name: group.name,
+          canCreateTopics: group.createTopicsMode !== "admins" || group.isAdmin,
+        }));
+
+        if (
+          preferredGroupId.length > 0 &&
+          !nextOptions.some((group) => group.id === preferredGroupId)
+        ) {
+          try {
+            const groupResponse = await getAteneoGroup(preferredGroupId);
+            const currentGroup = groupResponse.data.group;
+            nextOptions.unshift({
+              id: currentGroup.id,
+              name: currentGroup.name,
+              canCreateTopics: currentGroup.createTopicsMode !== "admins" || currentGroup.isAdmin,
+            });
+          } catch (error) {
+            console.warn("ateneo_preferred_group_unavailable", {
+              preferredGroupId,
+              error,
+            });
+            if (!cancelled) {
+              toast.info(translationRef.current("newTopic.toasts.preferredGroupUnavailable"));
+            }
+          }
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setGroupOptions(nextOptions);
+
+        const preferredGroupOption = nextOptions.find((option) => option.id === preferredGroupId);
+        const defaultGroupId = preferredGroupOption
+          ? preferredGroupOption.id
+          : cameFromFooter
+            ? ""
+            : (nextOptions[0]?.id ?? "");
+        setSelectedGroupId(defaultGroupId);
+        const selectedGroup = nextOptions.find((option) => option.id === defaultGroupId);
+        setCanCreateTopics(
+          defaultGroupId.length > 0 ? Boolean(selectedGroup?.canCreateTopics) : true
+        );
+      } catch {
+        if (!cancelled) {
+          setGroupOptions([]);
+          setSelectedGroupId("");
+          setCanCreateTopics(false);
+        }
+      }
+    };
+
+    void loadOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cameFromFooter, preferredGroupId]);
+
+  useEffect(() => {
+    if (!shouldLockBodyScroll) {
+      document.body.style.removeProperty("overflow");
+      return;
+    }
+
+    document.body.style.setProperty("overflow", "hidden");
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (isImagePreviewOpen) {
+          setActivePreviewImageIndex(null);
+          return;
+        }
+
+        setIsGroupPickerOpen(false);
+        return;
+      }
+
+      if (!isImagePreviewOpen || imagePreviewItems.length === 0) {
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setActivePreviewImageIndex((current) => {
+          const currentIndex = current ?? 0;
+          return (currentIndex + 1) % imagePreviewItems.length;
+        });
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setActivePreviewImageIndex((current) => {
+          const currentIndex = current ?? 0;
+          return (currentIndex - 1 + imagePreviewItems.length) % imagePreviewItems.length;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.removeProperty("overflow");
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [imagePreviewItems, isImagePreviewOpen, shouldLockBodyScroll]);
+
+  useEffect(() => {
+    if (!isDesktopGroupPickerOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (!desktopGroupPickerRef.current?.contains(target)) {
+        setIsDesktopGroupPickerOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDesktopGroupPickerOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isDesktopGroupPickerOpen]);
+
+  const clearFieldError = (field: NewTopicField) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  // Field errors are shown only next to their field (no toast) and focus moves to the first one.
+  // Toasts are reserved for errors that do not belong to a specific input.
+  const reportFieldErrors = (errors: NewTopicErrors) => {
+    setFieldErrors(errors);
+    const firstField = firstInvalidField(errors);
+    if (!firstField) return;
+
+    if (firstField === "title") {
+      titleInputRef.current?.focus();
+    } else if (firstField === "description") {
+      descriptionInputRef.current?.focus();
+    } else {
+      groupSectionRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  const handleGroupChange = (nextGroupId: string) => {
+    clearFieldError("group");
+    setSelectedGroupId(nextGroupId);
+    const nextGroup = groupOptions.find((group) => group.id === nextGroupId);
+    setCanCreateTopics(nextGroupId.length > 0 ? Boolean(nextGroup?.canCreateTopics) : true);
+    setIsGroupPickerOpen(false);
+    setIsDesktopGroupPickerOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    const targetGroupId = selectedGroupId.trim();
+    const safeTitle = normalizeTopicText(title);
+    const safeDescription = normalizeTopicText(description);
+
+    // First line of defence: same rules as the backend, reported without a round trip.
+    const clientErrors = validateNewTopic({ groupId: targetGroupId, canCreateTopics, title, description });
+    if (firstInvalidField(clientErrors)) {
+      reportFieldErrors(clientErrors);
+      return;
+    }
+
+    setFieldErrors({});
+    setIsSubmitting(true);
+    try {
+      const response = await createAteneoTopic(targetGroupId, {
+        title: safeTitle,
+        description: safeDescription,
+        tone: selectedTone,
+        attachments: attachments.map((attachment) => attachment.file)
+      });
+
+      toast.success(t("newTopic.toasts.published"));
+      attachments.forEach((attachment) => {
+        if (attachment.previewUrl) {
+          URL.revokeObjectURL(attachment.previewUrl);
+        }
+      });
+      setAttachments([]);
+      setActivePreviewImageIndex(null);
+      router.push(`/ateneo/groups/${encodeURIComponent(targetGroupId)}/topics/${encodeURIComponent(response.data.topic.id)}`);
+    } catch (error) {
+      console.error("ateneo_topic_publish_failed", {
+        groupId: targetGroupId,
+        attachmentsCount: attachments.length,
+        attachmentNames: attachments.map((attachment) => attachment.file.name),
+        error
+      });
+
+      // Second line of defence: the backend explains invalid fields in `details`.
+      const backendErrors = mapBackendTopicIssues((error as { details?: unknown } | null)?.details);
+      if (firstInvalidField(backendErrors)) {
+        reportFieldErrors(backendErrors);
+      } else {
+        toast.error(getAteneoTopicPublishErrorTranslation(error));
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openImagePreviewAt = (targetIndex: number) => {
+    if (!imagePreviewItems[targetIndex]) {
+      return;
+    }
+
+    setActivePreviewImageIndex(targetIndex);
+  };
+
+  const closeImagePreview = () => {
+    setActivePreviewImageIndex(null);
+  };
+
+  const showNextPreviewImage = () => {
+    if (imagePreviewItems.length === 0) {
+      return;
+    }
+
+    setActivePreviewImageIndex((current) => {
+      const currentIndex = current ?? 0;
+      return (currentIndex + 1) % imagePreviewItems.length;
+    });
+  };
+
+  const showPreviousPreviewImage = () => {
+    if (imagePreviewItems.length === 0) {
+      return;
+    }
+
+    setActivePreviewImageIndex((current) => {
+      const currentIndex = current ?? 0;
+      return (currentIndex - 1 + imagePreviewItems.length) % imagePreviewItems.length;
+    });
+  };
+
+  const handlePreviewTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (!isImageCarouselEnabled) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    previewTouchStartXRef.current = touch.clientX;
+    previewTouchStartYRef.current = touch.clientY;
+  };
+
+  const handlePreviewTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (!isImageCarouselEnabled) {
+      return;
+    }
+
+    const startX = previewTouchStartXRef.current;
+    const startY = previewTouchStartYRef.current;
+    if (startX === null || startY === null) {
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    previewTouchStartXRef.current = null;
+    previewTouchStartYRef.current = null;
+
+    if (Math.abs(deltaX) < 45 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      showNextPreviewImage();
+      return;
+    }
+
+    showPreviousPreviewImage();
+  };
+
+  const removeActivePreviewImage = () => {
+    if (!activePreviewImage || normalizedActivePreviewImageIndex === null) {
+      return;
+    }
+
+    const nextPreviewIndex =
+      imagePreviewItems.length <= 1
+        ? null
+        : Math.min(normalizedActivePreviewImageIndex, imagePreviewItems.length - 2);
+
+    removeAttachmentAt(activePreviewImage.attachmentIndex);
+    setActivePreviewImageIndex(nextPreviewIndex);
+  };
+
+  // Rendered twice: in the header for quick posters and below the form, where most people look
+  // after filling it in. Always enabled (except while sending): problems are reported on click,
+  // next to each field.
+  const renderPublishButton = (extraClassName = "") => (
+    <button
+      type="button"
+      disabled={isSubmitting}
+      aria-busy={isSubmitting}
+      onClick={() => void handleSubmit()}
+      className={`rounded-full bg-[var(--brand-500)] px-5 py-2.5 text-scale-3 font-semibold text-[var(--navy-900)] transition hover:brightness-95 disabled:cursor-wait disabled:opacity-70 disabled:hover:brightness-100 ${extraClassName}`}
+    >
+      {isSubmitting ? t("newTopic.publishing") : t("newTopic.publish")}
+    </button>
+  );
+
+  return (
+    <div className="space-y-4">
+      <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/heic,image/heif" multiple className="hidden" onChange={(event) => {
+        void registerAttachments(event.target.files, "image");
+        event.currentTarget.value = "";
+      }} />
+      <input ref={fileInputRef} type="file" accept="application/pdf" multiple className="hidden" onChange={(event) => {
+        void registerAttachments(event.target.files, "pdf");
+        event.currentTarget.value = "";
+      }} />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label={t("newTopic.backAria")}
+            className="inline-flex items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-scale-2 font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--surface-2)]"
+          >
+            <span aria-hidden="true">&lt;</span>
+          </button>
+          <h1 className="font-display text-scale-5 font-semibold text-[var(--heading-primary)]">
+            {t("newTopic.title")}
+          </h1>
+        </div>
+
+        {renderPublishButton()}
+      </div>
+
+      {groupOptions.length === 0 ? (
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
+          {t("newTopic.emptyGroupsMessage")}
+        </div>
+      ) : null}
+
+      {groupOptions.length > 0 && selectedGroupId.trim().length > 0 && !canCreateTopics ? (
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 text-scale-3 text-[var(--text-secondary)]">
+          {t("newTopic.adminsOnlyMessage")}
+        </div>
+      ) : null}
+
+      <div
+        className={[
+          "rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 sm:p-5",
+          groupOptions.length === 0
+            ? "pointer-events-none opacity-60"
+            : "",
+        ].join(" ")}
+      >
+        <div ref={groupSectionRef} className="flex items-center gap-3">
+          <label className="min-w-0 flex-1">
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.groupLabel")}</span>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setIsGroupPickerOpen(true)}
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-left outline-none transition hover:border-[var(--brand-500)] hover:bg-[var(--surface-2)] focus:border-[var(--brand-700)] md:hidden"
+              >
+                <span className="min-w-0">
+                  <span className={[
+                    "block truncate text-scale-3 font-medium",
+                    selectedGroupId ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
+                  ].join(" ")}>
+                    {selectedGroupLabel}
+                  </span>
+                  {selectedGroup && !selectedGroup.canCreateTopics ? (
+                    <span className="mt-0.5 block text-scale-1 text-[var(--text-secondary)]">
+                      {t("newTopic.groupAdminsOnlyLabel")}
+                    </span>
+                  ) : null}
+                </span>
+
+                <span className="flex shrink-0 items-center gap-2">
+                  {selectedGroup && !selectedGroup.canCreateTopics ? (
+                    <span
+                      aria-label={getGroupWarningMessage()}
+                      title={getGroupWarningMessage()}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                    >
+                      ⚠
+                    </span>
+                  ) : null}
+                </span>
+
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-2)] text-[var(--text-secondary)]"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                    <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </button>
+
+              <div ref={desktopGroupPickerRef} className="relative hidden md:block">
+                <button
+                  type="button"
+                  onClick={() => setIsDesktopGroupPickerOpen((current) => !current)}
+                  className="flex w-full items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-left outline-none transition hover:border-[var(--brand-500)] hover:bg-[var(--surface-2)] focus:border-[var(--brand-700)]"
+                >
+                  <span className="min-w-0">
+                    <span className={[
+                      "block truncate text-scale-3 font-medium",
+                      selectedGroupId ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]",
+                    ].join(" ")}>
+                      {selectedGroupLabel}
+                    </span>
+                    {selectedGroup && !selectedGroup.canCreateTopics ? (
+                      <span className="mt-0.5 block text-scale-1 text-[var(--text-secondary)]">
+                        {t("newTopic.groupAdminsOnlyLabel")}
+                      </span>
+                    ) : null}
+                  </span>
+
+                  <span className="flex shrink-0 items-center gap-2">
+                    {selectedGroup && !selectedGroup.canCreateTopics ? (
+                      <span
+                        aria-label={getGroupWarningMessage()}
+                        title={getGroupWarningMessage()}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                      >
+                        ⚠
+                      </span>
+                    ) : null}
+
+                    <span
+                      aria-hidden="true"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-2)] text-[var(--text-secondary)]"
+                    >
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        className={[
+                          "h-4 w-4 transition-transform duration-200",
+                          isDesktopGroupPickerOpen ? "rotate-180" : "",
+                        ].join(" ")}
+                      >
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                  </span>
+                </button>
+
+                {isDesktopGroupPickerOpen ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-2.5 shadow-[0_24px_48px_color-mix(in_srgb,var(--navy-900)_26%,transparent)]">
+                    <button
+                      type="button"
+                      onClick={() => handleGroupChange("")}
+                      className={[
+                        "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-scale-2 transition",
+                        selectedGroupId.length === 0
+                          ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                          : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-2)]",
+                      ].join(" ")}
+                    >
+                      <span>{groupOptions.length > 0 ? t("newTopic.selectGroup") : t("newTopic.noGroupsAvailable")}</span>
+                    </button>
+
+                    {groupOptions.map((group) => {
+                      const isSelected = selectedGroupId === group.id;
+
+                      return (
+                        <button
+                          key={group.id}
+                          type="button"
+                          onClick={() => handleGroupChange(group.id)}
+                          className={[
+                            "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition",
+                            isSelected
+                              ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                              : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
+                          ].join(" ")}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-scale-2 font-medium">{group.name}</span>
+                          </span>
+
+                          <span className="flex shrink-0 items-center gap-2">
+                            {!group.canCreateTopics ? (
+                              <span
+                                aria-label={getGroupWarningMessage()}
+                                title={getGroupWarningMessage()}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                              >
+                                ⚠
+                              </span>
+                            ) : null}
+
+                            {isSelected ? (
+                              <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-700)] text-white">✓</span>
+                            ) : null}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </label>
+        </div>
+
+        {fieldErrors.group ? (
+          <p id="new-topic-group-error" role="alert" className="mt-2 text-scale-2 font-semibold text-[var(--danger-500)]">
+            {fieldErrorMessage("group")}
+          </p>
+        ) : null}
+
+        <div className="mt-5 space-y-5">
+          <label className="block">
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.titleLabel")}</span>
+            <input
+              ref={titleInputRef}
+              value={title}
+              onChange={(event) => {
+                clearFieldError("title");
+                setTitle(event.target.value);
+              }}
+              placeholder={t("newTopic.titlePlaceholder")}
+              aria-invalid={isTitleInvalid}
+              aria-describedby={fieldErrors.title ? "new-topic-title-error" : undefined}
+              className={[
+                "w-full rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
+                isTitleInvalid ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]" : "border-[var(--line)] focus:border-[var(--brand-700)]",
+              ].join(" ")}
+            />
+            {fieldErrors.title ? (
+              <p id="new-topic-title-error" role="alert" className="mt-1 text-scale-2 font-semibold text-[var(--danger-500)]">
+                {fieldErrorMessage("title")}
+              </p>
+            ) : null}
+            <div
+              className={[
+                "mt-1 text-right text-scale-1",
+                isTitleTooLong ? "text-[var(--danger-500)]" : "text-[var(--text-secondary)]",
+              ].join(" ")}
+            >
+              {title.length}/{TOPIC_TITLE_LIMIT}
+            </div>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.descriptionLabel")}</span>
+            <textarea
+              ref={descriptionInputRef}
+              value={description}
+              onChange={(event) => {
+                clearFieldError("description");
+                setDescription(event.target.value);
+              }}
+              placeholder={t("newTopic.descriptionPlaceholder")}
+              rows={6}
+              aria-invalid={isDescriptionInvalid}
+              aria-describedby={fieldErrors.description ? "new-topic-description-error" : undefined}
+              className={[
+                "w-full resize-none rounded-xl border bg-[var(--surface)] px-3 py-3 text-scale-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-secondary)]",
+                isDescriptionInvalid
+                  ? "border-[var(--danger-500)] focus:border-[var(--danger-500)]"
+                  : "border-[var(--line)] focus:border-[var(--brand-700)]",
+              ].join(" ")}
+            />
+            {fieldErrors.description ? (
+              <p id="new-topic-description-error" role="alert" className="mt-1 text-scale-2 font-semibold text-[var(--danger-500)]">
+                {fieldErrorMessage("description")}
+              </p>
+            ) : null}
+            <div
+              className={[
+                "mt-1 text-right text-scale-1",
+                isDescriptionTooLong ? "text-[var(--danger-500)]" : "text-[var(--text-secondary)]",
+              ].join(" ")}
+            >
+              {description.length}/{TOPIC_DESCRIPTION_LIMIT}
+            </div>
+
+            {detectedUrls.length > 0 ? (
+              <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
+                <p className="text-scale-2 font-semibold text-[var(--heading-primary)]">{t("newTopic.detectedLinks")}</p>
+                <LinkifiedText
+                  text={description}
+                  className="mt-2 whitespace-pre-wrap text-scale-2 text-[var(--text-secondary)]"
+                  linkClassName="sophium-link-accent underline underline-offset-2"
+                />
+                <LinkPreviewList text={description} className="mt-3 grid gap-2" />
+              </div>
+            ) : null}
+          </label>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.attachLabel")}</span>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-3">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
+                >
+                  <span aria-hidden="true">◫</span>
+                  {t("newTopic.attachPhoto")}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-2.5 text-scale-2 font-medium text-[var(--text-primary)] transition hover:bg-[var(--surface)]"
+                >
+                  <span aria-hidden="true">▣</span>
+                  {t("newTopic.attachFile")}
+                </button>
+              </div>
+
+              {attachments.some((attachment) => attachment.kind === "image") ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {attachments.map((attachment, index) => {
+                    if (attachment.kind !== "image") {
+                      return null;
+                    }
+
+                    const previewItem = imagePreviewItems.find((item) => item.attachmentIndex === index);
+                    if (!previewItem) {
+                      return null;
+                    }
+
+                    return (
+                      <div
+                        key={`${attachment.file.name}-${index}`}
+                        className="group relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--surface)] text-left transition hover:border-[var(--brand-700)]"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const previewIndex = imagePreviewItems.findIndex((item) => item.attachmentIndex === index);
+                            if (previewIndex >= 0) {
+                              openImagePreviewAt(previewIndex);
+                            }
+                          }}
+                          className="block"
+                          aria-label={t("newTopic.openPreviewAria", { name: attachment.file.name })}
+                        >
+                          <Image
+                            src={previewItem.previewUrl}
+                            alt={t("newTopic.previewAlt", { name: attachment.file.name })}
+                            width={80}
+                            height={80}
+                            unoptimized
+                            className="h-20 w-20 object-cover"
+                          />
+                        </button>
+                        <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-[color:color-mix(in_srgb,var(--navy-900)_58%,transparent)] px-2 py-1 text-scale-1 text-white">
+                          {attachment.file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeAttachmentAt(index);
+                          }}
+                          className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_84%,transparent)] text-sm text-[var(--text-primary)] backdrop-blur transition hover:bg-[var(--surface)]"
+                          aria-label={t("newTopic.removeAria", { name: attachment.file.name })}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {attachments.some((attachment) => attachment.kind === "pdf") ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {attachments.map((attachment, index) =>
+                    attachment.kind === "pdf" ? (
+                      <PdfAttachmentCard
+                        key={`${attachment.file.name}-${index}`}
+                        fileName={attachment.file.name}
+                        sizeBytes={attachment.file.size}
+                        pageCount={attachment.pageCount}
+                        thumbnailUrl={attachment.previewUrl}
+                        isLoadingThumbnail={attachment.previewStatus === "loading"}
+                        onOpen={() => openLocalFileInNewTab(attachment.file)}
+                        openLabel={t("newTopic.pdf.open")}
+                        pagesLabel={(count) => t("newTopic.pdf.pages", { count })}
+                        onRemove={() => removeAttachmentAt(index)}
+                        removeLabel={t("newTopic.removeAria", { name: attachment.file.name })}
+                      />
+                    ) : null
+                  )}
+                </div>
+              ) : null}
+
+              <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-scale-2 text-[var(--text-secondary)]">
+                {t("newTopic.fileTypesHint")}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-1">
+              <div className="mb-3 text-scale-3 font-semibold text-[var(--heading-primary)]">{t("newTopic.toneLabel")}</div>
+            <div className="grid grid-cols-3 gap-2">
+              {toneOptions.map((tone) => {
+                const isSelected = selectedTone === tone;
+
+                return (
+                  <button
+                    key={tone}
+                    type="button"
+                    onClick={() => setSelectedTone(tone)}
+                    className={[
+                      "rounded-xl border px-3 py-2.5 text-scale-2 font-medium transition",
+                      isSelected
+                        ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-800)]"
+                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
+                    ].join(" ")}
+                  >
+                    {tone === "SERIO" ? t("newTopic.tones.serio") : tone === "MIX" ? t("newTopic.tones.mix") : t("newTopic.tones.libre")}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-scale-2 text-[var(--text-secondary)]">
+              {t("newTopic.toneHint")}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        {renderPublishButton("w-full sm:w-auto sm:px-8")}
+      </div>
+
+      {isGroupPickerOpen ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center px-4 md:hidden">
+          <button
+            type="button"
+            aria-label={t("newTopic.closeGroupPickerAria")}
+            className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--navy-900)_48%,transparent)]"
+            onClick={() => setIsGroupPickerOpen(false)}
+          />
+          <section className="relative z-[141] w-full max-w-[28rem] rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[0_20px_50px_color-mix(in_srgb,var(--navy-900)_26%,transparent)]">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-scale-4 font-semibold text-[var(--heading-primary)]">
+                {t("newTopic.chooseGroupTitle")}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setIsGroupPickerOpen(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
+                aria-label={t("newTopic.closePickerAria")}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-3 max-h-[55vh] space-y-2 overflow-y-auto pr-1">
+              <button
+                type="button"
+                onClick={() => handleGroupChange("")}
+                className={[
+                  "flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left text-scale-3",
+                  selectedGroupId.length === 0
+                    ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                    : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]",
+                ].join(" ")}
+              >
+                <span>{t("newTopic.selectGroup")}</span>
+              </button>
+
+              {groupOptions.length === 0 ? (
+                <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-2)] px-3 py-3 text-scale-2 text-[var(--text-secondary)]">
+                  {t("newTopic.noGroupsAvailable")}
+                </div>
+              ) : null}
+
+              {groupOptions.map((group) => {
+                const isSelected = selectedGroupId === group.id;
+
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => handleGroupChange(group.id)}
+                    className={[
+                      "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left transition",
+                      isSelected
+                        ? "border-[var(--brand-700)] bg-[var(--brand-100)] text-[var(--brand-900)]"
+                        : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--surface-2)]",
+                    ].join(" ")}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-scale-3 font-medium">{group.name}</span>
+                    </span>
+
+                    <span className="flex shrink-0 items-center gap-2">
+                      {!group.canCreateTopics ? (
+                        <span
+                          aria-label={getGroupWarningMessage()}
+                          title={getGroupWarningMessage()}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--danger-500)_40%,var(--line))] bg-[color:color-mix(in_srgb,var(--danger-500)_15%,var(--surface))] text-[var(--danger-500)]"
+                        >
+                          ⚠
+                        </span>
+                      ) : null}
+
+                      {isSelected ? (
+                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-700)] text-white">✓</span>
+                      ) : null}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isImagePreviewOpen && activePreviewImage ? (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center px-3 sm:px-6">
+          <button
+            type="button"
+            aria-label={t("newTopic.closePreviewAria")}
+            className="absolute inset-0 bg-[color:color-mix(in_srgb,var(--navy-900)_72%,transparent)]"
+            onClick={closeImagePreview}
+          />
+
+          <section className="relative z-[151] w-full max-w-5xl rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[0_24px_60px_color-mix(in_srgb,var(--navy-900)_40%,transparent)] sm:p-4">
+            <div className="flex items-center justify-between gap-3 pb-3">
+              <p className="min-w-0 truncate text-scale-2 font-semibold text-[var(--heading-primary)]">
+                {activePreviewImage.file.name}
+              </p>
+              <div className="flex items-center gap-2">
+                {isImageCarouselEnabled ? (
+                  <p className="text-scale-1 text-[var(--text-secondary)]">
+                    {normalizedActivePreviewImageIndex !== null ? normalizedActivePreviewImageIndex + 1 : 1}/{imagePreviewItems.length}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={removeActivePreviewImage}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--danger-500)] bg-[var(--surface)] text-[var(--danger-500)] transition hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,var(--surface))]"
+                  aria-label={t("newTopic.removeCurrentImageAria")}
+                >
+                  🗑
+                </button>
+                <button
+                  type="button"
+                  onClick={closeImagePreview}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)]"
+                  aria-label={t("newTopic.closePreviewAria")}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div
+              className="relative flex min-h-[220px] items-center justify-center rounded-xl bg-[var(--surface-2)] p-2 sm:min-h-[320px] sm:p-3"
+              onTouchStart={handlePreviewTouchStart}
+              onTouchEnd={handlePreviewTouchEnd}
+            >
+              <Image
+                src={activePreviewImage.previewUrl}
+                alt={t("newTopic.previewAlt", { name: activePreviewImage.file.name })}
+                width={1600}
+                height={1200}
+                unoptimized
+                className="max-h-[72vh] w-auto max-w-full rounded-lg object-contain"
+              />
+
+              {isImageCarouselEnabled ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={showPreviousPreviewImage}
+                    className="absolute left-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-xl text-[var(--text-primary)] backdrop-blur sm:left-3"
+                    aria-label={t("newTopic.previousImageAria")}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextPreviewImage}
+                    className="absolute right-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-xl text-[var(--text-primary)] backdrop-blur sm:right-3"
+                    aria-label={t("newTopic.nextImageAria")}
+                  >
+                    ›
+                  </button>
+                </>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+    </div>
+  );
+}

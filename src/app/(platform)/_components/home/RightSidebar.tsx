@@ -1,36 +1,51 @@
 import { AppCard } from "@/components/ui/AppCard";
+import { BrandSymbol } from "@/components/ui/BrandSymbol";
+
+type MembershipCtaVariant = "brand" | "danger";
 
 type RightSidebarProps = {
   professionalStampLines: string[];
+  membershipCtaLabel: string;
+  membershipCtaVariant: MembershipCtaVariant;
+  isMembershipCtaDisabled: boolean;
+  onMembershipCtaClick: () => void;
 };
 
-export function RightSidebar({ professionalStampLines }: RightSidebarProps) {
-  return (
-    <aside className="mensa-fade-up space-y-4 lg:sticky lg:top-20">
-      <AppCard className="p-4">
-        <h3 className="font-[family-name:var(--font-spectral)] text-lg font-semibold text-slate-900">
-          Comunidad Mensa Argentina
-        </h3>
-        <p className="mt-2 text-sm text-slate-700">
-          Somos miembros y construimos una red para conectar talento, criterio y ejecucion.
-        </p>
-        <p className="mt-3 rounded-lg bg-[#eaf4ff] p-3 text-sm font-medium text-[#0a4f8a]">
-          &quot;Pensar diferente no alcanza: hay que ejecutar mejor.&quot;
-        </p>
-      </AppCard>
+export function RightSidebar({
+  professionalStampLines,
+  membershipCtaLabel,
+  membershipCtaVariant,
+  isMembershipCtaDisabled,
+  onMembershipCtaClick,
+}: RightSidebarProps) {
+  const membershipCtaClassName =
+    membershipCtaVariant === "danger"
+      ? "mt-6 rounded-full bg-[var(--danger-500)] px-6 py-3 text-base font-semibold text-white transition hover:bg-[var(--danger-400)]"
+      : "mt-6 rounded-full bg-[var(--brand-500)] px-6 py-3 text-base font-semibold text-[var(--navy-900)] transition hover:brightness-95";
 
-      <AppCard className="p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-700)]">
-          Tu sello profesional
+  return (
+    <aside className="sophium-fade-up hidden space-y-4 lg:sticky lg:top-24 lg:block">
+      <AppCard className="p-6">
+        <h3 className="flex items-center gap-2 font-display text-2xl font-semibold text-[var(--heading-primary)]">
+          <BrandSymbol name="sophium" className="h-7" />
+          Sophium
         </h3>
-        <ul className="mt-3 space-y-2 text-sm text-slate-700">
+        <p className="mt-4 text-lg leading-snug text-[var(--text-primary)]">
+          Directorio de empresas y feed profesional para miembros con negocio propio.
+        </p>
+
+        <button
+          type="button"
+          onClick={onMembershipCtaClick}
+          disabled={isMembershipCtaDisabled}
+          className={`${membershipCtaClassName} disabled:cursor-not-allowed disabled:opacity-70`}
+        >
+          {membershipCtaLabel}
+        </button>
+
+        <ul className="mt-6 space-y-2 text-sm text-[var(--text-secondary)]">
           {professionalStampLines.map((line) => (
-            <li
-              key={line}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2"
-            >
-              {line}
-            </li>
+            <li key={line}>{line}</li>
           ))}
         </ul>
       </AppCard>

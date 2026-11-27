@@ -1,0 +1,36 @@
+{
+  "brand": "Sophium Entrepreneurs",
+  "header": {
+    "title": "Community companies",
+    "subtitle": "Founded or led by Sophium members. Verified."
+  },
+  "membership": {
+    "title": "Are you an entrepreneur?",
+    "subtitle": "Sophium Entrepreneurs is new; we will tell you what it is about. You can also request it from your profile.",
+    "ariaRequest": "Request Sophium Entrepreneurs membership",
+    "ariaCancel": "Cancel Sophium Entrepreneurs membership request",
+    "sending": "Sending request...",
+    "cancelling": "Cancelling request...",
+    "request": "Request Entrepreneurs membership",
+    "cancel": "Cancel request",
+    "errorRequest": "Couldn't send the request.",
+    "errorCancel": "Couldn't cancel the request.",
+    "errorUpdate": "We couldn't update your membership right now.",
+    "successRequest": "Request sent.",
+    "successCancel": "Request cancelled."
+  },
+  "card": {
+    "fallbackFounder": "Sophium member",
+    "fallbackRole": "Entrepreneur",
+    "fallbackDescription": "No description available.",
+    "fallbackLocation": "Location",
+    "website": "Website",
+    "viewFullProfile": "View full profile",
+    "viewFullProfileAria": "View full profile of {{name}}"
+  },
+  "states": {
+    "loadingEnterprises": "Loading companies...",
+    "loadError": "We couldn't load the directory right now.",
+    "empty": "Verified companies will show up here."
+  }
+}

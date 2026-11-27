@@ -1,0 +1,323 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import {
+  downloadAteneoTopicAttachment,
+  isImageMimeType,
+  resolveAteneoAttachmentUrl,
+  type AteneoTopicAttachment,
+} from "@/lib/api/ateneo";
+import { UserProfileLink } from "@/components/ui/UserProfileLink";
+import { UserAvatar } from "@/components/ui/UserAvatar";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
+import { LinkPreviewList } from "@/components/ui/LinkPreviewList";
+import { AteneoImageCarouselModal } from "./AteneoImageCarouselModal";
+import { AteneoImageMosaic } from "./AteneoImageMosaic";
+import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/image-preview";
+import { PdfAttachmentCard } from "@/components/ui/PdfAttachmentCard";
+import { useTranslation } from "react-i18next";
+import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
+
+export type AteneoTopicCardTopic = {
+  id: string;
+  groupLabel: string;
+  authorImageUrl: string | null;
+  authorInitial: string;
+  authorName: string;
+  authorUserId?: string;
+  // Backend Spanish label; shown only when createdAt is missing.
+  timeLabel: string;
+  createdAt?: string;
+  title: string;
+  description: string;
+  tone: string;
+  hotScore?: number;
+  comments: number;
+  attachments: AteneoTopicAttachment[];
+  isRecommended?: boolean;
+  /** From a group the viewer has not joined (feed discovery). */
+  isFromOtherGroup?: boolean;
+};
+
+type AteneoTopicCardVariant = "feed" | "group";
+
+type AteneoTopicCardProps = {
+  topic: AteneoTopicCardTopic;
+  topicHref: string;
+  variant: AteneoTopicCardVariant;
+  showRecommendedBadge?: boolean;
+};
+
+export function AteneoTopicCard({ topic, topicHref, variant, showRecommendedBadge = false }: AteneoTopicCardProps) {
+  const router = useRouter();
+  const { t } = useTranslation("ateneo");
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+  const [imagePreviewUrlById, setImagePreviewUrlById] = useState<Record<string, string>>({});
+  const previewUrlsRef = useRef<string[]>([]);
+  const imageAttachments = useMemo(
+    () =>
+      topic.attachments
+        .filter((attachment) => isImageMimeType(attachment.mimeType))
+        .map((attachment) => ({
+          id: attachment.id,
+          fileName: attachment.fileName,
+          downloadUrl: attachment.downloadUrl,
+        })),
+    [topic.attachments]
+  );
+  const topicGroupIdFromHref = useMemo(() => {
+    const match = topicHref.match(/^\/ateneo\/groups\/([^/]+)\/topics\//);
+    if (!match?.[1]) {
+      return null;
+    }
+
+    try {
+      return decodeURIComponent(match[1]);
+    } catch {
+      return match[1];
+    }
+  }, [topicHref]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      if (imageAttachments.length === 0) {
+        revokeObjectUrls(previewUrlsRef.current);
+        previewUrlsRef.current = [];
+        setImagePreviewUrlById({});
+        return;
+      }
+
+      if (!topicGroupIdFromHref) {
+        setImagePreviewUrlById({});
+        return;
+      }
+
+      const loaded = await Promise.all(
+        imageAttachments.map(async (attachment) => {
+          try {
+            const payload = await downloadAteneoTopicAttachment(topicGroupIdFromHref, topic.id, attachment.id);
+            const previewUrl = await createRenderableImageUrlFromBlob(payload.blob);
+            return [attachment.id, previewUrl] as const;
+          } catch {
+            return [attachment.id, ""] as const;
+          }
+        })
+      );
+
+      if (cancelled) {
+        revokeObjectUrls(loaded.map(([, url]) => url).filter(Boolean));
+        return;
+      }
+
+      revokeObjectUrls(previewUrlsRef.current);
+      previewUrlsRef.current = loaded.map(([, url]) => url).filter(Boolean);
+
+      const nextRecord: Record<string, string> = {};
+      loaded.forEach(([attachmentId, url]) => {
+        if (url) {
+          nextRecord[attachmentId] = url;
+        }
+      });
+
+      setImagePreviewUrlById(nextRecord);
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [imageAttachments, topic.id, topicGroupIdFromHref]);
+
+  useEffect(() => {
+    return () => {
+      revokeObjectUrls(previewUrlsRef.current);
+    };
+  }, []);
+
+  const metaClassName =
+    variant === "feed"
+      ? "flex flex-wrap items-center gap-x-2 gap-y-1 text-scale-1 text-[var(--text-secondary)]"
+      : "text-scale-2 text-[var(--text-secondary)]";
+  const titleClassName =
+    variant === "feed"
+      ? "mt-1 text-scale-4 font-semibold leading-tight text-[var(--heading-primary)]"
+      : "mt-1 text-[1.32rem] font-semibold leading-tight text-[var(--heading-primary)]";
+  const descriptionClassName =
+    variant === "feed"
+      ? "mt-1 whitespace-pre-wrap text-scale-2 text-[var(--text-secondary)]"
+      : "mt-1 whitespace-pre-wrap text-scale-3 text-[var(--text-secondary)]";
+  const footerClassName =
+    variant === "feed"
+      ? "mt-3 flex flex-wrap items-center gap-3 text-scale-1 text-[var(--text-secondary)]"
+      : "mt-3 flex items-center gap-3 text-scale-2 text-[var(--text-secondary)]";
+
+  const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("a, button, input, textarea, select, [role='button']")) {
+      return;
+    }
+
+    router.push(topicHref);
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest("a, button, input, textarea, select, [role='button']")) {
+      return;
+    }
+
+    event.preventDefault();
+    router.push(topicHref);
+  };
+
+  const carouselImages = useMemo(
+    () =>
+      imageAttachments.map((attachment) => ({
+        id: attachment.id,
+        src: imagePreviewUrlById[attachment.id],
+        alt: `Vista previa de ${attachment.fileName}`,
+        caption: attachment.fileName,
+      })),
+    [imageAttachments, imagePreviewUrlById]
+  );
+
+  const loadedCarouselImages = useMemo(
+    () =>
+      carouselImages.filter(
+        (image): image is { id: string; src: string; alt: string; caption: string } => Boolean(image.src)
+      ),
+    [carouselImages]
+  );
+
+  const hotScoreLabel = typeof topic.hotScore === "number" ? topic.hotScore.toFixed(4) : null;
+
+  return (
+    <>
+      <article
+        role="link"
+        tabIndex={0}
+        onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
+        className="cursor-pointer rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4 py-4 transition hover:border-[var(--brand-700)] hover:bg-[var(--surface-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-500)] focus-visible:ring-offset-2"
+        aria-label={`Ver tema ${topic.title}`}
+      >
+        <div className="flex items-start gap-3">
+          <UserAvatar
+            imageUrl={topic.authorImageUrl}
+            initials={topic.authorInitial}
+            label={`Foto de perfil de ${topic.authorName}`}
+            className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy-900)]"
+            initialsClassName="text-sm font-semibold text-[var(--surface)]"
+          />
+
+        <div className="min-w-0 flex-1">
+          {variant === "feed" ? (
+            <div className={metaClassName}>
+              <span>
+                <Link href={topicHref} className="sophium-link-accent font-medium hover:underline">
+                  {topic.groupLabel}
+                </Link>
+              </span>
+              {topic.isFromOtherGroup ? (
+                <span className="rounded-full bg-[var(--brand-50)] px-2 py-0.5 text-scale-1 font-semibold text-[var(--brand-700)]">
+                  {t("feed.discoveryBadge")}
+                </span>
+              ) : null}
+              <span>·</span>
+              <UserProfileLink userId={topic.authorUserId} className="font-semibold text-[var(--text-primary)]">
+                {topic.authorName}
+              </UserProfileLink>
+              <span>·</span>
+              <span><AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} /></span>
+            </div>
+          ) : (
+            <p className={metaClassName}>
+              <Link href={topicHref} className="sophium-link-accent font-medium hover:underline">
+                {topic.groupLabel}
+              </Link>{" "}
+              <span className="mx-1">·</span>{" "}
+              <UserProfileLink userId={topic.authorUserId} className="font-semibold text-[var(--text-primary)]">
+                {topic.authorName}
+              </UserProfileLink>{" "}
+              <span className="mx-1">·</span> <AteneoRelativeTime value={topic.createdAt} fallback={topic.timeLabel} />
+            </p>
+          )}
+
+          <h3 className={titleClassName}>
+            <Link href={topicHref} className="hover:underline">
+              {topic.title}
+            </Link>
+            {hotScoreLabel ? (
+              <span className="ml-2 align-middle text-scale-1 font-medium text-[var(--text-secondary)]">
+                [score: {hotScoreLabel}]
+              </span>
+            ) : null}
+          </h3>
+
+          <LinkifiedText
+            text={topic.description}
+            className={descriptionClassName}
+            linkClassName="sophium-link-accent underline underline-offset-2"
+          />
+          <LinkPreviewList text={topic.description} className="mt-3 grid gap-2" />
+
+          {topic.attachments.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              {loadedCarouselImages.length > 0 ? (
+                <AteneoImageMosaic
+                  images={loadedCarouselImages.map((image) => ({
+                    id: image.id,
+                    src: image.src,
+                    alt: image.alt,
+                  }))}
+                  onOpenImage={(index) => setActiveImageIndex(index)}
+                />
+              ) : null}
+
+              {topic.attachments
+                .filter((attachment) => !isImageMimeType(attachment.mimeType))
+                .map((attachment) => (
+                  <PdfAttachmentCard
+                    key={attachment.id}
+                    fileName={attachment.fileName}
+                    sizeBytes={attachment.sizeBytes}
+                    href={resolveAteneoAttachmentUrl(attachment.downloadUrl)}
+                    openLabel="Abrir PDF"
+                  />
+                ))}
+            </div>
+          ) : null}
+
+          <div className={footerClassName}>
+            <span className="rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-2.5 py-0.5 font-semibold text-[var(--brand-800)]">
+              {topic.tone}
+            </span>
+            {showRecommendedBadge && topic.isRecommended ? (
+              <span className="rounded-full border border-[color:color-mix(in_srgb,var(--brand-500)_55%,transparent)] bg-[color:color-mix(in_srgb,var(--brand-100)_55%,var(--surface))] px-2.5 py-0.5 font-semibold text-[var(--brand-900)]">
+                Recomendado para vos
+              </span>
+            ) : null}
+            <span>💬 {topic.comments}</span>
+          </div>
+        </div>
+      </div>
+      </article>
+
+      <AteneoImageCarouselModal
+        images={loadedCarouselImages}
+        activeIndex={activeImageIndex}
+        onClose={() => setActiveImageIndex(null)}
+        onChangeIndex={setActiveImageIndex}
+      />
+    </>
+  );
+}

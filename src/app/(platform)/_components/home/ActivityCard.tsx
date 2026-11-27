@@ -3,7 +3,7 @@ import { AppCard } from "@/components/ui/AppCard";
 export function ActivityCard() {
   return (
     <AppCard className="p-5">
-      <h3 className="font-[family-name:var(--font-spectral)] text-lg font-semibold text-slate-900">
+      <h3 className="font-display text-lg font-semibold text-slate-900">
         Actividad destacada
       </h3>
       <p className="mt-2 text-sm text-slate-600">

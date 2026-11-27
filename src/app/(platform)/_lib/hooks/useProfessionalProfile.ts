@@ -1,378 +1,465 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { emptyExperience, emptyProfile, STORAGE_KEY } from "../constants";
-import { Experience, ExperienceDraft, Profile } from "../types";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { emptyProfile } from "../constants";
+import { Education, Experience, Profile } from "../types";
+import {
+  EducationHistoryInput,
+  EducationHistoryOutput,
+  EducationOperation,
+  EmploymentHistoryInput,
+  EmploymentHistoryOutput,
+  getMyProfileIdentity,
+  getProfileByUserId,
+  getMyProfile,
+  isProfileSourceEmptyError,
+  patchEducationHistory,
+  patchWorkExperiences,
+  PatchEducationHistoryInput,
+  PatchWorkExperiencesInput,
+  ProfileHttpError,
+  ProfileOutput,
+  PublicProfileOutput,
+  saveMyProfile,
+  SaveProfileInput,
+  WorkExperienceOperation,
+} from "@/lib/api/profile";
+import { getTwoInitials } from "@/lib/utils/name";
+import { computeProfileCompletion } from "../profileCompletion";
 
-type ProfileEntry = {
-  id: string;
+type ProfessionalProfileState = {
   profile: Profile;
   experiences: Experience[];
+  educations: Education[];
+  badges: string[];
 };
 
-const DEFAULT_PROFILE_ID = "profile-default";
-const MOCK_PROFILE_ID = "profile-mock-existing";
+function normalizeYearMonth(value: string | null | undefined) {
+  if (!value) return "";
+  return value.length >= 7 ? value.slice(0, 7) : value;
+}
 
-const defaultProfileEntry: ProfileEntry = {
-  id: DEFAULT_PROFILE_ID,
-  profile: emptyProfile,
-  experiences: [],
-};
+function normalizeDateInputValue(value: Date | string | null | undefined) {
+  if (!value) return "";
 
-const mockProfileEntry: ProfileEntry = {
-  id: MOCK_PROFILE_ID,
-  profile: {
-    nombre: "Ada",
-    apellido: "Lovelace",
-    fechaNacimiento: "1986-12-10",
-    nacionalidad: "Britanica",
-    puesto: "Chief Technology Strategist",
-  },
-  experiences: [
-    {
-      id: "mock-exp-1",
-      puestoTrabajo: "Principal AI Advisor",
-      lugarTrabajo: "Quantum Forge Labs",
-      fechaComienzo: "2022-03",
-      fechaFinalizacion: "",
-      trabajoActual: true,
-    },
-    {
-      id: "mock-exp-2",
-      puestoTrabajo: "VP de Producto Digital",
-      lugarTrabajo: "Orion Cloud Systems",
-      fechaComienzo: "2018-05",
-      fechaFinalizacion: "2022-02",
-      trabajoActual: false,
-    },
-  ],
-};
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
 
-const isFutureYearMonth = (value: string) => {
-  if (!value) return false;
+  return value.length >= 10 ? value.slice(0, 10) : value;
+}
 
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const currentYearMonth = `${year}-${month}`;
+// Works for both the own profile and another member's (PublicProfileOutput lacks the private fields).
+function mapProfileOutputToProfile(source: ProfileOutput | PublicProfileOutput): Profile {
+  return {
+    nombre: source.firstName ?? "",
+    apellido: source.lastName ?? "",
+    fechaNacimiento: normalizeDateInputValue(source.dateOfBirth),
+    nacionalidad: source.nationality ?? "",
+    puesto: source.currentJobTitle ?? "",
+    empresaActual: source.currentCompany ?? "",
+    about: source.about ?? "",
+    locationCountry: source.locationCountry ?? "",
+    locationCity: source.locationCity ?? "",
+    locationPostalCode: source.locationPostalCode ?? "",
+    intereses: source.interests ?? [],
+    imagenPerfilUrl: source.profileImageUrl ?? "",
+    imagenBannerUrl: source.profileBannerImageUrl ?? "",
+  };
+}
 
-  return value > currentYearMonth;
-};
+function mapEmploymentHistoryToExperience(items: EmploymentHistoryOutput[]): Experience[] {
+  return items.map((item) => {
+    const fechaFinalizacion = normalizeYearMonth(item.endYearMonth);
+
+    return {
+      id: item.id,
+      puestoTrabajo: item.jobTitle,
+      lugarTrabajo: item.company,
+      descripcion: item.description ?? "",
+      fechaComienzo: normalizeYearMonth(item.startYearMonth),
+      fechaFinalizacion,
+      trabajoActual: !fechaFinalizacion,
+    };
+  });
+}
+
+function mapEducationHistoryToEducation(items: EducationHistoryOutput[]): Education[] {
+  return items.map((item) => {
+    const fechaFinalizacion = normalizeYearMonth(item.endYearMonth);
+
+    return {
+      id: item.id,
+      institucion: item.institution,
+      titulo: item.degree,
+      campoEstudio: item.fieldOfStudy ?? "",
+      fechaComienzo: normalizeYearMonth(item.startYearMonth),
+      fechaFinalizacion,
+      estudiandoActualmente: !fechaFinalizacion,
+      descripcion: item.description ?? "",
+    };
+  });
+}
+
+function mapExperiencesToEmploymentHistoryInput(items: Experience[]): EmploymentHistoryInput[] {
+  return items.map((item) => ({
+    company: item.lugarTrabajo,
+    jobTitle: item.puestoTrabajo,
+    description: item.descripcion.trim(),
+    startYearMonth: item.fechaComienzo,
+    ...(item.trabajoActual || !item.fechaFinalizacion
+      ? {}
+      : { endYearMonth: item.fechaFinalizacion }),
+  }));
+}
+
+function mapEducationsToEducationHistoryInput(items: Education[]): EducationHistoryInput[] {
+  return items.map((item) => ({
+    institution: item.institucion,
+    degree: item.titulo,
+    ...(item.campoEstudio.trim() ? { fieldOfStudy: item.campoEstudio.trim() } : {}),
+    startYearMonth: item.fechaComienzo,
+    ...(item.estudiandoActualmente || !item.fechaFinalizacion
+      ? {}
+      : { endYearMonth: item.fechaFinalizacion }),
+    ...(item.descripcion.trim() ? { description: item.descripcion.trim() } : {}),
+  }));
+}
+
+function mapProfileToSaveInput(
+  profile: Profile,
+  experiences: Experience[],
+  educations: Education[]
+): SaveProfileInput {
+  const isoDateOfBirth = profile.fechaNacimiento
+    ? new Date(`${profile.fechaNacimiento}T00:00:00.000Z`).toISOString()
+    : undefined;
+
+  return {
+    firstName: profile.nombre.trim(),
+    lastName: profile.apellido.trim(),
+    ...(isoDateOfBirth ? { dateOfBirth: isoDateOfBirth } : {}),
+    ...(profile.nacionalidad.trim() ? { nationality: profile.nacionalidad.trim() } : {}),
+    ...(profile.puesto.trim() ? { currentJobTitle: profile.puesto.trim() } : {}),
+    ...(profile.empresaActual.trim() ? { currentCompany: profile.empresaActual.trim() } : {}),
+    ...(profile.about.trim() ? { about: profile.about.trim() } : {}),
+    ...(profile.locationCountry.trim() ? { locationCountry: profile.locationCountry.trim() } : {}),
+    ...(profile.locationCity.trim() ? { locationCity: profile.locationCity.trim() } : {}),
+    ...(profile.locationPostalCode.trim()
+      ? { locationPostalCode: profile.locationPostalCode.trim() }
+      : {}),
+    interests: profile.intereses,
+    ...(profile.imagenPerfilUrl.trim()
+      ? { profileImageUrl: profile.imagenPerfilUrl.trim() }
+      : {}),
+    ...(profile.imagenBannerUrl.trim()
+      ? { profileBannerImageUrl: profile.imagenBannerUrl.trim() }
+      : {}),
+    ...(experiences.length > 0
+      ? {
+          employmentHistory: mapExperiencesToEmploymentHistoryInput(experiences),
+        }
+      : {}),
+    ...(educations.length > 0
+      ? {
+          educationHistory: mapEducationsToEducationHistoryInput(educations),
+        }
+      : {}),
+  };
+}
+
+function buildInitialProfileState(): ProfessionalProfileState {
+  return {
+    profile: emptyProfile,
+    experiences: [],
+    educations: [],
+    badges: [],
+  };
+}
 
 export const useProfessionalProfile = () => {
-  const [profiles, setProfiles] = useState<ProfileEntry[]>([defaultProfileEntry]);
-  const [activeProfileId, setActiveProfileId] = useState(DEFAULT_PROFILE_ID);
-  const [draft, setDraft] = useState<ExperienceDraft>(emptyExperience);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [readyToSave, setReadyToSave] = useState(false);
+  const searchParams = useSearchParams();
+  const selectedUserId = searchParams.get("userId")?.trim() ?? "";
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as {
-          activeProfileId?: string;
-          profiles?: ProfileEntry[];
-          profile?: Profile;
-          experiences?: Experience[];
-        };
+  const canEditProfile = !selectedUserId;
 
-        if (Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setProfiles(parsed.profiles);
-          setActiveProfileId(parsed.activeProfileId ?? parsed.profiles[0].id);
-        } else {
-          const legacyProfile = parsed.profile ?? emptyProfile;
-          const legacyExperiences = Array.isArray(parsed.experiences)
-            ? parsed.experiences
-            : [];
+  const [state, setState] = useState<ProfessionalProfileState>(buildInitialProfileState);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [needsProfileInitialization, setNeedsProfileInitialization] = useState(false);
+  const [isSavingExperiences, setIsSavingExperiences] = useState(false);
+  const [experienceSaveError, setExperienceSaveError] = useState<string | null>(null);
+  const [isSavingEducations, setIsSavingEducations] = useState(false);
+  const [educationSaveError, setEducationSaveError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isProfileUnavailable, setIsProfileUnavailable] = useState(false);
+  const profile = state.profile;
 
-          setProfiles([
-            {
-              id: DEFAULT_PROFILE_ID,
-              profile: legacyProfile,
-              experiences: legacyExperiences,
-            },
-          ]);
-          setActiveProfileId(DEFAULT_PROFILE_ID);
-        }
+  const loadProfile = useCallback(
+    async (signal?: AbortSignal, withLoading = true) => {
+      if (withLoading) {
+        setIsProfileLoading(true);
       }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      setReadyToSave(true);
+
+      const remoteProfile = selectedUserId
+        ? await getProfileByUserId(selectedUserId, signal)
+        : await getMyProfile(signal);
+
+      setState((current) => ({
+        ...current,
+        profile: mapProfileOutputToProfile(remoteProfile),
+        experiences: mapEmploymentHistoryToExperience(remoteProfile.employmentHistory ?? []),
+        educations: mapEducationHistoryToEducation(remoteProfile.educationHistory ?? []),
+        badges: (remoteProfile.badges ?? []).map((badge) => badge.slug),
+      }));
+
+      // Always resolved so a member-view of the own profile (`?userId=<own id>`) can be detected.
+      const ownUserId = await getMyProfileIdentity(signal);
+      setCurrentUserId(ownUserId);
+
+      setNeedsProfileInitialization(false);
+      setIsProfileUnavailable(false);
+    },
+    [selectedUserId]
+  );
+
+  const handleLoadProfileError = useCallback(
+    (error: unknown) => {
+      if (!selectedUserId && isProfileSourceEmptyError(error)) {
+        setNeedsProfileInitialization(true);
+      }
+
+      if (
+        selectedUserId &&
+        error instanceof ProfileHttpError &&
+        (error.status === 403 || error.status === 404)
+      ) {
+        setIsProfileUnavailable(true);
+      } else {
+        setIsProfileUnavailable(false);
+      }
+
+      setState((current) => ({
+        ...current,
+        profile: emptyProfile,
+        experiences: [],
+        educations: [],
+        badges: [],
+      }));
+    },
+    [selectedUserId]
+  );
+
+  const refetchProfile = useCallback(async () => {
+    try {
+      await loadProfile(undefined, false);
+    } catch (error) {
+      handleLoadProfileError(error);
     }
-  }, []);
-
-  const normalizedProfiles = useMemo(
-    () =>
-      profiles.map((entry) => ({
-        ...entry,
-        experiences: entry.experiences.map((item) => ({
-            ...item,
-            puestoTrabajo: item.puestoTrabajo ?? "",
-            fechaComienzo:
-              item.fechaComienzo?.length === 10
-                ? item.fechaComienzo.slice(0, 7)
-                : item.fechaComienzo,
-            fechaFinalizacion:
-              item.fechaFinalizacion?.length === 10
-                ? item.fechaFinalizacion.slice(0, 7)
-                : item.fechaFinalizacion,
-            trabajoActual: item.trabajoActual ?? !item.fechaFinalizacion,
-          })),
-      })),
-    [profiles]
-  );
-
-  const activeProfileEntry = useMemo(
-    () =>
-      normalizedProfiles.find((entry) => entry.id === activeProfileId) ??
-      normalizedProfiles[0] ??
-      null,
-    [normalizedProfiles, activeProfileId]
-  );
-
-  const profile = activeProfileEntry?.profile ?? emptyProfile;
-  const activeProfileIdResolved = activeProfileEntry?.id ?? "";
+  }, [handleLoadProfileError, loadProfile]);
 
   useEffect(() => {
-    if (!readyToSave) return;
+    let isMounted = true;
+    const controller = new AbortController();
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        activeProfileId: activeProfileIdResolved,
-        profiles: normalizedProfiles,
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadProfile(controller.signal)
+      .catch((error) => {
+        if (!isMounted || controller.signal.aborted) {
+          return;
+        }
+
+        handleLoadProfileError(error);
       })
-    );
-  }, [activeProfileIdResolved, normalizedProfiles, readyToSave]);
+      .finally(() => {
+        if (!isMounted) {
+          return;
+        }
+
+        setIsProfileLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [handleLoadProfileError, loadProfile, selectedUserId]);
 
   const sortedExperiences = useMemo(() => {
-    const currentExperiences = activeProfileEntry?.experiences ?? [];
-    return [...currentExperiences].sort((a, b) => {
+    return [...state.experiences].sort((a, b) => {
       const startDiff = b.fechaComienzo.localeCompare(a.fechaComienzo);
       if (startDiff !== 0) return startDiff;
       return b.fechaFinalizacion.localeCompare(a.fechaFinalizacion);
     });
-  }, [activeProfileEntry]);
+  }, [state.experiences]);
 
-  const profileOptions = useMemo(
+  const sortedEducations = useMemo(() => {
+    return [...state.educations].sort((a, b) => {
+      const startDiff = b.fechaComienzo.localeCompare(a.fechaComienzo);
+      if (startDiff !== 0) return startDiff;
+      return b.fechaFinalizacion.localeCompare(a.fechaFinalizacion);
+    });
+  }, [state.educations]);
+
+  const profileCompletion = useMemo(
     () =>
-      normalizedProfiles.map((entry, index) => {
-        const firstName = entry.profile.nombre.trim();
-        const lastName = entry.profile.apellido.trim();
-        const fullName = `${firstName} ${lastName}`.trim();
-
-        return {
-          id: entry.id,
-          title: fullName || `Perfil ${index + 1}`,
-          subtitle: entry.profile.puesto || "Sin puesto cargado",
-        };
+      computeProfileCompletion(profile, {
+        experiences: state.experiences.length,
+        educations: state.educations.length,
       }),
-    [normalizedProfiles]
+    [profile, state.experiences.length, state.educations.length]
   );
-
-  const profileCompletion = useMemo(() => {
-    const totalFields = 5;
-    const completed = [
-      profile.nombre,
-      profile.apellido,
-      profile.fechaNacimiento,
-      profile.nacionalidad,
-      profile.puesto,
-    ].filter(Boolean).length;
-
-    return Math.round((completed / totalFields) * 100);
-  }, [profile]);
 
   const userDisplayName =
     profile.nombre || profile.apellido
       ? `${profile.nombre} ${profile.apellido}`.trim()
       : "Nombre y apellido";
 
-  const initials = `${profile.nombre.charAt(0)}${profile.apellido.charAt(0)}`
-    .toUpperCase()
-    .trim();
+  const initials = getTwoInitials({
+    firstName: profile.nombre,
+    lastName: profile.apellido,
+  });
 
-  const handleProfileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-
-    setProfiles((current) =>
-      current.map((entry) =>
-        entry.id === activeProfileIdResolved
-          ? {
-              ...entry,
-              profile: {
-                ...entry.profile,
-                [name]: value,
-              },
-            }
-          : entry
-      )
-    );
+  const refreshProfile = async () => {
+    await loadProfile(undefined, false);
   };
 
-  const handleDraftChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, type, value, checked } = event.target;
+  // Returns the error message (or null on success) so callers never read stale state.
+  const persistWorkExperienceOperations = async (
+    operations: PatchWorkExperiencesInput["operations"]
+  ): Promise<string | null> => {
+    setExperienceSaveError(null);
+    setIsSavingExperiences(true);
 
-    if (name === "trabajoActual") {
-      setDraft((current) => ({
-        ...current,
-        trabajoActual: checked,
-        fechaFinalizacion: checked ? "" : current.fechaFinalizacion,
-      }));
-      return;
+    const result = await patchWorkExperiences({ operations });
+
+    if (!result.success) {
+      setExperienceSaveError(result.message);
+      setIsSavingExperiences(false);
+      return result.message;
     }
 
-    setDraft((current) => ({
-      ...current,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    try {
+      await refreshProfile();
+      return null;
+    } catch {
+      const refreshError = "Experience was saved but refresh failed";
+      setExperienceSaveError(refreshError);
+      return refreshError;
+    } finally {
+      setIsSavingExperiences(false);
+    }
   };
 
-  const resetDraft = () => {
-    setDraft(emptyExperience);
-    setEditingId(null);
+  const persistEducationOperations = async (
+    operations: PatchEducationHistoryInput["operations"]
+  ): Promise<string | null> => {
+    setEducationSaveError(null);
+    setIsSavingEducations(true);
+
+    const result = await patchEducationHistory({ operations });
+
+    if (!result.success) {
+      setEducationSaveError(result.message);
+      setIsSavingEducations(false);
+      return result.message;
+    }
+
+    try {
+      await refreshProfile();
+      return null;
+    } catch {
+      const refreshError = "Education was saved but refresh failed";
+      setEducationSaveError(refreshError);
+      return refreshError;
+    } finally {
+      setIsSavingEducations(false);
+    }
   };
 
-  const onSubmitExperience = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (
-      !draft.puestoTrabajo ||
-      !draft.lugarTrabajo ||
-      !draft.fechaComienzo ||
-      (!draft.trabajoActual && !draft.fechaFinalizacion)
-    ) {
-      return;
+  const onSaveExperienceOperations = async (operations: WorkExperienceOperation[]) => {
+    if (operations.length === 0) {
+      return { ok: true };
     }
 
-    if (
-      isFutureYearMonth(draft.fechaComienzo) ||
-      (!draft.trabajoActual && isFutureYearMonth(draft.fechaFinalizacion))
-    ) {
-      return;
+    const errorMessage = await persistWorkExperienceOperations(operations);
+    if (errorMessage !== null) {
+      return { ok: false, message: errorMessage || "Save failed" };
     }
 
-    if (editingId) {
-      setProfiles((current) =>
-        current.map((entry) =>
-          entry.id === activeProfileIdResolved
-            ? {
-                ...entry,
-                experiences: entry.experiences.map((item) =>
-                  item.id === editingId ? { ...item, ...draft } : item
-                ),
-              }
-            : entry
-        )
-      );
-      resetDraft();
-      return;
+    return { ok: true };
+  };
+
+  const onSaveEducationOperations = async (operations: EducationOperation[]) => {
+    if (operations.length === 0) {
+      return { ok: true };
     }
 
-    setProfiles((current) =>
-      current.map((entry) =>
-        entry.id === activeProfileIdResolved
-          ? {
-              ...entry,
-              experiences: [
-                ...entry.experiences,
-                {
-                  id: crypto.randomUUID(),
-                  ...draft,
-                },
-              ],
-            }
-          : entry
-      )
+    const errorMessage = await persistEducationOperations(operations);
+    if (errorMessage !== null) {
+      return { ok: false, message: errorMessage || "Save failed" };
+    }
+
+    return { ok: true };
+  };
+
+  const onSaveProfile = async (nextProfile: Profile) => {
+    setProfileSaveError(null);
+    setIsSavingProfile(true);
+
+    const result = await saveMyProfile(
+      mapProfileToSaveInput(nextProfile, state.experiences, state.educations)
     );
 
-    resetDraft();
-  };
+    if (!result.success) {
+      setProfileSaveError(result.message);
+      setIsSavingProfile(false);
+      return { ok: false, message: result.message };
+    }
 
-  const onEditExperience = (item: Experience) => {
-    setEditingId(item.id);
-    setDraft({
-      puestoTrabajo: item.puestoTrabajo,
-      lugarTrabajo: item.lugarTrabajo,
-      fechaComienzo: item.fechaComienzo,
-      fechaFinalizacion: item.fechaFinalizacion,
-      trabajoActual: item.trabajoActual,
-    });
-  };
+    try {
+      await refreshProfile();
+      setNeedsProfileInitialization(false);
 
-  const onDeleteExperience = (id: string) => {
-    setProfiles((current) =>
-      current.map((entry) =>
-        entry.id === activeProfileIdResolved
-          ? {
-              ...entry,
-              experiences: entry.experiences.filter((item) => item.id !== id),
-            }
-          : entry
-      )
-    );
-    if (editingId === id) {
-      resetDraft();
+      return { ok: true };
+    } catch {
+      const refreshError = "Profile was saved but refresh failed";
+      setProfileSaveError(refreshError);
+      return { ok: false, message: refreshError };
+    } finally {
+      setIsSavingProfile(false);
     }
   };
-
-  const selectProfile = (id: string) => {
-    setActiveProfileId(id);
-    resetDraft();
-  };
-
-  const createNewProfile = () => {
-    const newId = crypto.randomUUID();
-    const newEntry: ProfileEntry = {
-      id: newId,
-      profile: emptyProfile,
-      experiences: [],
-    };
-
-    setProfiles((current) => [newEntry, ...current]);
-    setActiveProfileId(newId);
-    resetDraft();
-  };
-
-  const loadMockProfile = () => {
-    setProfiles((current) => {
-      if (current.some((entry) => entry.id === MOCK_PROFILE_ID)) {
-        return current;
-      }
-
-      return [mockProfileEntry, ...current];
-    });
-    setActiveProfileId(MOCK_PROFILE_ID);
-    resetDraft();
-  };
-
-  const hasMockProfile = useMemo(
-    () => normalizedProfiles.some((entry) => entry.id === MOCK_PROFILE_ID),
-    [normalizedProfiles]
-  );
 
   return {
     profile,
-    draft,
-    editingId,
     sortedExperiences,
-    profileOptions,
-    activeProfileId: activeProfileIdResolved,
-    hasMockProfile,
+    sortedEducations,
+    badges: state.badges,
+    activeProfileId: selectedUserId,
+    currentUserId,
+    canEditProfile,
+    isViewingOwnProfileAsMember: Boolean(selectedUserId) && selectedUserId === currentUserId,
     profileCompletion,
+    isProfileLoading,
+    isSavingProfile,
+    profileSaveError,
+    needsProfileInitialization,
+    isProfileUnavailable,
+    isSavingExperiences,
+    experienceSaveError,
+    isSavingEducations,
+    educationSaveError,
     userDisplayName,
     initials,
-    handleProfileChange,
-    handleDraftChange,
-    resetDraft,
-    onSubmitExperience,
-    onEditExperience,
-    onDeleteExperience,
-    selectProfile,
-    createNewProfile,
-    loadMockProfile,
+    onSaveProfile,
+    onSaveExperienceOperations,
+    onSaveEducationOperations,
+    clearProfileSaveError: () => setProfileSaveError(null),
+    clearExperienceSaveError: () => setExperienceSaveError(null),
+    clearEducationSaveError: () => setEducationSaveError(null),
+    refetchProfile,
   };
 };

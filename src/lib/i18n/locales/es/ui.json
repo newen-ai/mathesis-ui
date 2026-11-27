@@ -1,0 +1,30 @@
+{
+  "language": {
+    "label": "Idioma",
+    "options": {
+      "es": "Español",
+      "en": "Inglés"
+    }
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "retry": "Reintentar",
+    "back": "Atrás",
+    "continue": "Continuar"
+  },
+  "states": {
+    "loading": "Cargando...",
+    "empty": "No hay datos para mostrar.",
+    "error": "Ocurrió un error inesperado."
+  },
+  "navigation": {
+    "home": "Inicio",
+    "profile": "Perfil",
+    "messages": "Mensajes",
+    "notifications": "Notificaciones",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión"
+  }
+}

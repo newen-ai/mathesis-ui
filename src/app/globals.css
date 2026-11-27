@@ -1,149 +1,531 @@
 @import "tailwindcss";
+/* Tailwind skips node_modules: scan the shared login package so its classes get generated. */
+@source "../../node_modules/@kenrou/shared-ui/src";
+
+/* Tailwind v4 preflight resets buttons to cursor: default; restore the pointer on every enabled button. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
 
 :root {
-  --background: #f3f2ef;
-  --foreground: #1f2937;
-  --brand-100: #deeeff;
-  --brand-700: #0a66c2;
-  --brand-800: #004182;
-  --brand-900: #002f5c;
-  --line: #dde3ea;
+  /* Palette from the brand manual (v3). Light: Blanco Puro cards, Crema (#FAF8F5) secondary surfaces,
+     Grafito text, Oro Oscuro for gold text on light backgrounds (Oro Sophium is never text on light). */
+  --background: #f4f3f1;
+  --foreground: #1a1a1a;
+  --surface: #ffffff;
+  --surface-2: #faf8f5;
+  --surface-muted: #f2eee7;
+  /* Modals and popovers. Same as --surface in light mode; one step lighter in dark mode. */
+  --surface-elevated: #ffffff;
+  --line: #e4dfd6;
+  --line-strong: #d7c9b0;
+  /* Card border: neutral in light mode, subtle gold in dark mode (manual: "borde dorado 40%"). */
+  --card-line: var(--line);
+  --text-primary: #1a1a1a;
+  --text-secondary: #50565e;
+  /* Gris Medio (brand manual): notes and metadata. Lightest text that still passes WCAG AA on every surface. */
+  --text-soft: #666666;
+  --brand-50: #f6efe1;
+  --brand-100: #f0e4cb;
+  --brand-300: #d8ba6d;
+  --brand-500: #c9a84c;
+  --brand-700: #7a6435;
+  --brand-800: #65532c;
+  --brand-900: #4d3f22;
+  /* Navy scale shared with Newen. 50/100 are the "cold" alternative to Crema for neutral boxes. */
+  --navy-50: #f0f5f9;
+  --navy-100: #d6e4ef;
+  --navy-300: #7a9cbd;
+  --navy-500: #2c5478;
+  --navy-700: #163757;
+  --navy-800: #10304d;
+  --navy-900: #0a2540;
+  /* Section colors (one per universe): identity only, never success/error/pending. Text on top:
+     white on Sophium and Agora, Grafito on Nexum. */
+  --section-sophium: #0a2540;
+  --section-sophium-soft: #d6e4ef;
+  --section-nexum: #c9a84c;
+  --section-nexum-soft: #f5efdf;
+  --section-agora: #6e2c3b;
+  --section-agora-soft: #e5d9dc;
+  --section-b2b: #666666;
+  --post-body-bg: #ffffff;
+  --post-file-bg: #faf8f5;
+  --post-file-preview-bg: #163757;
+  --accent-overlay: rgba(10, 37, 64, 0.52);
+  /* Status colors (brand manual "Semáforo de Uso"): danger = Terracota (reports, bans, errors), pending =
+     Ámbar Oscuro (in review), success = Verde Salvia (approved). Never used to identify a section. */
+  --danger-500: #a6432e;
+  --danger-soft: #f8ece9;
+  --danger-line: #e6c3bb;
+  --on-danger: #ffffff;
+  --pending-500: #9c5f1f;
+  --pending-soft: #f8f0e6;
+  --pending-line: #e6cfb2;
+  --success-500: #3f6b4f;
+  --success-soft: #ebf2ed;
+  --success-line: #bfd3c5;
+  --on-success: #ffffff;
+  --heading-primary: var(--navy-900);
+  --on-brand: #1f2329;
+  --link-accent: var(--brand-700);
+  --link-accent-hover: var(--brand-900);
+  /* Verbum (daily word game) tiles and keys. Text on top of them uses --verbum-on-tile. */
+  --verbum-correct: #3f8a5a;
+  --verbum-present: #c39a2e;
+  --verbum-absent: #7a8593;
+  --verbum-on-tile: #ffffff;
+}
+
+[data-theme="dark"] {
+  /* Brand manual dark mode: Navy background, card #33506B and elevated #4D6E8C (hierarchy by lighter
+     surfaces, never by shadow), with a subtle gold border on cards. */
+  --background: #0a2540;
+  --foreground: #e9edf2;
+  --surface: #33506b;
+  --surface-2: #2a4660;
+  --surface-muted: #163757;
+  --surface-elevated: #4d6e8c;
+  --line: #56718c;
+  --line-strong: #7a9cbd;
+  --card-line: color-mix(in srgb, #c9a84c 40%, transparent);
+  --text-primary: #f2f5f8;
+  /* Both pass WCAG AA on --surface and --surface-2. */
+  --text-secondary: #c8d2dc;
+  --text-soft: #b9c6d3;
+  --brand-50: #243d58;
+  --brand-100: #2e4a67;
+  --brand-300: #d6b54c;
+  --brand-500: #c9a84c;
+  /* Gold text on dark cards: lighter than Oro Sophium so it passes AA on #33506B. */
+  --brand-700: #e1c672;
+  --brand-800: #ecd590;
+  --brand-900: #f3e6bd;
+  --navy-50: #163757;
+  --navy-100: #1d4060;
+  --navy-300: #7a9cbd;
+  --navy-500: #2c5478;
+  --navy-700: #163757;
+  --navy-800: #10304d;
+  --navy-900: #0a2540;
+  /* Manual: Sophium's base equals the dark background, so flat Sophium surfaces use Navy 300 here. */
+  --section-sophium: #7a9cbd;
+  --section-sophium-soft: #163757;
+  --section-nexum: #c9a84c;
+  --section-nexum-soft: #3a3a2c;
+  --section-agora: #af8b93;
+  --section-agora-soft: #3d2a33;
+  --section-b2b: #c8c8c8;
+  --post-body-bg: #2a4660;
+  --post-file-bg: #4d6e8c;
+  --post-file-preview-bg: #5f81a4;
+  --accent-overlay: rgba(10, 23, 38, 0.6);
+  --danger-500: #ffcbbf;
+  --danger-soft: #4a3036;
+  --danger-line: #8a5a52;
+  --on-danger: #10263f;
+  --pending-500: #f8d6a8;
+  --pending-soft: #45392c;
+  --pending-line: #8a6d48;
+  --success-500: #b5e3c4;
+  --success-soft: #2c4439;
+  --success-line: #5f8a6f;
+  --on-success: #10263f;
+  --heading-primary: var(--text-primary);
+  --on-brand: #1b2330;
+  --link-accent: var(--brand-800);
+  --link-accent-hover: #f0dc96;
+  --verbum-correct: #4c9a68;
+  --verbum-present: #b8912c;
+  --verbum-absent: #3b4f65;
+  --verbum-on-tile: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sora);
+  --font-sans: var(--font-inter);
+  /* Headings/display text (brand manual: Georgia). Body text inherits Inter; use `font-display` for titles, never ad-hoc families. */
+  --font-display: Georgia, "Times New Roman", serif;
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sora), "Segoe UI", sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-inter), "Segoe UI", sans-serif;
 }
 
-.linkedin-shell {
-  background:
-    linear-gradient(180deg, #f3f2ef 0%, #f5f7fa 100%),
-    radial-gradient(circle at 0% 0%, rgba(10, 102, 194, 0.06) 0%, transparent 20%);
+html:has([data-welcome-scroll-lock]),
+body:has([data-welcome-scroll-lock]) {
+  overflow-y: hidden;
+  overscroll-behavior-y: none;
 }
 
-.linkedin-topbar {
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+html {
+  /* Root of the whole type scale: every rem-based size (type-scale tokens, text-[..rem], Tailwind) scales from here. */
+  font-size: 16px;
 }
 
-.linkedin-phrase-band {
-  background:
-    linear-gradient(95deg, rgba(0, 65, 130, 0.96) 0%, rgba(10, 102, 194, 0.95) 45%, rgba(32, 164, 184, 0.93) 100%);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.18);
+:root {
+  --menu-profile-name-size: 1.18rem;
+  --menu-profile-meta-size: 0.76rem;
+  --menu-item-size: 0.86rem;
+  --menu-section-size: 0.67rem;
+  --menu-logout-size: 0.86rem;
+  --type-scale-1: 0.78rem;
+  --type-scale-2: 0.9rem;
+  --type-scale-3: 1rem;
+  --type-scale-4: 1.2rem;
+  --type-scale-5: 1.55rem;
 }
 
-.linkedin-phrase-stage {
-  min-height: 1.65rem;
-  overflow: hidden;
-  flex: 1;
+[data-theme="dark"] {
+  --menu-profile-name-size: 1.18rem;
+  --menu-profile-meta-size: 0.76rem;
+  --menu-item-size: 0.86rem;
+  --menu-section-size: 0.67rem;
+  --menu-logout-size: 0.86rem;
+  --type-scale-1: 0.78rem;
+  --type-scale-2: 0.9rem;
+  --type-scale-3: 1rem;
+  --type-scale-4: 1.2rem;
+  --type-scale-5: 1.55rem;
 }
 
-.linkedin-phrase-text {
-  animation: phraseSlide 5200ms ease both;
-  text-wrap: balance;
+.text-scale-1 {
+  font-size: var(--type-scale-1);
+  line-height: 1.25;
 }
 
-.linkedin-phrase-progress {
-  height: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(90deg, rgba(223, 240, 255, 0.65) 0%, rgba(255, 255, 255, 0.72) 100%);
-  transform-origin: left center;
-  animation-name: phraseProgress;
-  animation-timing-function: linear;
-  animation-fill-mode: both;
+.text-scale-2 {
+  font-size: var(--type-scale-2);
+  line-height: 1.35;
 }
 
-.linkedin-phrase-progress.is-paused {
-  animation-play-state: paused;
+.text-scale-3 {
+  font-size: var(--type-scale-3);
+  line-height: 1.5;
 }
 
-.linkedin-card {
-  border: 1px solid var(--line);
+.text-scale-4 {
+  font-size: var(--type-scale-4);
+  line-height: 1.35;
+}
+
+.text-scale-5 {
+  font-size: var(--type-scale-5);
+  line-height: 1.2;
+}
+
+.sophium-heading-primary {
+  color: var(--heading-primary);
+}
+
+.sophium-on-brand {
+  color: var(--on-brand);
+}
+
+.sophium-link-accent {
+  color: var(--link-accent);
+}
+
+.sophium-link-accent:hover {
+  color: var(--link-accent-hover);
+}
+
+.sophium-shell {
+  background: var(--background);
+}
+
+.sophium-topbar {
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.sophium-card {
+  border: 1px solid var(--card-line);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: 0 1px 1px color-mix(in srgb, var(--navy-900) 7%, transparent);
+}
+
+.sophium-nav-item {
+  display: inline-flex;
+  min-width: 108px;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 0.24rem;
   border-radius: 0.95rem;
-  background: white;
-  box-shadow: 0 1px 2px rgba(20, 23, 28, 0.06);
-}
-
-.linkedin-nav-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  border-radius: 0.55rem;
-  padding: 0.42rem 0.55rem;
-  font-size: 0.78rem;
+  background: color-mix(in srgb, var(--brand-100) 18%, var(--surface));
+  padding: 0.52rem 0.7rem;
+  font-size: 0.79rem;
   font-weight: 600;
-  color: #4b5563;
-  transition: background-color 150ms ease, color 150ms ease;
+  color: var(--text-secondary);
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
-.linkedin-nav-item:hover {
-  background: #f2f5f9;
-  color: #111827;
+.sophium-nav-item:hover {
+  background: color-mix(in srgb, var(--brand-100) 70%, var(--surface));
+  color: var(--text-primary);
 }
 
-.linkedin-nav-item.is-active {
-  background: #ebf4ff;
-  color: #0a66c2;
+.sophium-nav-item.is-active {
+  background: color-mix(in srgb, var(--surface-muted) 82%, var(--surface));
+  border-color: color-mix(in srgb, var(--brand-300) 70%, transparent);
+  color: var(--brand-700);
 }
 
-.linkedin-nav-dot {
-  height: 0.5rem;
-  width: 0.5rem;
-  border-radius: 9999px;
-  background: currentColor;
-  opacity: 0.72;
+/* Logo link and profile avatar in the top bar: same hover feedback as .sophium-nav-item. */
+.sophium-nav-logo {
+  border-radius: 0.95rem;
+  transition: background-color 150ms ease;
 }
 
-.linkedin-composer-trigger {
-  transition: background-color 130ms ease, border-color 130ms ease;
+.sophium-nav-logo:hover {
+  background: color-mix(in srgb, var(--brand-100) 70%, var(--surface));
 }
 
-.linkedin-composer-trigger:hover {
-  background-color: #f8fafc;
-  border-color: #9ca3af;
+.sophium-nav-avatar {
+  transition: box-shadow 150ms ease, border-color 150ms ease, filter 150ms ease;
 }
 
-.linkedin-tag {
+.sophium-nav-avatar:hover,
+.sophium-nav-avatar.is-active {
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-300) 55%, transparent);
+}
+
+.sophium-nav-avatar:hover {
+  filter: brightness(1.08);
+}
+
+.sophium-nav-logo:focus-visible,
+.sophium-nav-avatar:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
+.sophium-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.sophium-composer-trigger {
+  transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease;
+}
+
+.sophium-composer-trigger:hover {
+  background-color: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--text-primary);
+}
+
+.sophium-tag {
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;
-  border: 1px solid #d7deea;
-  background: #f8fbff;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
   padding: 0.35rem 0.7rem;
   font-size: 0.73rem;
   font-weight: 600;
-  color: #1f4f80;
+  color: var(--text-secondary);
 }
 
-.mensa-field {
+.sophium-field {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #475467;
+  color: var(--text-secondary);
 }
 
-.mensa-field input {
-  border: 1px solid #c6ced8;
+.sophium-field input {
+  border: 1px solid var(--line);
   border-radius: 0.6rem;
-  background-color: white;
+  background-color: var(--surface);
   padding: 0.64rem 0.75rem;
   font-size: 0.92rem;
-  color: #111827;
+  color: var(--text-primary);
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
-.mensa-field input:focus {
+.sophium-field input:focus {
   outline: none;
   border-color: var(--brand-700);
-  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.16);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
+}
+
+.sophium-field textarea,
+.sophium-field select {
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background-color: var(--surface);
+  padding: 0.64rem 0.75rem;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+/* Custom select trigger (nationality, birth date calendar): looks like .sophium-field inputs. */
+.sophium-select-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  background-color: var(--surface);
+  padding: 0.64rem 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.sophium-select-trigger:focus-visible,
+.sophium-select-trigger[aria-expanded="true"] {
+  outline: none;
+  border-color: var(--brand-700);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
+}
+
+.sophium-select-popup {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background-color: var(--surface);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+  color: var(--text-primary);
+}
+
+.sophium-calendar-select {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background-color: var(--surface);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sophium-calendar-select:focus {
+  outline: none;
+  border-color: var(--brand-700);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
+}
+
+.sophium-select-option {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.92rem;
+}
+
+.sophium-select-option[data-active] {
+  background: color-mix(in srgb, var(--brand-100) 70%, var(--surface));
+}
+
+.sophium-select-option[aria-selected="true"] {
+  font-weight: 600;
+  color: var(--brand-700);
+}
+
+.sophium-field textarea:focus,
+.sophium-field select:focus {
+  outline: none;
+  border-color: var(--brand-700);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-500) 24%, transparent);
+}
+
+.welcome-future-shell {
+  min-height: 100dvh;
+  background: var(--background);
+}
+
+.welcome-future-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--surface);
+}
+
+.welcome-future-content {
+  flex: 1;
+}
+
+@media (min-aspect-ratio: 1/1) {
+  .welcome-future-shell {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    bottom: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .welcome-future-layout {
+    display: grid;
+    grid-template-columns: 1.03fr 1.55fr;
+    min-height: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .welcome-future-hero {
+    height: 100%;
+  }
+
+  .welcome-future-content {
+    height: 100%;
+    overflow-y: auto;
+  }
+}
+
+
+.sophium-icon-button {
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  border-radius: 9999px;
+  transition: all 140ms ease;
+}
+
+.sophium-icon-button:hover {
+  border-color: var(--line-strong);
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+
+.sophium-password-toggle {
+  color: var(--text-secondary);
+  transition: color 140ms ease;
+}
+
+.sophium-password-toggle:hover {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .sophium-password-toggle {
+  color: var(--brand-500);
+}
+
+[data-theme="dark"] .sophium-password-toggle:hover {
+  color: var(--brand-800);
+}
+
+.sophium-spin {
+  animation: spin 0.8s linear infinite;
+}
+
+.sophium-toast {
+  animation: toastIn 180ms ease both;
 }
 
 @keyframes fadeUp {
@@ -157,44 +539,114 @@ body {
   }
 }
 
-@keyframes phraseSlide {
-  0% {
-    opacity: 0;
-    transform: translateX(26px) scale(0.99);
-    filter: blur(1.5px);
-  }
-  10% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    filter: blur(0);
-  }
-  82% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-22px) scale(1.01);
-    filter: blur(1.5px);
-  }
-}
-
-@keyframes phraseProgress {
+@keyframes spin {
   from {
-    width: 100%;
-    opacity: 1;
+    transform: rotate(0deg);
   }
   to {
-    width: 0%;
-    opacity: 0.75;
+    transform: rotate(360deg);
   }
 }
 
-.mensa-fade-up {
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sophium-fade-up {
   animation: fadeUp 340ms ease both;
 }
 
-.mensa-fade-up-delay {
+.sophium-fade-up-delay {
   animation: fadeUp 460ms ease both;
+}
+
+.sophium-profile-stack .sophium-field {
+  font-size: 0.65rem;
+  gap: 0.35rem;
+}
+
+.sophium-profile-stack .sophium-field input,
+.sophium-profile-stack .sophium-field textarea,
+.sophium-profile-stack .sophium-field select {
+  font-size: 0.68rem;
+  padding: 0.5rem 0.62rem;
+}
+
+/* Verbum (daily word game) animations. Tiles reveal their color halfway through the flip. */
+@keyframes verbum-flip {
+  0% {
+    transform: rotateX(0deg);
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border-color: var(--line-strong);
+  }
+  49% {
+    transform: rotateX(90deg);
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border-color: var(--line-strong);
+  }
+  50% {
+    transform: rotateX(90deg);
+    background-color: var(--verbum-tile-bg);
+    color: var(--verbum-on-tile);
+    border-color: var(--verbum-tile-bg);
+  }
+  100% {
+    transform: rotateX(0deg);
+    background-color: var(--verbum-tile-bg);
+    color: var(--verbum-on-tile);
+    border-color: var(--verbum-tile-bg);
+  }
+}
+
+@keyframes verbum-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes verbum-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes verbum-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-14px); }
+  60% { transform: translateY(-6px); }
+}
+
+.verbum-tile-reveal {
+  animation: verbum-flip 0.5s ease-in-out both;
+}
+
+.verbum-tile-pop {
+  animation: verbum-pop 0.12s ease-out;
+}
+
+.verbum-row-shake {
+  animation: verbum-shake 0.4s ease-in-out;
+}
+
+.verbum-tile-win {
+  animation: verbum-bounce 0.6s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .verbum-tile-reveal,
+  .verbum-tile-pop,
+  .verbum-row-shake,
+  .verbum-tile-win {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+  }
 }

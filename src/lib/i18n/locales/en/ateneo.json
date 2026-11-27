@@ -1,0 +1,198 @@
+{
+  "feed": {
+    "authorFallback": "User",
+    "title": "Feed",
+    "subtitle": "All your groups, mixed together",
+    "newTopic": "+ New topic",
+    "loading": "Loading feed...",
+    "empty": "Start the first conversation topic.",
+    "discoveryBadge": "Suggested group"
+  },
+  "explorer": {
+    "tabs": {
+      "mine": "Your groups",
+      "discover": "Discover",
+      "admin": "Groups you manage"
+    },
+    "headerTitle": "Explore Groups",
+    "breadcrumb": "Agora > Ateneo > Explore",
+    "createGroup": "+ Create group",
+    "searchPlaceholder": "Search groups...",
+    "official": "Official",
+    "optionsAria": "Options for {{name}}",
+    "join": "Join",
+    "loading": "Loading groups...",
+    "empty": "No groups match your search.",
+    "floatingCreateAria": "Create group",
+    "comingSoon": "Coming soon"
+  },
+  "headerActions": {
+    "groupInfo": "View group info",
+    "groupMembers": "View group members",
+    "editGroup": "Edit group",
+    "moreOptions": "More group options",
+    "leaveGroup": "Leave group",
+    "leaveGroupOwnerDisabled": "You created this group, so you can't leave it.",
+    "hints": {
+      "groupInfo": "Info",
+      "groupMembers": "Members",
+      "editGroup": "Edit",
+      "moreOptions": "More"
+    },
+    "leaveConfirm": {
+      "title": "Leave group",
+      "body": "You are about to leave {{name}}. Your topics and comments stay in the group, and you can join again at any time.",
+      "cancel": "Cancel",
+      "confirm": "Leave group",
+      "leaving": "Leaving...",
+      "closeAria": "Close"
+    },
+    "leaveSuccess": "You left the group",
+    "leaveError": "We couldn't remove you from the group. Please try again."
+  },
+  "newTopic": {
+    "title": "New topic",
+    "backAria": "Back",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "emptyGroupsMessage": "To publish, join a group or create a new one from Ateneo.",
+    "adminsOnlyMessage": "Only administrators can create topics in this group.",
+    "groupLabel": "Group",
+    "selectedGroup": "Selected group",
+    "selectGroup": "Select a group",
+    "noGroupsAvailable": "Create the first group",
+    "groupAdminsOnlyLabel": "Only administrators can create",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Topic title...",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Tell us what this is about...",
+    "detectedLinks": "Detected links",
+    "attachLabel": "Attach",
+    "attachPhoto": "Photo",
+    "attachFile": "File",
+    "openPreviewAria": "Open preview for {{name}}",
+    "previewAlt": "Preview of {{name}}",
+    "removeAria": "Remove {{name}}",
+    "fileTypesHint": "Photo: JPG, PNG, or HEIC · File: PDF only",
+    "toneLabel": "Topic tone (optional, indicative)",
+    "tones": {
+      "serio": "SERIOUS",
+      "mix": "MIX",
+      "libre": "OPEN"
+    },
+    "toneHint": "Indicative only: this does not change moderation or the real Seriometer from reactions.",
+    "closeGroupPickerAria": "Close group picker",
+    "chooseGroupTitle": "Choose group",
+    "closePickerAria": "Close picker",
+    "closePreviewAria": "Close preview",
+    "removeCurrentImageAria": "Remove current image",
+    "previousImageAria": "Previous image",
+    "nextImageAria": "Next image",
+    "toasts": {
+      "imageTypesOnly": "Only JPG, PNG, or HEIC/HEIF images are allowed.",
+      "pdfOnly": "Only PDF files are allowed.",
+      "fileTooLarge": "The file {{name}} is too large. Maximum {{maxSize}} per file.",
+      "chooseImage": "Pick a JPG, PNG, or HEIC image.",
+      "choosePdf": "Pick a PDF file.",
+      "maxAttachments": "Maximum 5 attachments per topic. Remove one to add another.",
+      "preferredGroupUnavailable": "We could not load the group from this link. Showing your available groups instead.",
+      "published": "Topic published"
+    },
+    "errors": {
+      "groupRequired": "Choose a group to publish the topic.",
+      "groupAdminsOnly": "Only admins can create topics in this group. Choose another group.",
+      "titleRequired": "Write a title.",
+      "titleTooShort": "The title needs at least {{min}} characters.",
+      "titleTooLong": "The title can have up to {{max}} characters.",
+      "descriptionRequired": "Write a description.",
+      "descriptionTooShort": "The description needs at least {{min}} characters.",
+      "descriptionTooLong": "The description can have up to {{max}} characters."
+    },
+    "pdf": {
+      "open": "View PDF",
+      "pages_one": "{{count}} page",
+      "pages_other": "{{count}} pages"
+    }
+  },
+  "groupMeta": {
+    "members_one": "{{count}} member",
+    "members_other": "{{count}} members",
+    "activity": {
+      "new": "Recently created",
+      "active": "Active today",
+      "inactive": "No activity"
+    }
+  },
+  "discussion": {
+    "deletedComment": "Comment deleted",
+    "deleteComment": "Delete comment",
+    "deletingComment": "Deleting...",
+    "deleteCommentConfirm": "Delete this comment? This can't be undone.",
+    "commentDeleted": "Comment deleted",
+    "deleteCommentError": "We couldn't delete the comment."
+  },
+  "membersPanel": {
+    "loading": "Loading members...",
+    "loadError": "We couldn't load this group.",
+    "joinToSee": "Join the group to see the full member list.",
+    "joinBlockedHint": "You can't join because you were removed from this group.",
+    "join": "Join group",
+    "joining": "Joining...",
+    "joinBlocked": "This account was removed from the group and can't rejoin.",
+    "joinError": "We couldn't add you to the group.",
+    "tabsAria": "Member sections",
+    "tabs": {
+      "members": "Members",
+      "moderation": "Moderation"
+    },
+    "userFallback": "User",
+    "adminFallback": "Admin",
+    "avatar": "Profile photo of {{name}}",
+    "badges": {
+      "owner": "OWNER",
+      "admin": "ADMIN",
+      "pinned": "PINNED"
+    },
+    "memberSince": "Member since {{date}}",
+    "moreOptions": "More options for {{name}}",
+    "kick": "Remove user",
+    "kickNotAllowed": "You don't have permission to remove this user.",
+    "kicked": "User removed",
+    "kickError": "We couldn't remove the user.",
+    "total_one": "{{count}} member in total.",
+    "total_other": "{{count}} members in total.",
+    "showing": "Showing {{shown}} of {{total}} members.",
+    "loadMore": "Show more members",
+    "loadingMore": "Loading...",
+    "loadMoreError": "We couldn't load more members.",
+    "moderation": {
+      "intro": "Removed users and content taken down by moderation. You can undo any of these actions.",
+      "filtersAria": "Moderation type",
+      "users": "Users ({{count}})",
+      "topics": "Topics ({{count}})",
+      "comments": "Comments ({{count}})",
+      "noUsers": "No removed users.",
+      "kickedBy": "Removed by {{name}} · {{date}}",
+      "reason": "Reason: {{reason}}",
+      "readmit": "Readmit",
+      "readmitting": "Readmitting...",
+      "readmitted": "User readmitted",
+      "readmitError": "We couldn't readmit the user.",
+      "noTopics": "No withdrawn posts.",
+      "topicBy": "Post by {{name}} · {{date}}",
+      "opening": "Opening...",
+      "clickToView": "Click to view content",
+      "previewError": "We couldn't open the removed post preview.",
+      "restoring": "Restoring...",
+      "restoreTopic": "Restore post",
+      "topicRestored": "Post restored",
+      "restoreTopicError": "We couldn't restore the post.",
+      "noComments": "No withdrawn comments.",
+      "emptyComment": "Comment without content",
+      "commentBy": "Comment by {{name}} · {{date}}",
+      "restoreComment": "Restore comment",
+      "commentRestored": "Comment restored",
+      "restoreCommentError": "We couldn't restore the comment."
+    }
+  }
+}

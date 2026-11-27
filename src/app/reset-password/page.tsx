@@ -1,0 +1,329 @@
+"use client";
+
+import Link from "next/link";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
+import { resetPassword } from "@/lib/api/auth";
+import { formatApiErrorDetails } from "@/lib/api/client";
+import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
+import { evaluatePasswordStrength } from "@/lib/utils/password";
+
+type ValidationErrors = {
+  token?: string;
+  password?: string;
+  confirmPassword?: string;
+};
+
+function ResetPasswordContent() {
+  const { t } = useTranslation("auth");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const token = useMemo(() => {
+    const raw = searchParams.get("token") ?? "";
+    return raw.trim();
+  }, [searchParams]);
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [didSucceed, setDidSucceed] = useState(false);
+  const [secondsUntilRedirect, setSecondsUntilRedirect] = useState(2);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [popupInfo, setPopupInfo] = useState<{
+    title: string;
+    message: string;
+    details?: string;
+  } | null>(null);
+
+  const strength = evaluatePasswordStrength(password);
+
+  const semaphoreColors =
+    strength.strength === "weak"
+      ? ["var(--danger-500)", "var(--line)", "var(--line)"]
+      : strength.strength === "normal"
+        ? ["var(--brand-500)", "var(--brand-500)", "var(--line)"]
+        : ["#2E9F61", "#2E9F61", "#2E9F61"];
+
+  useEffect(() => {
+    if (!didSucceed) {
+      return;
+    }
+
+    const tickId = setInterval(() => {
+      setSecondsUntilRedirect((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    const redirectId = setTimeout(() => {
+      router.replace("/login");
+      router.refresh();
+    }, 2000);
+
+    return () => {
+      clearInterval(tickId);
+      clearTimeout(redirectId);
+    };
+  }, [didSucceed, router]);
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const nextErrors: ValidationErrors = {};
+
+    if (!token) {
+      nextErrors.token = t("resetPassword.invalidToken");
+    }
+
+    if (!strength.meetsPolicy) {
+      nextErrors.password =
+        t("resetPassword.passwordPolicyError");
+    }
+
+    if (!confirmPassword || confirmPassword !== password) {
+      nextErrors.confirmPassword = t("resetPassword.passwordMismatch");
+    }
+
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const result = await resetPassword({
+      token,
+      newPassword: password,
+    });
+
+    if (!result.success) {
+      setPopupInfo({
+        title: t("common.serviceErrorTitle"),
+        message: getRateLimitMessage(result.details) ?? result.message,
+        details: formatApiErrorDetails(result.details, result.status),
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(false);
+    setDidSucceed(true);
+    setSecondsUntilRedirect(2);
+  };
+
+  return (
+    <>
+      <ServiceErrorPopup
+        isOpen={popupInfo !== null}
+        title={popupInfo?.title ?? ""}
+        message={popupInfo?.message ?? ""}
+        details={popupInfo?.details}
+        onClose={() => setPopupInfo(null)}
+      />
+
+      <main
+        className="min-h-screen"
+        style={{ backgroundColor: "var(--background)", color: "var(--text-primary)" }}
+      >
+        <section className="flex min-h-screen w-full flex-col lg:flex-row">
+          <div className="px-8 pb-10 pt-9 lg:hidden" style={{ backgroundColor: "var(--navy-900)" }}>
+            <Link
+              href="/login"
+              className="inline-flex text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C] transition hover:opacity-80"
+            >
+              {t("resetPassword.back")}
+            </Link>
+            <h1 className="mt-3 font-display text-[1.35rem] leading-[1.08] font-bold text-[#FAF8F5]">
+              {t("resetPassword.title")}
+            </h1>
+            <div className="mt-6 h-1 w-full rounded-full bg-[#C9A84C]" />
+          </div>
+
+          <div
+            className="relative hidden overflow-hidden text-center lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:justify-between lg:px-12 lg:py-14 lg:text-left"
+            style={{ backgroundColor: "var(--navy-900)" }}
+          >
+            <span
+              className="pointer-events-none absolute right-[-92px] top-[-52px] hidden h-56 w-56 rounded-full border lg:block"
+              style={{ borderColor: "color-mix(in srgb, var(--brand-500) 26%, transparent)" }}
+            />
+            <span
+              className="pointer-events-none absolute bottom-[-94px] left-[58%] hidden h-56 w-56 rounded-full border lg:block"
+              style={{ borderColor: "color-mix(in srgb, var(--brand-500) 24%, transparent)" }}
+            />
+
+            <BrandCornerLogo />
+            <div aria-hidden="true" className="h-14" />
+
+            <div className="relative z-10 mt-10 lg:mt-0">
+              <h1 className="mt-4 font-display text-[1.35rem] font-bold leading-tight text-[#FAF8F5]">
+                {t("resetPassword.title")}
+              </h1>
+              <p className="mx-auto mt-4 max-w-[370px] font-display text-base italic leading-relaxed text-[#D7DCE3] lg:mx-0 lg:max-w-xs lg:text-sm">
+                {t("resetPassword.subtitle")}
+              </p>
+            </div>
+
+            <p className="relative z-10 mt-10 text-[0.66rem] text-[#8EA0B6] lg:mt-0">sophium.social</p>
+          </div>
+
+          <div
+            className="flex flex-1 flex-col px-8 pb-8 pt-8 lg:justify-center lg:px-14 lg:py-14"
+            style={{ backgroundColor: "var(--surface)" }}
+          >
+            <div className="w-full lg:mx-auto lg:max-w-[440px]">
+              {errors.token ? (
+                <p className="mb-4 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-semibold text-[var(--danger-500)]">
+                  {errors.token}
+                </p>
+              ) : null}
+
+              {didSucceed ? (
+                <div className="flex flex-col gap-4 rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] p-5">
+                  <h2
+                    className="font-display text-[1.35rem] font-bold"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {t("resetPassword.successTitle")}
+                  </h2>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                    {t("resetPassword.successDescription", {
+                      seconds: secondsUntilRedirect,
+                      suffix: secondsUntilRedirect === 1 ? "" : "s",
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.replace("/login");
+                      router.refresh();
+                    }}
+                    className="mt-2 w-full rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95"
+                    style={{ backgroundColor: "var(--brand-500)" }}
+                  >
+                    {t("resetPassword.successNow")}
+                  </button>
+                </div>
+              ) : (
+              <form className="flex flex-col gap-6" onSubmit={onSubmit} noValidate>
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-bold tracking-wide lg:text-xs"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {t("resetPassword.newPasswordLabel")}
+                  </label>
+                  <PasswordInput
+                    id="password"
+                    autoComplete="new-password"
+                    placeholder={t("resetPassword.newPasswordPlaceholder")}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    aria-invalid={Boolean(errors.password)}
+                    aria-describedby={errors.password ? "password-error" : "password-help"}
+                    className="rounded-2xl border-[1.5px] px-5 py-3 text-base outline-none transition lg:rounded-lg lg:px-3.5 lg:py-2.5 lg:text-sm"
+                    style={{
+                      borderColor: "var(--line)",
+                      color: "var(--text-primary)",
+                      backgroundColor: "var(--surface)",
+                    }}
+                  />
+
+                  <div className="mt-1 grid grid-cols-3 gap-2" aria-label={t("resetPassword.securityLevelAria", { level: strength.strength })}>
+                    <span
+                      className="h-2 rounded-full"
+                      style={{ backgroundColor: semaphoreColors[0] }}
+                    />
+                    <span
+                      className="h-2 rounded-full"
+                      style={{ backgroundColor: semaphoreColors[1] }}
+                    />
+                    <span
+                      className="h-2 rounded-full"
+                      style={{ backgroundColor: semaphoreColors[2] }}
+                    />
+                  </div>
+
+                  <p id="password-help" className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+                    {t("resetPassword.passwordHelp")}
+                  </p>
+
+                  {errors.password ? (
+                    <p id="password-error" className="text-sm font-medium text-[var(--danger-500)]">
+                      {errors.password}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label
+                    htmlFor="confirmPassword"
+                    className="text-sm font-bold tracking-wide lg:text-xs"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {t("resetPassword.repeatPasswordLabel")}
+                  </label>
+                  <PasswordInput
+                    id="confirmPassword"
+                    autoComplete="new-password"
+                    placeholder={t("resetPassword.newPasswordPlaceholder")}
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    aria-invalid={Boolean(errors.confirmPassword)}
+                    aria-describedby={errors.confirmPassword ? "confirm-password-error" : undefined}
+                    className="rounded-2xl border-[1.5px] px-5 py-3 text-base outline-none transition lg:rounded-lg lg:px-3.5 lg:py-2.5 lg:text-sm"
+                    style={{
+                      borderColor: "var(--line)",
+                      color: "var(--text-primary)",
+                      backgroundColor: "var(--surface)",
+                    }}
+                  />
+                  {errors.confirmPassword ? (
+                    <p id="confirm-password-error" className="text-sm font-medium text-[var(--danger-500)]">
+                      {errors.confirmPassword}
+                    </p>
+                  ) : null}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full rounded-full px-6 py-3 text-sm font-bold text-[#1A1A1A] transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-70"
+                  style={{ backgroundColor: "var(--brand-500)" }}
+                >
+                  {isSubmitting ? t("resetPassword.savingPassword") : t("resetPassword.savePassword")}
+                </button>
+              </form>
+              )}
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </>
+  );
+}
+
+export default function ResetPasswordPage() {
+  const { t } = useTranslation("auth");
+
+  return (
+    <Suspense
+      fallback={
+        <main
+          className="flex min-h-screen items-center justify-center"
+          style={{ backgroundColor: "var(--background)", color: "var(--text-secondary)" }}
+        >
+          <p className="text-sm">{t("common.loading")}</p>
+        </main>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}

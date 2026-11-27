@@ -1,0 +1,90 @@
+{
+  "page": {
+    "title": "Mensajes",
+    "subtitle": "Conversaciones privadas para colaboraciones de alto impacto."
+  },
+  "time": {
+    "now": "Ahora",
+    "yesterday": "Ayer"
+  },
+  "fallbacks": {
+    "user": "Usuario",
+    "you": "Tú",
+    "noProfessionalData": "Sin datos profesionales",
+    "noMembers": "Sin miembros",
+    "untitledGroup": "Grupo sin título",
+    "directChat": "Chat directo",
+    "contact": "Contacto",
+    "searchResult": "Resultado de búsqueda",
+    "noMessagesYet": "Sin mensajes por ahora",
+    "chat": "Chat",
+    "deletedMessage": "Mensaje eliminado"
+  },
+  "errors": {
+    "groupTitleRequired": "El título del grupo es obligatorio.",
+    "createGroupOrSend": "No se pudo crear el grupo o enviar el mensaje.",
+    "createGroup": "No se pudo crear el grupo.",
+    "selectContactCreateChat": "Seleccioná al menos un contacto para crear el chat.",
+    "createDirectChat": "No se pudo crear el chat directo.",
+    "selectContactStartConversation": "Seleccioná al menos un contacto para iniciar la conversación.",
+    "openDirectOrSend": "No se pudo abrir el chat directo o enviar el mensaje.",
+    "selectConversation": "Seleccioná una conversación.",
+    "sendMessage": "No se pudo enviar el mensaje.",
+    "loadConversations": "No pudimos cargar tus conversaciones.",
+    "refreshConversations": "No pudimos actualizar las conversaciones.",
+    "loadHistory": "No se pudo cargar el historial anterior.",
+    "loadChatHistory": "No se pudo cargar el historial del chat.",
+    "confirmCreation": "No se pudo confirmar la creación del chat.",
+    "completeSend": "No se pudo completar el envío."
+  },
+  "blocked": {
+    "blockedByOther": "Has sido bloqueado por este usuario",
+    "blockedByYou": "Has bloqueado a este usuario"
+  },
+  "composer": {
+    "newConversation": "Nueva conversación",
+    "confirm": "Confirmar",
+    "confirming": "Confirmando...",
+    "to": "Para",
+    "searchMembers": "Buscar miembros...",
+    "searchResults": "Resultados de búsqueda",
+    "contacts": "Contactos",
+    "searchingContacts": "Buscando contactos...",
+    "emptySearch": "No encontramos contactos para esa búsqueda.",
+    "emptyContacts": "Tus conexiones van a aparecer acá.",
+    "writeMessage": "Escribir un mensaje...",
+    "send": "Enviar",
+    "sending": "Enviando...",
+    "confirmButton": "Crear y enviar"
+  },
+  "conversations": {
+    "loading": "Cargando conversaciones...",
+    "empty": "Empezá una conversación con otro Miembro.",
+    "selectToStart": "Seleccioná una conversación para empezar.",
+    "backToList": "Volver a la lista",
+    "loadingOlder": "Cargando mensajes anteriores...",
+    "emptyThread": "Escribí el primer mensaje.",
+    "deletedMessage": "Mensaje eliminado",
+    "newConversationButton": "Nueva conversación"
+  },
+  "groupTitleModal": {
+    "title": "Título del grupo",
+    "subtitle": "Ingresá un título para crear el chat grupal.",
+    "placeholder": "Ej: Equipo Fundador",
+    "cancel": "Cancelar",
+    "creating": "Creando..."
+  },
+  "groupMembersModal": {
+    "ariaLabel": "Miembros del grupo",
+    "membersCount": "{{count}} miembros",
+    "close": "Cerrar",
+    "roleAdmin": "Administrador",
+    "roleMember": "Miembro"
+  },
+  "aria": {
+    "jumpToLatest": "Ir al último mensaje",
+    "backToConversations": "Volver a conversaciones",
+    "viewGroupMembers": "Ver miembros del grupo",
+    "profilePhoto": "Foto de perfil de {{name}}"
+  }
+}
