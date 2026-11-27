@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 
 type WelcomeFeature = {
   title: string;
@@ -63,7 +64,7 @@ const currentFeatures: WelcomeFeature[] = [
   },
   {
     title: "Credencial digital",
-    description: "Tu credencial de Miembro de Mensa, siempre a mano.",
+    description: "Tu credencial de Miembro, siempre a mano.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="4.5" y="6" width="15" height="12" rx="2" />
@@ -101,12 +102,8 @@ export default function BienvenidaPage() {
           <div className="pointer-events-none absolute right-[-4rem] top-[-4rem] h-52 w-52 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full border border-white/10" />
 
-          <div className="flex items-center gap-2.5">
-            <span className="text-[1.65rem] font-semibold text-[var(--brand-500)]">∫</span>
-            <span className="font-display text-[1.65rem] font-semibold tracking-[0.03em] text-white">
-              Sophium
-            </span>
-          </div>
+          <BrandCornerLogo />
+          <div aria-hidden="true" className="h-14" />
 
           <div className="max-w-[26rem] space-y-3 py-8 lg:py-0">
             <p className="text-[0.76rem] font-semibold uppercase tracking-[0.2em] text-[var(--brand-300)]">

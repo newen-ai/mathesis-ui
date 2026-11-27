@@ -11,6 +11,7 @@ import {
 } from "@/lib/api/feed";
 import { getTwoInitials } from "@/lib/utils/name";
 import { useTranslation } from "react-i18next";
+import { ReportDialog, type ReportTarget } from "@/app/(platform)/_components/ReportDialog";
 import { formatRelativeTime } from "@/lib/utils/relative-time";
 
 type FeedPostCardProps = {
@@ -68,6 +69,7 @@ export function FeedPostCard({
 
 	const attachmentCount = post.attachments.length;
 	const { t, i18n } = useTranslation();
+	const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
 	const timeLabel = formatRelativeTime(post.createdAt, t, i18n.language);
 	const isReacted = post.currentUserReactionValue !== null;
 
@@ -207,7 +209,7 @@ export function FeedPostCard({
 											type="button"
 											onClick={() => {
 											setMenuOpen(false);
-											onShowComingSoon?.();
+											setReportTarget({ type: "FEED_POST", id: post.id });
 										}}
 											className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-[var(--text-primary)] transition hover:bg-[var(--surface-2)]"
 										>
@@ -352,6 +354,8 @@ export function FeedPostCard({
 					</div>
 				</div>
 			) : null}
+
+			<ReportDialog target={reportTarget} onClose={() => setReportTarget(null)} />
 		</>
 	);
 }

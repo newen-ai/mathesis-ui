@@ -11,7 +11,7 @@ import {
   sanitizeLoginNextPath,
 } from "@/lib/auth/login-redirect";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
-import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { BRAND_LOGO_FULL_SRC, BRAND_LOGO_SRC } from "@/lib/assets";
 import { extractAuthErrorCode, getAuthErrorTranslation, isCaptchaError } from "@/lib/i18n/auth-errors";
 import { useTurnstile } from "@/components/auth/TurnstileWidget";
 import { normalizeEmailInput } from "@/lib/utils/email";
@@ -108,6 +108,7 @@ function LoginPageContent() {
     <SharedBrandedLoginScreen
       brandName="Sophium"
       logoSrc={BRAND_LOGO_SRC}
+      logoLockupSrc={BRAND_LOGO_FULL_SRC}
       logoAlt={t("common.brandLogoAlt")}
       mobileTagline={t("login.screen.mobileTagline")}
       badgeLabel={t("login.screen.badgeLabel")}

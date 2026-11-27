@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
-import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 import { resetPassword } from "@/lib/api/auth";
 import { formatApiErrorDetails } from "@/lib/api/client";
 import { getRateLimitMessage } from "@/lib/i18n/auth-errors";
@@ -156,21 +156,8 @@ function ResetPasswordContent() {
               style={{ borderColor: "color-mix(in srgb, var(--brand-500) 24%, transparent)" }}
             />
 
-            <div className="relative z-10 flex flex-col items-center lg:flex-row lg:items-center lg:gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={BRAND_LOGO_SRC}
-                alt={t("common.brandLogoAlt")}
-                width={40}
-                height={40}
-                loading="eager"
-                decoding="async"
-                className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
-              />
-              <p className="mt-2 font-display text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
-                Sophium
-              </p>
-            </div>
+            <BrandCornerLogo />
+            <div aria-hidden="true" className="h-14" />
 
             <div className="relative z-10 mt-10 lg:mt-0">
               <h1 className="mt-4 font-display text-[1.35rem] font-bold leading-tight text-[#FAF8F5]">
@@ -190,7 +177,7 @@ function ResetPasswordContent() {
           >
             <div className="w-full lg:mx-auto lg:max-w-[440px]">
               {errors.token ? (
-                <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                <p className="mb-4 rounded-lg border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-semibold text-[var(--danger-500)]">
                   {errors.token}
                 </p>
               ) : null}

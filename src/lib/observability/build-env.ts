@@ -17,7 +17,7 @@ export function assertObservabilityBuildEnv(env: Record<string, string | undefin
   if (missing.length > 0) {
     throw new Error(
       `[observability] Missing environment variables for this Vercel build: ${missing.join(", ")}. ` +
-        "Set them in Vercel > Project > Settings > Environment Variables (see mathesis-backend/docs/PERFORMANCE.md)."
+        "Set them in Vercel > Project > Settings > Environment Variables (see sophium-backend/docs/PERFORMANCE.md)."
     );
   }
 }

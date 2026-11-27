@@ -30,10 +30,12 @@ type TopBarDesktopProps = {
 };
 
 function DesktopDropdownMenu({
+  section,
   items,
   isNavItemActive,
   onClose,
 }: {
+  section: "nexum" | "agora";
   items: typeof desktopNexumMenuItems;
   isNavItemActive: (href: string) => boolean;
   onClose: () => void;
@@ -41,7 +43,11 @@ function DesktopDropdownMenu({
   const { t } = useTranslation();
 
   return (
-    <div className="absolute right-0 top-[calc(100%+0.4rem)] z-[80] w-[21rem] rounded-[1rem] border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+    <div
+      className="absolute right-0 top-[calc(100%+0.4rem)] z-[80] w-[21rem] rounded-[1rem] border border-t-4 border-[var(--line)] bg-[var(--surface)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+      // Section color (brand manual): Nexum gold, Agora bordó.
+      style={{ borderTopColor: `var(--section-${section})` }}
+    >
       {items.map((menuItem) => {
         const hasRoute = Boolean(menuItem.href);
         const active = menuItem.href ? isNavItemActive(menuItem.href) : false;
@@ -137,6 +143,9 @@ export function TopBarDesktop({
         }
 
         const isOpen = desktopDropdownOpen === item.menuKey;
+        const sectionItems = item.menuKey === "nexum" ? desktopNexumMenuItems : desktopAgoraMenuItems;
+        // The section symbol turns gold while its menu is open or the current page belongs to it.
+        const isSectionActive = isOpen || sectionItems.some((menuItem) => Boolean(menuItem.href && isNavItemActive(menuItem.href)));
 
         return (
           <div key={item.id} className="relative">
@@ -150,13 +159,14 @@ export function TopBarDesktop({
               className={`sophium-nav-item ${isOpen ? "is-active" : ""}`}
             >
               <span className="sophium-nav-icon" aria-hidden="true">
-                <DesktopTopbarIcon name={item.icon} />
+                <DesktopTopbarIcon name={item.icon} active={isSectionActive} />
               </span>
               <span>{item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label}</span>
             </button>
 
             {item.menuKey === "nexum" && isOpen ? (
               <DesktopDropdownMenu
+                section="nexum"
                 items={desktopNexumMenuItems}
                 isNavItemActive={isNavItemActive}
                 onClose={() => setDesktopDropdownOpen(null)}
@@ -165,6 +175,7 @@ export function TopBarDesktop({
 
             {item.menuKey === "agora" && isOpen ? (
               <DesktopDropdownMenu
+                section="agora"
                 items={desktopAgoraMenuItems}
                 isNavItemActive={isNavItemActive}
                 onClose={() => setDesktopDropdownOpen(null)}

@@ -39,6 +39,7 @@ import { createRenderableImageUrlFromBlob, revokeObjectUrls } from "@/lib/utils/
 import { AteneoKickMemberModal } from "./AteneoKickMemberModal";
 import { AteneoContentModerationModal } from "./AteneoContentModerationModal";
 import { AteneoRelativeTime } from "./AteneoLocalizedLabels";
+import { ReportDialog, type ReportTarget } from "@/app/(platform)/_components/ReportDialog";
 
 type AteneoTopicDiscussionProps = {
   groupId: string;
@@ -105,6 +106,7 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
   const [openReplyFor, setOpenReplyFor] = useState<string | null>(null);
   const replyTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [reportOpenFor, setReportOpenFor] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [groupMembersByUserId, setGroupMembersByUserId] = useState<Record<string, AteneoGroupMember>>({});
   const [kickTarget, setKickTarget] = useState<{ userId: string; name: string; sourceContext: "TOPIC" | "COMMENT"; sourceCommentId?: string } | null>(null);
   const [isKicking, setIsKicking] = useState(false);
@@ -839,19 +841,22 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                     </button>
                   ) : null}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toast.info("Tema reportado");
-                      setReportOpenFor(null);
-                    }}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
-                  >
-                    <span className="text-[var(--danger-500)]">
-                      <FlagIcon />
-                    </span>
-                    <span className="text-[var(--danger-500)]">Denunciar publicación</span>
-                  </button>
+                  {/* Reporting your own topic makes no sense, so it is hidden for the author. */}
+                  {!canDeleteTopic ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReportOpenFor(null);
+                        setReportTarget({ type: "ATENEO_TOPIC", id: topic.id });
+                      }}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
+                    >
+                      <span className="text-[var(--danger-500)]">
+                        <FlagIcon />
+                      </span>
+                      <span className="text-[var(--danger-500)]">Denunciar publicación</span>
+                    </button>
+                  ) : null}
 
                   {canKickTarget(topic.author.userId) ? (
                     <button
@@ -1103,8 +1108,8 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
                               <button
                                 type="button"
                                 onClick={() => {
-                                  toast.info("Comentario reportado");
                                   setReportOpenFor(null);
+                                  setReportTarget({ type: "ATENEO_COMMENT", id: comment.id });
                                 }}
                                 className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-scale-2 font-medium text-[var(--danger-500)] hover:bg-[color:color-mix(in_srgb,var(--danger-500)_12%,transparent)]"
                               >
@@ -1278,6 +1283,8 @@ export function AteneoTopicDiscussion({ groupId, topicId }: AteneoTopicDiscussio
           onConfirm={handleModerationConfirm}
         />
       ) : null}
+
+      <ReportDialog target={reportTarget} onClose={() => setReportTarget(null)} />
     </div>
   );
 }

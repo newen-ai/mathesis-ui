@@ -1,3 +1,4 @@
+import { BrandSymbol } from "@/components/ui/BrandSymbol";
 import type { ReactNode } from "react";
 
 type DesktopTopbarIconProps = {
@@ -87,30 +88,11 @@ function AdminIcon({ className }: DesktopTopbarIconProps) {
   );
 }
 
-function NexumIcon({ className }: DesktopTopbarIconProps) {
-  return (
-    <IconFrame className={className}>
-      <path d="M8 4.8h8" />
-      <path d="m9.2 4.8 1 4.2v4.1A3.7 3.7 0 0 1 6.5 16.8h0" />
-      <path d="m14.8 4.8-1 4.2v4.1a3.7 3.7 0 0 0 3.7 3.7h0" />
-      <path d="M6.5 16.8h11" />
-    </IconFrame>
-  );
-}
-
-function AgoraIcon({ className }: DesktopTopbarIconProps) {
-  return (
-    <IconFrame className={className}>
-      <ellipse cx="9" cy="12" rx="4.2" ry="4.7" />
-      <ellipse cx="15" cy="12" rx="4.2" ry="4.7" />
-    </IconFrame>
-  );
-}
-
 export function DesktopTopbarIcon({
   name,
   className = "h-[1.15rem] w-[1.15rem]",
-}: DesktopTopbarIconProps & { name: DesktopTopbarIconName }) {
+  active = false,
+}: DesktopTopbarIconProps & { name: DesktopTopbarIconName; active?: boolean }) {
   if (name === "feed") {
     return <FeedIcon className={className} />;
   }
@@ -131,12 +113,9 @@ export function DesktopTopbarIcon({
     return <DirectoryIcon className={className} />;
   }
 
-  if (name === "nexum") {
-    return <NexumIcon className={className} />;
-  }
-
-  if (name === "agora") {
-    return <AgoraIcon className={className} />;
+  // Section symbols from the brand manual: silver at rest, gold while the section is active.
+  if (name === "nexum" || name === "agora") {
+    return <BrandSymbol name={name} finish={active ? "gold" : "silver"} className="h-[1.35rem]" />;
   }
 
   return <AdminIcon className={className} />;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 import { normalizeEmailInput } from "@/lib/utils/email";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
 import { requestPasswordReset } from "@/lib/api/auth";
@@ -114,21 +114,8 @@ export default function ForgotPasswordPage() {
             style={{ borderColor: "color-mix(in srgb, var(--brand-500) 24%, transparent)" }}
           />
 
-          <div className="relative z-10 flex flex-col items-center lg:flex-row lg:items-center lg:gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={BRAND_LOGO_SRC}
-              alt={t("common.brandLogoAlt")}
-              width={40}
-              height={40}
-              loading="eager"
-              decoding="async"
-              className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
-            />
-            <p className="mt-2 font-display text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
-              Sophium
-            </p>
-          </div>
+          <BrandCornerLogo />
+          <div aria-hidden="true" className="h-14" />
 
           <div className="relative z-10 mt-10 lg:mt-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">{t("forgotPassword.desktopEyebrow")}</p>
@@ -186,7 +173,7 @@ export default function ForgotPasswordPage() {
                   }}
                 />
                 {errors.email ? (
-                  <p id="email-error" className="text-sm font-medium text-red-600">
+                  <p id="email-error" className="text-sm font-medium text-[var(--danger-500)]">
                     {errors.email}
                   </p>
                 ) : null}
@@ -194,7 +181,7 @@ export default function ForgotPasswordPage() {
 
               {captcha.widget}
               {errors.captcha ? (
-                <p className="text-center text-sm font-medium text-red-600">{errors.captcha}</p>
+                <p className="text-center text-sm font-medium text-[var(--danger-500)]">{errors.captcha}</p>
               ) : null}
 
               <button

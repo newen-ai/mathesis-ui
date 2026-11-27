@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 import { maskEmailForDisplay, resolveEmailParam } from "@/lib/utils/email";
 
 export default function ForgotPasswordSentPage() {
@@ -44,21 +44,8 @@ export default function ForgotPasswordSentPage() {
             style={{ borderColor: "color-mix(in srgb, var(--brand-500) 24%, transparent)" }}
           />
 
-          <div className="relative z-10 flex flex-col items-center lg:flex-row lg:items-center lg:gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={BRAND_LOGO_SRC}
-              alt={t("common.brandLogoAlt")}
-              width={40}
-              height={40}
-              loading="eager"
-              decoding="async"
-              className="mx-auto h-16 w-16 lg:mx-0 lg:h-9 lg:w-9"
-            />
-            <p className="mt-2 font-display text-xl font-bold tracking-[0.1em] text-[#FAF8F5] lg:mt-0 lg:text-xl">
-              Sophium
-            </p>
-          </div>
+          <BrandCornerLogo />
+          <div aria-hidden="true" className="h-14" />
 
           <div className="relative z-10 mt-10 lg:mt-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C9A84C]">{t("forgotPasswordSent.desktopEyebrow")}</p>

@@ -15,7 +15,7 @@
   },
   "states": {
     "loading": "Loading notifications...",
-    "empty": "You have no notifications."
+    "empty": "You're all caught up."
   },
   "errors": {
     "load": "We couldn't load your notifications.",

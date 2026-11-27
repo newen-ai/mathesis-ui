@@ -17,6 +17,9 @@ type RegisterInput = CaptchaInput & {
 	lastName: string;
 	email: string;
 	password: string;
+	// Versions of the Terms and Privacy Policy shown in the form. Omitted when they could not be loaded: the
+	// user then accepts them on the first visit instead.
+	acceptedLegalVersions?: { termsVersion: string; privacyVersion: string } | null;
 };
 
 type LoginInput = CaptchaInput & {
@@ -54,6 +57,9 @@ export type SessionAccessDecision = {
 	isWhitelisted: boolean;
 	hasVerifiedEmail: boolean;
 	hasCompletedWelcomeOnboarding: boolean;
+	// False when the current Terms / Privacy Policy versions are still to be accepted. Undefined with older
+	// backends, which means "nothing to accept".
+	hasAcceptedCurrentLegalDocuments?: boolean;
 };
 
 type WhitelistErrorDetails = {
@@ -67,6 +73,7 @@ type SessionPayload = {
 			isWhitelisted?: boolean;
 			hasVerifiedEmail?: boolean;
 			hasCompletedWelcomeOnboarding?: boolean;
+			hasAcceptedCurrentLegalDocuments?: boolean;
 		};
 	};
 	details?: WhitelistErrorDetails;
@@ -97,6 +104,12 @@ export async function register(
 				lastName: input.lastName,
 				email: input.email,
 				password: input.password,
+				...(input.acceptedLegalVersions
+					? {
+							acceptedTermsVersion: input.acceptedLegalVersions.termsVersion,
+							acceptedPrivacyVersion: input.acceptedLegalVersions.privacyVersion,
+						}
+					: {}),
 				...captchaBody(input),
 			},
 		});
@@ -398,6 +411,7 @@ export async function getSessionAccessDecision(): Promise<SessionAccessDecision>
 			isWhitelisted,
 			hasVerifiedEmail,
 			hasCompletedWelcomeOnboarding,
+			hasAcceptedCurrentLegalDocuments: payload?.data?.user?.hasAcceptedCurrentLegalDocuments,
 		};
 	} catch {
 		return {
@@ -453,6 +467,25 @@ export async function getSessionUserId(): Promise<string | null> {
 	}
 }
 
+export type SessionContact = { id: string; email: string };
+
+// Who is logged in, for forms that prefill the account email (bug reports). Null when there is no session.
+export async function getSessionContact(): Promise<SessionContact | null> {
+	try {
+		const sessionResponse = await apiRequest("/auth/session");
+		if (!sessionResponse.ok) {
+			return null;
+		}
+
+		const payload = (await sessionResponse.json()) as { data?: { user?: { id?: unknown; email?: unknown } } };
+		const id = payload?.data?.user?.id;
+		const email = payload?.data?.user?.email;
+		return typeof id === "string" && id && typeof email === "string" && email ? { id, email } : null;
+	} catch {
+		return null;
+	}
+}
+
 export async function logout(): Promise<AuthServiceResponse> {
 	try {
 		const response = await apiRequest("/auth/logout", {
@@ -473,32 +506,6 @@ export async function logout(): Promise<AuthServiceResponse> {
 				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
 					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
 					: "No pudimos conectar con el servicio de logout.",
-			details: "Error de red o CORS.",
-		};
-	}
-}
-
-export async function requestWhitelistAccess(message?: string): Promise<AuthServiceResponse> {
-	try {
-		const response = await apiRequest("/auth/whitelist-request", {
-			method: "POST",
-			body: {
-				message,
-			},
-		});
-
-		return parseServiceResponse(
-			response,
-			"Respuesta inválida del servicio de solicitud de whitelist."
-		);
-	} catch (error) {
-		return {
-			success: false,
-			message:
-				error instanceof Error &&
-				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
-					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
-					: "No pudimos enviar tu solicitud de whitelist.",
 			details: "Error de red o CORS.",
 		};
 	}

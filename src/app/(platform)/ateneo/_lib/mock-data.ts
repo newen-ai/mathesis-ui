@@ -1,4 +1,4 @@
-import { BRAND_LOGO_SRC, MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
+import { BRAND_LOGO_SRC } from "@/lib/assets";
 
 export type AteneoBadge = {
   id: string;
@@ -50,12 +50,6 @@ export const ateneoIconOptions: AteneoIconOption[] = [
 ];
 
 export const ateneoBadgeOptions: AteneoBadgeOption[] = [
-  {
-    id: "mensa-ar",
-    label: "Mensa AR",
-    logoSrc: MENSA_ARGENTINA_LOGO_SRC,
-    logoAlt: "Logo Mensa Argentina",
-  },
   {
     id: "mensa-empresarios",
     label: "Sophium Empresarios",

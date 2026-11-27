@@ -7,6 +7,11 @@
       "missingApiBaseUrl": "Bug report integration is not configured in this environment.",
       "imageTooLarge": "One of the screenshots is too large to send.",
       "imagesOnly": "Only image files are allowed as bug report screenshots.",
+      "contactEmailRequired": "Leave a contact email so we can get back to you.",
+      "tooManyScreenshots": "You attached more screenshots than allowed.",
+      "captchaRequired": "Complete the verification to send the report.",
+      "captchaFailed": "The verification failed. Try again.",
+      "rateLimited": "You sent many reports. Try again later.",
       "default": "We could not send the bug report right now."
     }
   },
@@ -28,5 +33,62 @@
     "minutesAgo": "{{count}} min ago",
     "hoursAgo": "{{count}} h ago",
     "daysAgo": "{{count}} d ago"
+  },
+  "report": {
+    "title": {
+      "profile": "Report profile",
+      "feedPost": "Report post",
+      "ateneoTopic": "Report topic",
+      "ateneoComment": "Report comment"
+    },
+    "description": "Tell us what is going on. The Sophium team reviews every report, and the reported person does not learn who made it.",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Select a reason",
+    "reasons": {
+      "SPAM": "Spam or advertising",
+      "HARASSMENT": "Harassment or insults",
+      "INAPPROPRIATE": "Inappropriate content",
+      "IMPERSONATION": "Impersonation",
+      "OTHER": "Other"
+    },
+    "detailsLabel": "Details (optional)",
+    "detailsLabelRequired": "Details",
+    "detailsPlaceholder": "What are you reporting and why?",
+    "detailsRequired": "Tell us the reason so we can review it.",
+    "cancel": "Cancel",
+    "submit": "Send report",
+    "submitting": "Sending...",
+    "toasts": {
+      "sent": "We received your report. Thanks for letting us know.",
+      "alreadyReported": "You already reported this. We are reviewing it.",
+      "notFound": "This content is no longer available.",
+      "rateLimited": "You sent many reports in a row. Try again later.",
+      "error": "We could not send the report. Try again."
+    }
+  },
+  "legal": {
+    "back": "Back",
+    "lastUpdated": "Last updated: {{date}}",
+    "loading": "Loading...",
+    "loadError": "We could not load the document. Please try again in a few minutes.",
+    "retry": "Try again",
+    "spanishOnly": "This document is only available in Spanish.",
+    "termsTitle": "Terms and Conditions",
+    "privacyTitle": "Privacy Policy",
+    "seeAlsoTerms": "See the Terms and Conditions",
+    "seeAlsoPrivacy": "See the Privacy Policy",
+    "gate": {
+      "title": "Terms and Privacy Policy",
+      "intro": "To keep using Sophium, please read and accept the Terms and Conditions and the Privacy Policy.",
+      "read": "Read",
+      "hide": "Hide",
+      "openInNewTab": "Open in a new tab",
+      "checkbox": "I have read and accept Sophium's Terms and Conditions and Privacy Policy.",
+      "accept": "Accept and continue",
+      "accepting": "Saving...",
+      "logout": "Log out",
+      "outdated": "The texts were updated while you were reading them. Please review them and accept again.",
+      "acceptError": "We could not save your acceptance. Please try again."
+    }
   }
 }

@@ -6,11 +6,9 @@ import { AppCard } from "@/components/ui/AppCard";
 import { getSessionAccessDecision, type SessionRole } from "@/lib/api/auth";
 import { ModulePage } from "../_components/ModulePage";
 import {
-  approveWhitelistRequest,
-  getWhitelistRequests,
   getWhitelistUsers,
   getWhitelistedEmails,
-  type WhitelistRequestRow,
+  promoteUserToWhitelist,
   type WhitelistUserRow,
   type WhitelistedEmailRow,
 } from "@/lib/api/admin";
@@ -26,7 +24,7 @@ import { HOME_PATH } from "@/lib/routes";
 
 type AccessState = "loading" | "allowed" | "denied";
 type ViewMode = "whitelist" | "mensa";
-type WhitelistViewMode = "requests" | "pending-users" | "whitelisted-emails";
+type WhitelistViewMode = "pending-users" | "whitelisted-emails";
 
 const dashboardTabs: Array<{ value: ViewMode; label: string; description: string }> = [
   {
@@ -41,12 +39,21 @@ const dashboardTabs: Array<{ value: ViewMode; label: string; description: string
   },
 ];
 
+// Recorded in the whitelist audit log for every approval from this panel.
+const PROMOTE_REASON = "Aprobado desde el panel de administración";
+
+function formatPendingUserName(user: WhitelistUserRow): string | null {
+  const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return name || null;
+}
+
+function formatRegisteredAt(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("es-AR", { day: "numeric", month: "short", year: "numeric" });
+}
+
 const whitelistViewButtons: Array<{ value: WhitelistViewMode; label: string; description: string }> = [
-  {
-    value: "requests",
-    label: "Solicitudes",
-    description: "Emails solicitando acceso",
-  },
   {
     value: "pending-users",
     label: "Usuarios pendientes",
@@ -64,12 +71,13 @@ export default function AdminPage() {
   const [accessState, setAccessState] = useState<AccessState>("loading");
   const [role, setRole] = useState<SessionRole | null>(null);
   const [activeTab, setActiveTab] = useState<ViewMode>("whitelist");
-  const [activeWhitelistView, setActiveWhitelistView] = useState<WhitelistViewMode>("requests");
-  const [requests, setRequests] = useState<WhitelistRequestRow[]>([]);
+  const [activeWhitelistView, setActiveWhitelistView] = useState<WhitelistViewMode>("pending-users");
   const [pendingUsers, setPendingUsers] = useState<WhitelistUserRow[]>([]);
   const [whitelistedEmails, setWhitelistedEmails] = useState<WhitelistedEmailRow[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [promotingUserId, setPromotingUserId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   // Mensa admin state
@@ -113,22 +121,25 @@ export default function AdminPage() {
     };
   }, [router]);
 
-  const reloadWhitelistData = useCallback(async () => {
+  const loadWhitelistData = useCallback(async (signal?: AbortSignal) => {
     setIsLoadingData(true);
     setLoadError(null);
 
     try {
-      const [requestsResult, pendingUsersResult, emailsResult] = await Promise.allSettled([
-        getWhitelistRequests(),
-        getWhitelistUsers("non-whitelisted"),
-        getWhitelistedEmails(),
+      const [pendingUsersResult, emailsResult] = await Promise.allSettled([
+        getWhitelistUsers("non-whitelisted", signal),
+        getWhitelistedEmails(signal),
       ]);
 
-      if (requestsResult.status === "fulfilled") setRequests(requestsResult.value);
-      if (pendingUsersResult.status === "fulfilled") setPendingUsers(pendingUsersResult.value);
+      if (signal?.aborted) return;
+
+      // Admins get in without being on the whitelist, so they are never "pending".
+      if (pendingUsersResult.status === "fulfilled") {
+        setPendingUsers(pendingUsersResult.value.filter((user) => user.role !== "admin"));
+      }
       if (emailsResult.status === "fulfilled") setWhitelistedEmails(emailsResult.value);
 
-      const firstError = [requestsResult, pendingUsersResult, emailsResult].find(
+      const firstError = [pendingUsersResult, emailsResult].find(
         (result): result is PromiseRejectedResult => result.status === "rejected"
       );
 
@@ -140,7 +151,7 @@ export default function AdminPage() {
         );
       }
     } finally {
-      setIsLoadingData(false);
+      if (!signal?.aborted) setIsLoadingData(false);
     }
   }, []);
 
@@ -162,47 +173,11 @@ export default function AdminPage() {
   useEffect(() => {
     if (accessState !== "allowed") return;
 
-    let isMounted = true;
     const controller = new AbortController();
-
-    const loadData = async () => {
-      try {
-        const [requestsResult, pendingUsersResult, emailsResult] = await Promise.allSettled([
-          getWhitelistRequests(controller.signal),
-          getWhitelistUsers("non-whitelisted", controller.signal),
-          getWhitelistedEmails(controller.signal),
-        ]);
-
-        if (!isMounted || controller.signal.aborted) return;
-
-        if (requestsResult.status === "fulfilled") setRequests(requestsResult.value);
-        if (pendingUsersResult.status === "fulfilled") setPendingUsers(pendingUsersResult.value);
-        if (emailsResult.status === "fulfilled") setWhitelistedEmails(emailsResult.value);
-
-        const firstError = [requestsResult, pendingUsersResult, emailsResult].find(
-          (result): result is PromiseRejectedResult => result.status === "rejected"
-        );
-
-        if (firstError) {
-          setLoadError(
-            firstError.reason instanceof Error
-              ? firstError.reason.message
-              : "No pudimos cargar una parte del dashboard."
-          );
-        }
-      } finally {
-        if (!isMounted || controller.signal.aborted) return;
-        setIsLoadingData(false);
-      }
-    };
-
-    void loadData();
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [accessState]);
+    const run = async () => { await loadWhitelistData(controller.signal); };
+    void run();
+    return () => controller.abort();
+  }, [accessState, loadWhitelistData]);
 
   useEffect(() => {
     if (accessState !== "allowed" || activeTab !== "mensa") return;
@@ -238,22 +213,27 @@ export default function AdminPage() {
 
 
   const viewSummary = useMemo(() => ({
-    requests: requests.length,
     pendingUsers: pendingUsers.length,
     whitelistedEmails: whitelistedEmails.length,
-  }), [requests.length, pendingUsers.length, whitelistedEmails.length]);
+  }), [pendingUsers.length, whitelistedEmails.length]);
 
-  const onApprove = async (requestId: string) => {
+  const onPromote = async (user: WhitelistUserRow) => {
+    const label = formatPendingUserName(user) ? `${formatPendingUserName(user)} (${user.email})` : user.email;
+    if (!window.confirm(`¿Agregar a ${label} a la whitelist? Va a poder entrar a Sophium.`)) return;
+
     setActionMessage(null);
-    const result = await approveWhitelistRequest(requestId);
+    setActionError(null);
+    setPromotingUserId(user.id);
+    const result = await promoteUserToWhitelist(user.id, PROMOTE_REASON);
+    setPromotingUserId(null);
 
     if (!result.success) {
-      setActionMessage(result.message);
+      setActionError(result.message || "No se pudo agregar a la whitelist.");
       return;
     }
 
-    setActionMessage("Solicitud aprobada correctamente.");
-    await reloadWhitelistData();
+    setActionMessage(`${label} ya está en la whitelist.`);
+    await loadWhitelistData();
   };
 
   const onOpenAddAdminModal = () => {
@@ -338,7 +318,7 @@ export default function AdminPage() {
 
         {activeTab === "whitelist" ? (
           <div className="mt-4 text-xs text-[var(--text-secondary)]">
-            Solicitudes: {viewSummary.requests} · Pendientes: {viewSummary.pendingUsers} · Aprobados: {viewSummary.whitelistedEmails}
+            Pendientes: {viewSummary.pendingUsers} · Aprobados: {viewSummary.whitelistedEmails}
           </div>
         ) : (
           <div className="mt-4 text-xs font-semibold text-[var(--text-primary)]">
@@ -347,7 +327,7 @@ export default function AdminPage() {
         )}
 
         {loadError ? (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="mt-4 rounded-xl border border-[var(--pending-line)] bg-[var(--pending-soft)] px-3 py-2 text-sm text-[var(--pending-500)]">
             {loadError}
           </div>
         ) : null}
@@ -357,14 +337,10 @@ export default function AdminPage() {
       {activeTab === "whitelist" ? (
         <AppCard className="p-5">
           <h2 className="font-display text-xl font-semibold text-[var(--text-primary)]">
-            {activeWhitelistView === "requests"
-              ? "Solicitudes de acceso"
-              : activeWhitelistView === "pending-users"
-                ? "Usuarios pendientes"
-                : "Emails aprobados"}
+            {activeWhitelistView === "pending-users" ? "Usuarios pendientes" : "Emails aprobados"}
           </h2>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
             {whitelistViewButtons.map((item) => (
               <button
                 key={item.value}
@@ -391,8 +367,14 @@ export default function AdminPage() {
           </div>
 
           {actionMessage ? (
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <div className="mt-3 rounded-xl border border-[var(--success-line)] bg-[var(--success-soft)] px-3 py-2 text-sm text-[var(--success-500)]">
               {actionMessage}
+            </div>
+          ) : null}
+
+          {actionError ? (
+            <div className="mt-3 rounded-xl border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger-500)]">
+              {actionError}
             </div>
           ) : null}
 
@@ -400,46 +382,40 @@ export default function AdminPage() {
             <p className="mt-4 text-sm text-[var(--text-secondary)]">Cargando datos...</p>
           ) : null}
 
-          {!isLoadingData && activeWhitelistView === "requests" ? (
-            <div className="mt-4 space-y-3">
-              {requests.length === 0 ? (
-                <p className="text-sm text-slate-600">No hay solicitudes pendientes.</p>
-              ) : (
-                requests.map((request) => (
-                  <div key={request.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-900">{request.user.email}</div>
-                        <div className="text-xs text-slate-600">Canonical: {request.canonicalEmail}</div>
-                        {request.message ? <div className="mt-2 text-sm text-slate-700">{request.message}</div> : null}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onApprove(request.id)}
-                          className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-                        >
-                          Aprobar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          ) : null}
-
           {!isLoadingData && activeWhitelistView === "pending-users" ? (
             <div className="mt-4 space-y-3">
               {pendingUsers.length === 0 ? (
                 <p className="text-sm text-slate-600">No hay usuarios pendientes.</p>
               ) : (
-                pendingUsers.map((user) => (
-                  <div key={user.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="text-sm font-semibold text-slate-900">{user.email}</div>
-                    <div className="text-xs text-slate-600">Canonical: {user.canonicalEmail}</div>
-                  </div>
-                ))
+                pendingUsers.map((user) => {
+                  const name = formatPendingUserName(user);
+                  const registeredAt = formatRegisteredAt(user.createdAt);
+                  const isPromoting = promotingUserId === user.id;
+
+                  return (
+                    <div
+                      key={user.id}
+                      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-900">{name ?? user.email}</div>
+                        {name ? <div className="break-all text-sm text-slate-700">{user.email}</div> : null}
+                        <div className="mt-1 text-xs text-slate-600">
+                          {registeredAt ? `Registrado el ${registeredAt}` : null}
+                          {user.hasVerifiedEmail === false ? `${registeredAt ? " · " : ""}Mail sin confirmar` : null}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void onPromote(user)}
+                        disabled={promotingUserId !== null}
+                        className="shrink-0 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isPromoting ? "Agregando..." : "Agregar a la whitelist"}
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
           ) : null}
@@ -482,13 +458,13 @@ export default function AdminPage() {
           </div>
 
           {meAdminMessage ? (
-            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <div className="mt-4 rounded-xl border border-[var(--success-line)] bg-[var(--success-soft)] px-3 py-2 text-sm text-[var(--success-500)]">
               {meAdminMessage}
             </div>
           ) : null}
 
           {meAdminError ? (
-            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="mt-4 rounded-xl border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger-500)]">
               {meAdminError}
             </div>
           ) : null}
@@ -512,7 +488,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => void onRemoveAdmin(admin.userId)}
-                    className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500"
+                    className="rounded-full bg-[var(--danger-500)] px-4 py-2 text-sm font-semibold text-[var(--on-danger)] transition hover:brightness-110"
                   >
                     Quitar admin
                   </button>

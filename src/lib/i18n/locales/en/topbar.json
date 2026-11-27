@@ -42,7 +42,6 @@
     "closeMenu": "Close menu",
     "openMenu": "Open menu",
     "goToNotifications": "Go to notifications",
-    "defaultIdentity": "CEO · Sophium & Newen Solutions",
     "membership": {
       "loading": "Loading membership...",
       "sending": "Sending request...",
@@ -63,7 +62,7 @@
       "title": "Nexum · your professional network",
       "profile": {
         "title": "Your Professional Profile",
-        "subtitle": "CV, experience and Mensa verification"
+        "subtitle": "CV and experience"
       },
       "editProfessionalProfile": "Edit Professional Profile",
       "companies": {
@@ -104,7 +103,6 @@
         "subtitle": "Settings, legal, and admin tools"
       },
       "legalRules": "Ateneo and Sophium rules",
-      "legalTermsPrivacy": "Terms and Privacy Policy",
       "adminUsers": "Sophium users",
       "adminSophium": "Sophium management",
       "reportPost": "Post reports",

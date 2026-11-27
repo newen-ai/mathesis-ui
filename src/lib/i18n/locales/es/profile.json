@@ -35,8 +35,6 @@
     "activeBadgeCriteria": "Insignia activa en tu perfil",
     "memberSince": "Miembro Sophium desde jul 2026",
     "fallbackName": "María López",
-    "frontMembershipFallbackLabel": "Mensa Argentina",
-    "frontMembershipFallbackCriteria": "Miembro de Mensa Argentina",
     "logoMensaAlt": "Logo Mensa Argentina",
     "logoSophiumAlt": "Logo Sophium",
     "actions": {
@@ -129,7 +127,7 @@
       "postalCode": "Código postal",
       "about": "Acerca de (máx. 800)"
     },
-    "emptyAbout": "Aún no agregaste una descripción profesional.",
+    "emptyAbout": "Contá en pocas líneas a qué te dedicás.",
     "errors": {
       "birthDate": {
         "future": "La fecha de nacimiento no puede ser futura.",
@@ -151,7 +149,7 @@
   "experience": {
     "title": "Experiencia",
     "add": "+ Agregar experiencia",
-    "empty": "Todavía no agregaste experiencias laborales.",
+    "empty": "Agregá tu primera experiencia laboral.",
     "new": "Nueva experiencia",
     "editTitle": "Editar experiencia",
     "update": "Actualizar experiencia",
@@ -183,7 +181,7 @@
   "education": {
     "title": "Formación académica",
     "add": "+ Agregar formación",
-    "empty": "Todavía no agregaste formación académica.",
+    "empty": "Agregá tu formación académica.",
     "new": "Nueva formación",
     "editTitle": "Editar formación",
     "update": "Actualizar formación",
@@ -218,13 +216,13 @@
     "add": "Agregar",
     "save": "Guardar",
     "discard": "Descartar",
-    "empty": "Aún no agregaste intereses.",
+    "empty": "Sumá tus intereses para conectar con afinidad.",
     "suggestionTag": "sugerencia",
     "inputPlaceholder": "Agregar interés",
     "helpTypeToSuggest": "Escribí al menos 3 caracteres para ver sugerencias.",
     "helpDragToReorder": "Arrastrá y soltá los intereses para reordenarlos.",
     "loadingSuggestions": "Buscando sugerencias...",
-    "noSuggestions": "No hay sugerencias para este texto.",
+    "noSuggestions": "Probá con otra palabra.",
     "errors": {
       "invalid": "Ingresá un interés válido antes de agregarlo.",
       "duplicate": "Ese interés ya está agregado."

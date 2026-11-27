@@ -51,7 +51,7 @@
     "contacts": "Contacts",
     "searchingContacts": "Searching contacts...",
     "emptySearch": "No contacts found for that search.",
-    "emptyContacts": "No contacts available yet.",
+    "emptyContacts": "Your connections will show up here.",
     "writeMessage": "Write a message...",
     "send": "Send",
     "sending": "Sending...",
@@ -59,11 +59,11 @@
   },
   "conversations": {
     "loading": "Loading conversations...",
-    "empty": "You don't have conversations yet.",
+    "empty": "Start a conversation with another Member.",
     "selectToStart": "Select a conversation to begin.",
     "backToList": "Back to list",
     "loadingOlder": "Loading earlier messages...",
-    "emptyThread": "No messages yet.",
+    "emptyThread": "Write the first message.",
     "deletedMessage": "Deleted message",
     "newConversationButton": "New conversation"
   },

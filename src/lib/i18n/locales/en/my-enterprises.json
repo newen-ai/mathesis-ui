@@ -4,7 +4,7 @@
     "subtitle": "These are the companies you manage in Sophium. Only the Admin can edit or delete a record. The Admin is the user who created it in Sophium.",
     "createNew": "+ Create new company",
     "loading": "Loading companies...",
-    "empty": "You do not have any companies yet.",
+    "empty": "Create your first company.",
     "errors": {
       "delete": "We could not delete the company."
     },
@@ -49,7 +49,7 @@
     "back": "<- Back",
     "aside": {
       "whatIsTitle": "What is Sophium Business?",
-      "whatIsBody": "An additional membership for members with their own company or startup. It adds access to a verified company directory and an exclusive networking feed for Mensa entrepreneurs.",
+      "whatIsBody": "An additional membership for members with their own company or startup. It adds access to a verified company directory and an exclusive networking feed for Sophium entrepreneurs.",
       "howItWorksTitle": "How it works",
       "howItWorksBody": "Your request is reviewed by the Sophium Business team and we will notify you once it is approved."
     }

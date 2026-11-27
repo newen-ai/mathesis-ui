@@ -10,8 +10,10 @@ import * as block from "./block";
 import * as chat from "./chat";
 import * as enterprise from "./enterprise";
 import * as feed from "./feed";
+import * as legal from "./legal";
 import * as notifications from "./notifications";
 import * as profile from "./profile";
+import * as report from "./report";
 import * as verbum from "./verbum";
 
 // Ids with reserved characters prove every path segment is URL-encoded.
@@ -52,6 +54,7 @@ const cases: ContractCase[] = [
     { name: "Nuevo", icon: "community" },
   ],
   ["joinAteneoGroup", () => ateneo.joinAteneoGroup(G), "POST", `/ateneo/groups/${eG}/join`],
+  ["leaveAteneoGroup", () => ateneo.leaveAteneoGroup(G), "POST", `/ateneo/groups/${eG}/leave`],
   ["listAteneoFeed", () => ateneo.listAteneoFeed(5), "GET", "/ateneo/feed?limit=5"],
   ["listAteneoTopics", () => ateneo.listAteneoTopics(G, 7), "GET", `/ateneo/groups/${eG}/topics?limit=7`],
   ["getAteneoTopic", () => ateneo.getAteneoTopic(G, T), "GET", `/ateneo/groups/${eG}/topics/${eT}`],
@@ -94,6 +97,21 @@ const cases: ContractCase[] = [
   ["blockUser with note", () => block.blockUser(U, "molesto"), "POST", `/blocks/${eU}`, { reasonNote: "molesto" }],
   ["blockUser without note", () => block.blockUser(U), "POST", `/blocks/${eU}`, {}],
   ["unblockUser", () => block.unblockUser(U), "DELETE", `/blocks/${eU}`],
+  // Content reports
+  [
+    "createContentReport with details",
+    () => report.createContentReport({ targetType: "ATENEO_COMMENT", targetId: C, reason: "OTHER", details: "  insulta  " }),
+    "POST",
+    "/reports",
+    { targetType: "ATENEO_COMMENT", targetId: C, reason: "OTHER", details: "insulta" }
+  ],
+  [
+    "createContentReport without details",
+    () => report.createContentReport({ targetType: "PROFILE", targetId: U, reason: "SPAM", details: "   " }),
+    "POST",
+    "/reports",
+    { targetType: "PROFILE", targetId: U, reason: "SPAM" }
+  ],
   // Enterprises
   ["listMyEnterprises", () => enterprise.listMyEnterprises(), "GET", "/enterprises/my"],
   ["listVerifiedDirectory", () => enterprise.listVerifiedDirectory(), "GET", "/enterprises/directory"],
@@ -108,10 +126,8 @@ const cases: ContractCase[] = [
   ["deleteEnterprise", () => enterprise.deleteEnterprise("e1"), "DELETE", "/enterprises/e1"],
   // Platform admin (whitelist) and companies dashboard
   ["getWhitelistedEmails", () => admin.getWhitelistedEmails(), "GET", "/admin/whitelist/emails"],
-  ["getWhitelistUsers", () => admin.getWhitelistUsers("non-whitelisted"), "GET", "/admin/whitelist/users?status=non-whitelisted"],
-  ["getWhitelistRequests", () => admin.getWhitelistRequests(), "GET", "/admin/whitelist/requests?status=PENDING"],
-  ["approveWhitelistRequest with reason", () => admin.approveWhitelistRequest("r/1", "ok"), "POST", `/admin/whitelist/requests/${encodeURIComponent("r/1")}/approve`, { reason: "ok" }],
-  ["approveWhitelistRequest without reason", () => admin.approveWhitelistRequest("r1"), "POST", "/admin/whitelist/requests/r1/approve", {}],
+  ["getWhitelistUsers", () => admin.getWhitelistUsers("non-whitelisted"), "GET", "/admin/whitelist/users?status=non-whitelisted&limit=200"],
+  ["promoteUserToWhitelist", () => admin.promoteUserToWhitelist("u/1", "Formulario beta"), "POST", `/admin/whitelist/users/${encodeURIComponent("u/1")}/promote`, { reason: "Formulario beta" }],
   ["checkCompaniesAdminAccess", () => admin.checkCompaniesAdminAccess(), "GET", "/admin/companies/access-check"],
   ["createCompaniesMembershipRequest", () => admin.createCompaniesMembershipRequest("hola"), "POST", "/admin/companies/my-request", { message: "hola" }],
   ["createCompaniesMembershipRequest empty", () => admin.createCompaniesMembershipRequest(), "POST", "/admin/companies/my-request", {}],
@@ -148,6 +164,15 @@ const cases: ContractCase[] = [
   ["getMyPreferences", () => profile.getMyPreferences(), "GET", "/profile/me/preferences"],
   ["updateMyPreferences", () => profile.updateMyPreferences("dark"), "PATCH", "/profile/me/preferences", { themePreference: "dark" }],
   // Verbum
+  // Legal
+  ["getLegalDocument", () => legal.getLegalDocument("privacy"), "GET", "/legal/documents/privacy"],
+  [
+    "acceptLegalDocuments",
+    () => legal.acceptLegalDocuments({ termsVersion: "2026-11-27", privacyVersion: "2026-11-27" }),
+    "POST",
+    "/legal/acceptances",
+    { termsVersion: "2026-11-27", privacyVersion: "2026-11-27" },
+  ],
   ["getVerbumPuzzle (today)", () => verbum.getVerbumPuzzle(null), "GET", "/games/verbum/today"],
   ["getVerbumPuzzle (day)", () => verbum.getVerbumPuzzle(G), "GET", `/games/verbum/puzzles/${eG}`],
   ["submitVerbumGuess", () => verbum.submitVerbumGuess(G, "ROBOT"), "POST", `/games/verbum/puzzles/${eG}/guesses`, { guess: "ROBOT" }],
@@ -196,6 +221,24 @@ describe("API contract with the backend", () => {
     expect(mock.last.path).toBe("/support/bug-reports");
     expect(bugForm.get("pageUrl")).toBe("https://x");
     expect(bugForm.getAll("screenshots")).toHaveLength(1);
+    // Logged in: no contact email, device or captcha unless given.
+    expect(bugForm.has("contactEmail")).toBe(false);
+    expect(bugForm.has("device")).toBe(false);
+    expect(bugForm.has("captchaToken")).toBe(false);
+
+    await profile.submitBugReport({
+      title: "Bug",
+      description: "Desc",
+      pageUrl: "https://x",
+      screenshots: [],
+      contactEmail: "visita@example.com",
+      device: { browser: "Chrome 131", deviceType: "desktop" },
+      captchaToken: "tok",
+    });
+    const anonymousForm = mock.last.body as FormData;
+    expect(anonymousForm.get("contactEmail")).toBe("visita@example.com");
+    expect(JSON.parse(anonymousForm.get("device") as string)).toEqual({ browser: "Chrome 131", deviceType: "desktop" });
+    expect(anonymousForm.get("captchaToken")).toBe("tok");
   });
 
   it("skips the request for too-short searches", async () => {

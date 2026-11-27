@@ -14,6 +14,9 @@ import {
 import { usePathname, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { submitBugReport } from "@/lib/api/profile";
+import { getSessionContact, type SessionContact } from "@/lib/api/auth";
+import { useTurnstile } from "@/components/auth/TurnstileWidget";
+import { collectDeviceInfo, formatDeviceSummary, type DeviceInfo } from "@/lib/utils/device-info";
 import { getBugReportErrorTranslation } from "@/lib/i18n/bug-report-errors";
 import {
   type BugReportButtonCorner,
@@ -31,6 +34,12 @@ import {
   saveBugReportDraft,
   type BugReportDraft,
 } from "@/lib/utils/bug-report";
+
+// Before login anyone can send a report, so the backend accepts one small screenshot and asks for a captcha.
+const ANONYMOUS_MAX_SCREENSHOTS = 1;
+const ANONYMOUS_MAX_UPLOAD_SCREENSHOT_BYTES = 2 * 1024 * 1024;
+const CONTACT_EMAIL_MAX_LENGTH = 254;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const reportingHints = [
   "¿Qué ocurrió exactamente?",
@@ -169,6 +178,12 @@ export function BugReportWidget() {
     return readBugReportDraft() ?? createEmptyBugReportDraft(window.location.href);
   });
   const [isAttachingScreenshots, setIsAttachingScreenshots] = useState(false);
+  // "loading" until /auth/session answers after opening; null means logged out.
+  const [sessionContact, setSessionContact] = useState<SessionContact | null | "loading">("loading");
+  const [contactEmail, setContactEmail] = useState("");
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
+  const captcha = useTurnstile("flex justify-center");
+  const sessionRequestIdRef = useRef(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -236,11 +251,25 @@ export function BugReportWidget() {
           top: `${anchoredButtonPosition.top}px`,
         };
 
+  const isSessionLoading = sessionContact === "loading";
+  const isAnonymous = sessionContact === null;
+  const maxScreenshots = isAnonymous ? ANONYMOUS_MAX_SCREENSHOTS : BUG_REPORT_MAX_SCREENSHOTS;
+  const maxUploadScreenshotBytes = isAnonymous
+    ? ANONYMOUS_MAX_UPLOAD_SCREENSHOT_BYTES
+    : BUG_REPORT_MAX_UPLOAD_SCREENSHOT_BYTES;
+  const trimmedContactEmail = contactEmail.trim();
+  const isContactEmailValid = EMAIL_PATTERN.test(trimmedContactEmail);
+  const deviceSummary = deviceInfo ? formatDeviceSummary(deviceInfo) : "";
+
   const titleCount = effectiveDraft.title.trim().length;
   const descriptionCount = effectiveDraft.description.trim().length;
-  const canSubmit = useMemo(() => {
-    return Boolean(titleCount > 0 && descriptionCount > 0 && effectiveDraft.pageUrl);
-  }, [descriptionCount, effectiveDraft.pageUrl, titleCount]);
+  const canSubmit =
+    titleCount > 0 &&
+    descriptionCount > 0 &&
+    Boolean(effectiveDraft.pageUrl) &&
+    !isSessionLoading &&
+    (!isAnonymous || (isContactEmailValid && (!captcha.enabled || Boolean(captcha.token))));
+
 
   useEffect(() => {
     if (!isOpen) {
@@ -298,9 +327,13 @@ export function BugReportWidget() {
       return;
     }
 
-    const remainingSlots = BUG_REPORT_MAX_SCREENSHOTS - effectiveDraft.screenshots.length;
+    const remainingSlots = maxScreenshots - effectiveDraft.screenshots.length;
     if (remainingSlots <= 0) {
-      setError(`Solo podés adjuntar hasta ${BUG_REPORT_MAX_SCREENSHOTS} capturas.`);
+      setError(
+        maxScreenshots === 1
+          ? "Solo podés adjuntar 1 captura."
+          : `Solo podés adjuntar hasta ${maxScreenshots} capturas.`
+      );
       return;
     }
 
@@ -499,7 +532,21 @@ export function BugReportWidget() {
       return;
     }
 
-    setIsOpen((current) => !current);
+    if (isOpen) {
+      handleClose();
+      return;
+    }
+
+    // Each time the form opens: who is reporting (the session may have started or ended) and from which device.
+    const requestId = ++sessionRequestIdRef.current;
+    setSessionContact("loading");
+    setDeviceInfo(collectDeviceInfo());
+    setIsOpen(true);
+    void getSessionContact().then((contact) => {
+      if (sessionRequestIdRef.current === requestId) {
+        setSessionContact(contact);
+      }
+    });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -515,6 +562,18 @@ export function BugReportWidget() {
       return;
     }
 
+    if (isAnonymous && !isContactEmailValid) {
+      setError("Ingresá un email de contacto válido.");
+      return;
+    }
+
+    if (effectiveDraft.screenshots.length > maxScreenshots) {
+      setError(
+        `Sin iniciar sesión podés adjuntar ${maxScreenshots} captura. Quitá las demás para enviar el reporte.`
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -524,7 +583,7 @@ export function BugReportWidget() {
       );
 
       const oversizedScreenshot = screenshots.find(
-        (screenshot) => screenshot.size > BUG_REPORT_MAX_UPLOAD_SCREENSHOT_BYTES
+        (screenshot) => screenshot.size > maxUploadScreenshotBytes
       );
 
       if (oversizedScreenshot) {
@@ -538,7 +597,14 @@ export function BugReportWidget() {
         description: effectiveDraft.description.trim(),
         pageUrl: effectiveDraft.pageUrl,
         screenshots,
+        contactEmail: isAnonymous ? trimmedContactEmail : undefined,
+        device: deviceInfo,
+        captchaToken: isAnonymous ? captcha.token : undefined,
       });
+      // Turnstile tokens are single-use.
+      if (isAnonymous) {
+        captcha.reset();
+      }
 
       if (!response.success) {
         setError(getBugReportErrorTranslation(response.message));
@@ -654,7 +720,10 @@ export function BugReportWidget() {
                       Capturas
                     </p>
                     <p className="text-scale-1 text-[var(--text-secondary)]">
-                      Hasta {BUG_REPORT_MAX_SCREENSHOTS} imágenes. El borrador se guarda localmente y se envía al backend cuando confirmás.
+                      {maxScreenshots === 1
+                        ? "Hasta 1 imagen de 2 MB sin iniciar sesión."
+                        : `Hasta ${maxScreenshots} imágenes.`}{" "}
+                      El borrador se guarda localmente y se envía cuando confirmás.
                     </p>
                     <p className="mt-1 text-scale-1 text-[var(--text-soft)]">
                       También podés pegar una captura con Ctrl+V o Cmd+V.
@@ -665,7 +734,7 @@ export function BugReportWidget() {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
-                      multiple
+                      multiple={maxScreenshots > 1}
                       className="hidden"
                       onChange={handleScreenshotSelection}
                     />
@@ -708,6 +777,42 @@ export function BugReportWidget() {
                   </p>
                 )}
               </div>
+
+              <label className="sophium-field">
+                <span>Email de contacto</span>
+                {isAnonymous ? (
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={contactEmail}
+                    maxLength={CONTACT_EMAIL_MAX_LENGTH}
+                    onChange={(event) => setContactEmail(event.target.value)}
+                    placeholder="tu@email.com"
+                  />
+                ) : (
+                  // Plain text, not an input: the account email cannot be changed here.
+                  <p className="text-scale-3 font-medium text-[var(--text-primary)]" data-testid="bug-report-account-email">
+                    {isSessionLoading ? "Cargando..." : sessionContact.email}
+                  </p>
+                )}
+                <span className="text-scale-1 text-[var(--text-soft)]">
+                  {isAnonymous
+                    ? "Lo usamos solo para responderte sobre este reporte."
+                    : "Usamos el email de tu cuenta."}
+                </span>
+              </label>
+
+              {deviceSummary ? (
+                <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
+                  <p className="text-scale-2 font-semibold text-[var(--text-primary)]">Dispositivo</p>
+                  <p className="mt-0.5 text-scale-2 text-[var(--text-secondary)]" data-testid="bug-report-device">
+                    {deviceSummary}
+                  </p>
+                </div>
+              ) : null}
+
+              {isAnonymous && captcha.enabled ? captcha.widget : null}
 
               {error ? (
                 <p className="rounded-xl border border-[color-mix(in_srgb,var(--danger-500)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger-500)_10%,var(--surface))] px-3 py-2 text-scale-1 font-medium text-[var(--danger-500)]">

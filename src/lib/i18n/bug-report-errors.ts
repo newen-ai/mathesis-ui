@@ -10,6 +10,13 @@ export const bugReportErrorCodeToKey: Record<string, string> = {
   BUG_REPORT_IMAGE_IS_TOO_LARGE: "common:bugReport.errors.imageTooLarge",
   ONLY_IMAGE_ATTACHMENTS_ARE_ALLOWED_FOR_BUG_REPORTS:
     "common:bugReport.errors.imagesOnly",
+  CONTACT_EMAIL_IS_REQUIRED: "common:bugReport.errors.contactEmailRequired",
+  ONLY_UP_TO_1_SCREENSHOT_FILES_ARE_ALLOWED: "common:bugReport.errors.tooManyScreenshots",
+  ONLY_UP_TO_3_SCREENSHOT_FILES_ARE_ALLOWED: "common:bugReport.errors.tooManyScreenshots",
+  COMPLETE_THE_VERIFICATION_TO_CONTINUE: "common:bugReport.errors.captchaRequired",
+  THE_VERIFICATION_FAILED_TRY_AGAIN: "common:bugReport.errors.captchaFailed",
+  VERIFICATION_IS_UNAVAILABLE_TRY_AGAIN_IN_A_MOMENT: "common:bugReport.errors.captchaFailed",
+  TOO_MANY_ATTEMPTS_PLEASE_TRY_AGAIN_LATER: "common:bugReport.errors.rateLimited",
 };
 
 export function getBugReportErrorTranslation(

@@ -7,6 +7,11 @@
       "missingApiBaseUrl": "La integración de reportes no está configurada en este entorno.",
       "imageTooLarge": "Una de las capturas supera el tamaño permitido para enviarla.",
       "imagesOnly": "Solo se permiten imágenes como capturas del reporte.",
+      "contactEmailRequired": "Dejanos un email de contacto para poder responderte.",
+      "tooManyScreenshots": "Adjuntaste más capturas de las permitidas.",
+      "captchaRequired": "Completá la verificación para enviar el reporte.",
+      "captchaFailed": "La verificación falló. Intentá de nuevo.",
+      "rateLimited": "Enviaste muchos reportes. Probá de nuevo más tarde.",
       "default": "No pudimos enviar el reporte en este momento."
     }
   },
@@ -28,5 +33,62 @@
     "minutesAgo": "hace {{count}} min",
     "hoursAgo": "hace {{count}} h",
     "daysAgo": "hace {{count}} d"
+  },
+  "report": {
+    "title": {
+      "profile": "Denunciar perfil",
+      "feedPost": "Denunciar publicación",
+      "ateneoTopic": "Denunciar tema",
+      "ateneoComment": "Denunciar comentario"
+    },
+    "description": "Contanos qué pasa. El equipo de Sophium revisa cada denuncia y la persona denunciada no sabe quién la hizo.",
+    "reasonLabel": "Motivo",
+    "reasonPlaceholder": "Seleccioná un motivo",
+    "reasons": {
+      "SPAM": "Spam o publicidad",
+      "HARASSMENT": "Acoso o insultos",
+      "INAPPROPRIATE": "Contenido inapropiado",
+      "IMPERSONATION": "Suplantación de identidad",
+      "OTHER": "Otro"
+    },
+    "detailsLabel": "Detalle (opcional)",
+    "detailsLabelRequired": "Detalle",
+    "detailsPlaceholder": "¿Qué estás denunciando y por qué?",
+    "detailsRequired": "Contanos el motivo para que podamos revisarlo.",
+    "cancel": "Cancelar",
+    "submit": "Enviar denuncia",
+    "submitting": "Enviando...",
+    "toasts": {
+      "sent": "Recibimos tu denuncia. Gracias por avisarnos.",
+      "alreadyReported": "Ya lo denunciaste. Lo estamos revisando.",
+      "notFound": "Este contenido ya no está disponible.",
+      "rateLimited": "Enviaste muchas denuncias seguidas. Probá de nuevo más tarde.",
+      "error": "No pudimos enviar la denuncia. Intentá de nuevo."
+    }
+  },
+  "legal": {
+    "back": "Volver",
+    "lastUpdated": "Última actualización: {{date}}",
+    "loading": "Cargando...",
+    "loadError": "No pudimos cargar el documento. Probá de nuevo en unos minutos.",
+    "retry": "Reintentar",
+    "spanishOnly": "",
+    "termsTitle": "Términos y Condiciones",
+    "privacyTitle": "Política de Privacidad",
+    "seeAlsoTerms": "Ver Términos y Condiciones",
+    "seeAlsoPrivacy": "Ver Política de Privacidad",
+    "gate": {
+      "title": "Términos y Política de Privacidad",
+      "intro": "Para seguir usando Sophium, leé y aceptá los Términos y Condiciones y la Política de Privacidad.",
+      "read": "Leer",
+      "hide": "Ocultar",
+      "openInNewTab": "Abrir en otra pestaña",
+      "checkbox": "Leí y acepto los Términos y Condiciones y la Política de Privacidad de Sophium.",
+      "accept": "Aceptar y continuar",
+      "accepting": "Guardando...",
+      "logout": "Cerrar sesión",
+      "outdated": "Los textos se actualizaron mientras los leías. Revisalos y aceptá de nuevo.",
+      "acceptError": "No pudimos guardar tu aceptación. Probá de nuevo."
+    }
   }
 }

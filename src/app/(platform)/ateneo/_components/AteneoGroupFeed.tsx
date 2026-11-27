@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   getAteneoGroup,
   joinAteneoGroup,
+  leaveAteneoGroup,
   listAteneoTopics,
   type AteneoGroup,
   type AteneoTopic,
@@ -133,6 +134,19 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
     }
   };
 
+  // Stays on the group page: it is still readable, now with the "join" view.
+  const onLeave = async () => {
+    await leaveAteneoGroup(groupId);
+    const [groupRes, topicsRes] = await Promise.all([
+      getAteneoGroup(groupId),
+      listAteneoTopics(groupId)
+    ]);
+
+    setGroup(groupRes.data.group);
+    setRules(groupRes.data.rules);
+    setTopics(topicsRes.data.topics.map((topic) => mapTopic(topic)));
+  };
+
   if (isLoading) {
     return (
       <section className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-6">
@@ -251,7 +265,13 @@ export function AteneoGroupFeed({ groupId }: AteneoGroupFeedProps) {
             </div>
           </div>
 
-          <AteneoGroupHeaderActions groupId={groupId} isAdmin={group.isAdmin} />
+          <AteneoGroupHeaderActions
+            groupId={groupId}
+            groupName={group.name}
+            isAdmin={group.isAdmin}
+            isOwner={group.isOwner}
+            onLeave={onLeave}
+          />
         </div>
 
         {canCreateTopics ? (

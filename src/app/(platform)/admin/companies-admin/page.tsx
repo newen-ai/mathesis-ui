@@ -167,7 +167,7 @@ export default function CompaniesAdminPage() {
       <AppCard className="p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--brand-500)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--brand-700)]">
               Acciones rápidas
             </p>
             <h2 className="mt-2 font-display text-xl font-semibold text-[var(--text-primary)]">Panel de revisión</h2>
@@ -229,7 +229,7 @@ export default function CompaniesAdminPage() {
                         <button
                           type="button"
                           onClick={() => void onApproveRequest(request.id)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white transition hover:bg-emerald-400"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--success-500)] text-[var(--on-success)] transition hover:brightness-110"
                           aria-label="Aprobar solicitud"
                           title="Aprobar"
                         >
@@ -240,7 +240,7 @@ export default function CompaniesAdminPage() {
                         <button
                           type="button"
                           onClick={() => void onRejectRequest(request.id)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-600 text-white transition hover:bg-rose-500"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--danger-500)] text-[var(--on-danger)] transition hover:brightness-110"
                           aria-label="Rechazar solicitud"
                           title="Rechazar"
                         >
@@ -292,7 +292,7 @@ export default function CompaniesAdminPage() {
                     <button
                       type="button"
                       onClick={() => void onRemoveMember(member.userId)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-600 text-white transition hover:bg-rose-500"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--danger-500)] text-[var(--on-danger)] transition hover:brightness-110"
                       aria-label="Quitar acceso de Sophium Empresarios"
                       title="Quitar acceso"
                     >
@@ -308,7 +308,7 @@ export default function CompaniesAdminPage() {
             )}
           </div>
           {actionError ? (
-            <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            <div className="mt-3 rounded-xl border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger-500)]">
               {actionError}
             </div>
           ) : null}

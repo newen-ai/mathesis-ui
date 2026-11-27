@@ -45,7 +45,7 @@
       "notAWord": "Not in the word list.",
       "wrongLength": "The word has {{count}} letters.",
       "alreadyFinished": "This puzzle is already over.",
-      "notAvailable": "There is no puzzle for that day.",
+      "notAvailable": "Pick another day on the calendar.",
       "load": "We couldn't load the puzzle.",
       "submit": "We couldn't send your guess. Please try again.",
       "sessionExpired": "Your session expired. Log in again to keep playing; your guesses are saved.",

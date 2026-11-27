@@ -42,7 +42,6 @@
     "closeMenu": "Cerrar menú",
     "openMenu": "Abrir menú",
     "goToNotifications": "Ir a notificaciones",
-    "defaultIdentity": "CEO · Sophium & Newen Solutions",
     "membership": {
       "loading": "Cargando membresía...",
       "sending": "Enviando solicitud...",
@@ -63,7 +62,7 @@
       "title": "Nexum · tu red profesional",
       "profile": {
         "title": "Tu Perfil Profesional",
-        "subtitle": "CV, experiencia y verificación Mensa"
+        "subtitle": "CV y experiencia"
       },
       "editProfessionalProfile": "Editar Perfil Profesional",
       "companies": {
@@ -104,7 +103,6 @@
         "subtitle": "Configuración, legales y herramientas de Admin"
       },
       "legalRules": "Reglas de Ateneo y Sophium",
-      "legalTermsPrivacy": "Términos y Política de Privacidad",
       "adminUsers": "Usuarios Sophium",
       "adminSophium": "ABM de Sophium",
       "reportPost": "Denuncias de Publicación",

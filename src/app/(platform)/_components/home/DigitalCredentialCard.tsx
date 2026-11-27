@@ -6,6 +6,7 @@ import QRCode from "react-qr-code";
 import { useProfessionalProfile } from "../../_lib/hooks/useProfessionalProfile";
 import { BRAND_LOGO_SRC, MENSA_ARGENTINA_LOGO_SRC } from "@/lib/assets";
 import { traceUiAction } from "@/lib/observability/spans";
+import { BrandSymbol } from "@/components/ui/BrandSymbol";
 
 const CREDENTIAL_TTL_MS = 5 * 60 * 1000;
 
@@ -27,6 +28,8 @@ type CredentialBadgeCriterion = {
   aliases: string[];
   logoSrc?: string;
   logoAlt?: string;
+  // When true the badge is listed only if the user actually holds it (no greyed-out preview).
+  onlyWhenActive?: boolean;
 };
 
 const CREDENTIAL_BADGE_CRITERIA: CredentialBadgeCriterion[] = [
@@ -37,6 +40,7 @@ const CREDENTIAL_BADGE_CRITERIA: CredentialBadgeCriterion[] = [
     aliases: ["mensa_argentina", "mensa_ar"],
     logoSrc: MENSA_ARGENTINA_LOGO_SRC,
     logoAlt: "credential.logoMensaAlt",
+    onlyWhenActive: true,
   },
   {
     id: "sophium-empresarios",
@@ -115,13 +119,18 @@ export function DigitalCredentialCard() {
     );
 
     const configuredCriteria = CREDENTIAL_BADGE_CRITERIA.map((criterion) => ({
-      id: criterion.id,
-      label: t(criterion.label),
-      criteria: t(criterion.criteria),
-      logoSrc: criterion.logoSrc,
-      logoAlt: criterion.logoAlt ? t(criterion.logoAlt) : undefined,
+      criterion,
       active: criterion.aliases.some((alias) => normalizedUserBadges.has(alias)),
-    }));
+    }))
+      .filter(({ criterion, active }) => active || !criterion.onlyWhenActive)
+      .map(({ criterion, active }) => ({
+        id: criterion.id,
+        label: t(criterion.label),
+        criteria: t(criterion.criteria),
+        logoSrc: criterion.logoSrc,
+        logoAlt: criterion.logoAlt ? t(criterion.logoAlt) : undefined,
+        active,
+      }));
 
     const configuredAliases = new Set(
       CREDENTIAL_BADGE_CRITERIA.flatMap((criterion) => criterion.aliases)
@@ -140,21 +149,11 @@ export function DigitalCredentialCard() {
     return [...configuredCriteria, ...extraOwnedBadges].slice(0, 4);
   }, [badges, t]);
 
-  const frontMembershipChip = useMemo(() => {
-    const primaryActiveBadge = badgePreviews.find((badge) => badge.active);
-    if (primaryActiveBadge) {
-      return primaryActiveBadge;
-    }
-
-    return {
-      id: "fallback-membership",
-      label: t("credential.frontMembershipFallbackLabel"),
-      criteria: t("credential.frontMembershipFallbackCriteria"),
-      logoSrc: MENSA_ARGENTINA_LOGO_SRC,
-      logoAlt: t("credential.logoMensaAlt"),
-      active: true,
-    } as BadgePreview;
-  }, [badgePreviews, t]);
+  // No fallback chip: without an active badge the front shows none.
+  const frontMembershipChip = useMemo(
+    () => badgePreviews.find((badge) => badge.active) ?? null,
+    [badgePreviews]
+  );
 
   const fullName = userDisplayName || t("credential.fallbackName");
 
@@ -217,7 +216,7 @@ export function DigitalCredentialCard() {
             <div className="absolute inset-0 overflow-hidden rounded-[1.7rem] border border-[rgba(255,255,255,0.12)] bg-[var(--navy-800)] text-[var(--text-primary)] [backface-visibility:hidden]">
               <div className="flex h-full flex-col p-6">
                 <div className="flex items-center gap-3 text-[var(--brand-100)]">
-                  <span className="font-display text-[1.7rem] leading-none text-[#d4af66]">∫</span>
+                  <BrandSymbol name="sophium" className="h-7" />
                   <span className="font-display text-[1.05rem] font-medium text-white">
                     Sophium
                   </span>
@@ -228,6 +227,7 @@ export function DigitalCredentialCard() {
                     {fullName}
                   </h1>
 
+                  {frontMembershipChip ? (
                   <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.12)] px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-white">
                     {frontMembershipChip.logoSrc ? (
                       <span
@@ -242,6 +242,7 @@ export function DigitalCredentialCard() {
                     )}
                     {frontMembershipChip.criteria}
                   </div>
+                  ) : null}
                 </div>
 
                 <div className="mt-5 flex items-end justify-between gap-4">
@@ -279,7 +280,7 @@ export function DigitalCredentialCard() {
               ) : (
                 <div className="flex h-full flex-col p-5">
                   <div className="flex items-center gap-2 pb-1 text-[var(--brand-200)]">
-                    <span className="font-display text-[1.6rem] leading-none text-[var(--brand-500)]">∫</span>
+                    <BrandSymbol name="sophium" className="h-6" />
                     <span className="font-display text-[1.1rem] font-medium text-white">
                       {t("credential.badgesTitle")}
                     </span>

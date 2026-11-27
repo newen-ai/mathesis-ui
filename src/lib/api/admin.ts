@@ -14,20 +14,10 @@ export type WhitelistUserRow = {
   role: string;
   createdAt: string;
   isWhitelisted: boolean;
-};
-
-export type WhitelistRequestRow = {
-  id: string;
-  userId: string;
-  canonicalEmail: string;
-  message?: string | null;
-  status: string;
-  reviewedByUserId?: string | null;
-  reviewedAt?: string | null;
-  createdAt: string;
-  user: {
-    email: string;
-  };
+  // Sent by newer backends; optional so the panel still works against an older one.
+  firstName?: string | null;
+  lastName?: string | null;
+  hasVerifiedEmail?: boolean;
 };
 
 type ListEnvelope<T> = {
@@ -62,7 +52,7 @@ export async function getWhitelistUsers(
   status: "whitelisted" | "non-whitelisted",
   signal?: AbortSignal
 ): Promise<WhitelistUserRow[]> {
-  const query = new URLSearchParams({ status });
+  const query = new URLSearchParams({ status, limit: "200" });
   return fetchAdminList<WhitelistUserRow>(
     `/admin/whitelist/users?${query.toString()}`,
     "Respuesta inválida de usuarios de whitelist",
@@ -70,22 +60,13 @@ export async function getWhitelistUsers(
   );
 }
 
-export async function getWhitelistRequests(signal?: AbortSignal): Promise<WhitelistRequestRow[]> {
-  const query = new URLSearchParams({ status: "PENDING" });
-  return fetchAdminList<WhitelistRequestRow>(
-    `/admin/whitelist/requests?${query.toString()}`,
-    "Respuesta inválida de solicitudes de whitelist",
-    signal
-  );
-}
-
-export async function approveWhitelistRequest(requestId: string, reason?: string) {
-  const response = await apiRequest(`/admin/whitelist/requests/${encodeURIComponent(requestId)}/approve`, {
+export async function promoteUserToWhitelist(userId: string, reason: string) {
+  const response = await apiRequest(`/admin/whitelist/users/${encodeURIComponent(userId)}/promote`, {
     method: "POST",
-    body: reason ? { reason } : {},
+    body: { reason },
   });
 
-  return parseServiceResponse(response, "Respuesta inválida al aprobar solicitud");
+  return parseServiceResponse(response, "Respuesta inválida al agregar a la whitelist");
 }
 
 // ── Companies admin ───────────────────────────────────────────────────────────

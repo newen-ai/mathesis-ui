@@ -377,6 +377,18 @@ export async function joinAteneoGroup(groupId: string, signal?: AbortSignal) {
   return result;
 }
 
+// The group owner cannot leave (403 ATENEO_OWNER_CANNOT_LEAVE). Leaving a group you are not in succeeds.
+export async function leaveAteneoGroup(groupId: string, signal?: AbortSignal) {
+  const response = await apiRequest(`/ateneo/groups/${encodeURIComponent(groupId)}/leave`, {
+    method: "POST",
+    signal
+  });
+
+  const result = await parseDataResponse<{ group: AteneoGroup }>(response, "Invalid Ateneo group leave response");
+  emitAteneoGroupsChanged();
+  return result;
+}
+
 export async function listAteneoFeed(limit = 20, signal?: AbortSignal) {
   const query = new URLSearchParams({ limit: String(limit) });
   const response = await apiRequest(`/ateneo/feed?${query.toString()}`, { signal });

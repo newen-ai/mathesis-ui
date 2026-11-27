@@ -2,10 +2,10 @@
   "brand": "Sophium Empresarios",
   "header": {
     "title": "Empresas de la comunidad",
-    "subtitle": "Fundadas o lideradas por socios Mensa. Verificadas."
+    "subtitle": "Fundadas o lideradas por Miembros Sophium. Verificadas."
   },
   "membership": {
-    "title": "¿Sos empresario/a Mensa?",
+    "title": "¿Sos empresario/a?",
     "subtitle": "Sophium Empresarios es nuevo; te contamos de qué se trata. También podés solicitarlo desde tu perfil.",
     "ariaRequest": "Solicitar membresía Sophium Empresarios",
     "ariaCancel": "Cancelar solicitud de membresía Sophium Empresarios",
@@ -20,7 +20,7 @@
     "successCancel": "Solicitud cancelada."
   },
   "card": {
-    "fallbackFounder": "Socio Mensa",
+    "fallbackFounder": "Miembro Sophium",
     "fallbackRole": "Empresario/a",
     "fallbackDescription": "Sin descripción disponible.",
     "fallbackLocation": "Ubicación",
@@ -31,6 +31,6 @@
   "states": {
     "loadingEnterprises": "Cargando empresas...",
     "loadError": "No pudimos cargar el directorio en este momento.",
-    "empty": "Todavía no hay empresas verificadas en el directorio."
+    "empty": "Las empresas verificadas van a aparecer acá."
   }
 }

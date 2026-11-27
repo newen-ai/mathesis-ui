@@ -12,7 +12,7 @@ import {
   getCompaniesMembershipState,
 } from "@/lib/api/admin";
 import { getSessionAccessDecision, logout, type SessionRole } from "@/lib/api/auth";
-import { BRAND_LOGO_FULL_SRC, BRAND_LOGO_SRC } from "@/lib/assets";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 import { listMyChats } from "@/lib/api/chat";
 import {
   listNotifications,
@@ -544,26 +544,7 @@ export function TopBar({ navItems }: TopBarProps) {
       <header className="sophium-topbar fixed left-0 right-0 top-0 z-50 border-b border-[var(--line)] bg-[var(--surface)]/95 backdrop-blur-md">
       <div className="flex h-16 w-full items-center gap-3 px-4 md:h-[5.5rem] md:px-6 lg:px-8">
         <Link href="/" className="sophium-nav-logo flex shrink-0 items-center gap-2 px-2 py-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={BRAND_LOGO_SRC}
-            alt="Logo Sophium"
-            width={56}
-            height={56}
-            loading="eager"
-            decoding="async"
-            className="h-10 w-10 md:hidden"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={BRAND_LOGO_FULL_SRC}
-            alt="Logo Sophium"
-            width={160}
-            height={42}
-            loading="eager"
-            decoding="async"
-            className="hidden h-14 w-auto max-w-none shrink-0 md:block lg:h-16"
-          />
+          <BrandLockup className="h-8 md:h-12 lg:h-14" />
         </Link>
 
         <div className="relative ml-2 w-full max-w-[560px] min-w-0 md:ml-4">

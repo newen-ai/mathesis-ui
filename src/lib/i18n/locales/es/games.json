@@ -45,7 +45,7 @@
       "notAWord": "No está en la lista de palabras.",
       "wrongLength": "La palabra tiene {{count}} letras.",
       "alreadyFinished": "Este desafío ya terminó.",
-      "notAvailable": "Ese día no tiene un desafío disponible.",
+      "notAvailable": "Elegí otro día del calendario.",
       "load": "No pudimos cargar el desafío.",
       "submit": "No pudimos enviar tu intento. Probá de nuevo.",
       "sessionExpired": "Tu sesión expiró. Volvé a ingresar para seguir jugando; tus intentos quedaron guardados.",

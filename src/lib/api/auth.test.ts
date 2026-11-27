@@ -11,7 +11,6 @@ import {
   register,
   requestPasswordReset,
   requestVerificationEmail,
-  requestWhitelistAccess,
   resetPassword,
   verifyEmail,
 } from "./auth";
@@ -34,7 +33,6 @@ describe("auth service calls", () => {
     ["changePassword", () => changePassword({ currentPassword: "a", newPassword: "b" }), "POST", "/auth/change-password", { currentPassword: "a", newPassword: "b" }],
     ["completeWelcomeOnboarding", () => completeWelcomeOnboarding(), "POST", "/auth/onboarding/complete", undefined],
     ["logout", () => logout(), "POST", "/auth/logout", undefined],
-    ["requestWhitelistAccess", () => requestWhitelistAccess("hola"), "POST", "/auth/whitelist-request", { message: "hola" }],
   ] as const)("%s calls the backend contract", async (_name, call, method, path, body) => {
     const mock = mockFetch(ok);
 
@@ -56,7 +54,6 @@ describe("auth service calls", () => {
     ["changePassword", () => changePassword({ currentPassword: "a", newPassword: "b" }), "No pudimos cambiar tu contraseña."],
     ["completeWelcomeOnboarding", () => completeWelcomeOnboarding(), "No pudimos completar tu bienvenida."],
     ["logout", () => logout(), "No pudimos conectar con el servicio de logout."],
-    ["requestWhitelistAccess", () => requestWhitelistAccess(), "No pudimos enviar tu solicitud de whitelist."],
   ] as const)("%s turns network failures into a friendly error", async (_name, call, message) => {
     mockFetch(new TypeError("Failed to fetch"));
 

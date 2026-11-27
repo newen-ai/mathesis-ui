@@ -197,7 +197,7 @@ export default function ContactPage() {
               height={36}
               loading="eager"
               decoding="async"
-              className="h-9 w-9"
+              className="h-9 w-9 object-contain"
             />
             <p className="font-display text-xl font-bold tracking-[0.06em] text-[var(--navy-900)]">
               Sophium

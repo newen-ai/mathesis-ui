@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { WelcomeFinishButton } from "./WelcomeFinishButton";
+import { BrandSymbol } from "@/components/ui/BrandSymbol";
 
 const priorityCards = [
   {
@@ -19,7 +20,7 @@ const priorityCards = [
     eyebrow: "Visión Sophium",
     title: "Comunidad Global",
     description:
-      "Empezamos en Mensa Argentina, pero la comunidad que estamos construyendo no tiene fronteras: cada Mensa Nacional del mundo, conectada.",
+      "Buscamos conectar a todas las personas con alto IQ",
     highlighted: true,
     icon: (
       <svg viewBox="0 0 24 24" className="h-11 w-11" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -48,7 +49,7 @@ const futureCards = [
   },
   {
     title: "Xenia",
-    description: "Viajás y tenés quién te reciba: conectá con Mensa en cualquier parte del mundo.",
+    description: "Conectá con gente con alto IQ en cualquier parte del mundo",
     badge: "PRÓXIMAMENTE",
     icon: (
       <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -113,7 +114,7 @@ function FeatureCard({
       className={`relative overflow-hidden rounded-[1rem] border px-3.5 py-2.5 shadow-[0_6px_18px_rgba(17,43,69,0.05)] ${bodyClassName}`}
     >
       {eyebrow ? (
-        <div className="absolute left-0 top-0 rounded-br-[0.95rem] rounded-tl-[0.95rem] bg-[var(--brand-500)] px-3 py-1 text-scale-1 font-bold uppercase tracking-[0.06em] text-[var(--navy-900)]">
+        <div className="absolute left-0 top-0 rounded-br-[0.95rem] rounded-tl-[0.95rem] bg-[var(--brand-500)] px-3 py-1 text-scale-1 font-bold text-[var(--navy-900)]">
           {eyebrow}
         </div>
       ) : null}
@@ -148,9 +149,11 @@ export default function BienvenidaFuturoPage() {
       <div className="welcome-future-layout">
         <section className="welcome-future-hero flex items-center justify-center bg-[var(--navy-900)] px-6 py-10 text-center text-white lg:px-10 lg:py-12">
           <div className="mx-auto w-full max-w-4xl">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center text-[1.65rem] text-[var(--brand-500)]">∫</div>
+            <div className="mx-auto flex h-10 w-10 items-center justify-center">
+              <BrandSymbol name="sophium" className="h-8" />
+            </div>
             <h1 className="mt-4 font-display text-[2.05rem] font-semibold leading-[0.98] text-white lg:text-[2.45rem]">
-              Lo mejor todavía no llegó
+              Lo mejor está por venir
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-[0.9rem] leading-[1.35] text-white/82 lg:text-[1rem]">
               Sophium no para de sumar funciones nuevas. Esto es apenas el comienzo de lo que esta comunidad puede ser para vos.

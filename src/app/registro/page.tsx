@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { register } from "@/lib/api/auth";
+import { getCurrentLegalVersions, LEGAL_PAGE_PATHS } from "@/lib/api/legal";
 import { formatApiErrorDetails } from "@/lib/api/client";
 import { getCaptchaErrorMessage, getRateLimitMessage } from "@/lib/i18n/auth-errors";
 import { useTurnstile } from "@/components/auth/TurnstileWidget";
 import { useRedirectIfAuthenticated } from "@/lib/auth/useRedirectIfAuthenticated";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { ServiceErrorPopup } from "@/components/ui/ServiceErrorPopup";
-import { BRAND_LOGO_SRC } from "@/lib/assets";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 import { normalizeEmailInput } from "@/lib/utils/email";
 import { HOME_PATH } from "@/lib/routes";
 
@@ -28,6 +29,14 @@ type ValidationErrors = {
   general?: string;
 };
 
+function getLegalOutdatedVersions(details: unknown): { termsVersion: string; privacyVersion: string } | null {
+  const value = details as { code?: unknown; currentVersions?: { terms?: unknown; privacy?: unknown } } | null;
+  if (value?.code !== "LEGAL_VERSION_OUTDATED") return null;
+  const terms = value.currentVersions?.terms;
+  const privacy = value.currentVersions?.privacy;
+  return typeof terms === "string" && typeof privacy === "string" ? { termsVersion: terms, privacyVersion: privacy } : null;
+}
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -39,7 +48,6 @@ export default function RegistroPage() {
   const [step, setStep] = useState<1 | 2>(1);
 
   // Paso 1 — verificación de membresía
-  const [organization, setOrganization] = useState(t("register.organizationMensa"));
   const [dni, setDni] = useState("");
   const [email, setEmail] = useState("");
   const [isAdult, setIsAdult] = useState(false);
@@ -50,7 +58,17 @@ export default function RegistroPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  // Versions of the texts linked from the checkbox, sent with the registration so the acceptance is recorded.
+  const [legalVersions, setLegalVersions] = useState<{ termsVersion: string; privacyVersion: string } | null>(null);
   const captcha = useTurnstile("flex justify-center");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void getCurrentLegalVersions(controller.signal).then((versions) => {
+      if (!controller.signal.aborted) setLegalVersions(versions);
+    });
+    return () => controller.abort();
+  }, []);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -142,11 +160,21 @@ export default function RegistroPage() {
       email: normalizedEmail,
       password,
       captchaToken: captcha.token,
+      acceptedLegalVersions: legalVersions,
     });
     // Turnstile tokens are single-use.
     captcha.reset();
 
     if (!result.success) {
+      const legalOutdated = getLegalOutdatedVersions(result.details);
+      if (legalOutdated) {
+        // The texts changed while the form was open: link the new versions and ask to accept them again.
+        setLegalVersions(legalOutdated);
+        setAcceptedTerms(false);
+        setErrors({ terms: t("register.errors.legalOutdated") });
+        setIsSubmitting(false);
+        return;
+      }
       const message = getRateLimitMessage(result.details) ?? getCaptchaErrorMessage(result.details) ?? result.message;
       setErrors({ general: message });
       setPopupInfo({
@@ -166,10 +194,7 @@ export default function RegistroPage() {
     step === 1 ? t("register.step1Label") : t("register.step2Label");
   const stepTitle = step === 1 ? t("register.step1Title") : t("register.step2Title");
   const formHeading = step === 1 ? t("register.formHeadingStep1") : t("register.formHeadingStep2");
-  const formSub =
-    step === 1
-      ? t("register.formSubStep1")
-      : t("register.formSubStep2");
+  const formSub = step === 1 ? null : t("register.formSubStep2");
 
   return (
     <>
@@ -184,23 +209,10 @@ export default function RegistroPage() {
       <main className="flex h-dvh flex-col bg-[#FAF8F5] lg:bg-white">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           {/* Navy: header en mobile / columna de marca a pantalla completa en desktop */}
-          <div className="bg-[#0A2540] px-4 py-3 lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:px-12 lg:py-12">
+          <div className="bg-[#0A2540] px-4 py-3 lg:relative lg:flex lg:w-2/5 lg:shrink-0 lg:flex-col lg:px-12 lg:py-12">
             {/* Desktop: logo */}
-            <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                  src={BRAND_LOGO_SRC}
-                alt={t("common.brandLogoAlt")}
-                width={32}
-                height={32}
-                loading="eager"
-                decoding="async"
-                className="h-8 w-8"
-              />
-              <span className="font-display text-lg font-bold tracking-[0.1em] text-[#FAF8F5]">
-                Sophium
-              </span>
-            </div>
+            <BrandCornerLogo className="hidden lg:flex" />
+            <div aria-hidden="true" className="hidden lg:block lg:h-14" />
 
             {/* Mobile: flecha + eyebrow */}
             <div className="mb-1 flex items-center gap-2 lg:hidden">
@@ -253,7 +265,6 @@ export default function RegistroPage() {
                     </svg>
                     {t("register.membershipVerified")}
                   </div>
-                  <div className="mt-3 text-sm text-[#FAF8F5]/70">{organization}</div>
                 </>
               )}
             </div>
@@ -319,7 +330,7 @@ export default function RegistroPage() {
                 <div className="font-display text-2xl font-bold text-[#0A2540]">
                   {formHeading}
                 </div>
-                <div className="mt-1 text-sm text-[#666666]">{formSub}</div>
+                {formSub ? <div className="mt-1 text-sm text-[#666666]">{formSub}</div> : null}
               </div>
 
               {step === 1 ? (
@@ -327,20 +338,6 @@ export default function RegistroPage() {
                   <p className="text-xs leading-relaxed text-[#666666] lg:hidden">
                     {t("register.mobileStep1Intro")}
                   </p>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="organization" className="text-xs font-bold tracking-wide text-[#0A2540]">
-                      {t("register.organizationLabel")}
-                    </label>
-                    <select
-                      id="organization"
-                      value={organization}
-                      onChange={(event) => setOrganization(event.target.value)}
-                      className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
-                    >
-                      <option value={t("register.organizationMensa")}>{t("register.organizationMensa")}</option>
-                    </select>
-                  </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label htmlFor="dni" className="text-xs font-bold tracking-wide text-[#0A2540]">
@@ -356,7 +353,7 @@ export default function RegistroPage() {
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.dni ? (
-                      <p className="text-xs font-medium text-red-700">{errors.dni}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.dni}</p>
                     ) : null}
                   </div>
 
@@ -374,11 +371,8 @@ export default function RegistroPage() {
                       aria-invalid={Boolean(errors.email)}
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
-                    <p className="text-[0.7rem] leading-relaxed text-[#666666]">
-                      {t("register.emailHelp")}
-                    </p>
                     {errors.email ? (
-                      <p className="text-xs font-medium text-red-700">{errors.email}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.email}</p>
                     ) : null}
                   </div>
 
@@ -392,7 +386,7 @@ export default function RegistroPage() {
                     {t("register.adultLabel")}
                   </label>
                   {errors.adult ? (
-                    <p className="text-xs font-medium text-red-700">{errors.adult}</p>
+                    <p className="text-xs font-medium text-[var(--danger-500)]">{errors.adult}</p>
                   ) : null}
 
                   <button
@@ -415,10 +409,6 @@ export default function RegistroPage() {
                     </svg>
                     {t("register.verifyAndContinue")}
                   </button>
-
-                  <p className="rounded-lg bg-white px-3 py-2 text-[0.7rem] leading-relaxed text-[#666666] lg:bg-[#FAF8F5]">
-                    {t("register.step1Footnote")}
-                  </p>
 
                   <p className="text-center text-xs text-[#666666]">
                     {t("register.alreadyHaveAccount")}{" "}
@@ -448,7 +438,6 @@ export default function RegistroPage() {
                       {t("register.membershipVerified")}
                     </div>
                     <div className="mt-1.5 text-sm font-bold text-[#0A2540]">{email}</div>
-                    <div className="text-xs text-[#666666]">{organization}</div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
@@ -466,7 +455,7 @@ export default function RegistroPage() {
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.firstName ? (
-                      <p id="first-name-error" className="text-xs font-medium text-red-700">
+                      <p id="first-name-error" className="text-xs font-medium text-[var(--danger-500)]">
                         {errors.firstName}
                       </p>
                     ) : null}
@@ -487,7 +476,7 @@ export default function RegistroPage() {
                       className="rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.lastName ? (
-                      <p id="last-name-error" className="text-xs font-medium text-red-700">
+                      <p id="last-name-error" className="text-xs font-medium text-[var(--danger-500)]">
                         {errors.lastName}
                       </p>
                     ) : null}
@@ -510,7 +499,7 @@ export default function RegistroPage() {
                       {t("register.passwordHelp")}
                     </p>
                     {errors.password ? (
-                      <p className="text-xs font-medium text-red-700">{errors.password}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.password}</p>
                     ) : null}
                   </div>
 
@@ -528,7 +517,7 @@ export default function RegistroPage() {
                       className="w-full rounded-lg border-[1.5px] border-[#E8E5E0] bg-white px-3.5 py-2 text-sm text-[#1A1A1A] outline-none transition focus:border-[#C9A84C]"
                     />
                     {errors.confirmPassword ? (
-                      <p className="text-xs font-medium text-red-700">{errors.confirmPassword}</p>
+                      <p className="text-xs font-medium text-[var(--danger-500)]">{errors.confirmPassword}</p>
                     ) : null}
                   </div>
 
@@ -541,27 +530,37 @@ export default function RegistroPage() {
                     />
                     <span>
                       {t("register.termsPrefix")}{" "}
-                      <span className="font-semibold text-[#7A6435] hover:underline">
+                      <a
+                        href={LEGAL_PAGE_PATHS.terms}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#7A6435] hover:underline"
+                      >
                         {t("register.termsLink")}
-                      </span>{" "}
+                      </a>{" "}
                       {t("register.termsMiddle")}{" "}
-                      <span className="font-semibold text-[#7A6435] hover:underline">
+                      <a
+                        href={LEGAL_PAGE_PATHS.privacy}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#7A6435] hover:underline"
+                      >
                         {t("register.privacyLink")}
-                      </span>{" "}
+                      </a>{" "}
                       {t("register.termsSuffix")}
                     </span>
                   </label>
                   {errors.terms ? (
-                    <p className="text-xs font-medium text-red-700">{errors.terms}</p>
+                    <p className="text-xs font-medium text-[var(--danger-500)]">{errors.terms}</p>
                   ) : null}
 
                   {captcha.widget}
                   {errors.captcha ? (
-                    <p className="text-center text-xs font-medium text-red-700">{errors.captcha}</p>
+                    <p className="text-center text-xs font-medium text-[var(--danger-500)]">{errors.captcha}</p>
                   ) : null}
 
                   {errors.general ? (
-                    <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                    <p className="rounded-lg border border-[var(--danger-line)] bg-[var(--danger-soft)] px-3 py-2 text-xs font-semibold text-[var(--danger-500)]">
                       {errors.general}
                     </p>
                   ) : null}

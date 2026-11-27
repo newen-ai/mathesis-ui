@@ -1,37 +1,43 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { logout, requestWhitelistAccess } from "@/lib/api/auth";
-import { apiRequest } from "@/lib/api/client";
+import { getSessionAccessDecision, logout } from "@/lib/api/auth";
+import { withBasePath } from "@/lib/assets";
 import { HOME_PATH } from "@/lib/routes";
+import { useHasMounted } from "@/lib/utils/use-has-mounted";
 
+// Beta sign-up form. People are matched by hand against their account (same name, last name and email).
+const BETA_SIGNUP_FORM_URL = "https://forms.gle/Zgea5DVsMqQfHDrWA";
+const CONTACT_EMAIL = "contact@sophium.social";
+const NEXT_STEPS = ["nextStep1", "nextStep2", "nextStep3"] as const;
+
+// Shown to signed-in accounts whose email is not on the whitelist yet (after confirming the email).
 export default function WhitelistAccessPage() {
   const { t } = useTranslation("auth");
   const router = useRouter();
-  const [note, setNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasMounted = useHasMounted();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isRetryingAccess, setIsRetryingAccess] = useState(false);
 
-  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  // Someone who was already let in (or whose session ended) does not belong on this page.
+  useEffect(() => {
+    let isActive = true;
+    void getSessionAccessDecision().then((decision) => {
+      if (!isActive) return;
+      if (decision.sessionState === "unauthenticated") {
+        router.replace("/login");
+      } else if (decision.sessionState === "authenticated" && (decision.isWhitelisted || decision.role === "admin")) {
+        router.replace(HOME_PATH);
+      }
+    });
+    return () => {
+      isActive = false;
+    };
+  }, [router]);
 
-    setIsSubmitting(true);
-    const result = await requestWhitelistAccess(note.trim() ? note.trim() : undefined);
-    setIsSubmitting(false);
-
-    if (!result.success) {
-      toast.error(result.message || t("whitelist.requestError"));
-      return;
-    }
-
-    toast.success(t("whitelist.requestSuccess"));
-  };
-
-  const onGoToLogin = async () => {
+  const onLogout = async () => {
     setIsLoggingOut(true);
     const result = await logout();
     if (!result.success) {
@@ -40,97 +46,88 @@ export default function WhitelistAccessPage() {
     router.replace("/login");
   };
 
-  const onRetryAccess = async () => {
-    setIsRetryingAccess(true);
-    try {
-      const response = await apiRequest("/profile/me");
-
-      if (response.ok) {
-        router.replace(HOME_PATH);
-        return;
-      }
-
-      if (response.status === 401) {
-        router.replace("/login");
-        return;
-      }
-
-      if (response.status === 403) {
-        let code: string | undefined;
-
-        try {
-          const payload = (await response.json()) as { details?: { code?: string } };
-          code = payload.details?.code;
-        } catch {
-          code = undefined;
-        }
-
-        if (code === "USER_NOT_WHITELISTED") {
-          toast.warning(t("whitelist.notInWhitelist"));
-          return;
-        }
-      }
-
-      toast.warning(t("whitelist.notInWhitelist"));
-    } catch {
-      toast.error(t("whitelist.retryError"));
-    } finally {
-      setIsRetryingAccess(false);
-    }
-  };
-
   return (
-    <main className="min-h-screen bg-[#F4EFE8] px-4 py-10">
-      <div className="mx-auto w-full max-w-2xl rounded-2xl border border-[#DCCFBF] bg-[#FFFCF8] p-6 shadow-sm md:p-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8D6E3E]">{t("whitelist.eyebrow")}</p>
-        <h1 className="mt-2 font-display text-3xl font-bold text-[#1D2A3A]">
-          {t("whitelist.title")}
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-[#4A5565]">
-          {t("whitelist.description")}
-        </p>
-
-        <form className="mt-6 space-y-3" onSubmit={onSubmit}>
-          <label htmlFor="whitelist-note" className="block text-xs font-semibold uppercase tracking-wide text-[#4A5565]">
-            {t("whitelist.noteLabel")}
-          </label>
-          <textarea
-            id="whitelist-note"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-            rows={4}
-            maxLength={500}
-            placeholder={t("whitelist.notePlaceholder")}
-            className="w-full rounded-xl border border-[#DCCFBF] bg-white px-3 py-2 text-sm text-[#1D2A3A] outline-none transition focus:border-[#8D6E3E]"
+    <main className="min-h-screen bg-[var(--navy-900)] px-4 pb-12 pt-8 md:pt-10">
+      <div className="mx-auto flex w-full max-w-[45rem] flex-col items-center">
+        <div className="flex flex-col items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={withBasePath("/brand/sophium-symbol-gold-realista.png")}
+            alt=""
+            width={158}
+            height={256}
+            className="h-20 w-auto md:h-[6.25rem]"
+            draggable={false}
           />
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center rounded-full bg-[#8D6E3E] px-5 py-2 text-sm font-semibold text-[#FFFCF8] transition hover:bg-[#7A5E36] disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isSubmitting ? t("whitelist.requestingAccess") : t("whitelist.requestAccess")}
-          </button>
-        </form>
-
-        <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-[#4A5565]">
-          <button
-            type="button"
-            onClick={onGoToLogin}
-            disabled={isLoggingOut}
-            className="font-semibold text-[#8D6E3E] underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoggingOut ? t("whitelist.loggingOut") : t("whitelist.goToLogin")}
-          </button>
-          <span aria-hidden>•</span>
-          <button
-            type="button"
-            onClick={onRetryAccess}
-            disabled={isRetryingAccess}
-            className="font-semibold text-[#8D6E3E] underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isRetryingAccess ? t("whitelist.retryingAccess") : t("whitelist.retryAccess")}
-          </button>
+          <span className="font-display text-[1.35rem] leading-none text-[var(--brand-300)]">Sophium</span>
         </div>
+
+        {/* Copy depends on the stored language, so it renders after hydration (the server always renders Spanish). */}
+        <section className="mt-7 w-full rounded-[1.25rem] bg-[var(--surface-2)] px-6 py-8 md:px-11 md:py-10">
+          {hasMounted ? (
+            <>
+              <p className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.12em] text-[var(--success-500)]">
+                <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[var(--success-500)]" />
+                {t("whitelist.eyebrow")}
+              </p>
+              <h1 className="mt-5 font-display text-[1.75rem] font-normal leading-tight sophium-heading-primary md:text-[2.15rem]">
+                {t("whitelist.title")}
+              </h1>
+              <p className="mt-5 text-[0.98rem] leading-relaxed text-[var(--text-primary)] opacity-85">
+                {t("whitelist.description")}
+              </p>
+
+              <a
+                href={BETA_SIGNUP_FORM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 flex w-full items-center justify-center rounded-[0.6rem] bg-[var(--navy-900)] px-6 py-4 text-base font-semibold text-[var(--brand-300)] transition hover:bg-[var(--navy-800)]"
+              >
+                {t("whitelist.formButton")}
+              </a>
+
+              <div className="mt-6 rounded-xl border-[1.5px] border-[var(--brand-500)] bg-[var(--brand-50)] px-5 py-4 text-[0.92rem] leading-relaxed sophium-heading-primary">
+                <strong className="font-bold">{t("whitelist.importantLabel")}</strong> {t("whitelist.importantText")}
+              </div>
+
+              <h2 className="mt-7 font-display text-[1.3rem] font-normal sophium-heading-primary">{t("whitelist.nextTitle")}</h2>
+              <ol className="mt-3 space-y-3">
+                {NEXT_STEPS.map((step, index) => (
+                  <li key={step} className="flex items-start gap-4">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--navy-900)] text-xs font-bold text-[var(--brand-300)]"
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="pt-0.5 text-[0.95rem] leading-relaxed text-[var(--text-primary)] opacity-85">
+                      {t(`whitelist.${step}`)}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="mt-6 flex flex-col gap-3 border-t border-[var(--line)] pt-5 text-sm text-[var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  {t("whitelist.questions")}{" "}
+                  <a href={`mailto:${CONTACT_EMAIL}`} className="font-bold sophium-heading-primary hover:underline">
+                    {CONTACT_EMAIL}
+                  </a>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void onLogout()}
+                  disabled={isLoggingOut}
+                  className="self-start font-semibold underline underline-offset-2 sophium-heading-primary disabled:cursor-not-allowed disabled:opacity-70 sm:self-auto"
+                >
+                  {isLoggingOut ? t("whitelist.loggingOut") : t("whitelist.logout")}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="min-h-[34rem]" aria-busy="true" />
+          )}
+        </section>
       </div>
     </main>
   );

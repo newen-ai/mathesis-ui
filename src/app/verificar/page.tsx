@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLockup } from "@/components/ui/BrandLockup";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
@@ -60,11 +61,8 @@ export default async function VerifyPage({ searchParams }: PageProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--background)] px-6 py-12 text-[var(--text-primary)]">
       <div className="w-full max-w-[720px] rounded-[2rem] border border-[var(--line)] bg-[var(--surface)] p-8 shadow-[0_18px_40px_rgba(0,0,0,0.08)] md:p-10">
-        <div className="mb-5 flex items-center gap-3 text-[var(--brand-700)]">
-          <span className="font-display text-[2.2rem] leading-none text-[var(--brand-500)]">∫</span>
-          <span className="font-display text-[1.25rem] font-medium text-[var(--text-primary)]">
-            Sophium
-          </span>
+        <div className="mb-5">
+          <BrandLockup className="h-11" />
         </div>
 
         <div className="space-y-4">
