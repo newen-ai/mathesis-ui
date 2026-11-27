@@ -207,9 +207,9 @@ export function TopBarMobile({
                     ? t("topbar:common.loading", { defaultValue: "Cargando..." })
                     : userName || t("topbar:profile.myProfile", { defaultValue: "Mi perfil" })}
                 </p>
-                <p className="text-scale-2 text-[var(--text-secondary)]">
-                  {userIdentityLine || t("topbar:mobile.defaultIdentity", { defaultValue: "CEO · Sophium & Newen Solutions" })}
-                </p>
+                {userIdentityLine ? (
+                  <p className="text-scale-2 text-[var(--text-secondary)]">{userIdentityLine}</p>
+                ) : null}
               </div>
             </div>
             <button
