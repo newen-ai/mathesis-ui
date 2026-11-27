@@ -126,10 +126,8 @@ const cases: ContractCase[] = [
   ["deleteEnterprise", () => enterprise.deleteEnterprise("e1"), "DELETE", "/enterprises/e1"],
   // Platform admin (whitelist) and companies dashboard
   ["getWhitelistedEmails", () => admin.getWhitelistedEmails(), "GET", "/admin/whitelist/emails"],
-  ["getWhitelistUsers", () => admin.getWhitelistUsers("non-whitelisted"), "GET", "/admin/whitelist/users?status=non-whitelisted"],
-  ["getWhitelistRequests", () => admin.getWhitelistRequests(), "GET", "/admin/whitelist/requests?status=PENDING"],
-  ["approveWhitelistRequest with reason", () => admin.approveWhitelistRequest("r/1", "ok"), "POST", `/admin/whitelist/requests/${encodeURIComponent("r/1")}/approve`, { reason: "ok" }],
-  ["approveWhitelistRequest without reason", () => admin.approveWhitelistRequest("r1"), "POST", "/admin/whitelist/requests/r1/approve", {}],
+  ["getWhitelistUsers", () => admin.getWhitelistUsers("non-whitelisted"), "GET", "/admin/whitelist/users?status=non-whitelisted&limit=200"],
+  ["promoteUserToWhitelist", () => admin.promoteUserToWhitelist("u/1", "Formulario beta"), "POST", `/admin/whitelist/users/${encodeURIComponent("u/1")}/promote`, { reason: "Formulario beta" }],
   ["checkCompaniesAdminAccess", () => admin.checkCompaniesAdminAccess(), "GET", "/admin/companies/access-check"],
   ["createCompaniesMembershipRequest", () => admin.createCompaniesMembershipRequest("hola"), "POST", "/admin/companies/my-request", { message: "hola" }],
   ["createCompaniesMembershipRequest empty", () => admin.createCompaniesMembershipRequest(), "POST", "/admin/companies/my-request", {}],

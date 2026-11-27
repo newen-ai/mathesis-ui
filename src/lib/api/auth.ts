@@ -510,29 +510,3 @@ export async function logout(): Promise<AuthServiceResponse> {
 		};
 	}
 }
-
-export async function requestWhitelistAccess(message?: string): Promise<AuthServiceResponse> {
-	try {
-		const response = await apiRequest("/auth/whitelist-request", {
-			method: "POST",
-			body: {
-				message,
-			},
-		});
-
-		return parseServiceResponse(
-			response,
-			"Respuesta inválida del servicio de solicitud de whitelist."
-		);
-	} catch (error) {
-		return {
-			success: false,
-			message:
-				error instanceof Error &&
-				error.message === "NEXT_PUBLIC_API_BASE_URL is not configured"
-					? "NEXT_PUBLIC_API_BASE_URL no esta configurada."
-					: "No pudimos enviar tu solicitud de whitelist.",
-			details: "Error de red o CORS.",
-		};
-	}
-}

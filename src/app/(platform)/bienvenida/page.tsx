@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BrandLockup } from "@/components/ui/BrandLockup";
+import { BrandCornerLogo } from "@/components/ui/BrandCornerLogo";
 
 type WelcomeFeature = {
   title: string;
@@ -102,7 +102,8 @@ export default function BienvenidaPage() {
           <div className="pointer-events-none absolute right-[-4rem] top-[-4rem] h-52 w-52 rounded-full border border-white/10" />
           <div className="pointer-events-none absolute bottom-[-5rem] left-1/2 h-56 w-56 -translate-x-1/2 rounded-full border border-white/10" />
 
-          <BrandLockup className="h-11" />
+          <BrandCornerLogo />
+          <div aria-hidden="true" className="h-14" />
 
           <div className="max-w-[26rem] space-y-3 py-8 lg:py-0">
             <p className="text-[0.76rem] font-semibold uppercase tracking-[0.2em] text-[var(--brand-300)]">

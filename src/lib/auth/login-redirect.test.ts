@@ -4,6 +4,7 @@ import {
   sanitizeLoginNextPath,
 } from "./login-redirect";
 import { HOME_PATH, WELCOME_ENTRY_PATH } from "@/lib/routes";
+import { FALLBACK_WHITELIST_PATH } from "./session-gate-redirect";
 
 describe("sanitizeLoginNextPath", () => {
   it("returns home when next path is null", () => {
@@ -24,6 +25,36 @@ describe("sanitizeLoginNextPath", () => {
 });
 
 describe("resolveLoginSuccessRedirect", () => {
+  it("sends accounts pending whitelist approval to the beta sign-up screen", () => {
+    const target = resolveLoginSuccessRedirect(
+      {
+        sessionState: "authenticated",
+        role: "user",
+        isWhitelisted: false,
+        hasVerifiedEmail: true,
+        hasCompletedWelcomeOnboarding: false,
+      },
+      "/ateneo"
+    );
+
+    expect(target).toBe(FALLBACK_WHITELIST_PATH);
+  });
+
+  it("lets admins in even when their email is not whitelisted", () => {
+    const target = resolveLoginSuccessRedirect(
+      {
+        sessionState: "authenticated",
+        role: "admin",
+        isWhitelisted: false,
+        hasVerifiedEmail: true,
+        hasCompletedWelcomeOnboarding: true,
+      },
+      "/ateneo"
+    );
+
+    expect(target).toBe("/ateneo");
+  });
+
   it("redirects pending onboarding users to bienvenida", () => {
     const target = resolveLoginSuccessRedirect(
       {
