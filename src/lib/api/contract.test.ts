@@ -10,6 +10,7 @@ import * as block from "./block";
 import * as chat from "./chat";
 import * as enterprise from "./enterprise";
 import * as feed from "./feed";
+import * as legal from "./legal";
 import * as notifications from "./notifications";
 import * as profile from "./profile";
 import * as report from "./report";
@@ -165,6 +166,15 @@ const cases: ContractCase[] = [
   ["getMyPreferences", () => profile.getMyPreferences(), "GET", "/profile/me/preferences"],
   ["updateMyPreferences", () => profile.updateMyPreferences("dark"), "PATCH", "/profile/me/preferences", { themePreference: "dark" }],
   // Verbum
+  // Legal
+  ["getLegalDocument", () => legal.getLegalDocument("privacy"), "GET", "/legal/documents/privacy"],
+  [
+    "acceptLegalDocuments",
+    () => legal.acceptLegalDocuments({ termsVersion: "2026-11-27", privacyVersion: "2026-11-27" }),
+    "POST",
+    "/legal/acceptances",
+    { termsVersion: "2026-11-27", privacyVersion: "2026-11-27" },
+  ],
   ["getVerbumPuzzle (today)", () => verbum.getVerbumPuzzle(null), "GET", "/games/verbum/today"],
   ["getVerbumPuzzle (day)", () => verbum.getVerbumPuzzle(G), "GET", `/games/verbum/puzzles/${eG}`],
   ["submitVerbumGuess", () => verbum.submitVerbumGuess(G, "ROBOT"), "POST", `/games/verbum/puzzles/${eG}/guesses`, { guess: "ROBOT" }],

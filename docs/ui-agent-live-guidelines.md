@@ -336,3 +336,10 @@ Purpose: Define persistent frontend UI direction rules that every agent must rea
 - Lists that can grow (members, etc.) load in pages with a `Ver más` button, using the backend `limit`/`cursor`/`nextCursor` contract; show "Mostrando X de N" while more remain.
 - Admin-only sections next to a regular list go in tabs on the same page (for example Ateneo members: `Miembros` / `Moderación` with a pending-count badge), not below the list.
 
+
+## Current Active UI Directions (2026-11-27 Legal Documents)
+- Terms and Privacy Policy are public pages at `/legal/terms` and `/legal/privacy` (no session), rendered from the backend (`GET /legal/documents/:slug`) with `LegalMarkdown` (`src/components/legal/`): no HTML injection, only headings, paragraphs, lists, bold, app/https/mailto links and auto-linked emails. Show "Última actualización" from the document version; the `# Title` comes from the document.
+- Links to the legal pages from flows the user should not lose (register checkbox, acceptance screen) open in a new tab.
+- Signed-in users without the current versions see `LegalAcceptanceGate` (rendered by `SessionGate`, blocking): both documents with `Leer` (inline, scrollable) and `Abrir en otra pestaña`, one checkbox, `Aceptar y continuar` (disabled until checked) and `Cerrar sesión`. No dismiss.
+- Settings > Legal rows and the mobile drawer `LEGALES` section link to the two pages (separate rows).
+- Public (SSR-rendered) pages with translated copy must not render that copy until hydration: the server always renders Spanish while the client starts in the stored language. Use `useHasMounted` (`src/lib/utils/use-has-mounted.ts`) and render a text-free shell until it is true (see `LegalDocumentPage`).

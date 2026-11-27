@@ -65,5 +65,30 @@
       "rateLimited": "You sent many reports in a row. Try again later.",
       "error": "We could not send the report. Try again."
     }
+  },
+  "legal": {
+    "back": "Back",
+    "lastUpdated": "Last updated: {{date}}",
+    "loading": "Loading...",
+    "loadError": "We could not load the document. Please try again in a few minutes.",
+    "retry": "Try again",
+    "spanishOnly": "This document is only available in Spanish.",
+    "termsTitle": "Terms and Conditions",
+    "privacyTitle": "Privacy Policy",
+    "seeAlsoTerms": "See the Terms and Conditions",
+    "seeAlsoPrivacy": "See the Privacy Policy",
+    "gate": {
+      "title": "Terms and Privacy Policy",
+      "intro": "To keep using Sophium, please read and accept the Terms and Conditions and the Privacy Policy.",
+      "read": "Read",
+      "hide": "Hide",
+      "openInNewTab": "Open in a new tab",
+      "checkbox": "I have read and accept Sophium's Terms and Conditions and Privacy Policy.",
+      "accept": "Accept and continue",
+      "accepting": "Saving...",
+      "logout": "Log out",
+      "outdated": "The texts were updated while you were reading them. Please review them and accept again.",
+      "acceptError": "We could not save your acceptance. Please try again."
+    }
   }
 }

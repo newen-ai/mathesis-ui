@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LEGAL_PAGE_PATHS } from "@/lib/api/legal";
 import type { RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -506,7 +507,14 @@ export function TopBarMobile({
 
                   <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.legal", { defaultValue: "LEGALES" })}</p>
                   <DisabledMenuRow label={t("topbar:mobile.sophium.legalRules", { defaultValue: "Reglas de Ateneo y Sophium" })} icon="badge" />
-                  <DisabledMenuRow label={t("topbar:mobile.sophium.legalTermsPrivacy", { defaultValue: "Términos y Política de Privacidad" })} icon="doc" />
+                  <Link href={LEGAL_PAGE_PATHS.terms} onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="doc" /></span>
+                    {t("settings:rows.terms", { defaultValue: "Términos y Condiciones" })}
+                  </Link>
+                  <Link href={LEGAL_PAGE_PATHS.privacy} onClick={closeMobileDrawer} className="flex items-center gap-3 rounded-xl px-2 py-2 text-scale-3 text-[var(--text-primary)] hover:bg-[var(--surface-2)]">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface-2)] text-[var(--text-secondary)]"><TopBarNavIcon icon="doc" /></span>
+                    {t("settings:rows.privacyPolicy", { defaultValue: "Política de Privacidad" })}
+                  </Link>
 
                   <p className="mt-2 border-t border-dashed border-[var(--line)] px-2 pb-1 pt-2 text-[0.68rem] font-bold tracking-[0.16em] text-[var(--brand-700)]">{t("topbar:mobile.sections.administration", { defaultValue: "ADMINISTRACIÓN" })}</p>
                   {isAdmin ? (

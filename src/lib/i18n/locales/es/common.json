@@ -65,5 +65,30 @@
       "rateLimited": "Enviaste muchas denuncias seguidas. Probá de nuevo más tarde.",
       "error": "No pudimos enviar la denuncia. Intentá de nuevo."
     }
+  },
+  "legal": {
+    "back": "Volver",
+    "lastUpdated": "Última actualización: {{date}}",
+    "loading": "Cargando...",
+    "loadError": "No pudimos cargar el documento. Probá de nuevo en unos minutos.",
+    "retry": "Reintentar",
+    "spanishOnly": "",
+    "termsTitle": "Términos y Condiciones",
+    "privacyTitle": "Política de Privacidad",
+    "seeAlsoTerms": "Ver Términos y Condiciones",
+    "seeAlsoPrivacy": "Ver Política de Privacidad",
+    "gate": {
+      "title": "Términos y Política de Privacidad",
+      "intro": "Para seguir usando Sophium, leé y aceptá los Términos y Condiciones y la Política de Privacidad.",
+      "read": "Leer",
+      "hide": "Ocultar",
+      "openInNewTab": "Abrir en otra pestaña",
+      "checkbox": "Leí y acepto los Términos y Condiciones y la Política de Privacidad de Sophium.",
+      "accept": "Aceptar y continuar",
+      "accepting": "Guardando...",
+      "logout": "Cerrar sesión",
+      "outdated": "Los textos se actualizaron mientras los leías. Revisalos y aceptá de nuevo.",
+      "acceptError": "No pudimos guardar tu aceptación. Probá de nuevo."
+    }
   }
 }

@@ -8,6 +8,7 @@ import {
   normalizePathname,
   resolveSessionGateRedirect,
 } from "@/lib/auth/session-gate-redirect";
+import { LegalAcceptanceGate } from "./LegalAcceptanceGate";
 
 type SessionGateProps = {
   children: ReactNode;
@@ -19,6 +20,8 @@ export function SessionGate({ children }: SessionGateProps) {
     "checking"
   );
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  // Signed-in users who have not accepted the current Terms / Privacy Policy see the acceptance screen first.
+  const [needsLegalAcceptance, setNeedsLegalAcceptance] = useState(false);
 
   const loginPath = useMemo(() => buildLoginPath(pathname), [pathname]);
 
@@ -54,6 +57,9 @@ export function SessionGate({ children }: SessionGateProps) {
         return;
       }
 
+      setNeedsLegalAcceptance(
+        nextSessionState === "authenticated" && accessDecision.hasAcceptedCurrentLegalDocuments === false
+      );
       setIsCheckingSession(false);
     };
 
@@ -81,6 +87,10 @@ export function SessionGate({ children }: SessionGateProps) {
 
   if (sessionState === "unauthenticated") {
     return null;
+  }
+
+  if (needsLegalAcceptance) {
+    return <LegalAcceptanceGate onAccepted={() => setNeedsLegalAcceptance(false)} />;
   }
 
   return (

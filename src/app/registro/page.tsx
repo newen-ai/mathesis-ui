@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { register } from "@/lib/api/auth";
+import { getCurrentLegalVersions, LEGAL_PAGE_PATHS } from "@/lib/api/legal";
 import { formatApiErrorDetails } from "@/lib/api/client";
 import { getCaptchaErrorMessage, getRateLimitMessage } from "@/lib/i18n/auth-errors";
 import { useTurnstile } from "@/components/auth/TurnstileWidget";
@@ -28,6 +29,14 @@ type ValidationErrors = {
   general?: string;
 };
 
+function getLegalOutdatedVersions(details: unknown): { termsVersion: string; privacyVersion: string } | null {
+  const value = details as { code?: unknown; currentVersions?: { terms?: unknown; privacy?: unknown } } | null;
+  if (value?.code !== "LEGAL_VERSION_OUTDATED") return null;
+  const terms = value.currentVersions?.terms;
+  const privacy = value.currentVersions?.privacy;
+  return typeof terms === "string" && typeof privacy === "string" ? { termsVersion: terms, privacyVersion: privacy } : null;
+}
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -49,7 +58,17 @@ export default function RegistroPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  // Versions of the texts linked from the checkbox, sent with the registration so the acceptance is recorded.
+  const [legalVersions, setLegalVersions] = useState<{ termsVersion: string; privacyVersion: string } | null>(null);
   const captcha = useTurnstile("flex justify-center");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void getCurrentLegalVersions(controller.signal).then((versions) => {
+      if (!controller.signal.aborted) setLegalVersions(versions);
+    });
+    return () => controller.abort();
+  }, []);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -141,11 +160,21 @@ export default function RegistroPage() {
       email: normalizedEmail,
       password,
       captchaToken: captcha.token,
+      acceptedLegalVersions: legalVersions,
     });
     // Turnstile tokens are single-use.
     captcha.reset();
 
     if (!result.success) {
+      const legalOutdated = getLegalOutdatedVersions(result.details);
+      if (legalOutdated) {
+        // The texts changed while the form was open: link the new versions and ask to accept them again.
+        setLegalVersions(legalOutdated);
+        setAcceptedTerms(false);
+        setErrors({ terms: t("register.errors.legalOutdated") });
+        setIsSubmitting(false);
+        return;
+      }
       const message = getRateLimitMessage(result.details) ?? getCaptchaErrorMessage(result.details) ?? result.message;
       setErrors({ general: message });
       setPopupInfo({
@@ -501,13 +530,23 @@ export default function RegistroPage() {
                     />
                     <span>
                       {t("register.termsPrefix")}{" "}
-                      <span className="font-semibold text-[#7A6435] hover:underline">
+                      <a
+                        href={LEGAL_PAGE_PATHS.terms}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#7A6435] hover:underline"
+                      >
                         {t("register.termsLink")}
-                      </span>{" "}
+                      </a>{" "}
                       {t("register.termsMiddle")}{" "}
-                      <span className="font-semibold text-[#7A6435] hover:underline">
+                      <a
+                        href={LEGAL_PAGE_PATHS.privacy}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#7A6435] hover:underline"
+                      >
                         {t("register.privacyLink")}
-                      </span>{" "}
+                      </a>{" "}
                       {t("register.termsSuffix")}
                     </span>
                   </label>

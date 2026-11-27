@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { logout } from "@/lib/api/auth";
+import { LEGAL_PAGE_PATHS } from "@/lib/api/legal";
 import { getMyProfileEmail } from "@/lib/api/profile";
 import i18next from "@/lib/i18n";
 import { type ThemeMode, useUiTheme } from "@/lib/theme/useUiTheme";
@@ -381,6 +382,7 @@ function ConfigurationSectionRows({
   onOpenBlockedUsers,
   onOpenChangePassword,
   onOpenContact,
+  onOpenPath,
 }: {
   rows: SettingsRow[];
   theme: ThemeMode;
@@ -393,6 +395,7 @@ function ConfigurationSectionRows({
   onOpenBlockedUsers: () => void;
   onOpenChangePassword: () => void;
   onOpenContact: () => void;
+  onOpenPath: (path: string) => void;
 }) {
   return rows.map((row, index) => {
     const withDivider = index < rows.length - 1;
@@ -483,6 +486,8 @@ function ConfigurationSectionRows({
       blocked: onOpenBlockedUsers,
       "change-password": onOpenChangePassword,
       contact: onOpenContact,
+      terms: () => onOpenPath(LEGAL_PAGE_PATHS.terms),
+      "privacy-policy": () => onOpenPath(LEGAL_PAGE_PATHS.privacy),
     };
     const onClick = clickHandlersByRowKey[row.key];
     const isInteractive = Boolean(onClick);
@@ -618,6 +623,7 @@ export default function ConfigurationPage() {
                   onOpenBlockedUsers={() => router.push("/account/configuration/blocked")}
                   onOpenChangePassword={() => router.push("/account/configuration/change-password")}
                   onOpenContact={() => router.push("/account/contact")}
+                  onOpenPath={(path) => router.push(path)}
                 />
               </div>
             </section>
@@ -678,6 +684,7 @@ export default function ConfigurationPage() {
                   onOpenBlockedUsers={() => router.push("/account/configuration/blocked")}
                   onOpenChangePassword={() => router.push("/account/configuration/change-password")}
                   onOpenContact={() => router.push("/account/contact")}
+                  onOpenPath={(path) => router.push(path)}
                 />
               </div>
             </section>

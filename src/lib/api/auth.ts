@@ -17,6 +17,9 @@ type RegisterInput = CaptchaInput & {
 	lastName: string;
 	email: string;
 	password: string;
+	// Versions of the Terms and Privacy Policy shown in the form. Omitted when they could not be loaded: the
+	// user then accepts them on the first visit instead.
+	acceptedLegalVersions?: { termsVersion: string; privacyVersion: string } | null;
 };
 
 type LoginInput = CaptchaInput & {
@@ -54,6 +57,9 @@ export type SessionAccessDecision = {
 	isWhitelisted: boolean;
 	hasVerifiedEmail: boolean;
 	hasCompletedWelcomeOnboarding: boolean;
+	// False when the current Terms / Privacy Policy versions are still to be accepted. Undefined with older
+	// backends, which means "nothing to accept".
+	hasAcceptedCurrentLegalDocuments?: boolean;
 };
 
 type WhitelistErrorDetails = {
@@ -67,6 +73,7 @@ type SessionPayload = {
 			isWhitelisted?: boolean;
 			hasVerifiedEmail?: boolean;
 			hasCompletedWelcomeOnboarding?: boolean;
+			hasAcceptedCurrentLegalDocuments?: boolean;
 		};
 	};
 	details?: WhitelistErrorDetails;
@@ -97,6 +104,12 @@ export async function register(
 				lastName: input.lastName,
 				email: input.email,
 				password: input.password,
+				...(input.acceptedLegalVersions
+					? {
+							acceptedTermsVersion: input.acceptedLegalVersions.termsVersion,
+							acceptedPrivacyVersion: input.acceptedLegalVersions.privacyVersion,
+						}
+					: {}),
 				...captchaBody(input),
 			},
 		});
@@ -398,6 +411,7 @@ export async function getSessionAccessDecision(): Promise<SessionAccessDecision>
 			isWhitelisted,
 			hasVerifiedEmail,
 			hasCompletedWelcomeOnboarding,
+			hasAcceptedCurrentLegalDocuments: payload?.data?.user?.hasAcceptedCurrentLegalDocuments,
 		};
 	} catch {
 		return {
